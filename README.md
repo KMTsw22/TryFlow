@@ -1,3 +1,7 @@
+1. 스타트업 창업자 혹은 출시전 객관적인 시장평가를 원하는 사람
+2. 시장 반응 조사 (기능, 가격, 피드백)
+3. 경쟁사: optimizely. g    oogle optimize
+
 # TryFlow — Pre-launch Market Validation Platform
 
 > 정식 출시 전, 가상의 랜딩 페이지로 시장 반응을 객관적인 수치로 측정하는 MVP 검증 도구
