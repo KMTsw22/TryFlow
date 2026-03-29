@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262 83% 58%;
+    --secondary: 262 100% 97%;
+    --secondary-foreground: 262 83% 45%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 262 100% 97%;
+    --accent-foreground: 262 83% 45%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border box-border;
+  }
+
+  body {
+    @apply bg-white text-gray-900 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+  }
+
+  .bg-gradient-hero {
+    background: linear-gradient(160deg, #f9f7ff 0%, #ede9fe 50%, #f5f3ff 100%);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #7C3AED, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .card-shadow {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-shadow-md {
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+}
