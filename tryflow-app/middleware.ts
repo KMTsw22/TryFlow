@@ -25,10 +25,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // 세션 갱신 (반드시 getUser 호출)
+  // Refresh session (must call getUser)
   const { data: { user } } = await supabase.auth.getUser();
 
-  // 대시보드 보호 — 비로그인 시 /login으로
+  // Protect dashboard routes — redirect to /login if not authenticated
   const isDashboardRoute =
     request.nextUrl.pathname.startsWith("/home") ||
     request.nextUrl.pathname.startsWith("/dashboard") ||
@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 로그인된 상태에서 /login 접근 시 대시보드로
+  // Redirect authenticated users away from /login to dashboard
   if (request.nextUrl.pathname === "/login" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";

@@ -1,312 +1,207 @@
-1. 스타트업 창업자 혹은 출시전 객관적인 시장평가를 원하는 사람
-2. 시장 반응 조사 (기능, 가격, 피드백)
-3. 경쟁사: optimizely. g    oogle optimize
+# try.wepp
 
-# TryFlow — Pre-launch Market Validation Platform
+**Pre-launch market validation playground.**
+Post your idea before writing a single line of production code — get real pricing votes, feature requests, and community feedback from users.
 
-> 정식 출시 전, 가상의 랜딩 페이지로 시장 반응을 객관적인 수치로 측정하는 MVP 검증 도구
-테스트브랜치
----
-
-## 1. 프로젝트 개요
-
-| 항목 | 내용 |
-|------|------|
-| 타겟 유저 | 스타트업 창업자, 사이드 프로젝트 개발자, 신규 서비스 출시 예정자 |
-| 핵심 목적 | 출시 전 가상 랜딩 페이지 배포 → 유저 반응(클릭률, 체류시간, 이메일) 수치 측정 |
-| 경쟁사 | Optimizely, Google Optimize |
+> Live demo · [try.wepp.vercel.app](https://try.wepp.vercel.app) *(replace with your deployment URL)*
 
 ---
 
-## 2. 기술 스택
+## Overview
 
-| 레이어 | 기술 |
-|--------|------|
-| Framework | Next.js 14 (App Router) |
-| Styling | Tailwind CSS |
-| Icons | Lucide React |
-| Components | Shadcn UI (커스텀) |
-| Database | PostgreSQL |
-| ORM | Prisma |
-| Auth | NextAuth.js |
+try.wepp lets builders validate ideas before they build. Creators submit a project in 5 minutes and get a public community page. Visitors browse, vote on pricing plans, vote on features, and leave feedback — all tracked in a real-time analytics dashboard.
+
+```
+Explorer → browses /explore → clicks project → votes + leaves feedback
+Creator  → submits project  → shares link    → reads analytics dashboard
+```
+
+---
+
+## Features
+
+- **Project submission wizard** — 4-step form: info → pricing → landing copy → launch
+- **Community page** (`/[slug]`) — pricing vote, feature vote, threaded comments, waitlist signup
+- **Explore grid** — browse all live projects by category with live search and filter
+- **Analytics dashboard** — per-project or aggregate: daily visitors, pricing tier interest, feature vote breakdown
+- **Notifications** — bell icon shows recent waitlist signups and comments
+- **Google OAuth** — sign in with Google via Supabase Auth
+- **Row-level security** — public reads, owner-only writes enforced at the DB layer
+
+---
+
+## Tech Stack
+
+| Layer | Choice |
+|-------|--------|
+| Framework | Next.js 15 (App Router, React Server Components) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| Auth & Database | Supabase (PostgreSQL + Auth + RLS) |
 | Charts | Recharts |
+| Icons | Lucide React |
+| UI primitives | shadcn/ui |
 
 ---
 
-## 3. 디자인 시스템 (UI 이미지 분석 기반)
+## Prerequisites
 
-### 컬러 팔레트
-
-```
-Primary:     #7C3AED  (Purple-600) — CTA 버튼, 강조 요소, 프로그레스 바
-Primary BG:  #F5F3FF  (Purple-50)  — 섹션 배경, 카드 강조 배경
-Secondary:   #06B6D4  (Cyan-500)   — 서브 아이콘, 보조 강조
-Success:     #10B981  (Emerald-500)— Running 상태, 긍정 지표
-Warning:     #F59E0B  (Amber-500)  — Paused 상태
-Danger:      #EF4444  (Red-500)    — 하락 지표
-Text-H:      #111827  (Gray-900)   — 제목
-Text-B:      #6B7280  (Gray-500)   — 본문, 설명
-Border:      #E5E7EB  (Gray-200)   — 카드 테두리, 구분선
-Background:  #FAFAFA  (Gray-50)    — 전체 배경
-```
-
-### 타이포그래피
-
-```
-Font Family: Inter (sans-serif)
-
-H1: font-bold, text-4xl~5xl
-H2: font-semibold, text-2xl~3xl
-H3: font-semibold, text-xl
-Body: font-normal, text-sm~base
-Label: font-medium, text-xs~sm, tracking-wide, uppercase
-```
-
-### 컴포넌트 Round 값
-
-```
-Card:         rounded-2xl   (16px)
-Button:       rounded-lg    (8px)
-Badge/Pill:   rounded-full
-Input:        rounded-lg    (8px)
-Sidebar item: rounded-xl    (12px)
-Avatar:       rounded-full
-```
-
-### 간격 (Padding/Spacing)
-
-```
-Section vertical:  py-16 ~ py-24
-Card inner:        p-6 ~ p-8
-Button:            px-6 py-3 (기본), px-4 py-2 (소형)
-Sidebar width:     w-56 ~ w-64
-Gap between cards: gap-4 ~ gap-6
-```
-
-### 주요 컴포넌트 스타일 패턴
-
-- **카드**: `bg-white rounded-2xl border border-gray-200 shadow-sm p-6`
-- **Primary 버튼**: `bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-6 py-3 font-semibold`
-- **Badge (Running)**: `bg-green-100 text-green-700 text-xs font-medium rounded-full px-3 py-1`
-- **Badge (Paused)**: `bg-amber-100 text-amber-700 text-xs font-medium rounded-full px-3 py-1`
-- **사이드바**: `bg-white border-r border-gray-200 w-60 flex flex-col`
+- Node.js 18+
+- A [Supabase](https://supabase.com) project
+- A Google Cloud OAuth 2.0 client (for Google login)
 
 ---
 
-## 4. 핵심 기능 요구사항
-
-### A. 유저용 랜딩 페이지 (Public)
-
-- **Hero 섹션**: 창업자가 입력한 서비스 가치 제안 강조
-- **Waitlist 등록**: 이메일 수집 폼
-- **가격 플랜 선택**: 플랜별 클릭 수 측정 (`data-testid` 부여)
-- **기능 선호도 투표**: 기능 카드 클릭 반응 측정
-- **이벤트 태깅**: 버튼마다 고유 `data-testid`, `data-event` 속성으로 Analytics 연동 대비
-
-### B. 창업자용 대시보드 (Auth Required)
-
-- **통계 요약**: 총 방문자, 전환율, Winning Variant 카드
-- **실험 목록 테이블**: 실험명, 상태(Running/Paused), 방문자 수, 전환율, 날짜
-- **실험 성과 상세**: 가격대별 전환율, 클릭률, 유저 행동 분석, 감성 분포 차트
-- **AI Insight 카드**: 최적 전략 제안 (텍스트 기반)
-
-### C. 실험 생성 플로우 (4 Step Wizard)
-
-| 단계 | 내용 |
-|------|------|
-| Step 1 | Basic Info — 제품명, 간단 설명 |
-| Step 2 | Pricing — 가격 플랜 설정 |
-| Step 3 | Landing — 랜딩 페이지 커스텀 |
-| Step 4 | Launch — 배포 및 링크 발급 |
-
----
-
-## 5. 폴더 구조
-
-```
-tryflow/
-├── app/
-│   ├── (auth)/
-│   │   ├── login/
-│   │   │   └── page.tsx
-│   │   └── signup/
-│   │       └── page.tsx
-│   ├── (dashboard)/
-│   │   ├── layout.tsx              # 사이드바 포함 대시보드 레이아웃
-│   │   ├── dashboard/
-│   │   │   └── page.tsx            # 메인 대시보드
-│   │   ├── experiments/
-│   │   │   ├── page.tsx            # 실험 목록
-│   │   │   ├── new/
-│   │   │   │   └── page.tsx        # 실험 생성 wizard
-│   │   │   └── [id]/
-│   │   │       └── page.tsx        # 실험 성과 상세
-│   │   ├── analytics/
-│   │   │   └── page.tsx
-│   │   └── settings/
-│   │       └── page.tsx
-│   ├── (landing)/
-│   │   └── [slug]/
-│   │       └── page.tsx            # 공개 랜딩 페이지 (유저 진입)
-│   ├── explore/
-│   │   └── page.tsx                # Explore Pricing Experiments
-│   ├── pricing/
-│   │   └── page.tsx                # 플랜 선택 페이지
-│   ├── layout.tsx                  # 루트 레이아웃
-│   ├── page.tsx                    # 메인 소개 페이지
-│   └── globals.css
-│
-├── components/
-│   ├── ui/                         # Shadcn 기반 기본 컴포넌트
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── badge.tsx
-│   │   ├── input.tsx
-│   │   ├── progress.tsx
-│   │   └── ...
-│   ├── layout/
-│   │   ├── Sidebar.tsx
-│   │   ├── TopBar.tsx
-│   │   └── Footer.tsx
-│   ├── dashboard/
-│   │   ├── StatsCard.tsx           # 방문자/전환율 요약 카드
-│   │   ├── ExperimentsTable.tsx    # 실험 목록 테이블
-│   │   ├── WinningVariantCard.tsx  # 우승 변형 강조 카드
-│   │   └── AiInsightCard.tsx       # AI 인사이트 카드
-│   ├── experiments/
-│   │   ├── ExperimentWizard.tsx    # 4단계 생성 폼
-│   │   ├── PerformanceChart.tsx    # 전환율 차트
-│   │   ├── SentimentDonut.tsx      # 감성 분포 도넛 차트
-│   │   └── HeatmapCard.tsx         # 클릭 히트맵 (선택)
-│   └── landing/
-│       ├── HeroSection.tsx
-│       ├── PricingSection.tsx
-│       ├── FeatureVoteSection.tsx
-│       └── WaitlistForm.tsx
-│
-├── lib/
-│   ├── db.ts                       # Prisma 클라이언트
-│   ├── auth.ts                     # NextAuth 설정
-│   └── analytics.ts                # 이벤트 트래킹 헬퍼
-│
-├── prisma/
-│   └── schema.prisma
-│
-└── public/
-    └── ...
-```
-
----
-
-## 6. 데이터베이스 스키마 (PostgreSQL + Prisma)
-
-```prisma
-model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  name        String?
-  plan        Plan         @default(BASIC)
-  experiments Experiment[]
-  createdAt   DateTime     @default(now())
-}
-
-model Experiment {
-  id             String      @id @default(cuid())
-  userId         String
-  user           User        @relation(fields: [userId], references: [id])
-  slug           String      @unique    // 공개 랜딩 URL
-  productName    String
-  description    String
-  status         ExpStatus   @default(DRAFT)
-  pricingTiers   Json        // [{ name, price, features[] }]
-  waitlistEmails WaitlistEntry[]
-  events         ClickEvent[]
-  createdAt      DateTime    @default(now())
-}
-
-model WaitlistEntry {
-  id           String     @id @default(cuid())
-  experimentId String
-  experiment   Experiment @relation(fields: [experimentId], references: [id])
-  email        String
-  createdAt    DateTime   @default(now())
-}
-
-model ClickEvent {
-  id           String     @id @default(cuid())
-  experimentId String
-  experiment   Experiment @relation(fields: [experimentId], references: [id])
-  eventType    String     // "pricing_click" | "feature_vote" | "waitlist_submit"
-  metadata     Json       // { planName, featureId, ... }
-  createdAt    DateTime   @default(now())
-}
-
-enum Plan {
-  BASIC
-  PRO
-  PREMIUM
-}
-
-enum ExpStatus {
-  DRAFT
-  RUNNING
-  PAUSED
-  ENDED
-}
-```
-
----
-
-## 7. 핵심 API 라우트
-
-```
-POST   /api/auth/[...nextauth]       # 인증
-POST   /api/experiments              # 실험 생성
-GET    /api/experiments              # 실험 목록 조회
-GET    /api/experiments/[id]         # 실험 상세
-PATCH  /api/experiments/[id]         # 상태 변경 (Running/Paused)
-GET    /api/experiments/[id]/stats   # 통계 (방문자, 전환율, 클릭 분포)
-POST   /api/track                    # 클릭 이벤트 수집 (public)
-POST   /api/waitlist                 # 이메일 등록 (public)
-```
-
----
-
-## 8. 개발 시작
+## Getting Started
 
 ```bash
-# 패키지 설치
+# Clone and enter the app directory
+git clone https://github.com/your-org/trywepp.git
+cd trywepp/tryflow-app
+
+# Install dependencies
 npm install
 
-# 환경 변수 설정
+# Set up environment variables
 cp .env.example .env.local
-# DATABASE_URL, NEXTAUTH_SECRET 등 입력
-
-# DB 마이그레이션
-npx prisma migrate dev
-
-# 개발 서버 실행
-npm run dev
 ```
 
----
-
-## 9. 환경 변수
+Edit `.env.local`:
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/tryflow"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret"
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+```bash
+# Start the development server
+npm run dev
+# → http://localhost:3000
 ```
 
 ---
 
-## 10. 단계별 구현 순서
+## Database Setup
 
-1. **[Step 1]** `prisma/schema.prisma` 작성 + DB 마이그레이션
-2. **[Step 2]** 루트 `layout.tsx` + `globals.css` (디자인 시스템 토큰 적용)
-3. **[Step 3]** 메인 소개 `page.tsx` (Hero, Features, Pricing 섹션)
-4. **[Step 4]** 대시보드 레이아웃 (Sidebar + TopBar)
-5. **[Step 5]** 실험 생성 Wizard (4-step form)
-6. **[Step 6]** 공개 랜딩 페이지 (`/[slug]`) + 이벤트 트래킹 API
-7. **[Step 7]** 통계 차트 (Recharts 기반 전환율, 클릭 분포)
+Run these SQL files **in order** in your Supabase SQL Editor:
+
+```
+db/schema.sql           # Core tables (experiments, waitlist_entries, click_events) + RLS policies
+db/comments.sql         # Comments table with public insert/owner read RLS
+db/add_fields.sql       # Adds category and maker_name columns to experiments
+db/add_reply.sql        # Adds parent_id to comments (threaded replies)
+db/add_project_url.sql  # Adds project_url column to experiments
+db/migrate_categories.sql  # (If upgrading) Normalises legacy category names
+db/seed.sql             # (Optional) Seeds 4 sample projects using the first signed-up user
+```
+
+### Google OAuth
+
+1. Supabase Dashboard → **Authentication → Providers → Google** → Enable
+2. Add your Google OAuth Client ID and Secret
+3. In Google Cloud Console, add this to **Authorized redirect URIs**:
+   ```
+   https://<your-project-ref>.supabase.co/auth/v1/callback
+   ```
+
+---
+
+## Project Structure
+
+```
+tryflow-app/
+├── app/
+│   ├── layout.tsx                    # Root layout — sidebar + auth check
+│   ├── page.tsx                      # Marketing landing page
+│   ├── explore/page.tsx              # Public project grid with search + category filter
+│   ├── (auth)/                       # /login
+│   ├── (dashboard)/                  # Auth-gated routes
+│   │   ├── home/page.tsx             # Creator stats banner + explore grid
+│   │   ├── dashboard/page.tsx        # Experiments table with action menu
+│   │   ├── analytics/page.tsx        # Charts (supports ?project=<id> for per-project view)
+│   │   └── settings/page.tsx         # Profile edit + preferences
+│   └── (landing)/[slug]/page.tsx     # Public community page per project
+│
+├── components/
+│   ├── layout/
+│   │   ├── Sidebar.tsx               # Hover-expand sidebar, guest/auth nav variants
+│   │   ├── TopBar.tsx                # Search, notifications, help, user avatar
+│   │   └── NavigationProgress.tsx    # Top loading bar on route change
+│   ├── landing/
+│   │   ├── PricingVoteSection.tsx    # Vote on pricing plans, see live results
+│   │   ├── FeatureVoteSection.tsx    # Vote on features
+│   │   ├── CommentSection.tsx        # Threaded comments with inline replies
+│   │   ├── PageViewTracker.tsx       # Fires page_view event on mount
+│   │   ├── ShareButtons.tsx          # Copy link + Post on X
+│   │   └── HeroSection.tsx           # Category-themed gradient hero
+│   ├── explore/
+│   │   ├── ProjectCard.tsx           # Card with category badge + pricing summary
+│   │   └── ExploreGrid.tsx           # Client component with category filter state
+│   ├── analytics/
+│   │   ├── ProjectSelector.tsx       # Dropdown to filter analytics by project
+│   │   ├── DailyVisitorsChart.tsx    # Recharts bar chart (last 14 days)
+│   │   ├── PricingBreakdownChart.tsx
+│   │   └── FeatureBreakdownChart.tsx
+│   ├── dashboard/
+│   │   ├── ExperimentActionsMenu.tsx # "..." dropdown: view, copy link, analytics, delete
+│   │   ├── MyProjectsList.tsx        # Creator's project list
+│   │   └── StatusBadge.tsx           # Clickable status pill (pause/resume/archive)
+│   └── settings/
+│       ├── ProfileForm.tsx           # Display name edit
+│       └── PreferencesPanel.tsx      # Toggles persisted to localStorage
+│
+├── db/                               # SQL migration files (run in Supabase SQL Editor)
+└── lib/
+    ├── supabase/client.ts            # Browser Supabase client
+    ├── supabase/server.ts            # Server Supabase client (SSR cookies)
+    └── utils.ts
+```
+
+---
+
+## API Routes
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/experiments` | List authenticated user's experiments |
+| `POST` | `/api/experiments` | Create a new experiment (status: RUNNING) |
+| `PATCH` | `/api/experiments/[id]` | Update status (pause/resume/archive) |
+| `DELETE` | `/api/experiments/[id]` | Delete own experiment |
+| `POST` | `/api/track` | Record a click/view event (public) |
+| `POST` | `/api/waitlist` | Add email to waitlist (public) |
+| `GET` | `/api/comments` | Fetch comments for an experiment |
+| `POST` | `/api/comments` | Post a comment or reply |
+| `GET` | `/api/search` | Search live projects by name (public) |
+| `GET` | `/api/notifications` | Recent waitlist + comment activity for current user |
+
+### Event types tracked via `/api/track`
+
+| `event_type` | `metadata` | Trigger |
+|---|---|---|
+| `page_view` | `{}` | Community page mount (increments total_visitors) |
+| `pricing_click` | `{ planName }` | Pricing section button click |
+| `pricing_vote` | `{ planName }` | Community page plan vote |
+| `feature_vote` | `{ featureId, featureTitle }` | Feature vote button |
+
+---
+
+## Categories
+
+SaaS · Marketplace · Consumer · Dev Tools · Health · Education · Social · Other
+
+---
+
+## Contributing
+
+Pull requests are welcome. For major changes, open an issue first.
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Commit your changes
+4. Open a pull request
+
+---
+
+## License
+
+MIT

@@ -36,5 +36,7 @@ Thumbs.db
 *.tsbuildinfo
 tryflow-app/next-env.d.ts
 
+.claude/*
+
 # Vercel
 .vercel

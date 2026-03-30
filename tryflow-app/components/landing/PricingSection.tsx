@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 interface PricingTier {
   name: string;
   price: string;
-  features: string[];
+  features?: string[];
+  description?: string;
   popular?: boolean;
 }
 
@@ -85,7 +86,7 @@ export function PricingSection({ experimentId, tiers }: PricingSectionProps) {
               </div>
 
               <ul className="space-y-3 flex-1">
-                {tier.features.map((f) => (
+                {(tier.features ?? (tier.description ? [tier.description] : [])).map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm">
                     <Check
                       className={cn(

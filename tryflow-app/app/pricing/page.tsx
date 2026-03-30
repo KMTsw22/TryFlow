@@ -51,7 +51,7 @@ export default function PricingPage() {
             <div className="w-7 h-7 rounded-lg bg-gradient-primary flex items-center justify-center">
               <Zap className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-gray-900 text-sm">TryFlow</span>
+            <span className="font-bold text-gray-900 text-sm">try.wepp</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500 font-medium">
             {["Platform","Pricing","Enterprise","Docs"].map(l => (
@@ -151,7 +151,7 @@ export default function PricingPage() {
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">TryFlow {selectedPlan.name}</p>
+                <p className="text-sm font-semibold text-gray-900">try.wepp {selectedPlan.name}</p>
                 <p className="text-xs text-gray-400">Monthly Subscription</p>
                 <p className="text-xs font-bold text-purple-700 mt-0.5">{selectedPlan.price}.00</p>
               </div>
@@ -207,13 +207,13 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 py-6 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-gray-400">
-          <span className="font-bold text-gray-700 text-sm">TryFlow</span>
+          <span className="font-bold text-gray-700 text-sm">try.wepp</span>
           <div className="flex gap-5">
             {["Privacy Policy","Terms of Service","Security","Status"].map(l => (
               <Link key={l} href="#" className="hover:text-gray-600">{l}</Link>
             ))}
           </div>
-          <span>© 2024 TryFlow Inc. Crafted for makers.</span>
+          <span>© 2026 try.wepp Inc. Crafted for makers.</span>
         </div>
       </footer>
     </div>

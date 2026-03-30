@@ -22,14 +22,14 @@ export default function LoginPage() {
           <div className="w-12 h-12 rounded-2xl bg-gradient-primary flex items-center justify-center mb-4">
             <Zap className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">TryFlow</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">try.wepp</h1>
           <p className="text-sm text-gray-500 mt-1">Pre-launch Market Validation</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          <h2 className="text-xl font-bold text-gray-900 text-center">Welcome back</h2>
+          <h2 className="text-xl font-bold text-gray-900 text-center">Sign in / Sign up</h2>
           <p className="text-sm text-gray-500 text-center mt-1 mb-8">
-            Sign in to continue to your dashboard
+            New or returning — just click below to continue
           </p>
 
           <button

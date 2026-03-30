@@ -9,11 +9,25 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    const { error } = await supabase
+    await supabase
       .from("click_events")
       .insert({ experiment_id: experimentId, event_type: eventType, metadata: metadata ?? {} });
 
-    if (error) throw error;
+    // Increment total_visitors only for page_view
+    if (eventType === "page_view") {
+      const { data: exp } = await supabase
+        .from("experiments")
+        .select("total_visitors")
+        .eq("id", experimentId)
+        .single();
+      if (exp) {
+        await supabase
+          .from("experiments")
+          .update({ total_visitors: (exp.total_visitors ?? 0) + 1 })
+          .eq("id", experimentId);
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });

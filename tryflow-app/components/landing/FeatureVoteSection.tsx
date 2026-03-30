@@ -22,7 +22,7 @@ export function FeatureVoteSection({
 }: FeatureVoteSectionProps) {
   const [voted, setVoted] = useState<Set<string>>(new Set());
 
-  const handleVote = async (featureId: string) => {
+  const handleVote = async (featureId: string, featureTitle: string) => {
     if (voted.has(featureId)) return;
     setVoted((prev) => new Set(prev).add(featureId));
 
@@ -32,7 +32,7 @@ export function FeatureVoteSection({
       body: JSON.stringify({
         experimentId,
         eventType: "feature_vote",
-        metadata: { featureId },
+        metadata: { featureId, featureTitle },
       }),
     });
   };
@@ -55,7 +55,7 @@ export function FeatureVoteSection({
             return (
               <button
                 key={feature.id}
-                onClick={() => handleVote(feature.id)}
+                onClick={() => handleVote(feature.id, feature.title)}
                 data-testid={`feature-vote-${feature.id}`}
                 data-event="feature_vote"
                 className={cn(

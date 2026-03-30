@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Check, ChevronRight, Save, Lock, Loader2 } from "lucide-react";
+import { X, Check, ChevronRight, Lock, Loader2 } from "lucide-react";
 
 const STEPS = [
   { id: 1, label: "BASIC INFO" },
@@ -15,6 +15,9 @@ const STEPS = [
 interface FormData {
   productName: string;
   description: string;
+  category: string;
+  makerName: string;
+  projectUrl: string;
   plans: { name: string; price: string; features: string }[];
   heroTitle: string;
   heroSubtitle: string;
@@ -25,10 +28,14 @@ export function ExperimentWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [launchMsg, setLaunchMsg] = useState("");
   const [error, setError] = useState("");
   const [form, setForm] = useState<FormData>({
     productName: "",
     description: "",
+    category: "",
+    makerName: "",
+    projectUrl: "",
     plans: [
       { name: "Basic",   price: "9",  features: "" },
       { name: "Pro",     price: "19", features: "" },
@@ -42,6 +49,15 @@ export function ExperimentWizard() {
   const handleLaunch = async () => {
     setLoading(true);
     setError("");
+
+    const msgs = ["Creating your page...", "Setting up pricing...", "Almost ready...", "Going live 🚀"];
+    let i = 0;
+    setLaunchMsg(msgs[0]);
+    const ticker = setInterval(() => {
+      i = Math.min(i + 1, msgs.length - 1);
+      setLaunchMsg(msgs[i]);
+    }, 700);
+
     try {
       const res = await fetch("/api/experiments", {
         method: "POST",
@@ -49,6 +65,9 @@ export function ExperimentWizard() {
         body: JSON.stringify({
           productName: form.productName,
           description: form.description,
+          category: form.category || "Other",
+          makerName: form.makerName,
+          projectUrl: form.projectUrl,
           pricingTiers: form.plans.map(p => ({
             name: p.name,
             price: p.price,
@@ -60,17 +79,17 @@ export function ExperimentWizard() {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to create experiment");
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create experiment");
 
-      router.push("/experiments");
-      router.refresh();
+      clearInterval(ticker);
+      router.push(`/${data.slug}`);
     } catch (e: unknown) {
+      clearInterval(ticker);
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setLoading(false);
+      setLaunchMsg("");
     }
   };
 
@@ -78,7 +97,7 @@ export function ExperimentWizard() {
     <div className="min-h-screen bg-purple-50/40 flex flex-col">
       {/* Top nav */}
       <header className="bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between sticky top-0 z-10">
-        <Link href="/dashboard" className="font-bold text-purple-700 text-sm">TryFlow</Link>
+        <Link href="/dashboard" className="font-bold text-purple-700 text-sm">try.wepp</Link>
         <nav className="flex items-center gap-6 text-sm font-medium">
           {STEPS.map(s => (
             <button
@@ -140,10 +159,7 @@ export function ExperimentWizard() {
       </div>
 
       {/* Footer bar */}
-      <div className="bg-white border-t border-gray-100 px-8 py-4 flex items-center justify-between fixed bottom-0 left-0 right-0 z-10">
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 font-medium hover:text-gray-700">
-          <Save className="w-3.5 h-3.5" /> Save Draft
-        </button>
+      <div className="bg-white border-t border-gray-100 px-8 py-4 flex items-center justify-end fixed bottom-0 left-0 right-0 z-10">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1 text-xs text-gray-400">
             <Lock className="w-3 h-3" /> Your data is stored securely
@@ -169,10 +185,12 @@ export function ExperimentWizard() {
             <button
               onClick={handleLaunch}
               disabled={loading}
-              className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-60"
+              className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-80 min-w-[180px] justify-center"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              {loading ? "Launching..." : "Launch Experiment 🚀"}
+              {loading
+                ? <><Loader2 className="w-4 h-4 animate-spin shrink-0" />{launchMsg}</>
+                : "Launch Experiment 🚀"
+              }
             </button>
           )}
         </div>
@@ -180,6 +198,12 @@ export function ExperimentWizard() {
     </div>
   );
 }
+
+const CATEGORIES = ["SaaS", "Marketplace", "Consumer", "Dev Tools", "Health", "Education", "Social", "Other"];
+const CATEGORY_EMOJI: Record<string, string> = {
+  SaaS: "⚡", Marketplace: "🛒", Consumer: "📱", "Dev Tools": "🛠️",
+  Health: "💚", Education: "📚", Social: "💬", Other: "🔬",
+};
 
 /* ── Step 1 ── */
 function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<React.SetStateAction<FormData>> }) {
@@ -198,10 +222,38 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
           <input
             value={form.productName}
             onChange={e => setForm(f => ({ ...f, productName: e.target.value }))}
-            placeholder="e.g., CloudSync Pro"
+            placeholder="e.g., StudyMate"
             className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />
-          <p className="text-xs text-gray-400 mt-1.5">What&apos;s the name of your product or service?</p>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category</label>
+          <div className="grid grid-cols-3 gap-2">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, category: cat }))}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                  form.category === cat
+                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                <span>{CATEGORY_EMOJI[cat]}</span> {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Your Name <span className="text-gray-400 font-normal">(optional)</span></label>
+          <input
+            value={form.makerName}
+            onChange={e => setForm(f => ({ ...f, makerName: e.target.value }))}
+            placeholder="e.g., Alex · CS Junior"
+            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+          <p className="text-xs text-gray-400 mt-1.5">Shown on your project card so testers know who made it.</p>
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Short Description</label>
@@ -209,13 +261,29 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
             value={form.description}
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             placeholder="Describe what your product does in 1-2 sentences..."
-            rows={4}
+            rows={3}
             className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
           />
         </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Project Link <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-purple-500">
+            <span className="text-gray-400 text-sm shrink-0">🔗</span>
+            <input
+              type="url"
+              value={form.projectUrl}
+              onChange={e => setForm(f => ({ ...f, projectUrl: e.target.value }))}
+              placeholder="https://your-demo.vercel.app"
+              className="flex-1 text-sm outline-none placeholder:text-gray-400"
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5">Deployed demo, GitHub link, etc. — shown as a &ldquo;View Demo&rdquo; button on the landing page.</p>
+        </div>
         <div className="flex items-start gap-3 bg-purple-50 rounded-xl p-4">
           <span className="text-purple-600 shrink-0">💡</span>
-          <p className="text-sm text-purple-700">Tip: A clear product description helps testers understand your value proposition better.</p>
+          <p className="text-sm text-purple-700">Your project will go live immediately after launch and appear on the Explore page.</p>
         </div>
       </div>
     </div>
@@ -301,7 +369,10 @@ function Step4({ form }: { form: FormData }) {
       <div className="space-y-3">
         <div className="bg-gray-50 rounded-xl p-4 space-y-3 text-sm">
           {[
-            { k: "Product",       v: form.productName || "—" },
+            { k: "Product",       v: form.productName  || "—" },
+            { k: "Category",      v: form.category     || "Other" },
+            { k: "Maker",         v: form.makerName    || "—" },
+            { k: "Project Link",  v: form.projectUrl   || "—" },
             { k: "Description",   v: form.description  || "—" },
             { k: "Pricing Tiers", v: form.plans.map(p => `$${p.price}`).join(" / ") },
             { k: "CTA",           v: form.ctaText },
@@ -316,7 +387,7 @@ function Step4({ form }: { form: FormData }) {
           <span className="text-purple-600">🔗</span>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Your public URL (after launch)</p>
-            <p className="text-sm font-bold text-purple-700">tryflow.io/e/{slug}</p>
+            <p className="text-sm font-bold text-purple-700">try.wepp/{slug}</p>
           </div>
         </div>
       </div>

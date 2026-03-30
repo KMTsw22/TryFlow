@@ -10,14 +10,14 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient();
 
-    // upsert (중복 이메일 무시)
+    // upsert (ignore duplicate emails)
     const { error } = await supabase
       .from("waitlist_entries")
       .upsert({ experiment_id: experimentId, email }, { onConflict: "experiment_id,email" });
 
     if (error) throw error;
 
-    // 이벤트 기록
+    // Record event
     await supabase
       .from("click_events")
       .insert({ experiment_id: experimentId, event_type: "waitlist_submit", metadata: { email } });

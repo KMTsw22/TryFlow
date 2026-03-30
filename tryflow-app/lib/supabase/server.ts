@@ -18,7 +18,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Server Component에서는 쿠키 쓰기 불가 — 미들웨어에서 처리
+            // Cookie writes are not allowed in Server Components — handled by middleware
           }
         },
       },
