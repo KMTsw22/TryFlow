@@ -35,6 +35,11 @@
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7"
   },
+  "overrides": {
+    "react-server-dom-webpack": "19.1.0",
+    "react-server-dom-parcel": "19.1.0",
+    "react-server-dom-turbopack": "19.1.0"
+  },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
