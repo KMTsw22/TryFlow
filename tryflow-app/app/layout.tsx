@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
+import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -31,11 +32,8 @@ export default async function RootLayout({
       </head>
       <body>
         <NavigationProgress />
-        <Sidebar isLoggedIn={isLoggedIn} />
-        {/* offset content by sidebar width (64px) */}
-        <div className="pl-[64px]">
-          {children}
-        </div>
+        <SidebarWrapper isLoggedIn={isLoggedIn} />
+        <ContentWrapper>{children}</ContentWrapper>
       </body>
     </html>
   );

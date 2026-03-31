@@ -41,6 +41,14 @@
     background: linear-gradient(160deg, #f9f7ff 0%, #ede9fe 50%, #f5f3ff 100%);
   }
 
+  .bg-gradient-navy {
+    background: linear-gradient(180deg, #0B1026 0%, #111938 100%);
+  }
+
+  .bg-gradient-cta-green {
+    background: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+  }
+
   .text-gradient {
     background: linear-gradient(135deg, #7C3AED, #a855f7);
     -webkit-background-clip: text;
