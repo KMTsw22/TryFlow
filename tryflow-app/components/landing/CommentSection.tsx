@@ -95,7 +95,9 @@ function CommentForm({
     const data = await res.json();
     setLoading(false);
     if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
-    onPosted(data.comment, data.creditAwarded ?? 0);
+    const awarded = data.creditAwarded ?? 0;
+    onPosted(data.comment, awarded);
+    if (awarded > 0) window.dispatchEvent(new CustomEvent("credits-updated"));
     setContent("");
     if (!compact) setName("");
   }

@@ -46,6 +46,15 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [hasNew, setHasNew] = useState(true);
+  const [liveCredits, setLiveCredits] = useState(creditBalance);
+
+  useEffect(() => {
+    const fetchCredits = () =>
+      fetch("/api/credits").then(r => r.json()).then(d => setLiveCredits(d.balance ?? 0)).catch(() => {});
+    fetchCredits();
+    window.addEventListener("credits-updated", fetchCredits);
+    return () => window.removeEventListener("credits-updated", fetchCredits);
+  }, []);
 
   // Search state
   const [query, setQuery] = useState("");
@@ -242,7 +251,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
         {/* ── Credit Balance ── */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
           <Coins className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          <span className="text-xs font-bold text-amber-700">{creditBalance.toLocaleString()}</span>
+          <span className="text-xs font-bold text-amber-700">{liveCredits.toLocaleString()}</span>
           <span className="text-[10px] text-amber-500 font-medium">크레딧</span>
         </div>
 

@@ -14,9 +14,11 @@ import {
   Zap,
   Compass,
   LogIn,
+  Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
 
 const GUEST_NAV = [
   { label: "Home",    icon: Home,    href: "/" },
@@ -38,6 +40,16 @@ export function Sidebar({ isLoggedIn }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const fetchCredits = () =>
+      fetch("/api/credits").then(r => r.json()).then(d => setCredits(d.balance ?? 0)).catch(() => {});
+    fetchCredits();
+    window.addEventListener("credits-updated", fetchCredits);
+    return () => window.removeEventListener("credits-updated", fetchCredits);
+  }, [isLoggedIn]);
 
   const NAV = isLoggedIn ? AUTH_NAV : GUEST_NAV;
 
@@ -103,6 +115,21 @@ export function Sidebar({ isLoggedIn }: Props) {
       <div className="px-2 pb-4 space-y-1 border-t border-gray-100 pt-3 shrink-0">
         {isLoggedIn ? (
           <>
+            {credits !== null && (
+              <div
+                title={!expanded ? `${credits.toLocaleString()} credits` : undefined}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 overflow-hidden"
+              >
+                <Coins className="w-4 h-4 text-amber-500 shrink-0" />
+                <span className={cn(
+                  "text-xs font-bold text-amber-700 whitespace-nowrap transition-all duration-150",
+                  expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
+                )}>
+                  {credits.toLocaleString()} 크레딧
+                </span>
+              </div>
+            )}
+
             <Link
               href="/experiments/new"
               title={!expanded ? "New Experiment" : undefined}
