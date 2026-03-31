@@ -33,6 +33,10 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = await createClient();
+
+  // 로그인 유저 확인 (크레딧 지급을 위해)
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { data, error } = await supabase
     .from("comments")
     .insert({
@@ -40,10 +44,23 @@ export async function POST(request: NextRequest) {
       author_name: authorName.trim(),
       content: content.trim(),
       parent_id: parentId ?? null,
+      user_id: user?.id ?? null,
     })
     .select("id, author_name, content, created_at, parent_id")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ comment: data }, { status: 201 });
+
+  // 로그인 유저 + 최소 200자 이상 댓글 → +10 크레딧 지급
+  const trimmedLength = content.trim().length;
+  const creditAwarded = user && trimmedLength >= 200 ? 10 : 0;
+
+  if (creditAwarded > 0) {
+    await supabase.rpc("add_credits", {
+      p_user_id: user!.id,
+      p_amount: creditAwarded,
+    });
+  }
+
+  return NextResponse.json({ comment: data, creditAwarded }, { status: 201 });
 }

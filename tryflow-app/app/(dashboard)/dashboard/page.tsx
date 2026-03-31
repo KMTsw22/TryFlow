@@ -148,6 +148,7 @@ export default async function DashboardPage() {
                         hero_subtitle:exp.hero_subtitle ?? "",
                         cta_text:     exp.cta_text ?? "Join Waitlist",
                         pricing_tiers: tiers,
+                        status:       exp.status,
                       }} />
                     </td>
                   </tr>

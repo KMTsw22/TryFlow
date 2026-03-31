@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { X, Check, ChevronRight, Lock, Loader2 } from "lucide-react";
+import { X, Check, ChevronRight, Lock, Loader2, Coins, AlertTriangle } from "lucide-react";
 
 const STEPS = [
   { id: 1, label: "BASIC INFO" },
@@ -11,6 +11,8 @@ const STEPS = [
   { id: 3, label: "LANDING" },
   { id: 4, label: "LAUNCH" },
 ];
+
+const CREDIT_COST = 1000;
 
 interface FormData {
   productName: string;
@@ -30,6 +32,7 @@ export function ExperimentWizard() {
   const [loading, setLoading] = useState(false);
   const [launchMsg, setLaunchMsg] = useState("");
   const [error, setError] = useState("");
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
   const [form, setForm] = useState<FormData>({
     productName: "",
     description: "",
@@ -46,7 +49,21 @@ export function ExperimentWizard() {
     ctaText: "Join Waitlist",
   });
 
+  useEffect(() => {
+    fetch("/api/credits")
+      .then(r => r.json())
+      .then(d => setCreditBalance(d.balance ?? 0))
+      .catch(() => setCreditBalance(null));
+  }, []);
+
+  const hasEnoughCredits = creditBalance === null || creditBalance >= CREDIT_COST;
+
   const handleLaunch = async () => {
+    if (creditBalance !== null && creditBalance < CREDIT_COST) {
+      setError(`크레딧이 부족합니다. 현재 잔액: ${creditBalance.toLocaleString()} / 필요 크레딧: ${CREDIT_COST.toLocaleString()}`);
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -114,6 +131,15 @@ export function ExperimentWizard() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
+          {/* 크레딧 잔액 표시 */}
+          {creditBalance !== null && (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
+              hasEnoughCredits ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-red-50 text-red-700 border border-red-200"
+            }`}>
+              <Coins className="w-3 h-3" />
+              {creditBalance.toLocaleString()} 크레딧
+            </div>
+          )}
           <Link href="/dashboard" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500">
             <X className="w-4 h-4" />
           </Link>
@@ -151,7 +177,7 @@ export function ExperimentWizard() {
           {step === 1 && <Step1 form={form} setForm={setForm} />}
           {step === 2 && <Step2 form={form} setForm={setForm} />}
           {step === 3 && <Step3 form={form} setForm={setForm} />}
-          {step === 4 && <Step4 form={form} />}
+          {step === 4 && <Step4 form={form} creditBalance={creditBalance} />}
           {error && (
             <p className="mt-4 text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2">{error}</p>
           )}
@@ -184,13 +210,16 @@ export function ExperimentWizard() {
           ) : (
             <button
               onClick={handleLaunch}
-              disabled={loading}
-              className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-80 min-w-[180px] justify-center"
+              disabled={loading || !hasEnoughCredits}
+              className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-50 min-w-[200px] justify-center"
             >
-              {loading
-                ? <><Loader2 className="w-4 h-4 animate-spin shrink-0" />{launchMsg}</>
-                : "Launch Experiment 🚀"
-              }
+              {loading ? (
+                <><Loader2 className="w-4 h-4 animate-spin shrink-0" />{launchMsg}</>
+              ) : !hasEnoughCredits ? (
+                <><AlertTriangle className="w-4 h-4 shrink-0" />크레딧 부족</>
+              ) : (
+                <>Launch Experiment 🚀 <span className="text-white/70 text-xs">(-{CREDIT_COST.toLocaleString()})</span></>
+              )}
             </button>
           )}
         </div>
@@ -358,8 +387,10 @@ function Step3({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
 }
 
 /* ── Step 4 ── */
-function Step4({ form }: { form: FormData }) {
+function Step4({ form, creditBalance }: { form: FormData; creditBalance: number | null }) {
   const slug = form.productName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "your-product";
+  const hasEnough = creditBalance === null || creditBalance >= CREDIT_COST;
+
   return (
     <div>
       <div className="mb-6">
@@ -383,6 +414,7 @@ function Step4({ form }: { form: FormData }) {
             </div>
           ))}
         </div>
+
         <div className="flex items-center gap-3 bg-purple-50 rounded-xl p-4">
           <span className="text-purple-600">🔗</span>
           <div>
@@ -390,6 +422,33 @@ function Step4({ form }: { form: FormData }) {
             <p className="text-sm font-bold text-purple-700">try.wepp/{slug}</p>
           </div>
         </div>
+
+        {/* 크레딧 비용 안내 */}
+        <div className={`flex items-center justify-between rounded-xl p-4 ${hasEnough ? "bg-amber-50 border border-amber-200" : "bg-red-50 border border-red-200"}`}>
+          <div className="flex items-center gap-2">
+            <Coins className={`w-4 h-4 ${hasEnough ? "text-amber-500" : "text-red-500"}`} />
+            <div>
+              <p className={`text-sm font-semibold ${hasEnough ? "text-amber-700" : "text-red-700"}`}>
+                실험실 등록 비용: 1,000 크레딧
+              </p>
+              <p className={`text-xs mt-0.5 ${hasEnough ? "text-amber-600" : "text-red-600"}`}>
+                노출 기간: 7일 · 현재 잔액: {creditBalance !== null ? `${creditBalance.toLocaleString()} 크레딧` : "로딩 중..."}
+              </p>
+            </div>
+          </div>
+          {!hasEnough && (
+            <div className="flex items-center gap-1 text-xs text-red-600 font-semibold">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              부족
+            </div>
+          )}
+        </div>
+
+        {!hasEnough && (
+          <p className="text-xs text-red-500 text-center">
+            댓글을 200자 이상 작성하면 +10 크레딧이 적립됩니다.
+          </p>
+        )}
       </div>
     </div>
   );

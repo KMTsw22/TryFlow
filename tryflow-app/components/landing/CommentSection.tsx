@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { MessageSquare, Send, User, CornerDownRight, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, Send, User, CornerDownRight, ChevronDown, ChevronUp, Coins, Sparkles } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -51,7 +51,6 @@ function buildTree(flat: Comment[]): CommentWithReplies[] {
       roots.push(map[c.id]);
     }
   });
-  // newest top-level first
   return roots.reverse();
 }
 
@@ -67,7 +66,7 @@ function CommentForm({
   experimentId: string;
   parentId?: string;
   placeholder?: string;
-  onPosted: (comment: Comment) => void;
+  onPosted: (comment: Comment, creditAwarded: number) => void;
   compact?: boolean;
   profileName?: string;
 }) {
@@ -76,6 +75,10 @@ function CommentForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isLoggedIn = !!profileName;
+  const charCount = content.length;
+  const meetsMinLength = charCount >= 200;
 
   useEffect(() => { if (compact) inputRef.current?.focus(); }, [compact]);
 
@@ -92,7 +95,7 @@ function CommentForm({
     const data = await res.json();
     setLoading(false);
     if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
-    onPosted(data.comment);
+    onPosted(data.comment, data.creditAwarded ?? 0);
     setContent("");
     if (!compact) setName("");
   }
@@ -101,7 +104,6 @@ function CommentForm({
     <form onSubmit={handleSubmit} className={compact ? "mt-2 space-y-2" : "bg-white rounded-2xl border border-gray-200 p-5 mb-8 card-shadow space-y-3"}>
       {/* Name area */}
       {profileName ? (
-        /* Logged in: show profile name */
         <div className="flex items-center gap-2">
           <div className={`${compact ? "w-6 h-6 text-[10px]" : "w-9 h-9 text-xs"} rounded-full bg-purple-100 flex items-center justify-center shrink-0 font-bold text-purple-700`}>
             {profileName.charAt(0).toUpperCase()}
@@ -109,7 +111,6 @@ function CommentForm({
           <span className={`${compact ? "text-xs" : "text-sm"} font-semibold text-gray-800`}>{profileName}</span>
         </div>
       ) : (
-        /* Guest: show name input */
         !compact ? (
           <div className="flex gap-3">
             <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
@@ -136,6 +137,7 @@ function CommentForm({
           />
         )
       )}
+
       <div className="flex gap-2">
         <textarea
           placeholder={placeholder ?? "What did you think? Be honest — the maker reads every comment."}
@@ -146,9 +148,44 @@ function CommentForm({
           className={`flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder:text-gray-400 resize-none ${compact ? "text-xs" : ""}`}
         />
       </div>
+
+      {/* 크레딧 안내 + 글자 수 */}
+      {!compact && (
+        <div className="flex items-center justify-between">
+          {/* 크레딧 적립 안내 */}
+          {isLoggedIn && (
+            <div className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${meetsMinLength ? "text-amber-600" : "text-gray-400"}`}>
+              <Coins className="w-3.5 h-3.5" />
+              {meetsMinLength
+                ? <span className="text-amber-600">200자 달성! 댓글 등록 시 +10 크레딧 지급</span>
+                : <span>{200 - charCount}자 더 작성하면 +10 크레딧</span>
+              }
+            </div>
+          )}
+          {!isLoggedIn && <div />}
+
+          <div className="flex items-center gap-2">
+            {/* 글자 수 진행바 */}
+            <div className="flex items-center gap-1.5">
+              {charCount > 0 && charCount < 200 && (
+                <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-400 rounded-full transition-all"
+                    style={{ width: `${(charCount / 200) * 100}%` }}
+                  />
+                </div>
+              )}
+              <span className={`text-xs ${meetsMinLength ? "text-amber-600 font-semibold" : "text-gray-400"}`}>
+                {charCount}/500
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">{content.length}/500</span>
-        <div className="flex items-center gap-2">
+        <span className={`text-xs ${compact ? "text-gray-400" : "hidden"}`}>{charCount}/500</span>
+        <div className={`flex items-center gap-2 ${compact ? "" : "ml-auto"}`}>
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button
             type="submit"
@@ -203,7 +240,6 @@ function CommentItem({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4 card-shadow">
-      {/* Author row */}
       <div className="flex items-start gap-3">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarColor(comment.author_name)}`}>
           {comment.author_name.charAt(0).toUpperCase()}
@@ -217,7 +253,6 @@ function CommentItem({
         </div>
       </div>
 
-      {/* Reply button */}
       <div className="mt-2 ml-11">
         <button
           onClick={() => setShowReplyForm(v => !v)}
@@ -228,7 +263,6 @@ function CommentItem({
         </button>
       </div>
 
-      {/* Replies */}
       {comment.replies.length > 0 && (
         <div className="ml-8 mt-1 border-l-2 border-gray-100 pl-3 space-y-0">
           {visibleReplies.map(r => <ReplyItem key={r.id} reply={r} />)}
@@ -251,7 +285,6 @@ function CommentItem({
         </div>
       )}
 
-      {/* Inline reply form */}
       {showReplyForm && (
         <div className="ml-8 mt-2 border-l-2 border-purple-100 pl-3">
           <CommentForm
@@ -271,10 +304,26 @@ function CommentItem({
   );
 }
 
+/* ── 크레딧 적립 토스트 ── */
+function CreditToast({ amount, onDismiss }: { amount: number; onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 3000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-amber-500 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-lg animate-in slide-in-from-bottom-4">
+      <Sparkles className="w-4 h-4" />
+      +{amount} 크레딧 적립!
+    </div>
+  );
+}
+
 /* ── Main Section ── */
 export function CommentSection({ experimentId, profileName }: Props) {
   const [comments, setComments] = useState<CommentWithReplies[]>([]);
   const [total, setTotal] = useState(0);
+  const [creditToast, setCreditToast] = useState(0);
 
   useEffect(() => {
     fetch(`/api/comments?experimentId=${experimentId}`)
@@ -286,9 +335,10 @@ export function CommentSection({ experimentId, profileName }: Props) {
       });
   }, [experimentId]);
 
-  function handleNewComment(comment: Comment) {
+  function handleNewComment(comment: Comment, creditAwarded: number) {
     setComments(prev => [{ ...comment, replies: [] }, ...prev]);
     setTotal(t => t + 1);
+    if (creditAwarded > 0) setCreditToast(creditAwarded);
   }
 
   function handleReply(parentId: string, reply: Comment) {
@@ -304,13 +354,21 @@ export function CommentSection({ experimentId, profileName }: Props) {
     <section className="py-16 px-6 bg-gray-50 border-t border-gray-100">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-8">
+        <div className="flex items-center gap-2 mb-4">
           <MessageSquare className="w-5 h-5 text-purple-600" />
           <h2 className="text-xl font-bold text-gray-900">
             Leave Feedback
             {total > 0 && <span className="ml-2 text-sm font-normal text-gray-400">({total})</span>}
           </h2>
         </div>
+
+        {/* 크레딧 안내 배너 (로그인 유저만) */}
+        {profileName && (
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 text-xs text-amber-700">
+            <Coins className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+            <span><strong>200자 이상</strong> 작성한 댓글에는 <strong>+10 크레딧</strong>이 적립됩니다.</span>
+          </div>
+        )}
 
         {/* New comment form */}
         <CommentForm experimentId={experimentId} onPosted={handleNewComment} profileName={profileName} />
@@ -335,6 +393,11 @@ export function CommentSection({ experimentId, profileName }: Props) {
           </div>
         )}
       </div>
+
+      {/* 크레딧 적립 토스트 */}
+      {creditToast > 0 && (
+        <CreditToast amount={creditToast} onDismiss={() => setCreditToast(0)} />
+      )}
     </section>
   );
 }
