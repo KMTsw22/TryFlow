@@ -20,7 +20,9 @@ interface FormData {
   category: string;
   makerName: string;
   projectUrl: string;
-  plans: { name: string; price: string; features: string }[];
+  sliderPaymentType: "one-time" | "monthly";
+  sliderMin: string;
+  sliderMax: string;
   heroTitle: string;
   heroSubtitle: string;
   ctaText: string;
@@ -39,11 +41,9 @@ export function ExperimentWizard() {
     category: "",
     makerName: "",
     projectUrl: "",
-    plans: [
-      { name: "Basic",   price: "9",  features: "" },
-      { name: "Pro",     price: "19", features: "" },
-      { name: "Premium", price: "29", features: "" },
-    ],
+    sliderPaymentType: "one-time",
+    sliderMin: "5",
+    sliderMax: "100",
     heroTitle: "",
     heroSubtitle: "",
     ctaText: "Join Waitlist",
@@ -85,11 +85,9 @@ export function ExperimentWizard() {
           category: form.category || "Other",
           makerName: form.makerName,
           projectUrl: form.projectUrl,
-          pricingTiers: form.plans.map(p => ({
-            name: p.name,
-            price: p.price,
-            features: p.features.split(",").map(f => f.trim()).filter(Boolean),
-          })),
+          pricingMode: "slider",
+          pricingTiers: [],
+          pricingSlider: { paymentType: form.sliderPaymentType, min: Number(form.sliderMin), max: Number(form.sliderMax) },
           heroTitle: form.heroTitle || form.productName,
           heroSubtitle: form.heroSubtitle || form.description,
           ctaText: form.ctaText,
@@ -321,33 +319,68 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
 
 /* ── Step 2 ── */
 function Step2({ form, setForm }: { form: FormData; setForm: React.Dispatch<React.SetStateAction<FormData>> }) {
-  const update = (i: number, k: keyof FormData["plans"][0], v: string) =>
-    setForm(f => ({ ...f, plans: f.plans.map((p, idx) => idx === i ? { ...p, [k]: v } : p) }));
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Pricing Tiers</h2>
-        <p className="text-sm text-gray-500 mt-1">Set up price points to test with your audience</p>
+        <h2 className="text-xl font-bold text-gray-900">Pricing</h2>
+        <p className="text-sm text-gray-500 mt-1">방문자가 슬라이더를 드래그해 얼마를 낼 의향이 있는지 답해요</p>
       </div>
-      <div className="space-y-3">
-        {form.plans.map((plan, i) => (
-          <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">{plan.name[0]}</div>
-              <input value={plan.name} onChange={e => update(i, "name", e.target.value)}
-                className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Plan name" />
-              <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 h-9">
-                <span className="text-gray-400 text-sm">$</span>
-                <input type="number" value={plan.price} onChange={e => update(i, "price", e.target.value)}
-                  className="w-12 text-sm outline-none text-gray-900" placeholder="0" />
-                <span className="text-gray-400 text-xs">/mo</span>
-              </div>
-            </div>
-            <input value={plan.features} onChange={e => update(i, "features", e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Features, comma-separated (e.g. 10GB Storage, 3 Users)" />
+
+      <div className="space-y-5">
+        {/* Payment type */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">결제 방식</label>
+          <div className="flex rounded-xl border border-gray-200 p-1">
+            {(["one-time", "monthly"] as const).map(type => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, sliderPaymentType: type }))}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+                  form.sliderPaymentType === type
+                    ? "bg-purple-600 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {type === "one-time" ? "1회 결제" : "월 구독"}
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Min / Max */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">최소 금액 ($)</label>
+            <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-purple-500">
+              <span className="text-gray-400">$</span>
+              <input
+                type="number" min="0"
+                value={form.sliderMin}
+                onChange={e => setForm(f => ({ ...f, sliderMin: e.target.value }))}
+                className="flex-1 text-sm outline-none"
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">최대 금액 ($)</label>
+            <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-purple-500">
+              <span className="text-gray-400">$</span>
+              <input
+                type="number" min="0"
+                value={form.sliderMax}
+                onChange={e => setForm(f => ({ ...f, sliderMax: e.target.value }))}
+                className="flex-1 text-sm outline-none"
+                placeholder="100"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 text-sm text-purple-700">
+          방문자가 슬라이더로 금액을 선택하면, 응답 분포가 페이지에 실시간으로 표시돼요.
+        </div>
       </div>
     </div>
   );
@@ -405,7 +438,7 @@ function Step4({ form, creditBalance }: { form: FormData; creditBalance: number 
             { k: "Maker",         v: form.makerName    || "—" },
             { k: "Project Link",  v: form.projectUrl   || "—" },
             { k: "Description",   v: form.description  || "—" },
-            { k: "Pricing Tiers", v: form.plans.map(p => `$${p.price}`).join(" / ") },
+            { k: "Pricing",       v: `$${form.sliderMin}–$${form.sliderMax} (${form.sliderPaymentType === "one-time" ? "1회 결제" : "월 구독"})` },
             { k: "CTA",           v: form.ctaText },
           ].map(row => (
             <div key={row.k} className="flex justify-between">

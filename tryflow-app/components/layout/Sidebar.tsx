@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Home,
   LayoutDashboard,
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
 
 const GUEST_NAV = [
   { label: "Home",    icon: Home,    href: "/" },

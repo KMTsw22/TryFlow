@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Check, BarChart3, MousePointerClick, Mail, Zap, MessageSquare, Rocket } from "lucide-react";
+import { ArrowRight, Check, BarChart3, MousePointerClick, Mail, Zap, MessageSquare, Rocket, Heart } from "lucide-react";
 // Zap used in hero mockup and footer
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,6 +10,32 @@ export default async function HomePage() {
     .select("*", { count: "exact", head: true })
     .eq("status", "RUNNING");
   const projectCount = liveCount ?? 0;
+
+  // Top 3 liked comments for Community Highlights
+  const { data: topComments } = await supabase
+    .from("comments")
+    .select("id, author_name, content, likes_count, experiment_id")
+    .gt("likes_count", 0)
+    .order("likes_count", { ascending: false })
+    .limit(3);
+
+  // Resolve experiment names for top comments
+  const topCommentData: { id: string; author_name: string; content: string; likes_count: number; product_name: string; slug: string }[] = [];
+  if (topComments && topComments.length > 0) {
+    const expIds = [...new Set(topComments.map((c: { experiment_id: string }) => c.experiment_id))];
+    const { data: expRows } = await supabase
+      .from("experiments")
+      .select("id, product_name, slug")
+      .in("id", expIds);
+    const expMap: Record<string, { product_name: string; slug: string }> = {};
+    (expRows ?? []).forEach((e: { id: string; product_name: string; slug: string }) => {
+      expMap[e.id] = { product_name: e.product_name, slug: e.slug };
+    });
+    topComments.forEach((c: { id: string; author_name: string; content: string; likes_count: number; experiment_id: string }) => {
+      const exp = expMap[c.experiment_id];
+      if (exp) topCommentData.push({ ...c, product_name: exp.product_name, slug: exp.slug });
+    });
+  }
 
   return (
     <div className="min-h-screen bg-white font-['Inter']">
@@ -104,6 +130,41 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+      )}
+
+      {/* ── Community Highlights ── */}
+      {topCommentData.length > 0 && (
+        <section className="py-12 px-6 bg-white border-b border-gray-100">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center gap-2 mb-6">
+              <Heart className="w-4 h-4 text-rose-500 fill-current" />
+              <h2 className="text-lg font-bold text-gray-900">Community Highlights</h2>
+              <span className="text-xs text-gray-400 ml-1">Most liked feedback</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {topCommentData.map(c => (
+                <Link
+                  key={c.id}
+                  href={`/${c.slug}`}
+                  className="bg-gray-50 border border-gray-100 rounded-2xl p-5 hover:border-purple-200 hover:bg-purple-50/30 transition-all group"
+                >
+                  <p className="text-sm text-gray-700 leading-relaxed line-clamp-3 mb-3 group-hover:text-gray-900">
+                    &ldquo;{c.content}&rdquo;
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700">{c.author_name}</p>
+                      <p className="text-xs text-purple-600 mt-0.5">{c.product_name}</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-rose-500 font-semibold">
+                      <Heart className="w-3.5 h-3.5 fill-current" /> {c.likes_count}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
       {/* ── Two Journeys ── */}

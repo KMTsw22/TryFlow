@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CommentSection } from "@/components/landing/CommentSection";
 import { FeatureVoteSection } from "@/components/landing/FeatureVoteSection";
-import { PricingVoteSection } from "@/components/landing/PricingVoteSection";
+import { PricingSliderSection } from "@/components/landing/PricingSliderSection";
 import { PageViewTracker } from "@/components/landing/PageViewTracker";
 import { ShareButtons } from "@/components/landing/ShareButtons";
 import Link from "next/link";
@@ -40,18 +40,19 @@ export default async function CommunityPage({ params }: Props) {
     ? (user.user_metadata?.full_name || user.email?.split("@")[0] || "Anonymous")
     : "";
 
-  // Aggregate vote counts per pricing plan
-  const { data: voteEvents } = await supabase
+  const pricingMode = (experiment as { pricing_mode?: string }).pricing_mode ?? "tiers";
+  const pricingSlider = (experiment as { pricing_slider?: { paymentType?: string; min?: number; max?: number } }).pricing_slider ?? {};
+
+  // Slider responses
+  const { data: sliderEvents } = await supabase
     .from("click_events")
     .select("metadata")
     .eq("experiment_id", experiment.id)
-    .eq("event_type", "pricing_vote");
+    .eq("event_type", "price_slider_response");
 
-  const initialVotes: Record<string, number> = {};
-  (voteEvents ?? []).forEach((e: { metadata: { planName?: string } }) => {
-    const plan = e.metadata?.planName;
-    if (plan) initialVotes[plan] = (initialVotes[plan] ?? 0) + 1;
-  });
+  const sliderResponses: number[] = (sliderEvents ?? [])
+    .map((e: { metadata: { value?: number } }) => e.metadata?.value)
+    .filter((v): v is number => typeof v === "number");
 
   const makerName  = (experiment as { maker_name?: string }).maker_name ?? "";
   const category   = (experiment as { category?: string }).category ?? "Other";
@@ -139,14 +140,18 @@ export default async function CommunityPage({ params }: Props) {
           </div>
         )}
 
-        {/* Pricing plan voting */}
-        {experiment.pricing_tiers?.length > 0 && (
+        {/* Pricing feedback */}
+        {pricingSlider.min !== undefined && pricingSlider.max !== undefined && (
           <div>
-            <h2 className="text-base font-bold text-gray-900 mb-4">Which plan would you pick?</h2>
-            <PricingVoteSection
+            <h2 className="text-base font-bold text-gray-900 mb-4">얼마를 낼 의향이 있나요?</h2>
+            <PricingSliderSection
               experimentId={experiment.id}
-              tiers={experiment.pricing_tiers}
-              initialVotes={initialVotes}
+              config={{
+                paymentType: (pricingSlider.paymentType as "one-time" | "monthly") ?? "one-time",
+                min: pricingSlider.min,
+                max: pricingSlider.max,
+              }}
+              initialResponses={sliderResponses}
             />
           </div>
         )}

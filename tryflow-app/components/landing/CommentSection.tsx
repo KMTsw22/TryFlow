@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { MessageSquare, Send, User, CornerDownRight, ChevronDown, ChevronUp, Coins, Sparkles, Heart } from "lucide-react";
+import { MessageSquare, Send, User, CornerDownRight, ChevronDown, ChevronUp, Coins, Sparkles, Heart, Flag } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -273,16 +273,20 @@ function ReplyItem({ reply }: { reply: Comment }) {
 
 /* ── Comment card ── */
 function CommentItem({
-  comment, experimentId, onReplyPosted, onLike, profileName,
+  comment, experimentId, onReplyPosted, onLike, onReport, profileName,
 }: {
   comment: CommentWithReplies;
   experimentId: string;
   onReplyPosted: (parentId: string, reply: Comment) => void;
   onLike: (commentId: string) => void;
+  onReport: (commentId: string) => void;
   profileName?: string;
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
+  const [reported, setReported] = useState(() =>
+    typeof window !== "undefined" && !!localStorage.getItem(`trywepp_reported_${comment.id}`)
+  );
   const visibleReplies = showAllReplies ? comment.replies : comment.replies.slice(0, 2);
   const hiddenCount = comment.replies.length - 2;
 
@@ -339,6 +343,19 @@ function CommentItem({
         >
           <CornerDownRight className="w-3 h-3" />
           {showReplyForm ? "Cancel" : `Reply${comment.replies.length > 0 ? ` (${comment.replies.length})` : ""}`}
+        </button>
+
+        {/* Report */}
+        <button
+          onClick={() => { if (!reported) { setReported(true); onReport(comment.id); } }}
+          disabled={reported}
+          className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ml-auto ${
+            reported ? "text-red-400 cursor-default" : "text-gray-300 hover:text-red-400"
+          }`}
+          title={reported ? "신고 완료" : "신고하기"}
+        >
+          <Flag className={`w-3 h-3 ${reported ? "fill-current" : ""}`} />
+          {reported && <span>신고됨</span>}
         </button>
       </div>
 
@@ -440,6 +457,18 @@ export function CommentSection({ experimentId, profileName }: Props) {
     setTotal(t => t + 1);
   }
 
+  const handleReport = useCallback((commentId: string) => {
+    const key = `trywepp_reported_${commentId}`;
+    if (localStorage.getItem(key)) return; // already reported
+    localStorage.setItem(key, "1");
+
+    fetch(`/api/comments/${commentId}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reporterId: voterId }),
+    });
+  }, [voterId]);
+
   const handleLike = useCallback((commentId: string) => {
     // Optimistic update
     setComments(prev => {
@@ -524,6 +553,7 @@ export function CommentSection({ experimentId, profileName }: Props) {
                 experimentId={experimentId}
                 onReplyPosted={handleReply}
                 onLike={handleLike}
+                onReport={handleReport}
                 profileName={profileName}
               />
             ))}

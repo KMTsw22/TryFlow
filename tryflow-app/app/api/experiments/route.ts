@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { productName, description, category, makerName, projectUrl, pricingTiers, features, heroTitle, heroSubtitle, ctaText } = body;
+  const { productName, description, category, makerName, projectUrl, pricingTiers, features, heroTitle, heroSubtitle, ctaText, pricingMode, pricingSlider } = body;
 
   if (!productName) return NextResponse.json({ error: "Missing productName" }, { status: 400 });
 
@@ -83,6 +83,8 @@ export async function POST(req: NextRequest) {
       hero_title: heroTitle,
       hero_subtitle: heroSubtitle,
       cta_text: ctaText ?? "Join Waitlist",
+      pricing_mode: pricingMode ?? "tiers",
+      pricing_slider: pricingSlider ?? {},
       expires_at: expiresAt,
     })
     .select()
