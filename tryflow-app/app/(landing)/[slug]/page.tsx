@@ -36,7 +36,9 @@ export default async function CommunityPage({ params }: Props) {
   if (!experiment || experiment.status === "DRAFT") notFound();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const profileName: string = user?.user_metadata?.full_name ?? "";
+  const profileName: string = user
+    ? (user.user_metadata?.full_name || user.email?.split("@")[0] || "Anonymous")
+    : "";
 
   // Aggregate vote counts per pricing plan
   const { data: voteEvents } = await supabase

@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS comments (
 
 CREATE TABLE IF NOT EXISTS user_credits (
   user_id    uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  balance    integer NOT NULL DEFAULT 10000 CHECK (balance >= 0),
+  balance    integer NOT NULL DEFAULT 2000 CHECK (balance >= 0),
   updated_at timestamptz DEFAULT now()
 );
 
@@ -211,7 +211,7 @@ CREATE OR REPLACE FUNCTION handle_new_user_credits()
 RETURNS trigger AS $$
 BEGIN
   INSERT INTO user_credits (user_id, balance)
-  VALUES (NEW.id, 10000)
+  VALUES (NEW.id, 2000)
   ON CONFLICT (user_id) DO NOTHING;
   RETURN NEW;
 END;
@@ -279,6 +279,6 @@ UPDATE experiments SET category = 'Other'
 -- ════════════════════════════════════════════════════════════
 
 INSERT INTO user_credits (user_id, balance)
-SELECT id, 10000
+SELECT id, 2000
 FROM auth.users
 ON CONFLICT (user_id) DO NOTHING;
