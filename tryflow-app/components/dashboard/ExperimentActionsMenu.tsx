@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   MoreHorizontal, Trash2, ExternalLink, BarChart3,
   Link2, AlertTriangle, X, Check, Pencil,
-  Pause, Play, Archive, Download, Copy,
+  Pause, Play, Download, Copy,
 } from "lucide-react";
 import { EditExperimentModal } from "./EditExperimentModal";
 
@@ -135,8 +135,6 @@ export function ExperimentActionsMenu({ experiment }: Props) {
   }
 
   const isRunning = experiment.status === "RUNNING";
-  const isPaused  = experiment.status === "PAUSED";
-  const isEnded   = experiment.status === "ENDED";
 
   return (
     <>
@@ -176,32 +174,16 @@ export function ExperimentActionsMenu({ experiment }: Props) {
 
             <Divider />
 
-            {/* Status */}
-            {(isRunning || isPaused) && (
-              <button
-                onClick={() => handleStatusChange(isRunning ? "PAUSED" : "RUNNING")}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
-              >
-                {isRunning
-                  ? <><Pause className="w-3.5 h-3.5 text-amber-500" /> Pause (hide from public)</>
-                  : <><Play className="w-3.5 h-3.5 text-green-500" /> Resume (go public)</>
-                }
-              </button>
-            )}
-
-            {!isEnded && (
-              <button onClick={() => handleStatusChange("ENDED")}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
-                <Archive className="w-3.5 h-3.5 text-gray-400" /> Archive (mark as ended)
-              </button>
-            )}
-
-            {isEnded && (
-              <button onClick={() => handleStatusChange("RUNNING")}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
-                <Play className="w-3.5 h-3.5 text-green-500" /> Reactivate
-              </button>
-            )}
+            {/* Status toggle: Running ↔ Paused */}
+            <button
+              onClick={() => handleStatusChange(isRunning ? "PAUSED" : "RUNNING")}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+            >
+              {isRunning
+                ? <><Pause className="w-3.5 h-3.5 text-amber-500" /> Pause</>
+                : <><Play className="w-3.5 h-3.5 text-green-500" /> Resume</>
+              }
+            </button>
 
             <Divider />
 

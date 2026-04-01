@@ -2,26 +2,20 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Pause, Play, Archive, ChevronDown } from "lucide-react";
+import { Pause, Play, ChevronDown } from "lucide-react";
 
 const STATUS_STYLE: Record<string, { label: string; dot: string; bg: string; text: string }> = {
   RUNNING: { label: "Running", dot: "bg-green-500", bg: "bg-green-50",  text: "text-green-700" },
   PAUSED:  { label: "Paused",  dot: "bg-amber-500", bg: "bg-amber-50",  text: "text-amber-700" },
-  ENDED:   { label: "Ended",   dot: "bg-gray-400",  bg: "bg-gray-100",  text: "text-gray-600" },
   DRAFT:   { label: "Draft",   dot: "bg-blue-400",  bg: "bg-blue-50",   text: "text-blue-600" },
 };
 
 const ACTIONS: Record<string, { label: string; icon: React.ReactNode; next: string }[]> = {
   RUNNING: [
-    { label: "Pause",   icon: <Pause  className="w-3 h-3 text-amber-500" />, next: "PAUSED" },
-    { label: "Archive", icon: <Archive className="w-3 h-3 text-gray-400" />, next: "ENDED"  },
+    { label: "Pause",  icon: <Pause className="w-3 h-3 text-amber-500" />, next: "PAUSED"  },
   ],
   PAUSED: [
-    { label: "Resume",  icon: <Play   className="w-3 h-3 text-green-500" />, next: "RUNNING" },
-    { label: "Archive", icon: <Archive className="w-3 h-3 text-gray-400" />, next: "ENDED"   },
-  ],
-  ENDED: [
-    { label: "Reactivate", icon: <Play className="w-3 h-3 text-green-500" />, next: "RUNNING" },
+    { label: "Resume", icon: <Play  className="w-3 h-3 text-green-500" />, next: "RUNNING" },
   ],
 };
 
