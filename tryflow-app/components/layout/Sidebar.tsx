@@ -124,7 +124,7 @@ export function Sidebar({ isLoggedIn }: Props) {
                   "text-xs font-bold text-amber-700 whitespace-nowrap transition-all duration-150",
                   expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
                 )}>
-                  {credits.toLocaleString()} 크레딧
+                  {credits.toLocaleString()} credits
                 </span>
               </div>
             )}

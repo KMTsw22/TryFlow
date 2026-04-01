@@ -252,7 +252,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
           <Coins className="w-3.5 h-3.5 text-amber-500 shrink-0" />
           <span className="text-xs font-bold text-amber-700">{liveCredits.toLocaleString()}</span>
-          <span className="text-[10px] text-amber-500 font-medium">크레딧</span>
+          <span className="text-[10px] text-amber-500 font-medium">credits</span>
         </div>
 
         {/* ── Avatar ── */}

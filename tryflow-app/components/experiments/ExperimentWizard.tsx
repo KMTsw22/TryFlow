@@ -60,7 +60,7 @@ export function ExperimentWizard() {
 
   const handleLaunch = async () => {
     if (creditBalance !== null && creditBalance < CREDIT_COST) {
-      setError(`크레딧이 부족합니다. 현재 잔액: ${creditBalance.toLocaleString()} / 필요 크레딧: ${CREDIT_COST.toLocaleString()}`);
+      setError(`Insufficient credits. Balance: ${creditBalance.toLocaleString()} / Required: ${CREDIT_COST.toLocaleString()}`);
       return;
     }
 
@@ -135,7 +135,7 @@ export function ExperimentWizard() {
               hasEnoughCredits ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-red-50 text-red-700 border border-red-200"
             }`}>
               <Coins className="w-3 h-3" />
-              {creditBalance.toLocaleString()} 크레딧
+              {creditBalance.toLocaleString()} credits
             </div>
           )}
           <Link href="/dashboard" className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500">
@@ -214,7 +214,7 @@ export function ExperimentWizard() {
               {loading ? (
                 <><Loader2 className="w-4 h-4 animate-spin shrink-0" />{launchMsg}</>
               ) : !hasEnoughCredits ? (
-                <><AlertTriangle className="w-4 h-4 shrink-0" />크레딧 부족</>
+                <><AlertTriangle className="w-4 h-4 shrink-0" />Insufficient credits</>
               ) : (
                 <>Launch Experiment 🚀 <span className="text-white/70 text-xs">(-{CREDIT_COST.toLocaleString()})</span></>
               )}
@@ -462,24 +462,24 @@ function Step4({ form, creditBalance }: { form: FormData; creditBalance: number 
             <Coins className={`w-4 h-4 ${hasEnough ? "text-amber-500" : "text-red-500"}`} />
             <div>
               <p className={`text-sm font-semibold ${hasEnough ? "text-amber-700" : "text-red-700"}`}>
-                실험실 등록 비용: 1,000 크레딧
+                Launch cost: 1,000 credits
               </p>
               <p className={`text-xs mt-0.5 ${hasEnough ? "text-amber-600" : "text-red-600"}`}>
-                노출 기간: 7일 · 현재 잔액: {creditBalance !== null ? `${creditBalance.toLocaleString()} 크레딧` : "로딩 중..."}
+                Visible for 7 days · Balance: {creditBalance !== null ? `${creditBalance.toLocaleString()} credits` : "Loading..."}
               </p>
             </div>
           </div>
           {!hasEnough && (
             <div className="flex items-center gap-1 text-xs text-red-600 font-semibold">
               <AlertTriangle className="w-3.5 h-3.5" />
-              부족
+              Not enough
             </div>
           )}
         </div>
 
         {!hasEnough && (
           <p className="text-xs text-red-500 text-center">
-            댓글을 200자 이상 작성하면 +10 크레딧이 적립됩니다.
+            Write 200+ character comments to earn +10 credits.
           </p>
         )}
       </div>
