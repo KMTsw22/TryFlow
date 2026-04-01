@@ -4,18 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { ExperimentActionsMenu } from "@/components/dashboard/ExperimentActionsMenu";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 
-function formatPrice(price: string) {
-  const num = parseFloat(price.replace("$", ""));
-  return !price || num === 0 || isNaN(num) ? "Free" : `$${num}`;
-}
-
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: experiments } = await supabase
     .from("experiments")
-    .select("id, slug, product_name, description, status, total_visitors, pricing_tiers, category, maker_name, project_url, hero_title, hero_subtitle, cta_text, created_at")
+    .select("id, slug, product_name, description, status, total_visitors, pricing_slider, category, maker_name, project_url, hero_title, hero_subtitle, cta_text, created_at")
     .eq("user_id", user!.id)
     .order("created_at", { ascending: false });
 
@@ -23,10 +18,6 @@ export default async function DashboardPage() {
   const runningCount  = experiments?.filter(e => e.status === "RUNNING").length ?? 0;
 
   const topExp = experiments?.[0];
-  const topPrice = topExp
-    ? (topExp.pricing_tiers as { name: string; price: string }[])?.[1]?.price ?? "—"
-    : "—";
-
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] ?? "there";
 
   return (
@@ -111,7 +102,6 @@ export default async function DashboardPage() {
           <tbody>
             {experiments && experiments.length > 0 ? (
               experiments.map((exp) => {
-                const tiers = (exp.pricing_tiers as { name: string; price: string }[]) ?? [];
                 const date = new Date(exp.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
                 return (
                   <tr key={exp.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
@@ -144,9 +134,9 @@ export default async function DashboardPage() {
                         project_url:  exp.project_url ?? "",
                         hero_title:   exp.hero_title ?? "",
                         hero_subtitle:exp.hero_subtitle ?? "",
-                        cta_text:     exp.cta_text ?? "Join Waitlist",
-                        pricing_tiers: tiers,
-                        status:       exp.status,
+                        cta_text:      exp.cta_text ?? "Join Waitlist",
+                        pricing_slider: exp.pricing_slider ?? {},
+                        status:        exp.status,
                       }} />
                     </td>
                   </tr>

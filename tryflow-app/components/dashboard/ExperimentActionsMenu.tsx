@@ -20,7 +20,7 @@ interface Experiment {
   hero_title?: string;
   hero_subtitle?: string;
   cta_text?: string;
-  pricing_tiers: { name: string; price: string }[];
+  pricing_slider?: { paymentType?: string; min?: number; max?: number };
   status: string;
 }
 
@@ -125,7 +125,7 @@ export function ExperimentActionsMenu({ experiment }: Props) {
         category:     experiment.category,
         makerName:    experiment.maker_name,
         projectUrl:   experiment.project_url,
-        pricingTiers: experiment.pricing_tiers,
+        pricingSlider: experiment.pricing_slider,
         heroTitle:    experiment.hero_title,
         heroSubtitle: experiment.hero_subtitle,
         ctaText:      experiment.cta_text,

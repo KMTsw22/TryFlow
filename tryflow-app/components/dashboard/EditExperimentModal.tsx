@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { X, Save, Loader2 } from "lucide-react";
 
 const CATEGORIES = ["SaaS", "Marketplace", "Consumer", "Dev Tools", "Health", "Education", "Social", "Other"];
 const CATEGORY_EMOJI: Record<string, string> = {
@@ -10,7 +10,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   Health: "💚", Education: "📚", Social: "💬", Other: "🔬",
 };
 
-interface Tier { name: string; price: string }
+interface PricingSlider { paymentType?: string; min?: number; max?: number }
 
 interface Experiment {
   id: string;
@@ -22,7 +22,7 @@ interface Experiment {
   hero_title?: string;
   hero_subtitle?: string;
   cta_text?: string;
-  pricing_tiers: Tier[];
+  pricing_slider?: PricingSlider;
 }
 
 interface Props {
@@ -35,34 +35,34 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const slider = experiment.pricing_slider ?? {};
+
   const [form, setForm] = useState({
-    productName:  experiment.product_name,
-    description:  experiment.description,
-    category:     experiment.category || "Other",
-    makerName:    experiment.maker_name || "",
-    projectUrl:   experiment.project_url || "",
-    heroTitle:    experiment.hero_title || "",
-    heroSubtitle: experiment.hero_subtitle || "",
-    ctaText:      experiment.cta_text || "Join Waitlist",
+    productName:      experiment.product_name,
+    description:      experiment.description,
+    category:         experiment.category || "Other",
+    makerName:        experiment.maker_name || "",
+    projectUrl:       experiment.project_url || "",
+    heroTitle:        experiment.hero_title || "",
+    heroSubtitle:     experiment.hero_subtitle || "",
+    ctaText:          experiment.cta_text || "Join Waitlist",
+    sliderPaymentType: (slider.paymentType as "one-time" | "monthly") ?? "one-time",
+    sliderMin:        String(slider.min ?? ""),
+    sliderMax:        String(slider.max ?? ""),
   });
-  const [tiers, setTiers] = useState<Tier[]>(
-    experiment.pricing_tiers?.length > 0
-      ? experiment.pricing_tiers
-      : [{ name: "Basic", price: "9" }, { name: "Pro", price: "19" }, { name: "Premium", price: "29" }]
-  );
 
   function setField(key: keyof typeof form, value: string) {
     setForm(f => ({ ...f, [key]: value }));
-  }
-
-  function updateTier(i: number, key: keyof Tier, value: string) {
-    setTiers(prev => prev.map((t, idx) => idx === i ? { ...t, [key]: value } : t));
   }
 
   async function handleSave() {
     if (!form.productName.trim()) { setError("Product name is required."); return; }
     setSaving(true);
     setError("");
+
+    const pricingSlider = form.sliderMin && form.sliderMax
+      ? { paymentType: form.sliderPaymentType, min: Number(form.sliderMin), max: Number(form.sliderMax) }
+      : undefined;
 
     const res = await fetch(`/api/experiments/${experiment.id}`, {
       method: "PATCH",
@@ -76,7 +76,7 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
         heroTitle:    form.heroTitle || form.productName,
         heroSubtitle: form.heroSubtitle || form.description,
         ctaText:      form.ctaText,
-        pricingTiers: tiers.filter(t => t.name.trim()),
+        pricingSlider,
       }),
     });
 
@@ -151,35 +151,39 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
             </div>
           </div>
 
-          {/* Pricing tiers */}
+          {/* Pricing Slider */}
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Pricing Plans</h3>
-              <button onClick={() => setTiers(p => [...p, { name: "", price: "" }])}
-                className="inline-flex items-center gap-1 text-xs font-medium text-teal-600 hover:text-teal-700">
-                <Plus className="w-3 h-3" /> Add plan
-              </button>
-            </div>
-            <div className="space-y-2">
-              {tiers.map((t, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <input value={t.name} onChange={e => updateTier(i, "name", e.target.value)}
-                    placeholder="Plan name"
-                    className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <div className="relative w-28">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                    <input value={t.price} onChange={e => updateTier(i, "price", e.target.value)}
-                      placeholder="0"
-                      className="w-full h-9 pl-6 pr-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  </div>
-                  {tiers.length > 1 && (
-                    <button onClick={() => setTiers(p => p.filter((_, idx) => idx !== i))}
-                      className="text-gray-300 hover:text-red-400 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Pricing</h3>
+            <div className="space-y-3">
+              {/* Payment type toggle */}
+              <div className="flex gap-2">
+                {(["one-time", "monthly"] as const).map(type => (
+                  <button key={type} onClick={() => setField("sliderPaymentType", type)}
+                    className={`flex-1 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                      form.sliderPaymentType === type
+                        ? "border-teal-500 bg-teal-50 text-teal-700"
+                        : "border-gray-200 text-gray-500 hover:bg-gray-50"
+                    }`}>
+                    {type === "one-time" ? "One-time" : "Monthly subscription"}
+                  </button>
+                ))}
+              </div>
+              {/* Min / Max */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Min price ($)</label>
+                  <input type="number" value={form.sliderMin} onChange={e => setField("sliderMin", e.target.value)}
+                    placeholder="e.g. 5"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                 </div>
-              ))}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Max price ($)</label>
+                  <input type="number" value={form.sliderMax} onChange={e => setField("sliderMax", e.target.value)}
+                    placeholder="e.g. 100"
+                    className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-400">Leave blank to hide pricing from your landing page.</p>
             </div>
           </div>
 

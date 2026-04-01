@@ -47,7 +47,7 @@ export async function PATCH(
   }
 
   // Full field update
-  const { productName, description, category, makerName, projectUrl, heroTitle, heroSubtitle, ctaText, pricingTiers } = body;
+  const { productName, description, category, makerName, projectUrl, heroTitle, heroSubtitle, ctaText, pricingSlider } = body;
 
   const { data, error } = await supabase
     .from("experiments")
@@ -60,7 +60,7 @@ export async function PATCH(
       hero_title:    heroTitle ?? null,
       hero_subtitle: heroSubtitle ?? null,
       cta_text:      ctaText ?? "Join Waitlist",
-      ...(pricingTiers !== undefined && { pricing_tiers: pricingTiers }),
+      ...(pricingSlider !== undefined && { pricing_slider: pricingSlider }),
     })
     .eq("id", id)
     .eq("user_id", user.id)
