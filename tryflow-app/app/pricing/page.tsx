@@ -48,10 +48,10 @@ export default function PricingPage() {
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-primary flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
               <Zap className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-gray-900 text-sm">try.wepp</span>
+            <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500 font-medium">
             {["Platform","Pricing","Enterprise","Docs"].map(l => (
@@ -60,7 +60,7 @@ export default function PricingPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">Log in</Link>
-            <Link href="/signup" className="bg-gradient-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90">Get Started</Link>
+            <Link href="/signup" className="bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-teal-600">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -77,7 +77,7 @@ export default function PricingPage() {
           {/* Step indicator */}
           <div className="flex items-center gap-3 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-bold">1</div>
+              <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-bold">1</div>
               <span className="font-semibold text-gray-900">Select Plan</span>
             </div>
             <div className="w-8 h-0.5 bg-gray-200" />
@@ -99,8 +99,8 @@ export default function PricingPage() {
                   onClick={() => setSelected(plan.name)}
                   className={`relative rounded-2xl border-2 p-6 cursor-pointer transition-all flex flex-col ${
                     isSelected
-                      ? "border-purple-600 bg-purple-600 text-white shadow-lg"
-                      : "border-gray-200 bg-white hover:border-purple-200"
+                      ? "border-teal-600 bg-teal-600 text-white shadow-lg"
+                      : "border-gray-200 bg-white hover:border-teal-200"
                   }`}
                 >
                   {plan.popular && (
@@ -111,13 +111,13 @@ export default function PricingPage() {
                   <h3 className={`text-lg font-bold ${isSelected ? "text-white" : "text-gray-900"}`}>{plan.name}</h3>
                   <div className="mt-2 mb-5">
                     <span className={`text-4xl font-extrabold ${isSelected ? "text-white" : "text-gray-900"}`}>{plan.price}</span>
-                    <span className={`text-sm ${isSelected ? "text-purple-200" : "text-gray-400"}`}>{plan.period}</span>
+                    <span className={`text-sm ${isSelected ? "text-teal-200" : "text-gray-400"}`}>{plan.period}</span>
                   </div>
                   <ul className="space-y-2.5 flex-1">
                     {plan.features.map(f => (
                       <li key={f} className="flex items-center gap-2 text-xs">
-                        <Check className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-purple-200" : "text-purple-600"}`} />
-                        <span className={isSelected ? "text-purple-100" : "text-gray-600"}>{f}</span>
+                        <Check className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-teal-200" : "text-teal-600"}`} />
+                        <span className={isSelected ? "text-teal-100" : "text-gray-600"}>{f}</span>
                       </li>
                     ))}
                     {plan.disabled.map(f => (
@@ -130,8 +130,8 @@ export default function PricingPage() {
                   <button
                     className={`mt-6 w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
                       isSelected
-                        ? "bg-white text-purple-700 hover:bg-purple-50"
-                        : "border border-gray-200 text-gray-700 hover:border-purple-400 hover:text-purple-700"
+                        ? "bg-white text-teal-700 hover:bg-teal-50"
+                        : "border border-gray-200 text-gray-700 hover:border-teal-400 hover:text-teal-700"
                     }`}
                   >
                     {isSelected ? "Selected Plan ✓" : plan.cta}
@@ -147,13 +147,13 @@ export default function PricingPage() {
 
             {/* Product */}
             <div className="flex items-center gap-3 pb-5 border-b border-gray-100">
-              <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-teal-500 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">try.wepp {selectedPlan.name}</p>
+                <p className="text-sm font-semibold text-gray-900">Try.Wepp {selectedPlan.name}</p>
                 <p className="text-xs text-gray-400">Monthly Subscription</p>
-                <p className="text-xs font-bold text-purple-700 mt-0.5">{selectedPlan.price}.00</p>
+                <p className="text-xs font-bold text-teal-700 mt-0.5">{selectedPlan.price}.00</p>
               </div>
             </div>
 
@@ -175,14 +175,14 @@ export default function PricingPage() {
 
             <div className="flex justify-between py-4 text-base font-bold text-gray-900">
               <span>Total</span>
-              <span className="text-purple-700">${total.toFixed(2)}</span>
+              <span className="text-teal-700">${total.toFixed(2)}</span>
             </div>
 
             {/* Promo */}
             <div className="flex gap-2 mb-4">
               <input
                 placeholder="Promo code"
-                className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
               <button className="px-4 h-9 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
                 Apply
@@ -191,7 +191,7 @@ export default function PricingPage() {
 
             <Link
               href="/signup"
-              className="flex items-center justify-center gap-2 w-full bg-gradient-primary text-white text-sm font-bold py-3 rounded-xl hover:opacity-90 transition-opacity"
+              className="flex items-center justify-center gap-2 w-full bg-teal-500 text-white text-sm font-bold py-3 rounded-xl hover:bg-teal-600 transition-colors"
               data-testid="continue-to-payment"
             >
               Continue to Payment <ChevronRight className="w-4 h-4" />
@@ -207,13 +207,13 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 py-6 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-gray-400">
-          <span className="font-bold text-gray-700 text-sm">try.wepp</span>
+          <span className="font-bold text-gray-700 text-sm">Try.Wepp</span>
           <div className="flex gap-5">
             {["Privacy Policy","Terms of Service","Security","Status"].map(l => (
               <Link key={l} href="#" className="hover:text-gray-600">{l}</Link>
             ))}
           </div>
-          <span>© 2026 try.wepp Inc. Crafted for makers.</span>
+          <span>© 2026 Try.Wepp Inc. Crafted for makers.</span>
         </div>
       </footer>
     </div>

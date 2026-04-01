@@ -38,9 +38,9 @@ export function WTPDistributionChart({ values, min, max }: Props) {
           <p className="text-[10px] text-teal-600 font-semibold uppercase tracking-wider">Average WTP</p>
           <p className="text-2xl font-extrabold text-teal-700 mt-0.5">${avg}</p>
         </div>
-        <div className="flex-1 bg-purple-50 rounded-xl p-3 text-center">
-          <p className="text-[10px] text-purple-600 font-semibold uppercase tracking-wider">Median WTP</p>
-          <p className="text-2xl font-extrabold text-purple-700 mt-0.5">${median}</p>
+        <div className="flex-1 bg-teal-50 rounded-xl p-3 text-center">
+          <p className="text-[10px] text-teal-600 font-semibold uppercase tracking-wider">Median WTP</p>
+          <p className="text-2xl font-extrabold text-teal-700 mt-0.5">${median}</p>
         </div>
         <div className="flex-1 bg-gray-50 rounded-xl p-3 text-center">
           <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">Responses</p>

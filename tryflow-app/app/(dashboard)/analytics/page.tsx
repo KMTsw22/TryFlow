@@ -148,7 +148,7 @@ export default async function AnalyticsPage({
   const funnel = [
     { label: "Visitors", value: totalVisitors, color: "bg-teal-500" },
     { label: "Try It Clicks", value: tryItClicks, color: "bg-blue-500" },
-    { label: "Price Votes", value: priceVotes, color: "bg-purple-500" },
+    { label: "Price Votes", value: priceVotes, color: "bg-teal-500" },
     { label: "Comments", value: commentCount ?? 0, color: "bg-pink-500" },
     { label: "Waitlist", value: waitlistCount ?? 0, color: "bg-amber-500" },
   ];
@@ -178,7 +178,7 @@ export default async function AnalyticsPage({
         {[
           { icon: <Users className="w-5 h-5 text-teal-600" />,          bg: "bg-teal-50",   label: "Total Visitors",    value: totalVisitors.toLocaleString() },
           { icon: <ExternalLink className="w-5 h-5 text-blue-600" />,   bg: "bg-blue-50",   label: "Try It Clicks",     value: tryItClicks.toLocaleString() },
-          { icon: <MessageSquare className="w-5 h-5 text-purple-600" />, bg: "bg-purple-50", label: "Comments",          value: (commentCount ?? 0).toLocaleString() },
+          { icon: <MessageSquare className="w-5 h-5 text-teal-600" />, bg: "bg-teal-50", label: "Comments",          value: (commentCount ?? 0).toLocaleString() },
           { icon: <Clock className="w-5 h-5 text-orange-600" />,         bg: "bg-orange-50", label: "Avg. Time on Page", value: avgDuration > 0 ? fmtDuration : "—" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-5 card-shadow">

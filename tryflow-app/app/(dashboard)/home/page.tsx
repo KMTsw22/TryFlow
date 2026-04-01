@@ -80,14 +80,14 @@ export default async function HomePage() {
               <Link
                 key={c.id}
                 href={`/${c.slug}`}
-                className="flex items-start gap-4 bg-white border border-gray-100 rounded-xl px-5 py-3.5 hover:border-purple-200 hover:bg-purple-50/30 transition-all group"
+                className="flex items-start gap-4 bg-white border border-gray-100 rounded-xl px-5 py-3.5 hover:border-teal-200 hover:bg-teal-50/30 transition-all group"
               >
                 <span className="text-sm font-black text-gray-200 w-5 shrink-0 mt-0.5">{i + 1}</span>
                 <p className="flex-1 text-sm text-gray-700 leading-relaxed line-clamp-1 group-hover:text-gray-900">
                   &ldquo;{c.content}&rdquo;
                 </p>
                 <div className="flex items-center gap-3 shrink-0 ml-2">
-                  <span className="text-xs text-gray-400 hidden sm:block">{c.author_name} · <span className="text-purple-600">{c.product_name}</span></span>
+                  <span className="text-xs text-gray-400 hidden sm:block">{c.author_name} · <span className="text-teal-600">{c.product_name}</span></span>
                   <div className="flex items-center gap-1 text-xs font-semibold text-rose-500">
                     <Heart className="w-3.5 h-3.5 fill-current" /> {c.likes_count}
                   </div>

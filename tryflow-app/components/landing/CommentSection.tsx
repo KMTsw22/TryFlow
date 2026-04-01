@@ -41,7 +41,7 @@ function timeAgo(dateStr: string) {
 
 function avatarColor(name: string) {
   const colors = [
-    "bg-purple-100 text-purple-700", "bg-blue-100 text-blue-700",
+    "bg-teal-100 text-teal-700", "bg-blue-100 text-blue-700",
     "bg-green-100 text-green-700",   "bg-amber-100 text-amber-700",
     "bg-pink-100 text-pink-700",     "bg-cyan-100 text-cyan-700",
   ];
@@ -85,7 +85,7 @@ function ReactionStats({ flat }: { flat: Comment[] }) {
         {stats.map(([tag, count]) => (
           <span key={tag} className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-full px-3 py-1 text-xs font-medium text-gray-700">
             {tag}
-            <span className="bg-purple-100 text-purple-700 rounded-full px-1.5 py-0.5 text-[10px] font-bold min-w-[20px] text-center">
+            <span className="bg-teal-100 text-teal-700 rounded-full px-1.5 py-0.5 text-[10px] font-bold min-w-[20px] text-center">
               {count}
             </span>
           </span>
@@ -155,7 +155,7 @@ function CommentForm({
       {/* Name area */}
       {profileName ? (
         <div className="flex items-center gap-2">
-          <div className={`${compact ? "w-6 h-6 text-[10px]" : "w-9 h-9 text-xs"} rounded-full bg-purple-100 flex items-center justify-center shrink-0 font-bold text-purple-700`}>
+          <div className={`${compact ? "w-6 h-6 text-[10px]" : "w-9 h-9 text-xs"} rounded-full bg-teal-100 flex items-center justify-center shrink-0 font-bold text-teal-700`}>
             {profileName.charAt(0).toUpperCase()}
           </div>
           <span className={`${compact ? "text-xs" : "text-sm"} font-semibold text-gray-800`}>{profileName}</span>
@@ -163,8 +163,8 @@ function CommentForm({
       ) : (
         !compact ? (
           <div className="flex gap-3">
-            <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-              <User className="w-4 h-4 text-purple-600" />
+            <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+              <User className="w-4 h-4 text-teal-600" />
             </div>
             <input type="text" placeholder="Your name (or nickname)"
               value={name} onChange={e => setName(e.target.value)} maxLength={30}
@@ -199,9 +199,9 @@ function CommentForm({
               return (
                 <button key={tag} type="button" onClick={() => toggleTag(tag)} disabled={disabled}
                   className={`text-xs rounded-full px-2.5 py-1 border transition-colors ${
-                    selected  ? "bg-purple-600 text-white border-purple-600" :
+                    selected  ? "bg-teal-600 text-white border-teal-600" :
                     disabled  ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed" :
-                                "bg-white text-gray-600 border-gray-200 hover:border-purple-400"
+                                "bg-white text-gray-600 border-gray-200 hover:border-teal-400"
                   }`}>
                   {tag}
                 </button>
@@ -315,7 +315,7 @@ function CommentItem({
           {(comment.reactions ?? []).length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {comment.reactions.map(tag => (
-                <span key={tag} className="text-[10px] bg-purple-50 text-purple-600 border border-purple-100 rounded-full px-2 py-0.5 font-medium">
+                <span key={tag} className="text-[10px] bg-teal-50 text-teal-600 border border-teal-100 rounded-full px-2 py-0.5 font-medium">
                   {tag}
                 </span>
               ))}
@@ -340,7 +340,7 @@ function CommentItem({
         {/* Reply */}
         <button
           onClick={() => setShowReplyForm(v => !v)}
-          className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-purple-600 transition-colors"
+          className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-teal-600 transition-colors"
         >
           <CornerDownRight className="w-3 h-3" />
           {showReplyForm ? "Cancel" : `Reply${comment.replies.length > 0 ? ` (${comment.replies.length})` : ""}`}
@@ -373,7 +373,7 @@ function CommentItem({
           {visibleReplies.map(r => <ReplyItem key={r.id} reply={r} />)}
           {hiddenCount > 0 && !showAllReplies && (
             <button onClick={() => setShowAllReplies(true)}
-              className="flex items-center gap-1 text-xs text-purple-600 font-medium mt-2 hover:text-purple-700">
+              className="flex items-center gap-1 text-xs text-teal-600 font-medium mt-2 hover:text-teal-700">
               <ChevronDown className="w-3 h-3" /> Show {hiddenCount} more {hiddenCount === 1 ? "reply" : "replies"}
             </button>
           )}
@@ -387,7 +387,7 @@ function CommentItem({
       )}
 
       {showReplyForm && (
-        <div className="ml-8 mt-2 border-l-2 border-purple-100 pl-3">
+        <div className="ml-8 mt-2 border-l-2 border-teal-100 pl-3">
           <CommentForm
             experimentId={experimentId}
             parentId={comment.id}

@@ -19,7 +19,7 @@ export function ProjectSelector({ experiments }: { experiments: Experiment[] }) 
     <select
       value={current}
       onChange={onChange}
-      className="h-8 pl-3 pr-8 text-xs font-semibold bg-white border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+      className="h-8 pl-3 pr-8 text-xs font-semibold bg-white border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer"
     >
       <option value="all">All Projects</option>
       {experiments.map((e) => (

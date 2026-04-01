@@ -27,7 +27,7 @@ export default async function ExperimentsPage() {
           <p className="text-gray-500 mt-1">Manage and monitor all your validation experiments</p>
         </div>
         <Link href="/experiments/new"
-          className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
+          className="flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-teal-600 transition-colors">
           <Plus className="w-4 h-4" /> New Experiment
         </Link>
       </div>
@@ -56,10 +56,10 @@ export default async function ExperimentsPage() {
                   <tr key={exp.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center">
-                          <FlaskConical className="w-3.5 h-3.5 text-purple-600" />
+                        <div className="w-7 h-7 rounded-lg bg-teal-100 flex items-center justify-center">
+                          <FlaskConical className="w-3.5 h-3.5 text-teal-600" />
                         </div>
-                        <Link href={`/experiments/${exp.id}`} className="font-medium text-gray-900 hover:text-purple-600 transition-colors">
+                        <Link href={`/experiments/${exp.id}`} className="font-medium text-gray-900 hover:text-teal-600 transition-colors">
                           {exp.product_name}
                         </Link>
                       </div>
@@ -76,7 +76,7 @@ export default async function ExperimentsPage() {
                     </td>
                     <td className="px-6 py-4 text-gray-500">{date}</td>
                     <td className="px-6 py-4">
-                      <Link href={`/experiments/${exp.id}`} className="text-xs text-purple-600 font-medium hover:underline">
+                      <Link href={`/experiments/${exp.id}`} className="text-xs text-teal-600 font-medium hover:underline">
                         View →
                       </Link>
                     </td>
@@ -88,7 +88,7 @@ export default async function ExperimentsPage() {
                 <td colSpan={6} className="px-6 py-16 text-center">
                   <p className="text-gray-400 text-sm mb-3">No experiments yet</p>
                   <Link href="/experiments/new"
-                    className="inline-flex items-center gap-2 bg-gradient-primary text-white text-xs font-semibold px-4 py-2 rounded-lg hover:opacity-90">
+                    className="inline-flex items-center gap-2 bg-teal-500 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-teal-600">
                     <Plus className="w-3.5 h-3.5" /> Create your first experiment
                   </Link>
                 </td>

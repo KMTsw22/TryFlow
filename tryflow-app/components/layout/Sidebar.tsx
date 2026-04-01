@@ -77,7 +77,7 @@ export function Sidebar({ isLoggedIn }: Props) {
             "font-bold text-gray-900 text-sm whitespace-nowrap transition-all duration-150",
             expanded ? "opacity-100 delay-75" : "opacity-0"
           )}>
-            try.wepp
+            Try.Wepp
           </span>
         </Link>
       </div>

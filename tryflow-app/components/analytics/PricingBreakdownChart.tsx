@@ -6,7 +6,7 @@ interface Props {
 }
 
 const COLORS = [
-  "bg-purple-500", "bg-violet-400", "bg-indigo-400", "bg-purple-300", "bg-violet-300",
+  "bg-teal-500", "bg-teal-400", "bg-teal-300", "bg-teal-600", "bg-teal-200",
 ];
 
 export function PricingBreakdownChart({ data, total }: Props) {

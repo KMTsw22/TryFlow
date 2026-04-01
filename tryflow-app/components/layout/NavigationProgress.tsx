@@ -30,9 +30,9 @@ export function NavigationProgress() {
   if (!visible) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] bg-purple-100">
+    <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] bg-teal-100">
       <div
-        className="h-full bg-gradient-primary rounded-r-full transition-all ease-out"
+        className="h-full bg-teal-500 rounded-r-full transition-all ease-out"
         style={{ width: `${width}%`, transitionDuration: width === 85 ? "350ms" : "200ms" }}
       />
     </div>

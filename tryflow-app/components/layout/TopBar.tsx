@@ -181,7 +181,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-gray-700 leading-snug">{n.message}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] text-purple-600 font-medium truncate">{n.project}</span>
+                          <span className="text-[10px] text-teal-600 font-medium truncate">{n.project}</span>
                           <span className="text-[10px] text-gray-400">{timeAgo(n.time)}</span>
                         </div>
                       </div>
@@ -220,7 +220,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
                 {[
                   { icon: <Plus className="w-3.5 h-3.5 text-teal-500" />, label: "Create a project", desc: "Share your idea in 5 minutes", href: "/experiments/new" },
                   { icon: <BarChart3 className="w-3.5 h-3.5 text-blue-500" />, label: "View analytics", desc: "Track visitors & conversions", href: "/analytics" },
-                  { icon: <BookOpen className="w-3.5 h-3.5 text-green-500" />, label: "How try.wepp works", desc: "Validate before you build", href: "/" },
+                  { icon: <BookOpen className="w-3.5 h-3.5 text-green-500" />, label: "How Try.Wepp works", desc: "Validate before you build", href: "/" },
                   { icon: <Zap className="w-3.5 h-3.5 text-amber-500" />, label: "Explore community", desc: "See what others are building", href: "/explore" },
                 ].map(item => (
                   <Link key={item.href} href={item.href} onClick={() => setHelpOpen(false)}
@@ -239,7 +239,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
               <div className="border-t border-gray-100 px-4 py-3">
                 <p className="text-[11px] text-gray-400 text-center">
                   Need more help?{" "}
-                  <a href="mailto:support@tryflow.app" className="text-purple-600 font-medium hover:underline">
+                  <a href="mailto:support@tryflow.app" className="text-teal-600 font-medium hover:underline">
                     Contact support
                   </a>
                 </p>

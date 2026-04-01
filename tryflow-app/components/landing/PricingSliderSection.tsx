@@ -106,8 +106,8 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
               max={max}
               value={value}
               onChange={e => setValue(Number(e.target.value))}
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-purple-600"
-              style={{ background: `linear-gradient(to right, #9333ea ${pct}%, #e5e7eb ${pct}%)` }}
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-teal-600"
+              style={{ background: `linear-gradient(to right, #0D9488 ${pct}%, #e5e7eb ${pct}%)` }}
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>${min}</span>
@@ -117,7 +117,7 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
 
           <button
             onClick={handleSubmit}
-            className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl hover:bg-purple-700 transition-colors text-sm"
+            className="w-full bg-teal-600 text-white font-semibold py-3 rounded-xl hover:bg-teal-700 transition-colors text-sm"
           >
             Submit Response
           </button>
@@ -130,16 +130,16 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-2xl p-4">
-            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 rounded-2xl p-4">
+            <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center shrink-0">
               <Check className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-purple-900">
+              <p className="text-sm font-semibold text-teal-900">
                 Response submitted: ${value}{suffix}
               </p>
               {avg !== null && (
-                <p className="text-xs text-purple-600 mt-0.5">
+                <p className="text-xs text-teal-600 mt-0.5">
                   Community average: ${avg}{suffix}
                 </p>
               )}
@@ -161,7 +161,7 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
                       <div className="w-full flex items-end justify-center" style={{ height: "80px" }}>
                         <div
-                          className={`w-full rounded-t transition-all duration-500 ${isUserBucket ? "bg-purple-600" : "bg-purple-200"}`}
+                          className={`w-full rounded-t transition-all duration-500 ${isUserBucket ? "bg-teal-600" : "bg-teal-200"}`}
                           style={{ height: `${Math.max(barPct, b.count > 0 ? 4 : 0)}%` }}
                         />
                       </div>

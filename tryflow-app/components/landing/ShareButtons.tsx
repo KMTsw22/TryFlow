@@ -18,7 +18,7 @@ export function ShareButtons({ title, description }: Props) {
   }
 
   function shareTwitter() {
-    const text = `Check out "${title}" on try.wepp — ${description.slice(0, 80)}${description.length > 80 ? "…" : ""}`;
+    const text = `Check out "${title}" on Try.Wepp — ${description.slice(0, 80)}${description.length > 80 ? "…" : ""}`;
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`,
       "_blank"

@@ -158,7 +158,7 @@ export default async function DashboardPage() {
                   <Sparkles className="w-8 h-8 mx-auto text-gray-300 mb-3" />
                   <p className="text-gray-400 text-sm mb-3">No projects yet</p>
                   <Link href="/experiments/new"
-                    className="inline-flex items-center gap-2 bg-gradient-primary text-white text-xs font-semibold px-4 py-2 rounded-lg hover:opacity-90">
+                    className="inline-flex items-center gap-2 bg-teal-500 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-teal-600">
                     <Plus className="w-3.5 h-3.5" /> Create your first project
                   </Link>
                 </td>

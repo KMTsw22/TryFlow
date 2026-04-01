@@ -2,7 +2,7 @@ export default function HomeLoading() {
   return (
     <div className="max-w-[1100px] mx-auto space-y-8 animate-pulse">
       {/* banner skeleton */}
-      <div className="rounded-2xl bg-purple-200 h-44" />
+      <div className="rounded-2xl bg-teal-200 h-44" />
 
       {/* grid header */}
       <div className="flex items-center justify-between">

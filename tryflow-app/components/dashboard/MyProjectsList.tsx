@@ -116,7 +116,7 @@ export function MyProjectsList({ experiments }: Props) {
             </span>
 
             {/* Visitors */}
-            <span className="flex items-center gap-1 text-xs text-purple-300 shrink-0">
+            <span className="flex items-center gap-1 text-xs text-teal-300 shrink-0">
               <Users className="w-3 h-3" />
               {exp.total_visitors.toLocaleString()}
             </span>
@@ -124,7 +124,7 @@ export function MyProjectsList({ experiments }: Props) {
             {/* Community link */}
             <Link
               href={`/${exp.slug}`}
-              className="shrink-0 inline-flex items-center gap-1 text-xs text-purple-200 hover:text-white transition-colors"
+              className="shrink-0 inline-flex items-center gap-1 text-xs text-teal-200 hover:text-white transition-colors"
               title="View community page"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -133,7 +133,7 @@ export function MyProjectsList({ experiments }: Props) {
             {/* Analytics link */}
             <Link
               href="/dashboard/analytics"
-              className="shrink-0 inline-flex items-center gap-1 text-xs text-purple-200 hover:text-white transition-colors"
+              className="shrink-0 inline-flex items-center gap-1 text-xs text-teal-200 hover:text-white transition-colors"
               title="Analytics"
             >
               <TrendingUp className="w-3.5 h-3.5" />

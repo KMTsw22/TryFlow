@@ -23,13 +23,13 @@ export default async function ExperimentDetailPage({
   const expTitle = exp?.product_name ?? "Experiment";
   const expStatus = STATUS_LABEL[exp?.status ?? "DRAFT"] ?? "Draft";
 
-  const TIER_COLORS = ["bg-purple-400", "bg-purple-600", "bg-purple-300"];
+  const TIER_COLORS = ["bg-teal-400", "bg-teal-600", "bg-teal-300"];
   const PLAN_CLICKS = tiers.length > 0
-    ? tiers.map((t, i) => ({ name: t.name, rate: [8.2, 34.7, 12.1][i] ?? 10, clicks: [210, 890, 311][i] ?? 100, color: TIER_COLORS[i] ?? "bg-purple-500" }))
+    ? tiers.map((t, i) => ({ name: t.name, rate: [8.2, 34.7, 12.1][i] ?? 10, clicks: [210, 890, 311][i] ?? 100, color: TIER_COLORS[i] ?? "bg-teal-500" }))
     : [
-        { name: "Basic",   rate: 8.2,  clicks: 210, color: "bg-purple-400" },
-        { name: "Pro",     rate: 34.7, clicks: 890, color: "bg-purple-600" },
-        { name: "Premium", rate: 12.1, clicks: 311, color: "bg-purple-300" },
+        { name: "Basic",   rate: 8.2,  clicks: 210, color: "bg-teal-400" },
+        { name: "Pro",     rate: 34.7, clicks: 890, color: "bg-teal-600" },
+        { name: "Premium", rate: 12.1, clicks: 311, color: "bg-teal-300" },
       ];
 
   const CLICK_BY_PRICE = tiers.length > 0
@@ -48,9 +48,9 @@ export default async function ExperimentDetailPage({
   ];
 
   const PERF_TABLE = [
-    { tier: "Basic Tier",   visitors: "890",   cvr: "8.2%",  revenue: "$7.4K", color: "bg-purple-300" },
-    { tier: "Pro Tier",     visitors: "2,450", cvr: "34.7%", revenue: "$28.3K", color: "bg-purple-600" },
-    { tier: "Premium Tier", visitors: "375",   cvr: "12.1%", revenue: "$3.2K", color: "bg-purple-400" },
+    { tier: "Basic Tier",   visitors: "890",   cvr: "8.2%",  revenue: "$7.4K", color: "bg-teal-300" },
+    { tier: "Pro Tier",     visitors: "2,450", cvr: "34.7%", revenue: "$28.3K", color: "bg-teal-600" },
+    { tier: "Premium Tier", visitors: "375",   cvr: "12.1%", revenue: "$3.2K", color: "bg-teal-400" },
   ];
 
   return (
@@ -76,7 +76,7 @@ export default async function ExperimentDetailPage({
         {[
           { label: "Total Visitors",  value: "2,715", icon: <Users className="w-4 h-4" />,             color: "bg-cyan-50 text-cyan-600",    change: "+12.5%" },
           { label: "Signups",         value: "163",   icon: <Mail className="w-4 h-4" />,               color: "bg-green-50 text-green-600",  change: "+8.1%" },
-          { label: "Conversion Rate", value: "20.8%", icon: <MousePointerClick className="w-4 h-4" />,  color: "bg-purple-50 text-purple-600", change: "+3.2%" },
+          { label: "Conversion Rate", value: "20.8%", icon: <MousePointerClick className="w-4 h-4" />,  color: "bg-teal-50 text-teal-600", change: "+3.2%" },
           { label: "Total Clicks",    value: "1,411", icon: <MousePointerClick className="w-4 h-4" />,  color: "bg-blue-50 text-blue-600",    change: "+5.4%" },
           { label: "Feature Votes",   value: "959",   icon: <ThumbsUp className="w-4 h-4" />,           color: "bg-amber-50 text-amber-600",  change: "+2.1%" },
         ].map(c => (
@@ -92,16 +92,16 @@ export default async function ExperimentDetailPage({
       </div>
 
       {/* Winner Banner */}
-      <div className="bg-gradient-primary rounded-2xl p-6 text-white flex items-center justify-between">
+      <div className="bg-teal-500 rounded-2xl p-6 text-white flex items-center justify-between">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-purple-200">🏆 AI Winner</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-teal-100">🏆 AI Winner</span>
           <p className="text-2xl font-extrabold mt-1">Pro Plan at $19/mo outperforms others</p>
-          <p className="text-purple-200 text-sm mt-1">34.7% click rate — 4× higher than Basic Tier</p>
+          <p className="text-teal-100 text-sm mt-1">34.7% click rate — 4× higher than Basic Tier</p>
         </div>
         <div className="bg-white/15 rounded-xl px-8 py-5 text-center shrink-0">
           <p className="text-4xl font-black">$19</p>
-          <p className="text-purple-200 text-xs mt-1">Optimal Price</p>
-          <button className="mt-3 bg-white text-purple-700 text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-purple-50 transition-colors">
+          <p className="text-teal-100 text-xs mt-1">Optimal Price</p>
+          <button className="mt-3 bg-white text-teal-700 text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-teal-50 transition-colors">
             Set as Winner
           </button>
         </div>
@@ -134,7 +134,7 @@ export default async function ExperimentDetailPage({
               <div key={p.price} className="flex flex-col items-center gap-1 flex-1">
                 <span className="text-xs font-bold text-gray-700">{p.rate}%</span>
                 <div
-                  className="w-full bg-purple-600 rounded-t-lg"
+                  className="w-full bg-teal-600 rounded-t-lg"
                   style={{ height: `${(p.rate / 40) * 80}px` }}
                 />
                 <span className="text-xs text-gray-400">{p.price}</span>
@@ -150,7 +150,7 @@ export default async function ExperimentDetailPage({
         <div className="bg-white rounded-2xl border border-gray-100 p-6 card-shadow">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-sm font-semibold text-gray-900">User Heatmap Analysis</h3>
-            <span className="text-xs text-purple-600 font-medium bg-purple-50 px-2.5 py-1 rounded-full">LIVE</span>
+            <span className="text-xs text-teal-600 font-medium bg-teal-50 px-2.5 py-1 rounded-full">LIVE</span>
           </div>
           <div className="space-y-3">
             {HEATMAP_ROWS.map(r => (
@@ -160,7 +160,7 @@ export default async function ExperimentDetailPage({
                   <span>{r.value.toLocaleString()}</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-primary rounded-full" style={{ width: r.width }} />
+                  <div className="h-full bg-teal-500 rounded-full" style={{ width: r.width }} />
                 </div>
               </div>
             ))}
@@ -174,7 +174,7 @@ export default async function ExperimentDetailPage({
           <div className="relative w-28 h-28">
             <svg viewBox="0 0 36 36" className="w-28 h-28 -rotate-90">
               <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#7C3AED" strokeWidth="3"
+              <circle cx="18" cy="18" r="15.9" fill="none" stroke="#0D9488" strokeWidth="3"
                 strokeDasharray="72 28" strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -184,7 +184,7 @@ export default async function ExperimentDetailPage({
           </div>
           <div className="flex gap-4 mt-4">
             {[
-              { label: "Positive", pct: "72%", color: "bg-purple-600" },
+              { label: "Positive", pct: "72%", color: "bg-teal-600" },
               { label: "Neutral",  pct: "19%", color: "bg-gray-300" },
               { label: "Negative", pct: "9%",  color: "bg-red-400" },
             ].map(s => (

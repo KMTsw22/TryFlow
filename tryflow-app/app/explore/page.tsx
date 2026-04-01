@@ -29,7 +29,7 @@ export default async function ExplorePage() {
     <div className="min-h-screen bg-[#FAFAFA] font-['Inter']">
       {/* Header */}
       <section className="pt-12 pb-8 px-6 text-center">
-        <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+        <div className="inline-flex items-center gap-2 bg-teal-100 text-teal-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
           <Sparkles className="w-3 h-3" />
           Pre-launch playground
         </div>

@@ -111,26 +111,26 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Product Name *</label>
                 <input value={form.productName} onChange={e => setField("productName", e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Your Name</label>
                 <input value={form.makerName} onChange={e => setField("makerName", e.target.value)}
                   placeholder="e.g. Jane D. · CS Junior"
-                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Description</label>
               <textarea value={form.description} onChange={e => setField("description", e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none" />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Project Link (optional)</label>
               <input value={form.projectUrl} onChange={e => setField("projectUrl", e.target.value)}
                 placeholder="https://your-demo.vercel.app"
-                className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
             </div>
           </div>
 
@@ -142,7 +142,7 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
                 <button key={cat} onClick={() => setField("category", cat)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
                     form.category === cat
-                      ? "border-purple-500 bg-purple-50 text-purple-700"
+                      ? "border-teal-500 bg-teal-50 text-teal-700"
                       : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
                   }`}>
                   <span>{CATEGORY_EMOJI[cat]}</span> {cat}
@@ -156,7 +156,7 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Pricing Plans</h3>
               <button onClick={() => setTiers(p => [...p, { name: "", price: "" }])}
-                className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700">
+                className="inline-flex items-center gap-1 text-xs font-medium text-teal-600 hover:text-teal-700">
                 <Plus className="w-3 h-3" /> Add plan
               </button>
             </div>
@@ -165,12 +165,12 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
                 <div key={i} className="flex items-center gap-2">
                   <input value={t.name} onChange={e => updateTier(i, "name", e.target.value)}
                     placeholder="Plan name"
-                    className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                    className="flex-1 h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <div className="relative w-28">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                     <input value={t.price} onChange={e => updateTier(i, "price", e.target.value)}
                       placeholder="0"
-                      className="w-full h-9 pl-6 pr-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                      className="w-full h-9 pl-6 pr-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   </div>
                   {tiers.length > 1 && (
                     <button onClick={() => setTiers(p => p.filter((_, idx) => idx !== i))}
@@ -191,18 +191,18 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Hero Title</label>
                 <input value={form.heroTitle} onChange={e => setField("heroTitle", e.target.value)}
                   placeholder="Leave blank to use product name"
-                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Hero Subtitle</label>
                 <input value={form.heroSubtitle} onChange={e => setField("heroSubtitle", e.target.value)}
                   placeholder="Leave blank to use description"
-                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">CTA Button Text</label>
                 <input value={form.ctaText} onChange={e => setField("ctaText", e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  className="w-full h-9 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
             </div>
           </div>
@@ -217,7 +217,7 @@ export function EditExperimentModal({ experiment, onClose }: Props) {
               Cancel
             </button>
             <button onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-5 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity">
+              className="inline-flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-teal-600 disabled:opacity-50 transition-colors">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {saving ? "Saving..." : "Save Changes"}
             </button>

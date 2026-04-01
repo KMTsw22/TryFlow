@@ -73,7 +73,7 @@ export function ExploreGrid({ projects }: Props) {
             <Sparkles className="w-10 h-10 mx-auto text-gray-300 mb-4" />
             <p className="text-gray-500 font-medium">No {active} projects yet</p>
             <p className="text-gray-400 text-sm mt-1">Be the first to submit one!</p>
-            <Link href="/signup" className="inline-flex items-center gap-2 mt-5 bg-gradient-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:opacity-90">
+            <Link href="/signup" className="inline-flex items-center gap-2 mt-5 bg-teal-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-teal-600">
               Submit My Project <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -91,7 +91,7 @@ export function ExploreGrid({ projects }: Props) {
             <p className="text-gray-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
               Build a landing page in 5 minutes and get real user feedback before writing a single line of code.
             </p>
-            <Link href="/signup" className="inline-flex items-center gap-2 mt-6 bg-gradient-primary text-white text-sm font-semibold px-6 py-3 rounded-lg hover:opacity-90">
+            <Link href="/signup" className="inline-flex items-center gap-2 mt-6 bg-teal-500 text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-teal-600">
               Submit Your Project Free <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

@@ -47,9 +47,9 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
       {/* Avatar + name */}
       <div className="flex items-center gap-4">
         {avatarUrl ? (
-          <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-purple-200" />
+          <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-teal-200" />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xl font-bold">
+          <div className="w-16 h-16 rounded-full bg-teal-500 flex items-center justify-center text-white text-xl font-bold">
             {initials}
           </div>
         )}
@@ -69,7 +69,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={50}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
           />
         </div>
         <div>
@@ -87,7 +87,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="inline-flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-teal-600 disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? "Saving..." : "Save Changes"}

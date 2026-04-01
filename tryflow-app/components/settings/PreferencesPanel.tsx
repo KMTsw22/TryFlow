@@ -35,7 +35,7 @@ export function PreferencesPanel() {
   const items = [
     {
       key: "emailNotifications" as keyof Prefs,
-      icon: <Bell className="w-4 h-4 text-purple-600" />,
+      icon: <Bell className="w-4 h-4 text-teal-600" />,
       label: "Email Notifications",
       desc: "Get notified when someone joins your waitlist or leaves a comment.",
     },
@@ -68,7 +68,7 @@ export function PreferencesPanel() {
           </div>
           <button
             onClick={() => toggle(pref.key)}
-            className={`shrink-0 mt-0.5 w-10 h-5 rounded-full transition-colors relative ${prefs[pref.key] ? "bg-purple-600" : "bg-gray-200"}`}
+            className={`shrink-0 mt-0.5 w-10 h-5 rounded-full transition-colors relative ${prefs[pref.key] ? "bg-teal-600" : "bg-gray-200"}`}
             aria-label={`Toggle ${pref.label}`}
           >
             <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${prefs[pref.key] ? "left-5" : "left-0.5"}`} />

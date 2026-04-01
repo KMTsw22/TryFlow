@@ -109,7 +109,7 @@ export function ExperimentWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-purple-50/40 flex flex-col">
+    <div className="min-h-screen bg-teal-50/40 flex flex-col">
       {/* Top nav */}
       <header className="bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between sticky top-0 z-10">
         <Link href="/dashboard" className="font-bold text-teal-600 text-sm">Try.Wepp</Link>
@@ -237,7 +237,7 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-xl">📋</div>
+        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center text-xl">📋</div>
         <div>
           <h2 className="text-xl font-bold text-gray-900">Basic Information</h2>
           <p className="text-sm text-gray-500">Tell us about the product you&apos;re testing</p>
@@ -296,7 +296,7 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
             Project Link <span className="text-gray-400 font-normal">(optional)</span>
           </label>
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-purple-500">
+          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-teal-500">
             <span className="text-gray-400 text-sm shrink-0">🔗</span>
             <input
               type="url"
@@ -308,9 +308,9 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
           </div>
           <p className="text-xs text-gray-400 mt-1.5">Deployed demo, GitHub link, etc. — shown as a &ldquo;View Demo&rdquo; button on the landing page.</p>
         </div>
-        <div className="flex items-start gap-3 bg-purple-50 rounded-xl p-4">
-          <span className="text-purple-600 shrink-0">💡</span>
-          <p className="text-sm text-purple-700">Your project will go live immediately after launch and appear on the Explore page.</p>
+        <div className="flex items-start gap-3 bg-teal-50 rounded-xl p-4">
+          <span className="text-teal-600 shrink-0">💡</span>
+          <p className="text-sm text-teal-700">Your project will go live immediately after launch and appear on the Explore page.</p>
         </div>
       </div>
     </div>
@@ -338,7 +338,7 @@ function Step2({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
                 onClick={() => setForm(f => ({ ...f, sliderPaymentType: type }))}
                 className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all ${
                   form.sliderPaymentType === type
-                    ? "bg-purple-600 text-white shadow-sm"
+                    ? "bg-teal-600 text-white shadow-sm"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
@@ -352,7 +352,7 @@ function Step2({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">최소 금액 ($)</label>
-            <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-purple-500">
+            <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-teal-500">
               <span className="text-gray-400">$</span>
               <input
                 type="number" min="0"
@@ -365,7 +365,7 @@ function Step2({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">최대 금액 ($)</label>
-            <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-purple-500">
+            <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 h-11 focus-within:ring-2 focus-within:ring-teal-500">
               <span className="text-gray-400">$</span>
               <input
                 type="number" min="0"
@@ -378,7 +378,7 @@ function Step2({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
           </div>
         </div>
 
-        <div className="bg-purple-50 border border-purple-100 rounded-xl p-4 text-sm text-purple-700">
+        <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 text-sm text-teal-700">
           방문자가 슬라이더로 금액을 선택하면, 응답 분포가 페이지에 실시간으로 표시돼요.
         </div>
       </div>
@@ -448,11 +448,11 @@ function Step4({ form, creditBalance }: { form: FormData; creditBalance: number 
           ))}
         </div>
 
-        <div className="flex items-center gap-3 bg-purple-50 rounded-xl p-4">
-          <span className="text-purple-600">🔗</span>
+        <div className="flex items-center gap-3 bg-teal-50 rounded-xl p-4">
+          <span className="text-teal-600">🔗</span>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Your public URL (after launch)</p>
-            <p className="text-sm font-bold text-purple-700">try.wepp/{slug}</p>
+            <p className="text-sm font-bold text-teal-700">Try.Wepp/{slug}</p>
           </div>
         </div>
 

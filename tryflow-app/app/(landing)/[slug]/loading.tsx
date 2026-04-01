@@ -2,7 +2,7 @@ export default function LandingLoading() {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* top banner skeleton */}
-      <div className="h-8 bg-purple-700/80 animate-pulse" />
+      <div className="h-8 bg-teal-700/80 animate-pulse" />
 
       {/* hero skeleton */}
       <div className="h-52 bg-gray-200 animate-pulse" />

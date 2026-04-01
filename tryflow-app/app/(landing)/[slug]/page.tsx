@@ -195,7 +195,7 @@ export async function generateMetadata({ params }: Props) {
     .eq("slug", slug)
     .single();
   const title = data ? `${data.product_name} · Try.Wepp` : "Try.Wepp";
-  const description = data?.description ?? "Pre-launch market validation on try.wepp";
+  const description = data?.description ?? "Pre-launch market validation on Try.Wepp";
   return {
     title,
     description,

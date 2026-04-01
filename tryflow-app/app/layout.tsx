@@ -6,7 +6,7 @@ import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "try.wepp — Pre-launch Market Validation",
+  title: "Try.Wepp — Pre-launch Market Validation",
   description:
     "Test your product before you build it. Measure real user reactions with a landing page before you launch.",
 };
