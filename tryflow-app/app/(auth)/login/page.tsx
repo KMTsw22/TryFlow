@@ -2,6 +2,7 @@
 
 import { Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 export default function LoginPage() {
   const handleGoogleLogin = async () => {
@@ -15,26 +16,28 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-navy flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-primary flex items-center justify-center mb-4">
-            <Zap className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">try.wepp</h1>
-          <p className="text-sm text-gray-500 mt-1">Pre-launch Market Validation</p>
+          <Link href="/" className="flex items-center gap-2.5 mb-4">
+            <div className="w-11 h-11 rounded-xl bg-teal-500 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+          </Link>
+          <h1 className="text-2xl font-extrabold text-white">Try.Wepp</h1>
+          <p className="text-sm text-gray-400 mt-1">Pricing validation platform</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          <h2 className="text-xl font-bold text-gray-900 text-center">Sign in / Sign up</h2>
-          <p className="text-sm text-gray-500 text-center mt-1 mb-8">
-            New or returning — just click below to continue
+        <div className="bg-[#0E1630] border border-white/10 rounded-2xl p-8">
+          <h2 className="text-lg font-bold text-white text-center">Sign in to continue</h2>
+          <p className="text-sm text-gray-400 text-center mt-1 mb-8">
+            New or returning — just click below
           </p>
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-3 border border-white/10 bg-white/5 hover:bg-white/10 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -45,13 +48,17 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
-          <p className="text-xs text-center text-gray-400 mt-6 leading-relaxed">
+          <p className="text-xs text-center text-gray-500 mt-6 leading-relaxed">
             By signing in, you agree to our{" "}
-            <a href="#" className="underline hover:text-gray-600">Terms of Service</a>
+            <a href="#" className="text-teal-400 hover:text-teal-300">Terms of Service</a>
             {" "}and{" "}
-            <a href="#" className="underline hover:text-gray-600">Privacy Policy</a>
+            <a href="#" className="text-teal-400 hover:text-teal-300">Privacy Policy</a>
           </p>
         </div>
+
+        <p className="text-center text-xs text-gray-600 mt-6">
+          <Link href="/" className="hover:text-gray-400 transition-colors">← Back to home</Link>
+        </p>
       </div>
     </div>
   );

@@ -49,7 +49,7 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
     setReady(true);
   }, [storageKey]);
 
-  const suffix = paymentType === "monthly" ? "/mo" : " (1회)";
+  const suffix = paymentType === "monthly" ? "/mo" : " (one-time)";
   const avg = responses.length > 0
     ? Math.round(responses.reduce((a, b) => a + b, 0) / responses.length)
     : null;
@@ -82,11 +82,11 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
       <div className="flex items-center justify-between mb-1">
         <p className="text-sm text-gray-500">
           {submitted
-            ? `내 응답: $${value}${suffix} · 총 ${responses.length}명 응답`
-            : "슬라이더를 드래그해 얼마를 낼 의향이 있는지 알려주세요"}
+            ? `Your response: $${value}${suffix} · ${responses.length} total responses`
+            : "Drag the slider to share how much you'd pay"}
         </p>
         {avg !== null && submitted && (
-          <span className="text-xs text-gray-400">평균 ${avg}{suffix}</span>
+          <span className="text-xs text-gray-400">Average ${avg}{suffix}</span>
         )}
       </div>
 
@@ -119,12 +119,12 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
             onClick={handleSubmit}
             className="w-full bg-purple-600 text-white font-semibold py-3 rounded-xl hover:bg-purple-700 transition-colors text-sm"
           >
-            응답 제출
+            Submit Response
           </button>
 
           {responses.length > 0 && (
             <p className="text-center text-xs text-gray-400">
-              {responses.length}명이 이미 응답했어요
+              {responses.length} {responses.length === 1 ? "person has" : "people have"} already responded
             </p>
           )}
         </div>
@@ -136,11 +136,11 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
             </div>
             <div>
               <p className="text-sm font-semibold text-purple-900">
-                ${value}{suffix} 응답 완료
+                Response submitted: ${value}{suffix}
               </p>
               {avg !== null && (
                 <p className="text-xs text-purple-600 mt-0.5">
-                  커뮤니티 평균: ${avg}{suffix}
+                  Community average: ${avg}{suffix}
                 </p>
               )}
             </div>
@@ -149,7 +149,7 @@ export function PricingSliderSection({ experimentId, config, initialResponses }:
           {responses.length > 0 && (
             <div>
               <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">
-                응답 분포 · {responses.length}명
+                Response distribution · {responses.length} {responses.length === 1 ? "response" : "responses"}
               </p>
               <div className="flex items-end gap-1 h-24">
                 {buckets.map((b, i) => {

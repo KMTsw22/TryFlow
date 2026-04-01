@@ -3,10 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { CommentSection } from "@/components/landing/CommentSection";
 import { FeatureVoteSection } from "@/components/landing/FeatureVoteSection";
 import { PricingSliderSection } from "@/components/landing/PricingSliderSection";
-import { PageViewTracker } from "@/components/landing/PageViewTracker";
+import { FullPageTracker } from "@/components/landing/FullPageTracker";
+import { TryItButton } from "@/components/landing/TryItButton";
 import { ShareButtons } from "@/components/landing/ShareButtons";
 import Link from "next/link";
-import { Zap, ExternalLink, Users, Tag, ArrowLeft } from "lucide-react";
+import { Zap, Users, Tag, ArrowLeft } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -61,13 +62,13 @@ export default async function CommunityPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-[#FAFAFA]">
-      <PageViewTracker experimentId={experiment.id} />
+      <FullPageTracker experimentId={experiment.id} />
       {/* try.wepp top banner */}
-      <div className="bg-purple-700 text-white text-xs py-2 px-4 text-center">
-        <span className="opacity-80">Pre-launch community on </span>
-        <span className="font-semibold">try.wepp</span>
-        <span className="opacity-80"> · Share your honest feedback! </span>
-        <Link href="/explore" className="underline underline-offset-2 font-medium hover:opacity-80">
+      <div className="bg-[#0B1026] text-white text-xs py-2 px-4 text-center">
+        <span className="opacity-60">Pre-launch validation on </span>
+        <span className="font-semibold text-teal-400">Try.Wepp</span>
+        <span className="opacity-60"> · Share your honest feedback! </span>
+        <Link href="/explore" className="underline underline-offset-2 font-medium text-teal-400 hover:text-teal-300">
           Browse other projects →
         </Link>
       </div>
@@ -114,15 +115,11 @@ export default async function CommunityPage({ params }: Props) {
 
               {/* Try button */}
               {projectUrl && (
-                <a
+                <TryItButton
                   href={projectUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-5 bg-white text-gray-900 text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-gray-100 transition-colors shadow-lg"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Try {experiment.product_name}
-                </a>
+                  productName={experiment.product_name}
+                  experimentId={experiment.id}
+                />
               )}
             </div>
           </div>
@@ -143,7 +140,7 @@ export default async function CommunityPage({ params }: Props) {
         {/* Pricing feedback */}
         {pricingSlider.min !== undefined && pricingSlider.max !== undefined && (
           <div>
-            <h2 className="text-base font-bold text-gray-900 mb-4">얼마를 낼 의향이 있나요?</h2>
+            <h2 className="text-base font-bold text-gray-900 mb-4">How much would you pay?</h2>
             <PricingSliderSection
               experimentId={experiment.id}
               config={{
@@ -171,15 +168,15 @@ export default async function CommunityPage({ params }: Props) {
           />
           <div className="flex items-center justify-between text-xs text-gray-400">
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded bg-gradient-primary flex items-center justify-center">
+              <div className="w-5 h-5 rounded bg-teal-500 flex items-center justify-center">
                 <Zap className="w-2.5 h-2.5 text-white" />
               </div>
               <span>
-                Powered by <span className="font-semibold text-purple-600">try.wepp</span>
+                Powered by <span className="font-semibold text-teal-600">Try.Wepp</span>
                 {makerName && <span className="text-gray-400"> · by {makerName}</span>}
               </span>
             </div>
-            <Link href="/explore" className="text-purple-600 font-medium hover:text-purple-700">
+            <Link href="/explore" className="text-teal-600 font-medium hover:text-teal-700">
               Browse more projects →
             </Link>
           </div>
@@ -197,7 +194,7 @@ export async function generateMetadata({ params }: Props) {
     .select("product_name, description")
     .eq("slug", slug)
     .single();
-  const title = data ? `${data.product_name} · try.wepp` : "try.wepp";
+  const title = data ? `${data.product_name} · Try.Wepp` : "Try.Wepp";
   const description = data?.description ?? "Pre-launch market validation on try.wepp";
   return {
     title,
@@ -206,7 +203,7 @@ export async function generateMetadata({ params }: Props) {
       title,
       description,
       type: "website",
-      siteName: "try.wepp",
+      siteName: "Try.Wepp",
     },
     twitter: {
       card: "summary",

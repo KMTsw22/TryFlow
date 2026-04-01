@@ -36,7 +36,7 @@ export default async function HomePage() {
   // Running experiments grid
   const { data: dbExperiments } = await supabase
     .from("experiments")
-    .select("id, slug, product_name, description, status, total_visitors, pricing_tiers, category, maker_name, project_url")
+    .select("id, slug, product_name, description, status, total_visitors, pricing_slider, category, maker_name, project_url")
     .eq("status", "RUNNING")
     .order("total_visitors", { ascending: false });
 
@@ -54,7 +54,7 @@ export default async function HomePage() {
 
   const allProjects = (dbExperiments ?? []).map((e: {
     id: string; slug: string; product_name: string; description: string;
-    total_visitors: number; pricing_tiers: { name: string; price: string }[];
+    total_visitors: number; pricing_slider?: { paymentType?: string; min?: number; max?: number };
     category?: string; maker_name?: string; project_url?: string;
   }) => ({
     id: e.id, slug: e.slug, product_name: e.product_name, description: e.description,
@@ -62,7 +62,7 @@ export default async function HomePage() {
     project_url: e.project_url ?? "",
     total_visitors: e.total_visitors,
     comment_count: commentCountMap[e.id] ?? 0,
-    pricing_tiers: e.pricing_tiers ?? [],
+    pricing_slider: e.pricing_slider ?? {},
   }));
 
   return (
@@ -73,7 +73,7 @@ export default async function HomePage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Heart className="w-4 h-4 text-rose-500 fill-current" />
-            <h2 className="text-base font-bold text-gray-900">가장 많은 좋아요를 받은 피드백</h2>
+            <h2 className="text-base font-bold text-gray-900">Top Liked Feedback</h2>
           </div>
           <div className="space-y-2">
             {topCommentData.map((c, i) => (
@@ -101,13 +101,13 @@ export default async function HomePage() {
       {/* ── Projects Grid ── */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-gray-900">지금 테스트 중인 프로젝트</h2>
-          <span className="text-xs text-gray-400">{allProjects.length}개</span>
+          <h2 className="text-base font-bold text-gray-900">Projects in Testing</h2>
+          <span className="text-xs text-gray-400">{allProjects.length} projects</span>
         </div>
         {allProjects.length === 0 ? (
           <div className="text-center py-12 text-gray-400 text-sm">
-            아직 진행 중인 프로젝트가 없어요.{" "}
-            <Link href="/experiments/new" className="text-purple-600 font-medium hover:underline">첫 번째로 등록해보세요!</Link>
+            No projects running yet.{" "}
+            <Link href="/experiments/new" className="text-teal-600 font-medium hover:underline">Be the first to add one!</Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

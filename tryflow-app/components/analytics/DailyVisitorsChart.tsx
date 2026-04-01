@@ -37,7 +37,7 @@ export function DailyVisitorsChart({ data }: Props) {
           labelStyle={{ fontWeight: 600, color: "#111827" }}
           formatter={(v: number) => [v, "Visitors"]}
         />
-        <Bar dataKey="views" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="views" fill="#0D9488" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

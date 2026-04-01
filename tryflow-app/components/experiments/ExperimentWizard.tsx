@@ -112,14 +112,14 @@ export function ExperimentWizard() {
     <div className="min-h-screen bg-purple-50/40 flex flex-col">
       {/* Top nav */}
       <header className="bg-white border-b border-gray-100 px-8 py-3 flex items-center justify-between sticky top-0 z-10">
-        <Link href="/dashboard" className="font-bold text-purple-700 text-sm">try.wepp</Link>
+        <Link href="/dashboard" className="font-bold text-teal-600 text-sm">Try.Wepp</Link>
         <nav className="flex items-center gap-6 text-sm font-medium">
           {STEPS.map(s => (
             <button
               key={s.id}
               onClick={() => s.id < step && setStep(s.id)}
               className={`pb-0.5 transition-colors ${
-                s.id === step ? "text-purple-700 border-b-2 border-purple-600" :
+                s.id === step ? "text-teal-700 border-b-2 border-teal-600" :
                 s.id < step  ? "text-gray-600 cursor-pointer" :
                                "text-gray-300 cursor-default"
               }`}
@@ -151,18 +151,18 @@ export function ExperimentWizard() {
             <div key={s.id} className="flex items-center">
               <div className="flex flex-col items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
-                  step > s.id ? "bg-purple-600 text-white" :
-                  step === s.id ? "bg-purple-600 text-white" :
+                  step > s.id ? "bg-teal-600 text-white" :
+                  step === s.id ? "bg-teal-600 text-white" :
                   "bg-gray-100 text-gray-400"
                 }`}>
                   {step > s.id ? <Check className="w-4 h-4" /> : s.id}
                 </div>
-                <span className={`text-[10px] font-semibold mt-1.5 tracking-wider ${step >= s.id ? "text-purple-600" : "text-gray-300"}`}>
+                <span className={`text-[10px] font-semibold mt-1.5 tracking-wider ${step >= s.id ? "text-teal-600" : "text-gray-300"}`}>
                   {s.label}
                 </span>
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`w-24 h-0.5 mb-4 mx-1 transition-colors ${step > s.id ? "bg-purple-600" : "bg-gray-200"}`} />
+                <div className={`w-24 h-0.5 mb-4 mx-1 transition-colors ${step > s.id ? "bg-teal-600" : "bg-gray-200"}`} />
               )}
             </div>
           ))}
@@ -201,7 +201,7 @@ export function ExperimentWizard() {
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={step === 1 && !form.productName.trim()}
-              className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-40"
+              className="flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-teal-600 disabled:opacity-40 transition-colors"
             >
               Continue <ChevronRight className="w-4 h-4" />
             </button>
@@ -209,7 +209,7 @@ export function ExperimentWizard() {
             <button
               onClick={handleLaunch}
               disabled={loading || !hasEnoughCredits}
-              className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:opacity-90 disabled:opacity-50 min-w-[200px] justify-center"
+              className="flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-teal-600 disabled:opacity-50 transition-colors min-w-[200px] justify-center"
             >
               {loading ? (
                 <><Loader2 className="w-4 h-4 animate-spin shrink-0" />{launchMsg}</>
@@ -250,7 +250,7 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
             value={form.productName}
             onChange={e => setForm(f => ({ ...f, productName: e.target.value }))}
             placeholder="e.g., StudyMate"
-            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
         <div>
@@ -263,7 +263,7 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
                 onClick={() => setForm(f => ({ ...f, category: cat }))}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
                   form.category === cat
-                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    ? "border-teal-500 bg-teal-50 text-teal-700"
                     : "border-gray-200 text-gray-600 hover:bg-gray-50"
                 }`}
               >
@@ -278,7 +278,7 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
             value={form.makerName}
             onChange={e => setForm(f => ({ ...f, makerName: e.target.value }))}
             placeholder="e.g., Alex · CS Junior"
-            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-400 mt-1.5">Shown on your project card so testers know who made it.</p>
         </div>
@@ -289,7 +289,7 @@ function Step1({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
             onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             placeholder="Describe what your product does in 1-2 sentences..."
             rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
           />
         </div>
         <div>
@@ -399,20 +399,20 @@ function Step3({ form, setForm }: { form: FormData; setForm: React.Dispatch<Reac
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Hero Title</label>
           <input value={form.heroTitle} onChange={e => setForm(f => ({ ...f, heroTitle: e.target.value }))}
             placeholder={`e.g., The best ${form.productName || "tool"} for your team`}
-            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Hero Subtitle</label>
           <textarea value={form.heroSubtitle} onChange={e => setForm(f => ({ ...f, heroSubtitle: e.target.value }))}
             placeholder="Brief description of your value proposition..."
             rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none" />
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none" />
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">CTA Button Text</label>
           <input value={form.ctaText} onChange={e => setForm(f => ({ ...f, ctaText: e.target.value }))}
             placeholder="e.g., Join Waitlist"
-            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            className="w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
         </div>
       </div>
     </div>

@@ -9,19 +9,20 @@ export default async function ExplorePage() {
 
   const { data: dbExperiments } = await supabase
     .from("experiments")
-    .select("id, slug, product_name, description, status, total_visitors, pricing_tiers, category, maker_name, project_url")
+    .select("id, slug, product_name, description, status, total_visitors, pricing_slider, category, maker_name, project_url")
     .eq("status", "RUNNING")
     .order("total_visitors", { ascending: false });
 
   const projects: ProjectData[] = (dbExperiments ?? []).map((e: {
     id: string; slug: string; product_name: string; description: string;
-    total_visitors: number; pricing_tiers: { name: string; price: string }[];
+    total_visitors: number; pricing_slider?: { paymentType?: string; min?: number; max?: number };
     category?: string; maker_name?: string; project_url?: string;
   }) => ({
     id: e.id, slug: e.slug, product_name: e.product_name, description: e.description,
     category: e.category ?? "Other", maker_name: e.maker_name ?? "",
     project_url: e.project_url ?? "",
-    total_visitors: e.total_visitors, comment_count: 0, pricing_tiers: e.pricing_tiers ?? [],
+    total_visitors: e.total_visitors, comment_count: 0,
+    pricing_slider: e.pricing_slider ?? {},
   }));
 
   return (
@@ -43,13 +44,13 @@ export default async function ExplorePage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 py-6 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-gray-400">
-          <Link href="/" className="font-bold text-gray-700 text-sm hover:text-gray-900">try.wepp</Link>
+          <Link href="/" className="font-bold text-gray-700 text-sm hover:text-gray-900">Try.Wepp</Link>
           <div className="flex gap-5">
             {["Terms", "Privacy", "Support"].map(l => (
               <Link key={l} href="#" className="hover:text-gray-600">{l}</Link>
             ))}
           </div>
-          <span>© 2026 try.wepp</span>
+          <span>© 2026 Try.Wepp</span>
         </div>
       </footer>
     </div>

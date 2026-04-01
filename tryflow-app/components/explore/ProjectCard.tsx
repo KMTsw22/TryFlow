@@ -13,7 +13,6 @@ const CATEGORY_STYLE: Record<string, { bg: string; text: string; border: string;
   Education:   { bg: "bg-indigo-100", text: "text-indigo-700", border: "border-indigo-300", emoji: "📚", cardAccent: "from-indigo-50 to-white",  accent: "border-t-2 border-t-indigo-400" },
   Social:      { bg: "bg-pink-100",   text: "text-pink-700",   border: "border-pink-300",   emoji: "💬", cardAccent: "from-pink-50 to-white",    accent: "border-t-2 border-t-pink-400" },
   Other:       { bg: "bg-gray-100",   text: "text-gray-600",   border: "border-gray-300",   emoji: "🔬", cardAccent: "from-gray-50 to-white",    accent: "border-t-2 border-t-gray-300" },
-  // Legacy category aliases
   HealthTech:  { bg: "bg-emerald-100",text: "text-emerald-700",border: "border-emerald-300",emoji: "💚", cardAccent: "from-emerald-50 to-white", accent: "border-t-2 border-t-emerald-400" },
   EdTech:      { bg: "bg-indigo-100", text: "text-indigo-700", border: "border-indigo-300", emoji: "📚", cardAccent: "from-indigo-50 to-white",  accent: "border-t-2 border-t-indigo-400" },
   FoodTech:    { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-300", emoji: "🛒", cardAccent: "from-orange-50 to-white",  accent: "border-t-2 border-t-orange-400" },
@@ -30,7 +29,7 @@ export interface ProjectData {
   project_url?: string;
   total_visitors: number;
   comment_count: number;
-  pricing_tiers: { name: string; price: string }[];
+  pricing_slider?: { paymentType?: string; min?: number; max?: number };
 }
 
 export function ProjectCard({ project }: { project: ProjectData }) {
@@ -38,11 +37,9 @@ export function ProjectCard({ project }: { project: ProjectData }) {
   const [loading, setLoading] = useState(false);
 
   const cat = CATEGORY_STYLE[project.category] ?? CATEGORY_STYLE.Other;
-  const tiers = project.pricing_tiers ?? [];
-  const isFreePrice = (p: string) => !p || parseFloat(p) === 0 || isNaN(parseFloat(p));
-  const prices = tiers.map((t) => parseFloat(t.price)).filter((p) => !isNaN(p) && p > 0);
-  const hasFree = tiers.some((t) => isFreePrice(t.price));
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const slider = project.pricing_slider;
+  const hasSlider = slider && slider.min !== undefined && slider.max !== undefined;
+  const suffix = slider?.paymentType === "monthly" ? "/mo" : "";
 
   function handleCommunity() {
     setLoading(true);
@@ -50,83 +47,77 @@ export function ProjectCard({ project }: { project: ProjectData }) {
   }
 
   return (
-    <div className={`bg-gradient-to-b ${cat.cardAccent} rounded-2xl border border-gray-200 ${cat.accent} p-5 flex flex-col hover:shadow-md transition-all shadow-sm group`}>
+    <div className={`bg-gradient-to-b ${cat.cardAccent} rounded-2xl border border-gray-200 ${cat.accent} p-5 flex flex-col gap-4 hover:shadow-md transition-all shadow-sm`}>
+
       {/* Top row */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${cat.bg} ${cat.text} ${cat.border}`}>
-          <span>{cat.emoji}</span>
-          {project.category}
+          <span>{cat.emoji}</span> {project.category}
         </span>
         <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-          Live testing
+          Live
         </span>
       </div>
 
-      {/* Name + maker */}
-      <div className="flex items-start gap-3 mb-3">
+      {/* Name + maker + description */}
+      <div className="flex items-start gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg ${cat.bg}`}>
           {cat.emoji}
         </div>
-        <div>
-          <h3 className="font-bold text-gray-900 text-base">{project.product_name}</h3>
+        <div className="min-w-0">
+          <h3 className="font-bold text-gray-900 text-base leading-tight">{project.product_name}</h3>
           {project.maker_name && (
             <p className="text-xs text-gray-400 mt-0.5">{project.maker_name}</p>
+          )}
+          {project.description && (
+            <p className="text-xs text-gray-500 leading-relaxed mt-1.5 line-clamp-2">
+              {project.description}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Description */}
-      <p className="text-sm text-gray-600 leading-relaxed mb-4 flex-1 line-clamp-3">
-        {project.description}
-      </p>
-
-      {/* Pricing pills */}
-      {tiers.length > 0 && (
-        <div className="flex gap-2 mb-4">
-          {tiers.slice(0, 3).map((t) => (
-            <div
-              key={t.name}
-              className={`flex-1 rounded-lg border text-center py-1.5 text-xs font-semibold ${
-                isFreePrice(t.price)
-                  ? "border-gray-200 bg-white text-gray-500"
-                  : `${cat.border} ${cat.bg} ${cat.text}`
-              }`}
-            >
-              <p className="text-[10px] text-gray-400 font-normal">{t.name}</p>
-              <p>{isFreePrice(t.price) ? "Free" : `$${t.price}`}</p>
+      {/* Pricing visual */}
+      {hasSlider ? (
+        <div className={`rounded-xl border ${cat.border} ${cat.bg} px-4 py-3`}>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+            Willingness to Pay
+          </p>
+          <div className="flex items-center justify-between">
+            <span className={`text-lg font-extrabold ${cat.text}`}>${slider!.min}</span>
+            <div className="flex-1 mx-3 relative h-1.5 bg-white/60 rounded-full overflow-hidden">
+              <div className={`absolute inset-y-0 left-0 w-1/2 rounded-full opacity-50 ${cat.bg}`} style={{ background: "currentColor" }} />
             </div>
-          ))}
+            <span className={`text-lg font-extrabold ${cat.text}`}>${slider!.max}{suffix}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-white/50 px-4 py-3">
+          <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-1">No pricing set</p>
+          <p className="text-xs text-gray-300">—</p>
         </div>
       )}
 
-      {/* Pricing summary */}
-      <p className="text-xs text-gray-400 mb-4">
-        {hasFree && maxPrice > 0 ? `Free — $${maxPrice}/mo` : hasFree ? "Completely free" : prices.length > 0 ? `$${Math.min(...prices)} — $${maxPrice}/mo` : ""}
-      </p>
-
       {/* Footer */}
-      <div className="pt-3 border-t border-gray-100 space-y-2">
+      <div className="border-t border-gray-100 pt-3 space-y-2">
         <div className="flex items-center gap-3 text-xs text-gray-400">
           <span className="flex items-center gap-1"><Users className="w-3 h-3" />{project.total_visitors.toLocaleString()}</span>
           <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{project.comment_count}</span>
         </div>
         <div className="flex items-center gap-2">
-          {/* Try it — opens external link in new tab if available */}
           {project.project_url ? (
             <a
               href={project.project_url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all bg-gray-900 text-white hover:bg-gray-700`}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-700 transition-colors"
             >
               <ExternalLink className="w-3 h-3" /> Try it
             </a>
           ) : (
             <div className="flex-1" />
           )}
-
-          {/* Community button */}
           <button
             onClick={handleCommunity}
             disabled={loading}
@@ -135,13 +126,11 @@ export function ProjectCard({ project }: { project: ProjectData }) {
                 ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                 : `${cat.bg} ${cat.text} ${cat.border} hover:opacity-80`
             }`}
-            data-testid={`explore-community-${project.slug}`}
           >
-            {loading ? (
-              <><Loader2 className="w-3 h-3 animate-spin" /> Loading...</>
-            ) : (
-              <><MessageSquare className="w-3 h-3" /> Community <ArrowRight className="w-3 h-3" /></>
-            )}
+            {loading
+              ? <><Loader2 className="w-3 h-3 animate-spin" /> Loading...</>
+              : <><MessageSquare className="w-3 h-3" /> Community <ArrowRight className="w-3 h-3" /></>
+            }
           </button>
         </div>
       </div>

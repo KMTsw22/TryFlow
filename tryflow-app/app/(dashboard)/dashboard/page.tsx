@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Users, Target, ArrowRight, Sparkles, Trophy } from "lucide-react";
+import { Plus, Users, Target, BarChart3, Sparkles, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ExperimentActionsMenu } from "@/components/dashboard/ExperimentActionsMenu";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -39,10 +39,16 @@ export default async function DashboardPage() {
             Welcome back, {firstName}. Here&apos;s how your projects are performing.
           </p>
         </div>
-        <Link href="/experiments/new"
-          className="flex items-center gap-2 bg-gradient-primary text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:opacity-90 transition-opacity">
-          <Plus className="w-4 h-4" /> New Project
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/analytics"
+            className="flex items-center gap-2 border border-gray-200 text-gray-600 text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+            <BarChart3 className="w-4 h-4" /> Analytics
+          </Link>
+          <Link href="/experiments/new"
+            className="flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-teal-600 transition-colors">
+            <Plus className="w-4 h-4" /> New Project
+          </Link>
+        </div>
       </div>
 
       {/* Stats Row */}
@@ -69,19 +75,19 @@ export default async function DashboardPage() {
           <p className="text-3xl font-bold text-gray-900 mt-0.5">{experiments?.length ?? 0}</p>
         </div>
 
-        <div className="bg-gradient-primary rounded-2xl p-5 text-white card-shadow flex flex-col justify-between">
+        <div className="bg-teal-500 rounded-2xl p-5 text-white card-shadow flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-purple-200">Top Project</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-teal-100">Top Project</span>
             <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
               <Trophy className="w-3.5 h-3.5 text-white" />
             </div>
           </div>
           <div>
-            <p className="text-xs text-purple-200 mt-3">Most visitors</p>
+            <p className="text-xs text-teal-100 mt-3">Most visitors</p>
             <p className="text-xl font-extrabold leading-tight mt-1 truncate">
               {topExp?.product_name ?? "No projects yet"}
             </p>
-            <p className="text-[11px] text-purple-300 mt-1">
+            <p className="text-[11px] text-teal-100 mt-1">
               {topExp ? `${topExp.total_visitors.toLocaleString()} visitors` : "Submit your first project"}
             </p>
           </div>
@@ -92,17 +98,12 @@ export default async function DashboardPage() {
       <div className="bg-white rounded-2xl border border-gray-100 card-shadow">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-sm font-semibold text-gray-900">My Projects</h2>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">{experiments?.length ?? 0} total</span>
-            <Link href="/analytics" className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700">
-              Analytics <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
+          <span className="text-xs text-gray-400">{experiments?.length ?? 0} total</span>
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-50">
-              {["PROJECT", "STATUS", "VISITORS", "PRICING", "DATE", ""].map(h => (
+              {["PROJECT", "STATUS", "VISITORS", "DATE", ""].map(h => (
                 <th key={h} className="text-left px-6 py-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{h}</th>
               ))}
             </tr>
@@ -116,7 +117,7 @@ export default async function DashboardPage() {
                   <tr key={exp.id} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700">
+                        <div className="w-7 h-7 rounded-lg bg-teal-100 flex items-center justify-center text-xs font-bold text-teal-700">
                           {exp.product_name[0].toUpperCase()}
                         </div>
                         <div>
@@ -131,9 +132,6 @@ export default async function DashboardPage() {
                       <StatusBadge experimentId={exp.id} status={exp.status} />
                     </td>
                     <td className="px-6 py-4 text-gray-600 font-medium">{exp.total_visitors.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-gray-500 text-xs">
-                      {tiers.length > 0 ? tiers.map(t => formatPrice(t.price)).join(" / ") : "—"}
-                    </td>
                     <td className="px-6 py-4 text-gray-400 text-xs">{date}</td>
                     <td className="px-6 py-4">
                       <ExperimentActionsMenu experiment={{

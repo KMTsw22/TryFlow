@@ -116,14 +116,14 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && searchResults[0]) { router.push(`/${searchResults[0].slug}`); setSearchOpen(false); setQuery(""); } }}
           placeholder="Search projects..."
-          className="w-full h-9 pl-9 pr-3 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+          className="w-full h-9 pl-9 pr-3 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
         />
         {searchOpen && searchResults.length > 0 && (
           <div className="absolute top-10 left-0 w-72 bg-white rounded-xl border border-gray-100 shadow-xl py-1.5 z-50 overflow-hidden">
             {searchResults.map(r => (
               <button key={r.id} onClick={() => { router.push(`/${r.slug}`); setSearchOpen(false); setQuery(""); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition-colors text-left">
-                <div className="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-700 shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-teal-100 flex items-center justify-center text-xs font-bold text-teal-700 shrink-0">
                   {r.product_name[0].toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -150,7 +150,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
             className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
           >
             <Bell className="w-4 h-4" />
-            {hasNew && <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-purple-600 rounded-full" />}
+            {hasNew && <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-teal-500 rounded-full" />}
           </button>
 
           {notifOpen && (
@@ -192,7 +192,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
 
               <div className="border-t border-gray-100 px-4 py-2.5">
                 <Link href="/analytics" onClick={() => setNotifOpen(false)}
-                  className="flex items-center justify-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700">
+                  className="flex items-center justify-center gap-1 text-xs text-teal-600 font-medium hover:text-teal-700">
                   View all analytics <ExternalLink className="w-3 h-3" />
                 </Link>
               </div>
@@ -218,7 +218,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
 
               <div className="p-3 space-y-1">
                 {[
-                  { icon: <Plus className="w-3.5 h-3.5 text-purple-500" />, label: "Create a project", desc: "Share your idea in 5 minutes", href: "/experiments/new" },
+                  { icon: <Plus className="w-3.5 h-3.5 text-teal-500" />, label: "Create a project", desc: "Share your idea in 5 minutes", href: "/experiments/new" },
                   { icon: <BarChart3 className="w-3.5 h-3.5 text-blue-500" />, label: "View analytics", desc: "Track visitors & conversions", href: "/analytics" },
                   { icon: <BookOpen className="w-3.5 h-3.5 text-green-500" />, label: "How try.wepp works", desc: "Validate before you build", href: "/" },
                   { icon: <Zap className="w-3.5 h-3.5 text-amber-500" />, label: "Explore community", desc: "See what others are building", href: "/explore" },
@@ -260,7 +260,7 @@ export function TopBar({ userName = "User", userImage, creditBalance = 0 }: TopB
           {userImage ? (
             <Image src={userImage} alt={userName} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
               {initials}
             </div>
           )}

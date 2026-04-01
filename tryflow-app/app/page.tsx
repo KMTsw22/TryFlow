@@ -23,7 +23,7 @@ export default function HomePage() {
               <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
                 <Zap className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="font-bold text-gray-900 text-sm">TryFlow</span>
+              <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
             </Link>
             <div className="hidden md:flex items-center gap-8">
               {["Product", "Use Cases", "Resources", "Pricing"].map((item) => (
@@ -380,7 +380,7 @@ export default function HomePage() {
             </h2>
             <p className="mt-5 text-base text-gray-500 leading-relaxed max-w-md">
               A/B test different price points, models, or usage tiers.
-              TryFlow manages the traffic split and tracks every user
+              Try.Wepp manages the traffic split and tracks every user
               interaction to find the best option.
             </p>
             <Link
@@ -605,7 +605,7 @@ export default function HomePage() {
                 <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
                   <Zap className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="font-bold text-white text-sm">TryFlow</span>
+                <span className="font-bold text-white text-sm">Try.Wepp</span>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">
                 Pricing intelligence
@@ -679,7 +679,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 pt-8 border-t border-white/10 flex items-center justify-between text-xs text-gray-600">
-            <span>&copy; 2026 TryFlow Inc. All rights reserved.</span>
+            <span>&copy; 2026 Try.Wepp Inc. All rights reserved.</span>
             <div className="flex gap-4">
               <Link href="#" className="hover:text-gray-400 transition-colors">
                 Privacy

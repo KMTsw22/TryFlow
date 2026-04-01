@@ -70,7 +70,7 @@ export function Sidebar({ isLoggedIn }: Props) {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100 shrink-0 h-[60px]">
         <Link href={isLoggedIn ? "/home" : "/"} className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shrink-0">
             <Zap className="w-4 h-4 text-white" />
           </div>
           <span className={cn(
@@ -94,11 +94,11 @@ export function Sidebar({ isLoggedIn }: Props) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 whitespace-nowrap",
                 active
-                  ? "bg-purple-50 text-purple-700"
+                  ? "bg-teal-50 text-teal-700"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
               )}
             >
-              <Icon className={cn("w-4 h-4 shrink-0", active ? "text-purple-600" : "text-gray-400")} />
+              <Icon className={cn("w-4 h-4 shrink-0", active ? "text-teal-600" : "text-gray-400")} />
               <span className={cn(
                 "transition-all duration-150",
                 expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
@@ -132,7 +132,7 @@ export function Sidebar({ isLoggedIn }: Props) {
             <Link
               href="/experiments/new"
               title={!expanded ? "New Experiment" : undefined}
-              className="flex items-center justify-center gap-2 w-full bg-gradient-primary text-white text-sm font-semibold py-2.5 rounded-xl hover:opacity-90 transition-opacity overflow-hidden"
+              className="flex items-center justify-center gap-2 w-full bg-teal-500 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-teal-600 transition-colors overflow-hidden"
             >
               <Plus className="w-4 h-4 shrink-0" />
               <span className={cn(
@@ -169,9 +169,9 @@ export function Sidebar({ isLoggedIn }: Props) {
           <Link
             href="/login"
             title={!expanded ? "Log in" : undefined}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors whitespace-nowrap"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors whitespace-nowrap"
           >
-            <LogIn className="w-4 h-4 shrink-0 text-purple-600" />
+            <LogIn className="w-4 h-4 shrink-0 text-teal-600" />
             <span className={cn("transition-all duration-150", expanded ? "opacity-100 delay-75" : "opacity-0 w-0")}>
               Log in
             </span>

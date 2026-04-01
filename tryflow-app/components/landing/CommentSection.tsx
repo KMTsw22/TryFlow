@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { MessageSquare, Send, User, CornerDownRight, ChevronDown, ChevronUp, Coins, Sparkles, Heart, Flag } from "lucide-react";
+import { MessageSquare, Send, User, CornerDownRight, ChevronDown, ChevronUp, Coins, Sparkles, Heart, Flag, X, AlertTriangle } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -168,13 +168,13 @@ function CommentForm({
             </div>
             <input type="text" placeholder="Your name (or nickname)"
               value={name} onChange={e => setName(e.target.value)} maxLength={30}
-              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder:text-gray-400"
+              className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300 placeholder:text-gray-400"
             />
           </div>
         ) : (
           <input ref={inputRef} type="text" placeholder="Your name"
             value={name} onChange={e => setName(e.target.value)} maxLength={30}
-            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder:text-gray-400"
+            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-teal-300 placeholder:text-gray-400"
           />
         )
       )}
@@ -184,7 +184,7 @@ function CommentForm({
           placeholder={placeholder ?? "What did you think? Be honest — the maker reads every comment."}
           value={content} onChange={e => setContent(e.target.value)}
           maxLength={500} rows={compact ? 2 : 3}
-          className={`flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder:text-gray-400 resize-none ${compact ? "text-xs" : ""}`}
+          className={`flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-300 placeholder:text-gray-400 resize-none ${compact ? "text-xs" : ""}`}
         />
       </div>
 
@@ -218,8 +218,8 @@ function CommentForm({
             <div className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${meetsMinLength ? "text-amber-600" : "text-gray-400"}`}>
               <Coins className="w-3.5 h-3.5" />
               {meetsMinLength
-                ? <span className="text-amber-600">200자 달성! 등록 시 +10 크레딧</span>
-                : <span>{200 - charCount}자 더 쓰면 +10 크레딧</span>
+                ? <span className="text-amber-600">200 chars reached! +10 credits on submit</span>
+                : <span>{200 - charCount} more chars for +10 credits</span>
               }
             </div>
           ) : <div />}
@@ -242,7 +242,7 @@ function CommentForm({
         <div className={`flex items-center gap-2 ${compact ? "" : "ml-auto"}`}>
           {error && <p className="text-xs text-red-500">{error}</p>}
           <button type="submit" disabled={loading}
-            className={`inline-flex items-center gap-1.5 bg-gradient-primary text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity ${compact ? "text-xs px-3 py-1.5" : "text-xs px-4 py-2"}`}>
+            className={`inline-flex items-center gap-1.5 bg-teal-500 text-white font-semibold rounded-lg hover:bg-teal-600 disabled:opacity-50 transition-colors ${compact ? "text-xs px-3 py-1.5" : "text-xs px-4 py-2"}`}>
             <Send className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
             {loading ? "Posting..." : compact ? "Reply" : "Post Comment"}
           </button>
@@ -284,6 +284,7 @@ function CommentItem({
 }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [reported, setReported] = useState(() =>
     typeof window !== "undefined" && !!localStorage.getItem(`trywepp_reported_${comment.id}`)
   );
@@ -347,16 +348,23 @@ function CommentItem({
 
         {/* Report */}
         <button
-          onClick={() => { if (!reported) { setReported(true); onReport(comment.id); } }}
+          onClick={() => { if (!reported) setShowReportModal(true); }}
           disabled={reported}
           className={`inline-flex items-center gap-1 text-xs font-medium transition-colors ml-auto ${
             reported ? "text-red-400 cursor-default" : "text-gray-300 hover:text-red-400"
           }`}
-          title={reported ? "신고 완료" : "신고하기"}
+          title={reported ? "Reported" : "Report"}
         >
           <Flag className={`w-3 h-3 ${reported ? "fill-current" : ""}`} />
-          {reported && <span>신고됨</span>}
+          {reported && <span>Reported</span>}
         </button>
+
+        {showReportModal && (
+          <ReportModal
+            onConfirm={() => { setReported(true); setShowReportModal(false); onReport(comment.id); }}
+            onCancel={() => setShowReportModal(false)}
+          />
+        )}
       </div>
 
       {/* Replies */}
@@ -393,6 +401,46 @@ function CommentItem({
   );
 }
 
+/* ── Report modal ── */
+function ReportModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 p-6 w-full max-w-sm">
+        <button onClick={onCancel} className="absolute top-4 right-4 text-gray-300 hover:text-gray-500 transition-colors">
+          <X className="w-4 h-4" />
+        </button>
+        <div className="flex flex-col items-center text-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-red-50 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 text-base">Report this comment?</h3>
+            <p className="text-sm text-gray-400 mt-1 leading-relaxed">
+              You can report comments that seem inappropriate or spam.<br />
+              You can only report once.
+            </p>
+          </div>
+          <div className="flex gap-2 w-full mt-1">
+            <button
+              onClick={onCancel}
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition-colors"
+            >
+              Report
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Credit toast ── */
 function CreditToast({ amount, onDismiss }: { amount: number; onDismiss: () => void }) {
   useEffect(() => {
@@ -402,7 +450,7 @@ function CreditToast({ amount, onDismiss }: { amount: number; onDismiss: () => v
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-amber-500 text-white text-sm font-semibold px-4 py-3 rounded-2xl shadow-lg animate-in slide-in-from-bottom-4">
       <Sparkles className="w-4 h-4" />
-      +{amount} 크레딧 적립!
+      +{amount} credits earned!
     </div>
   );
 }
@@ -517,7 +565,7 @@ export function CommentSection({ experimentId, profileName }: Props) {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
-          <MessageSquare className="w-5 h-5 text-purple-600" />
+          <MessageSquare className="w-5 h-5 text-teal-600" />
           <h2 className="text-xl font-bold text-gray-900">
             Leave Feedback
             {total > 0 && <span className="ml-2 text-sm font-normal text-gray-400">({total})</span>}
@@ -528,7 +576,7 @@ export function CommentSection({ experimentId, profileName }: Props) {
         {profileName && (
           <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-6 text-xs text-amber-700">
             <Coins className="w-3.5 h-3.5 shrink-0 text-amber-500" />
-            <span><strong>200자 이상</strong> 작성한 댓글에는 <strong>+10 크레딧</strong>이 적립됩니다.</span>
+            <span>Write <strong>200+ characters</strong> to earn <strong>+10 credits</strong>.</span>
           </div>
         )}
 
