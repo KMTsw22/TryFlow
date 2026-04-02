@@ -26,17 +26,6 @@ export default function HomePage() {
               </div>
               <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
             </Link>
-            <div className="hidden md:flex items-center gap-8">
-              {["Product", "Use Cases", "Resources", "Pricing"].map((item) => (
-                <Link
-                  key={item}
-                  href="#"
-                  className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                  {item}
-                </Link>
-              ))}
-            </div>
           </div>
           <div className="flex items-center gap-4">
             <Link
