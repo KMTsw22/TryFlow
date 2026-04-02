@@ -21,7 +21,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-10">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-xl bg-teal-400 flex items-center justify-center">
                 <TwLogo className="w-3.5 h-3.5" />
               </div>
               <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
@@ -194,7 +194,7 @@ export default function HomePage() {
               {/* Floating +18.4% card */}
               <div className="absolute bottom-4 left-4 bg-white rounded-xl shadow-lg px-4 py-3 z-10">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-teal-500 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-xl bg-teal-400 flex items-center justify-center">
                     <TrendingUp className="w-3 h-3 text-white" />
                   </div>
                   <div>
@@ -592,7 +592,7 @@ export default function HomePage() {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-xl bg-teal-400 flex items-center justify-center">
                   <TwLogo className="w-3.5 h-3.5" />
                 </div>
                 <span className="font-bold text-white text-sm">Try.Wepp</span>

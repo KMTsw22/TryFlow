@@ -169,7 +169,7 @@ export default async function CommunityPage({ params }: Props) {
           />
           <div className="flex items-center justify-between text-xs text-gray-400">
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded bg-teal-500 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-lg bg-teal-400 flex items-center justify-center">
                 <TwLogo className="w-2.5 h-2.5" />
               </div>
               <span>

@@ -49,7 +49,7 @@ export default function PricingPage() {
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-teal-400 flex items-center justify-center">
               <TwLogo className="w-3.5 h-3.5" />
             </div>
             <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
@@ -148,7 +148,7 @@ export default function PricingPage() {
 
             {/* Product */}
             <div className="flex items-center gap-3 pb-5 border-b border-gray-100">
-              <div className="w-12 h-12 rounded-xl bg-teal-500 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl bg-teal-400 flex items-center justify-center">
                 <TwLogo className="w-5 h-5" />
               </div>
               <div>
