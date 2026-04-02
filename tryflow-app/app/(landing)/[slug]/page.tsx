@@ -7,7 +7,8 @@ import { FullPageTracker } from "@/components/landing/FullPageTracker";
 import { TryItButton } from "@/components/landing/TryItButton";
 import { ShareButtons } from "@/components/landing/ShareButtons";
 import Link from "next/link";
-import { Zap, Users, Tag, ArrowLeft } from "lucide-react";
+import { Users, Tag, ArrowLeft } from "lucide-react";
+import { TwLogo } from "@/components/ui/TwLogo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -169,7 +170,7 @@ export default async function CommunityPage({ params }: Props) {
           <div className="flex items-center justify-between text-xs text-gray-400">
             <div className="flex items-center gap-1.5">
               <div className="w-5 h-5 rounded bg-teal-500 flex items-center justify-center">
-                <Zap className="w-2.5 h-2.5 text-white" />
+                <TwLogo className="w-2.5 h-2.5" />
               </div>
               <span>
                 Powered by <span className="font-semibold text-teal-600">Try.Wepp</span>

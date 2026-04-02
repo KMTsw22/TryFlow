@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import { TwLogo } from "@/components/ui/TwLogo";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
@@ -22,7 +22,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-8">
           <Link href="/" className="flex items-center gap-2.5 mb-4">
             <div className="w-11 h-11 rounded-xl bg-teal-500 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+              <TwLogo className="w-5 h-5" />
             </div>
           </Link>
           <h1 className="text-2xl font-extrabold text-white">Try.Wepp</h1>

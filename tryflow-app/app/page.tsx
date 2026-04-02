@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ChevronRight,
 } from "lucide-react";
+import { TwLogo } from "@/components/ui/TwLogo";
 
 export default function HomePage() {
   return (
@@ -21,7 +22,7 @@ export default function HomePage() {
           <div className="flex items-center gap-10">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
-                <Zap className="w-3.5 h-3.5 text-white" />
+                <TwLogo className="w-3.5 h-3.5" />
               </div>
               <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
             </Link>
@@ -603,7 +604,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
-                  <Zap className="w-3.5 h-3.5 text-white" />
+                  <TwLogo className="w-3.5 h-3.5" />
                 </div>
                 <span className="font-bold text-white text-sm">Try.Wepp</span>
               </div>

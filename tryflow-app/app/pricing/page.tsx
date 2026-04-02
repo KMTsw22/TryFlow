@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Zap, Lock, ChevronRight } from "lucide-react";
+import { Check, Lock, ChevronRight } from "lucide-react";
+import { TwLogo } from "@/components/ui/TwLogo";
 
 const PLANS = [
   {
@@ -49,7 +50,7 @@ export default function PricingPage() {
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-teal-500 flex items-center justify-center">
-              <Zap className="w-3.5 h-3.5 text-white" />
+              <TwLogo className="w-3.5 h-3.5" />
             </div>
             <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
           </div>
@@ -148,7 +149,7 @@ export default function PricingPage() {
             {/* Product */}
             <div className="flex items-center gap-3 pb-5 border-b border-gray-100">
               <div className="w-12 h-12 rounded-xl bg-teal-500 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
+                <TwLogo className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">Try.Wepp {selectedPlan.name}</p>

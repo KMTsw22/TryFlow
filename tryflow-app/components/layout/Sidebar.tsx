@@ -11,13 +11,13 @@ import {
   HelpCircle,
   LogOut,
   Plus,
-  Zap,
   Compass,
   LogIn,
   Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { TwLogo } from "@/components/ui/TwLogo";
 
 const GUEST_NAV = [
   { label: "Home",    icon: Home,    href: "/" },
@@ -71,7 +71,7 @@ export function Sidebar({ isLoggedIn }: Props) {
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100 shrink-0 h-[60px]">
         <Link href={isLoggedIn ? "/home" : "/"} className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shrink-0">
-            <Zap className="w-4 h-4 text-white" />
+            <TwLogo className="w-4 h-4" />
           </div>
           <span className={cn(
             "font-bold text-gray-900 text-sm whitespace-nowrap transition-all duration-150",
