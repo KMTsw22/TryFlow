@@ -14,8 +14,8 @@ export function TwLogo({ className }: { className?: string }) {
     >
       <defs>
         <linearGradient id={gradId} x1="0" y1="18" x2="0" y2="95" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#5EEAD4" />
-          <stop offset="100%" stopColor="#7C3AED" />
+          <stop offset="0%" stopColor="#5BB8CC" />
+          <stop offset="100%" stopColor="#7B22C8" />
         </linearGradient>
       </defs>
       {/* T crossbar */}
