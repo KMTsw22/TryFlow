@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   BarChart3,
   Settings,
-  HelpCircle,
   LogOut,
   Plus,
   Compass,
@@ -136,17 +135,6 @@ export function Sidebar({ isLoggedIn }: Props) {
                 expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
               )}>
                 New Experiment
-              </span>
-            </Link>
-
-            <Link
-              href="#"
-              title={!expanded ? "Help Center" : undefined}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors whitespace-nowrap"
-            >
-              <HelpCircle className="w-4 h-4 text-gray-400 shrink-0" />
-              <span className={cn("transition-all duration-150", expanded ? "opacity-100 delay-75" : "opacity-0 w-0")}>
-                Help Center
               </span>
             </Link>
 
