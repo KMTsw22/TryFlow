@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   ChevronRight,
 } from "lucide-react";
-import { TwLogo } from "@/components/ui/TwLogo";
 
 export default function HomePage() {
   return (
@@ -19,9 +18,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-teal-400 flex items-center justify-center">
-                <TwLogo className="w-3.5 h-3.5" />
-              </div>
+              <img src="/logo.png" className="w-7 h-7 rounded-xl" alt="Try.Wepp" />
               <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
             </Link>
             <Link href="/explore" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
@@ -593,9 +590,7 @@ export default function HomePage() {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-xl bg-teal-400 flex items-center justify-center">
-                  <TwLogo className="w-3.5 h-3.5" />
-                </div>
+                <img src="/logo.png" className="w-7 h-7 rounded-xl" alt="Try.Wepp" />
                 <span className="font-bold text-white text-sm">Try.Wepp</span>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">

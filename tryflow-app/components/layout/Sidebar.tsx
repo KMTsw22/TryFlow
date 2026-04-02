@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Home,
@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { TwLogo } from "@/components/ui/TwLogo";
 
 const GUEST_NAV = [
   { label: "Home",    icon: Home,    href: "/" },
@@ -37,7 +36,6 @@ interface Props {
 
 export function Sidebar({ isLoggedIn }: Props) {
   const pathname = usePathname();
-  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
 
@@ -70,9 +68,7 @@ export function Sidebar({ isLoggedIn }: Props) {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100 shrink-0 h-[60px]">
         <Link href={isLoggedIn ? "/home" : "/"} className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-teal-400 flex items-center justify-center shrink-0">
-            <TwLogo className="w-4 h-4" />
-          </div>
+          <img src="/logo.png" className="w-8 h-8 rounded-xl shrink-0" alt="Try.Wepp" />
           <span className={cn(
             "font-bold text-gray-900 text-sm whitespace-nowrap transition-all duration-150",
             expanded ? "opacity-100 delay-75" : "opacity-0"
