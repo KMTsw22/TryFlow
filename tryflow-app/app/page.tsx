@@ -1,8 +1,6 @@
 import Link from "next/link";
 import {
-  ArrowRight,
   BarChart3,
-  MousePointerClick,
   Zap,
   TrendingUp,
   Shield,
@@ -19,12 +17,15 @@ export default function HomePage() {
       {/* ── Top Navbar ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-16">
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-xl bg-teal-400 flex items-center justify-center">
                 <TwLogo className="w-3.5 h-3.5" />
               </div>
               <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
+            </Link>
+            <Link href="/explore" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+              Explore
             </Link>
           </div>
           <div className="flex items-center gap-4">
