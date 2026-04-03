@@ -8,6 +8,7 @@ import { TryItButton } from "@/components/landing/TryItButton";
 import { ShareButtons } from "@/components/landing/ShareButtons";
 import Link from "next/link";
 import { Users, Tag, ArrowLeft } from "lucide-react";
+import { TwLogo } from "@/components/ui/TwLogo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -168,7 +169,7 @@ export default async function CommunityPage({ params }: Props) {
           />
           <div className="flex items-center justify-between text-xs text-gray-400">
             <div className="flex items-center gap-1.5">
-              <img src="/logo.png" className="w-5 h-5" alt="Try.Wepp" />
+              <TwLogo className="w-5 h-5 rounded-md" />
               <span>
                 Powered by <span className="font-semibold text-teal-600">Try.Wepp</span>
                 {makerName && <span className="text-gray-400"> · by {makerName}</span>}

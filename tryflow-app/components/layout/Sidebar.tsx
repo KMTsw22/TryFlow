@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { TwLogo } from "@/components/ui/TwLogo";
 import {
   Home,
   LayoutDashboard,
@@ -67,7 +68,7 @@ export function Sidebar({ isLoggedIn }: Props) {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100 shrink-0 h-[60px]">
         <Link href={isLoggedIn ? "/home" : "/"} className="flex items-center gap-2.5">
-          <img src="/logo.png" className="w-8 h-8 shrink-0" alt="Try.Wepp" />
+          <TwLogo className="w-8 h-8 shrink-0 rounded-lg" />
           <span className={cn(
             "font-bold text-gray-900 text-sm whitespace-nowrap transition-all duration-150",
             expanded ? "opacity-100 delay-75" : "opacity-0"

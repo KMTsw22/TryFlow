@@ -1,30 +1,20 @@
-"use client";
-import { useId } from "react";
-
-// TW monogram logo — teal-to-purple gradient strokes
+// TW monogram — dark navy background, white strokes, perfectly symmetric
 export function TwLogo({ className }: { className?: string }) {
-  const uid = useId();
-  const gradId = `tw-grad-${uid}`;
   return (
     <svg
-      viewBox="0 0 100 112"
+      viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="18" x2="0" y2="95" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#5BB8CC" />
-          <stop offset="100%" stopColor="#7B22C8" />
-        </linearGradient>
-      </defs>
+      <rect width="100" height="100" rx="10" fill="#0D1528" />
       {/* T crossbar */}
-      <line x1="22" y1="18" x2="78" y2="18" stroke={`url(#${gradId})`} strokeWidth="11" strokeLinecap="round" />
-      {/* Stem + W */}
+      <line x1="21" y1="27" x2="79" y2="27" stroke="white" strokeWidth="8.5" strokeLinecap="round" />
+      {/* Stem + W (perfectly symmetric around x=50) */}
       <path
-        d="M50 18 L50 50 L10 95 L50 68 L82 95"
-        stroke={`url(#${gradId})`}
-        strokeWidth="11"
+        d="M50 27 L50 49 L21 81 L50 64 L79 81"
+        stroke="white"
+        strokeWidth="8.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
