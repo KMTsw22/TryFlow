@@ -20,7 +20,6 @@ const FILTER_STYLE: Record<string, string> = {
   Social:      "bg-pink-500 text-white border-pink-500",
 };
 
-// Map legacy category names to canonical ones for filtering
 const CATEGORY_ALIAS: Record<string, string> = {
   HealthTech: "Health",
   EdTech:     "Education",
@@ -72,7 +71,7 @@ export function ExploreGrid({ projects }: Props) {
           <div className="text-center py-20">
             <Sparkles className="w-10 h-10 mx-auto text-gray-300 mb-4" />
             <p className="text-gray-500 font-medium">No {active} projects yet</p>
-            <p className="text-gray-400 text-sm mt-1">Be the first to submit one!</p>
+            <p className="text-gray-400 text-sm mt-1">Be the first builder to submit one.</p>
             <Link href="/signup" className="inline-flex items-center gap-2 mt-5 bg-teal-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-teal-600">
               Submit My Project <ArrowRight className="w-4 h-4" />
             </Link>
@@ -87,9 +86,9 @@ export function ExploreGrid({ projects }: Props) {
 
         {filtered.length > 0 && (
           <div className="bg-gray-900 rounded-2xl p-10 mt-8 text-center">
-            <h2 className="text-2xl font-bold text-white">Have an idea to validate?</h2>
+            <h2 className="text-2xl font-bold text-white">Share your project with builders.</h2>
             <p className="text-gray-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-              Build a landing page in 5 minutes and get real user feedback before writing a single line of code.
+              Submit your product, earn credits by reviewing others, and get real feedback before your launch.
             </p>
             <Link href="/signup" className="inline-flex items-center gap-2 mt-6 bg-teal-500 text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-teal-600">
               Submit Your Project Free <ArrowRight className="w-4 h-4" />

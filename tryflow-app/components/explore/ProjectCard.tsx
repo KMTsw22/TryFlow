@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, MessageSquare, ArrowRight, Loader2, ExternalLink } from "lucide-react";
+import { Users, MessageSquare, ArrowRight, Loader2, ExternalLink, Star } from "lucide-react";
 
 const CATEGORY_STYLE: Record<string, { bg: string; text: string; border: string; emoji: string; cardAccent: string; accent: string }> = {
   SaaS:        { bg: "bg-violet-100", text: "text-violet-700", border: "border-violet-300", emoji: "⚡", cardAccent: "from-violet-50 to-white",  accent: "border-t-2 border-t-violet-400" },
@@ -37,11 +37,8 @@ export function ProjectCard({ project }: { project: ProjectData }) {
   const [loading, setLoading] = useState(false);
 
   const cat = CATEGORY_STYLE[project.category] ?? CATEGORY_STYLE.Other;
-  const slider = project.pricing_slider;
-  const hasSlider = slider && slider.min !== undefined && slider.max !== undefined;
-  const suffix = slider?.paymentType === "monthly" ? "/mo" : "";
 
-  function handleCommunity() {
+  function handleFeedback() {
     setLoading(true);
     router.push(`/${project.slug}`);
   }
@@ -56,7 +53,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
         </span>
         <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-          Live
+          Accepting feedback
         </span>
       </div>
 
@@ -68,7 +65,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
         <div className="min-w-0">
           <h3 className="font-bold text-gray-900 text-base leading-tight">{project.product_name}</h3>
           {project.maker_name && (
-            <p className="text-xs text-gray-400 mt-0.5">{project.maker_name}</p>
+            <p className="text-xs text-gray-400 mt-0.5">by {project.maker_name}</p>
           )}
           {project.description && (
             <p className="text-xs text-gray-500 leading-relaxed mt-1.5 line-clamp-2">
@@ -78,32 +75,29 @@ export function ProjectCard({ project }: { project: ProjectData }) {
         </div>
       </div>
 
-      {/* Pricing visual */}
-      {hasSlider ? (
-        <div className={`rounded-xl border ${cat.border} ${cat.bg} px-4 py-3`}>
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-            Willingness to Pay
-          </p>
-          <div className="flex items-center justify-between">
-            <span className={`text-lg font-extrabold ${cat.text}`}>${slider!.min}</span>
-            <div className="flex-1 mx-3 relative h-1.5 bg-white/60 rounded-full overflow-hidden">
-              <div className={`absolute inset-y-0 left-0 w-1/2 rounded-full opacity-50 ${cat.bg}`} style={{ background: "currentColor" }} />
-            </div>
-            <span className={`text-lg font-extrabold ${cat.text}`}>${slider!.max}{suffix}</span>
+      {/* Feedback info */}
+      <div className={`rounded-xl border ${cat.border} ${cat.bg} px-4 py-3`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              Feedback requested
+            </p>
+            <p className={`text-sm font-semibold ${cat.text}`}>UI, onboarding &amp; core value</p>
+          </div>
+          <div className="flex items-center gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className={`w-3 h-3 ${i < 4 ? `fill-current ${cat.text}` : "text-gray-300"}`} />
+            ))}
           </div>
         </div>
-      ) : (
-        <div className="rounded-xl border border-dashed border-gray-200 bg-white/50 px-4 py-3">
-          <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-wider mb-1">No pricing set</p>
-          <p className="text-xs text-gray-300">—</p>
-        </div>
-      )}
+        <p className="text-[10px] text-gray-400 mt-1.5">⏱ ~5 min review · Earn 2 credits</p>
+      </div>
 
       {/* Footer */}
       <div className="border-t border-gray-100 pt-3 space-y-2">
         <div className="flex items-center gap-3 text-xs text-gray-400">
-          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{project.total_visitors.toLocaleString()}</span>
-          <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{project.comment_count}</span>
+          <span className="flex items-center gap-1"><Users className="w-3 h-3" />{project.total_visitors.toLocaleString()} views</span>
+          <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{project.comment_count} reviews</span>
         </div>
         <div className="flex items-center gap-2">
           {project.project_url ? (
@@ -119,7 +113,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
             <div className="flex-1" />
           )}
           <button
-            onClick={handleCommunity}
+            onClick={handleFeedback}
             disabled={loading}
             className={`flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg transition-all border ${
               loading
@@ -129,7 +123,7 @@ export function ProjectCard({ project }: { project: ProjectData }) {
           >
             {loading
               ? <><Loader2 className="w-3 h-3 animate-spin" /> Loading...</>
-              : <><MessageSquare className="w-3 h-3" /> Community <ArrowRight className="w-3 h-3" /></>
+              : <><MessageSquare className="w-3 h-3" /> Give feedback <ArrowRight className="w-3 h-3" /></>
             }
           </button>
         </div>

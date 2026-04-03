@@ -146,10 +146,10 @@ export default async function AnalyticsPage({
   // ── Conversion funnel ────────────────────────────────────
   const priceVotes = events.filter((e: { event_type: string }) => e.event_type === "price_slider_response").length;
   const funnel = [
-    { label: "Visitors", value: totalVisitors, color: "bg-teal-500" },
+    { label: "Views", value: totalVisitors, color: "bg-teal-500" },
     { label: "Try It Clicks", value: tryItClicks, color: "bg-blue-500" },
-    { label: "Price Votes", value: priceVotes, color: "bg-teal-500" },
-    { label: "Comments", value: commentCount ?? 0, color: "bg-pink-500" },
+    { label: "Reactions", value: priceVotes, color: "bg-teal-500" },
+    { label: "Feedback", value: commentCount ?? 0, color: "bg-pink-500" },
     { label: "Waitlist", value: waitlistCount ?? 0, color: "bg-amber-500" },
   ];
   const funnelBase = funnel[0].value || 1;
@@ -176,10 +176,10 @@ export default async function AnalyticsPage({
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { icon: <Users className="w-5 h-5 text-teal-600" />,          bg: "bg-teal-50",   label: "Total Visitors",    value: totalVisitors.toLocaleString() },
-          { icon: <ExternalLink className="w-5 h-5 text-blue-600" />,   bg: "bg-blue-50",   label: "Try It Clicks",     value: tryItClicks.toLocaleString() },
-          { icon: <MessageSquare className="w-5 h-5 text-teal-600" />, bg: "bg-teal-50", label: "Comments",          value: (commentCount ?? 0).toLocaleString() },
-          { icon: <Clock className="w-5 h-5 text-orange-600" />,         bg: "bg-orange-50", label: "Avg. Time on Page", value: avgDuration > 0 ? fmtDuration : "—" },
+          { icon: <Users className="w-5 h-5 text-teal-600" />,          bg: "bg-teal-50",   label: "Total Views",        value: totalVisitors.toLocaleString() },
+          { icon: <ExternalLink className="w-5 h-5 text-blue-600" />,   bg: "bg-blue-50",   label: "Try It Clicks",      value: tryItClicks.toLocaleString() },
+          { icon: <MessageSquare className="w-5 h-5 text-teal-600" />, bg: "bg-teal-50",   label: "Feedback Received",  value: (commentCount ?? 0).toLocaleString() },
+          { icon: <Clock className="w-5 h-5 text-orange-600" />,         bg: "bg-orange-50", label: "Avg. Time on Page",  value: avgDuration > 0 ? fmtDuration : "—" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-5 card-shadow">
             <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>{s.icon}</div>
@@ -193,8 +193,8 @@ export default async function AnalyticsPage({
       <div className="bg-white rounded-2xl border border-gray-100 p-6 card-shadow">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Daily Visitors</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Page views over the last 14 days</p>
+            <h2 className="text-sm font-bold text-gray-900">Daily Views</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Project page views over the last 14 days</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs bg-teal-50 text-teal-700 font-semibold px-3 py-1 rounded-full">
@@ -213,8 +213,8 @@ export default async function AnalyticsPage({
         {/* Conversion Funnel */}
         <div className="bg-white rounded-2xl border border-gray-100 p-6 card-shadow">
           <div className="mb-5">
-            <h2 className="text-sm font-bold text-gray-900">Conversion Funnel</h2>
-            <p className="text-xs text-gray-400 mt-0.5">How visitors move through your page</p>
+            <h2 className="text-sm font-bold text-gray-900">Engagement Funnel</h2>
+            <p className="text-xs text-gray-400 mt-0.5">How visitors engage with your project</p>
           </div>
           <div className="space-y-3">
             {funnel.map((step) => {
@@ -338,8 +338,8 @@ export default async function AnalyticsPage({
       {(wtpValues.length > 0 || selectedExp?.pricing_slider) && (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 card-shadow">
           <div className="mb-5">
-            <h2 className="text-sm font-bold text-gray-900">Willingness to Pay</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Distribution of price responses from visitors</p>
+            <h2 className="text-sm font-bold text-gray-900">Feedback Ratings</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Distribution of rating responses from reviewers</p>
           </div>
           <WTPDistributionChart values={wtpValues} min={wtpMin} max={wtpMax} />
         </div>
@@ -350,11 +350,11 @@ export default async function AnalyticsPage({
         <div className="bg-white rounded-2xl border border-gray-100 p-6 card-shadow">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-sm font-bold text-gray-900">Feature Votes</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Which features users want most</p>
+              <h2 className="text-sm font-bold text-gray-900">Feature Reactions</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Which aspects of your project resonate most</p>
             </div>
             <span className="text-xs bg-blue-50 text-blue-700 font-semibold px-3 py-1 rounded-full">
-              {featureVotes.length} votes
+              {featureVotes.length} reactions
             </span>
           </div>
           <FeatureBreakdownChart data={featureData} total={featureVotes.length} />
@@ -419,8 +419,8 @@ export default async function AnalyticsPage({
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
           { icon: <Mail className="w-5 h-5 text-green-600" />,  bg: "bg-green-50",  label: "Waitlist Signups",  value: (waitlistCount ?? 0).toLocaleString() },
-          { icon: <MousePointerClick className="w-5 h-5 text-orange-600" />, bg: "bg-orange-50", label: "Feature Votes", value: featureVotes.length.toLocaleString() },
-          { icon: <TrendingUp className="w-5 h-5 text-teal-600" />, bg: "bg-teal-50", label: "Price Responses", value: wtpValues.length.toLocaleString() },
+          { icon: <MousePointerClick className="w-5 h-5 text-orange-600" />, bg: "bg-orange-50", label: "Feature Reactions", value: featureVotes.length.toLocaleString() },
+          { icon: <TrendingUp className="w-5 h-5 text-teal-600" />, bg: "bg-teal-50", label: "Rating Responses", value: wtpValues.length.toLocaleString() },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-5 card-shadow">
             <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>{s.icon}</div>

@@ -31,11 +31,11 @@ export default async function ExplorePage() {
       <section className="pt-12 pb-8 px-6 text-center">
         <div className="inline-flex items-center gap-2 bg-teal-100 text-teal-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
           <Sparkles className="w-3 h-3" />
-          Pre-launch playground
+          Pre-launch builder projects
         </div>
-        <h1 className="text-4xl font-extrabold text-gray-900">Try student projects before they launch</h1>
+        <h1 className="text-4xl font-extrabold text-gray-900">Discover products before they launch</h1>
         <p className="text-gray-500 mt-3 text-sm max-w-lg mx-auto leading-relaxed">
-          These products haven&apos;t shipped yet. Try them out and leave honest feedback — it directly helps the maker improve.
+          Browse early-stage products from real builders. Try them out, leave honest feedback, and earn credits — helping makers improve before their public launch.
         </p>
       </section>
 
