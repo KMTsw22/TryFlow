@@ -31,7 +31,7 @@ function useInView(threshold = 0.12) {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } },
+      ([e]) => setInView(e.isIntersecting),
       { threshold }
     );
     obs.observe(el);
