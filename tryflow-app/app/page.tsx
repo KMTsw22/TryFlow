@@ -104,7 +104,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-[60px]">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" className="w-7 h-7 rounded-xl" alt="Try.Wepp" />
+              <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
               <span className="font-bold text-gray-900 text-sm tracking-tight">Try.Wepp</span>
             </Link>
             <Link
@@ -798,7 +798,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <img src="/logo.png" className="w-7 h-7 rounded-xl" alt="Try.Wepp" />
+                <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
                 <span className="font-bold text-white text-sm">Try.Wepp</span>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed">

@@ -20,7 +20,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Link href="/" className="flex items-center gap-2.5 mb-4">
-            <img src="/logo.png" className="w-11 h-11 rounded-2xl" alt="Try.Wepp" />
+            <img src="/logo.png" className="w-11 h-11" alt="Try.Wepp" />
           </Link>
           <h1 className="text-2xl font-extrabold text-white">Try.Wepp</h1>
           <p className="text-sm text-gray-400 mt-1">Pricing validation platform</p>

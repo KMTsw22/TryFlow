@@ -168,7 +168,7 @@ export default async function CommunityPage({ params }: Props) {
           />
           <div className="flex items-center justify-between text-xs text-gray-400">
             <div className="flex items-center gap-1.5">
-              <img src="/logo.png" className="w-5 h-5 rounded-lg" alt="Try.Wepp" />
+              <img src="/logo.png" className="w-5 h-5" alt="Try.Wepp" />
               <span>
                 Powered by <span className="font-semibold text-teal-600">Try.Wepp</span>
                 {makerName && <span className="text-gray-400"> · by {makerName}</span>}
