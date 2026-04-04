@@ -30,9 +30,7 @@ export async function middleware(request: NextRequest) {
 
   // Protect dashboard routes — redirect to /login if not authenticated
   const isDashboardRoute =
-    request.nextUrl.pathname.startsWith("/home") ||
     request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/experiments") ||
     request.nextUrl.pathname.startsWith("/analytics") ||
     request.nextUrl.pathname.startsWith("/settings");
 

@@ -24,7 +24,7 @@ export default function LoginPage() {
             <TwLogo className="w-11 h-11 rounded-xl" />
           </Link>
           <h1 className="text-2xl font-extrabold text-white">Try.Wepp</h1>
-          <p className="text-sm text-gray-400 mt-1">Pricing validation platform</p>
+          <p className="text-sm text-gray-400 mt-1">Anonymous Founder Idea Signals</p>
         </div>
 
         <div className="bg-[#0E1630] border border-white/10 rounded-2xl p-8">
@@ -48,9 +48,9 @@ export default function LoginPage() {
 
           <p className="text-xs text-center text-gray-500 mt-6 leading-relaxed">
             By signing in, you agree to our{" "}
-            <a href="#" className="text-teal-400 hover:text-teal-300">Terms of Service</a>
+            <a href="#" className="text-indigo-400 hover:text-indigo-300">Terms of Service</a>
             {" "}and{" "}
-            <a href="#" className="text-teal-400 hover:text-teal-300">Privacy Policy</a>
+            <a href="#" className="text-indigo-400 hover:text-indigo-300">Privacy Policy</a>
           </p>
         </div>
 
