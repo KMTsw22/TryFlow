@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { TwLogo } from "@/components/ui/TwLogo";
 
 // ── Hooks ─────────────────────────────────────────────────────────────────
 function useScrolled(threshold = 12) {
@@ -70,7 +69,7 @@ export default function HomePage() {
       }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-[60px]">
           <Link href="/" className="flex items-center gap-2">
-            <TwLogo className="w-7 h-7 rounded-lg" />
+            <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
             <span className="font-bold text-white text-sm tracking-tight" style={{ color: scrolled ? "#0B1026" : "white" }}>Try.Wepp</span>
           </Link>
           <div className="flex items-center gap-2">
@@ -479,7 +478,7 @@ export default function HomePage() {
       <footer className="border-t border-gray-100 py-8 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TwLogo className="w-7 h-7 rounded-lg" />
+            <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
             <span className="text-sm font-bold text-gray-900">Try.Wepp</span>
           </div>
           <p className="text-xs text-gray-400">© 2026 Try.Wepp · Anonymous Founder Idea Signals</p>

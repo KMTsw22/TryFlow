@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { TwLogo } from "@/components/ui/TwLogo";
 import {
   LayoutDashboard,
   BarChart3,
@@ -55,7 +54,7 @@ export function Sidebar({ isLoggedIn }: Props) {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100 shrink-0 h-[60px]">
         <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-2.5">
-          <TwLogo className="w-8 h-8 shrink-0 rounded-lg" />
+          <img src="/logo.png" className="w-8 h-8 shrink-0 rounded-lg" alt="Try.Wepp" />
           <span className={cn(
             "font-bold text-gray-900 text-sm whitespace-nowrap transition-all duration-150",
             expanded ? "opacity-100 delay-75" : "opacity-0"

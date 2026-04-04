@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { TwLogo } from "@/components/ui/TwLogo";
 import { ArrowRight, Lock, ChevronDown } from "lucide-react";
 
 const CATEGORIES = [
@@ -65,7 +64,7 @@ export default function SubmitPage() {
       {/* Navbar */}
       <nav className="flex items-center justify-between px-8 h-[60px] border-b border-white/5">
         <Link href="/" className="flex items-center gap-2">
-          <TwLogo className="w-7 h-7 rounded-lg" />
+          <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
           <span className="font-bold text-white text-sm">Try.Wepp</span>
         </Link>
         <span className="text-xs text-gray-500 font-medium">Anonymous · Secure · Free</span>

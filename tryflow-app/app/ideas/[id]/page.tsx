@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { TwLogo } from "@/components/ui/TwLogo";
 import { TrendingUp, TrendingDown, Minus, ArrowRight, BarChart3, Share2 } from "lucide-react";
 
 interface Report {
@@ -77,7 +76,7 @@ export default async function IdeaReportPage({
       {/* Navbar */}
       <nav className="bg-white border-b border-gray-100 px-6 h-[60px] flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <TwLogo className="w-7 h-7 rounded-lg" />
+          <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
           <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
