@@ -37,15 +37,82 @@ function useMouse() {
   return pos;
 }
 
-function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const [ref, inView] = useInView();
+// Spring physics drop-in (replaces FadeUp)
+function FallIn({ children, delay = 0, className = "", rotate = true }: { children: React.ReactNode; delay?: number; className?: string; rotate?: boolean }) {
+  const [ref, inView] = useInView(0.08);
   return (
     <div ref={ref} className={className} style={{
       opacity: inView ? 1 : 0,
-      transform: inView ? "none" : "translateY(28px)",
-      transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
+      transform: inView
+        ? "translateY(0px) rotate(0deg) scale(1)"
+        : `translateY(-38px) ${rotate ? "rotate(-1.5deg)" : ""} scale(0.96)`,
+      transition: `opacity 0.45s ease ${delay}ms, transform 0.85s cubic-bezier(0.34,1.56,0.64,1) ${delay}ms`,
     }}>{children}</div>
   );
+}
+
+// Wave canvas — emits ripples on mouse move
+function WaveCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    type Ripple = { x: number; y: number; r: number; maxR: number; opacity: number };
+    const ripples: Ripple[] = [];
+    let raf = 0;
+    let lastEmit = 0;
+
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const emit = (x: number, y: number, large = false) => {
+      const n = large ? 4 : 3;
+      for (let i = 0; i < n; i++) {
+        ripples.push({ x, y, r: i * 22, maxR: large ? 340 : 200, opacity: large ? 0.28 - i * 0.05 : 0.18 - i * 0.04 });
+      }
+    };
+
+    // Ambient center pulses
+    const pulse = () => emit(canvas.width / 2, canvas.height / 2, true);
+    pulse();
+    const interval = setInterval(pulse, 3200);
+
+    const onMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const now = Date.now();
+      if (now - lastEmit < 70) return;
+      lastEmit = now;
+      emit(e.clientX - rect.left, e.clientY - rect.top);
+    };
+    canvas.addEventListener("mousemove", onMove);
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        if (r.r >= r.maxR || r.opacity <= 0.003) { ripples.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(129,140,248,${r.opacity.toFixed(3)})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        r.r += 1.8;
+        r.opacity *= 0.964;
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(interval);
+      canvas.removeEventListener("mousemove", onMove);
+      ro.disconnect();
+    };
+  }, []);
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-auto" />;
 }
 
 function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
@@ -358,6 +425,9 @@ export default function HomePage() {
       {/* ── Hero ── */}
       <section className="relative min-h-screen flex flex-col bg-gradient-navy overflow-hidden">
 
+        {/* Wave canvas — mouse ripples */}
+        <WaveCanvas />
+
         {/* Geometric background */}
         {/* Dot grid */}
         <div className="absolute inset-0 opacity-[0.07]" style={{
@@ -492,12 +562,12 @@ export default function HomePage() {
             { target: 3, suffix: " steps", label: "to your insight report", prefix: "" },
             { target: 12, suffix: " categories", label: "tracked in real time", prefix: "" },
           ].map((s, i) => (
-            <FadeUp key={i} delay={i * 100}>
+            <FallIn key={i} delay={i * 100}>
               <div className="text-3xl font-extrabold text-gray-900">
                 {s.prefix}<Counter target={s.target} suffix={s.suffix} />
               </div>
               <div className="text-xs text-gray-400 mt-1">{s.label}</div>
-            </FadeUp>
+            </FallIn>
           ))}
         </div>
       </section>
@@ -505,10 +575,10 @@ export default function HomePage() {
       {/* ── How it works ── */}
       <section className="py-28 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
-          <FadeUp className="text-center mb-16">
+          <FallIn className="text-center mb-16">
             <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">How it works</p>
             <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">Three steps. Real intelligence.</h2>
-          </FadeUp>
+          </FallIn>
 
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Connector line */}
@@ -519,7 +589,7 @@ export default function HomePage() {
               { step: "02", icon: Sparkles, title: "AI analyzes & clusters", sub: "Groups your idea with similar ones. Measures saturation, trend velocity, market timing.", color: "violet" },
               { step: "03", icon: BarChart3, title: "Get your report", sub: "Viability score, saturation level, trend direction, and a full market intelligence snapshot.", color: "blue" },
             ].map((item, i) => (
-              <FadeUp key={item.step} delay={i * 140}>
+              <FallIn key={item.step} delay={i * 140}>
                 <div className="relative p-8 rounded-2xl border border-gray-100 bg-white hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 group">
                   <span className="absolute top-4 right-5 text-7xl font-black text-gray-50 leading-none select-none group-hover:text-indigo-50 transition-colors">{item.step}</span>
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 ${item.color === "indigo" ? "bg-indigo-50" : item.color === "violet" ? "bg-violet-50" : "bg-blue-50"}`}>
@@ -528,7 +598,7 @@ export default function HomePage() {
                   <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                   <p className="text-sm text-gray-500 leading-relaxed">{item.sub}</p>
                 </div>
-              </FadeUp>
+              </FallIn>
             ))}
           </div>
         </div>
@@ -537,27 +607,27 @@ export default function HomePage() {
       {/* ── Interactive Demo ── */}
       <section className="py-28 px-6" style={{ background: "linear-gradient(135deg, #fafafe 0%, #f5f3ff 100%)" }}>
         <div className="max-w-5xl mx-auto">
-          <FadeUp className="text-center mb-14">
+          <FallIn className="text-center mb-14">
             <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">See how it works</p>
             <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">From idea to insight in 3 steps.</h2>
             <p className="mt-4 text-gray-500 max-w-md mx-auto text-sm">Watch the full journey — or click any step to explore it yourself.</p>
-          </FadeUp>
-          <FadeUp>
+          </FallIn>
+          <FallIn>
             <InteractiveDemo />
-          </FadeUp>
+          </FallIn>
         </div>
       </section>
 
       {/* ── Market gap ── */}
       <section className="py-28 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
-          <FadeUp className="text-center mb-14">
+          <FallIn className="text-center mb-14">
             <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">Market Research</p>
             <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">The data no one else has.</h2>
-          </FadeUp>
+          </FallIn>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <FadeUp>
+            <FallIn>
               <div className="p-8 rounded-2xl border border-gray-200 h-full">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
@@ -572,9 +642,9 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-            </FadeUp>
+            </FallIn>
 
-            <FadeUp delay={120}>
+            <FallIn delay={120}>
               <div className="p-8 rounded-2xl border border-indigo-200 bg-indigo-50 h-full relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-20"
                   style={{ background: "radial-gradient(circle, #818cf8, transparent)", transform: "translate(30%, -30%)" }} />
@@ -592,7 +662,7 @@ export default function HomePage() {
                 ))}
                 <p className="mt-2 text-xs text-indigo-400 border-t border-indigo-200 pt-4 font-medium">B2B expansion: VCs, accelerators, research institutions</p>
               </div>
-            </FadeUp>
+            </FallIn>
           </div>
         </div>
       </section>
@@ -600,10 +670,10 @@ export default function HomePage() {
       {/* ── Features ── */}
       <section className="py-28 px-6" style={{ background: "linear-gradient(135deg, #fafafe 0%, #f5f3ff 100%)" }}>
         <div className="max-w-5xl mx-auto">
-          <FadeUp className="text-center mb-14">
+          <FallIn className="text-center mb-14">
             <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">Core MVP</p>
             <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">Four features. One flywheel.</h2>
-          </FadeUp>
+          </FallIn>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {[
               { icon: FileText, title: "Anonymous Submission", sub: "ANONYMOUS SUBMISSION", desc: "Category, target user, brief description. No account needed. No public exposure.", color: "indigo" },
@@ -619,7 +689,7 @@ export default function HomePage() {
               };
               const c = configs[f.color as keyof typeof configs];
               return (
-                <FadeUp key={f.title} delay={i * 90}>
+                <FallIn key={f.title} delay={i * 90}>
                   <div className={`p-8 rounded-2xl border border-gray-100 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 h-full ${c.border}`}>
                     <div className={`w-11 h-11 rounded-xl ${c.bg} flex items-center justify-center mb-5`}>
                       <f.icon className={`w-5 h-5 ${c.text}`} />
@@ -628,7 +698,7 @@ export default function HomePage() {
                     <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-4">{f.sub}</p>
                     <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
                   </div>
-                </FadeUp>
+                </FallIn>
               );
             })}
           </div>
@@ -638,11 +708,11 @@ export default function HomePage() {
       {/* ── Competitive table ── */}
       <section className="py-28 px-6 bg-white">
         <div className="max-w-5xl mx-auto">
-          <FadeUp className="text-center mb-14">
+          <FallIn className="text-center mb-14">
             <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">Competitive Landscape</p>
             <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">A category of one.</h2>
-          </FadeUp>
-          <FadeUp>
+          </FallIn>
+          <FallIn>
             <div className="overflow-x-auto rounded-2xl border border-gray-200 shadow-sm">
               <table className="w-full text-sm bg-white">
                 <thead>
@@ -686,7 +756,7 @@ export default function HomePage() {
                 </tbody>
               </table>
             </div>
-          </FadeUp>
+          </FallIn>
         </div>
       </section>
 
@@ -700,7 +770,7 @@ export default function HomePage() {
           style={{ background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)" }} />
 
         <div className="relative max-w-3xl mx-auto text-center">
-          <FadeUp>
+          <FallIn>
             <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-5">Join the early wave</p>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
               Your idea is a <span style={{ color: "#818cf8" }}>market signal.</span><br />
@@ -712,7 +782,7 @@ export default function HomePage() {
             <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-9 py-4 rounded-xl text-base hover:bg-indigo-400 transition-all duration-200 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5">
               Submit your idea — it&apos;s free <ArrowRight className="w-5 h-5" />
             </Link>
-          </FadeUp>
+          </FallIn>
         </div>
       </section>
 
