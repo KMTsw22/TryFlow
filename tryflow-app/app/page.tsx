@@ -78,6 +78,249 @@ const CARD_COLORS: Record<string, { bg: string; text: string; badge: string }> =
   blue:   { bg: "bg-blue-50",   text: "text-blue-600",   badge: "bg-blue-100 text-blue-700" },
 };
 
+// ── Interactive Demo ───────────────────────────────────────────────────────
+const DEMO_DESC = "An AI copilot that auto-generates investor update emails from your product metrics — no manual writing needed.";
+const ANALYSIS_ITEMS = [
+  "Scanning 847 submitted ideas in AI / ML...",
+  "Comparing target user overlap...",
+  "Measuring market saturation level...",
+  "Calculating 7-day trend velocity...",
+  "Generating your insight report...",
+];
+
+function InteractiveDemo() {
+  const [step, setStep] = useState(0);
+  const [charCount, setCharCount] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [analysisLine, setAnalysisLine] = useState(0);
+  const [reportIn, setReportIn] = useState(false);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const t = (fn: () => void, ms: number) => { const id = setTimeout(fn, ms); timers.push(id); };
+
+    if (step === 0) {
+      setCharCount(0);
+      let i = 0;
+      const typeChar = () => {
+        i++;
+        setCharCount(i);
+        if (i < DEMO_DESC.length) t(typeChar, 28 + Math.random() * 18);
+        else t(() => setStep(1), 900);
+      };
+      t(typeChar, 600);
+    }
+
+    if (step === 1) {
+      setProgress(0);
+      setAnalysisLine(0);
+      let p = 0;
+      let line = 0;
+      const tick = () => {
+        p = Math.min(100, p + Math.random() * 11 + 5);
+        setProgress(Math.floor(p));
+        const newLine = Math.floor((p / 100) * ANALYSIS_ITEMS.length);
+        if (newLine !== line) { line = newLine; setAnalysisLine(newLine); }
+        if (p < 100) t(tick, 120 + Math.random() * 80);
+        else t(() => setStep(2), 500);
+      };
+      t(tick, 400);
+    }
+
+    if (step === 2) {
+      setReportIn(false);
+      setScore(0);
+      t(() => {
+        setReportIn(true);
+        let s = 0;
+        const countUp = () => {
+          s = Math.min(82, s + 5);
+          setScore(s);
+          if (s < 82) t(countUp, 35);
+        };
+        t(countUp, 300);
+        t(() => setStep(0), 5500);
+      }, 200);
+    }
+
+    return () => timers.forEach(clearTimeout);
+  }, [step]);
+
+  const STEP_LABELS = ["Submit idea", "AI analyzes", "Your report"];
+  const STEP_URLS   = ["try-flow-ten.vercel.app/submit", "try-flow-ten.vercel.app/submit", "try-flow-ten.vercel.app/ideas/f3a2•••"];
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      {/* Step indicator */}
+      <div className="flex items-center justify-center mb-8 gap-0">
+        {STEP_LABELS.map((label, i) => (
+          <div key={label} className="flex items-center">
+            <button onClick={() => setStep(i)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-400 cursor-pointer
+                ${step === i ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25" : "text-gray-400 hover:text-gray-600"}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
+                ${step === i ? "bg-white text-indigo-600" : step > i ? "bg-indigo-400 text-white" : "border-2 border-gray-300 text-gray-400"}`}>
+                {step > i ? "✓" : i + 1}
+              </span>
+              <span className="text-xs font-semibold">{label}</span>
+            </button>
+            {i < 2 && (
+              <div className={`w-10 h-px transition-all duration-500 ${step > i ? "bg-indigo-400" : "bg-gray-200"}`} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Browser window */}
+      <div className="rounded-2xl border border-gray-200 shadow-2xl overflow-hidden">
+        {/* Chrome bar */}
+        <div className="bg-gray-100 border-b border-gray-200 px-4 py-2.5 flex items-center gap-3">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+          </div>
+          <div className="flex-1 bg-white border border-gray-200 rounded px-3 py-1 text-[11px] text-gray-400 text-center font-mono truncate">
+            {STEP_URLS[step]}
+          </div>
+        </div>
+
+        {/* ── Step 0: Submit form ── */}
+        {step === 0 && (
+          <div className="bg-gradient-navy p-8 min-h-[360px]">
+            <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6">Step 2 of 3 — Describe your idea</p>
+
+            {/* Pre-filled fields */}
+            <div className="space-y-3 mb-5">
+              <div className="bg-indigo-500/20 border border-indigo-400/30 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                <span className="text-xs text-indigo-300 font-medium">Category</span>
+                <span className="text-xs font-bold text-indigo-200 bg-indigo-500/30 px-2 py-0.5 rounded-full">AI / ML ✓</span>
+              </div>
+              <div className="bg-indigo-500/20 border border-indigo-400/30 rounded-xl px-4 py-2.5 flex items-center justify-between">
+                <span className="text-xs text-indigo-300 font-medium">Target user</span>
+                <span className="text-xs font-bold text-indigo-200">Solo developers ✓</span>
+              </div>
+            </div>
+
+            {/* Typing field */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 min-h-[90px]">
+              <p className="text-xs text-gray-500 mb-2 font-medium">Description</p>
+              <p className="text-sm text-white leading-relaxed">
+                {DEMO_DESC.slice(0, charCount)}
+                <span className="inline-block w-px h-4 bg-indigo-400 ml-0.5 animate-pulse" />
+              </p>
+            </div>
+
+            {/* Submit button */}
+            <button className={`w-full py-3 rounded-xl font-bold text-sm transition-all duration-300
+              ${charCount >= DEMO_DESC.length
+                ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-[1.02]"
+                : "bg-white/10 text-white/40 cursor-not-allowed"}`}>
+              {charCount >= DEMO_DESC.length ? "✓ Get my insight report →" : "Get my insight report →"}
+            </button>
+            <p className="text-center text-[11px] text-gray-600 mt-3">100% anonymous · Never made public</p>
+          </div>
+        )}
+
+        {/* ── Step 1: AI Analysis ── */}
+        {step === 1 && (
+          <div className="bg-white p-8 min-h-[360px] flex flex-col justify-center">
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-6 h-6 text-indigo-500 animate-pulse" />
+              </div>
+              <h3 className="font-bold text-gray-900 text-lg">Analyzing your idea...</h3>
+              <p className="text-sm text-gray-400 mt-1">AI is clustering and scoring your submission</p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="mb-6">
+              <div className="flex justify-between text-xs text-gray-400 mb-2">
+                <span>Processing</span>
+                <span className="font-bold text-indigo-500">{progress}%</span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-200"
+                  style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+
+            {/* Analysis log */}
+            <div className="space-y-2">
+              {ANALYSIS_ITEMS.slice(0, Math.max(1, analysisLine)).map((item, i) => (
+                <div key={i} className={`flex items-center gap-2.5 text-xs transition-all duration-300
+                  ${i === analysisLine - 1 ? "opacity-100" : "opacity-40"}`}>
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0
+                    ${i < analysisLine - 1 ? "bg-emerald-100" : "bg-indigo-100"}`}>
+                    {i < analysisLine - 1
+                      ? <span className="text-emerald-600 text-[9px]">✓</span>
+                      : <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse block" />}
+                  </div>
+                  <span className={i < analysisLine - 1 ? "text-gray-400 line-through" : "text-gray-700 font-medium"}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 2: Report ── */}
+        {step === 2 && (
+          <div className={`min-h-[360px] transition-all duration-700 ${reportIn ? "opacity-100" : "opacity-0 translate-y-2"}`}>
+            {/* Report header */}
+            <div className="bg-gradient-navy p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 pointer-events-none"
+                style={{ background: "radial-gradient(circle, #818cf8, transparent)", transform: "translate(30%,-30%)" }} />
+              <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-widest mb-2">Personal Insight Report</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white font-bold text-sm">AI / ML · For: Solo developers</p>
+                  <p className="text-gray-400 text-xs mt-0.5">Submitted anonymously · Just now</p>
+                </div>
+                <div className="text-center">
+                  <div className={`text-4xl font-extrabold transition-colors duration-300 ${score >= 70 ? "text-emerald-400" : "text-amber-400"}`}>{score}</div>
+                  <div className="text-[10px] text-gray-400">viability</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Metrics */}
+            <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100 bg-white">
+              {[
+                { label: "Market Trend", value: "Rising",   icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
+                { label: "Saturation",   value: "Low",      icon: Minus,      color: "text-indigo-500",  bg: "bg-indigo-50" },
+                { label: "Similar Ideas",value: "3",        icon: Sparkles,   color: "text-violet-500",  bg: "bg-violet-50" },
+              ].map((m) => (
+                <div key={m.label} className="p-4 text-center">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{m.label}</p>
+                  <div className={`w-8 h-8 rounded-xl ${m.bg} flex items-center justify-center mx-auto mb-1`}>
+                    <m.icon className={`w-3.5 h-3.5 ${m.color}`} />
+                  </div>
+                  <p className={`text-xs font-bold ${m.color}`}>{m.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary */}
+            <div className="p-5 bg-white">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">AI Insight</p>
+              <p className="text-xs text-gray-600 leading-relaxed">
+                High-signal opportunity. The AI/ML space is gaining momentum with very few similar ideas —
+                you may be <span className="font-semibold text-indigo-600">early to a genuine market gap</span>.
+                Low saturation + rising trend = ideal timing.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <p className="text-center text-xs text-gray-400 mt-4">
+        Click the steps above to explore · Auto-plays on loop
+      </p>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const scrolled = useScrolled();
@@ -291,63 +534,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Live insight preview ── */}
+      {/* ── Interactive Demo ── */}
       <section className="py-28 px-6" style={{ background: "linear-gradient(135deg, #fafafe 0%, #f5f3ff 100%)" }}>
         <div className="max-w-5xl mx-auto">
           <FadeUp className="text-center mb-14">
-            <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">What you get</p>
-            <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">Your insight report, instantly.</h2>
-            <p className="mt-4 text-gray-500 max-w-md mx-auto text-sm">Every submission gets a full intelligence breakdown. Here&apos;s what it looks like.</p>
+            <p className="text-xs font-bold tracking-widest text-indigo-500 uppercase mb-3">See how it works</p>
+            <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight">From idea to insight in 3 steps.</h2>
+            <p className="mt-4 text-gray-500 max-w-md mx-auto text-sm">Watch the full journey — or click any step to explore it yourself.</p>
           </FadeUp>
-
           <FadeUp>
-            <div className="bg-white rounded-3xl border border-gray-200 shadow-2xl overflow-hidden max-w-2xl mx-auto">
-              {/* Report header */}
-              <div className="bg-gradient-navy p-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10"
-                  style={{ background: "radial-gradient(circle, #818cf8, transparent)", transform: "translate(30%, -30%)" }} />
-                <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2">Personal Insight Report</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white font-bold">AI / ML · For: Solo developers</p>
-                    <p className="text-gray-400 text-xs mt-1">Submitted anonymously · Just now</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-extrabold text-emerald-400">82</div>
-                    <div className="text-xs text-gray-400">viability</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metrics */}
-              <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
-                {[
-                  { label: "Market Trend", value: "Rising", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
-                  { label: "Saturation", value: "Low", icon: Minus, color: "text-indigo-500", bg: "bg-indigo-50" },
-                  { label: "Similar Ideas", value: "3", icon: Sparkles, color: "text-violet-500", bg: "bg-violet-50" },
-                ].map((m) => (
-                  <div key={m.label} className="p-5 text-center">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{m.label}</p>
-                    <div className={`w-9 h-9 rounded-xl ${m.bg} flex items-center justify-center mx-auto mb-1.5`}>
-                      <m.icon className={`w-4 h-4 ${m.color}`} />
-                    </div>
-                    <p className={`text-sm font-bold ${m.color}`}>{m.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* AI summary */}
-              <div className="p-6">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">AI Insight</p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  High-signal opportunity. The AI/ML space is gaining momentum with very few similar ideas submitted yet — you may be <span className="font-semibold text-indigo-600">early to a genuine market gap</span>. Low saturation combined with a rising trend makes this an ideal time to move.
-                </p>
-                <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Report ID: •••-••••-8f2a</span>
-                  <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">Private link only</span>
-                </div>
-              </div>
-            </div>
+            <InteractiveDemo />
           </FadeUp>
         </div>
       </section>
