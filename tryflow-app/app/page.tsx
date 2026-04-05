@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, TrendingUp, Minus, CheckCircle2, XCircle, ChevronDown, Sparkles, BarChart3, FileText, ShieldCheck } from "lucide-react";
+import { ParticleBackground } from "@/components/ui/ParticleBackground";
 
 // ── Hooks ──────────────────────────────────────────────────────────────────
 function useScrolled(threshold = 12) {
@@ -51,69 +52,6 @@ function FallIn({ children, delay = 0, className = "", rotate = true }: { childr
   );
 }
 
-// Wave canvas — emits ripples on mouse move
-function WaveCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    type Ripple = { x: number; y: number; r: number; maxR: number; opacity: number };
-    const ripples: Ripple[] = [];
-    let raf = 0;
-    let lastEmit = 0;
-
-    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
-
-    const emit = (x: number, y: number, large = false) => {
-      const n = large ? 4 : 3;
-      for (let i = 0; i < n; i++) {
-        ripples.push({ x, y, r: i * 22, maxR: large ? 340 : 200, opacity: large ? 0.28 - i * 0.05 : 0.18 - i * 0.04 });
-      }
-    };
-
-    // Ambient center pulses
-    const pulse = () => emit(canvas.width / 2, canvas.height / 2, true);
-    pulse();
-    const interval = setInterval(pulse, 3200);
-
-    const onMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const now = Date.now();
-      if (now - lastEmit < 70) return;
-      lastEmit = now;
-      emit(e.clientX - rect.left, e.clientY - rect.top);
-    };
-    canvas.addEventListener("mousemove", onMove);
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (let i = ripples.length - 1; i >= 0; i--) {
-        const r = ripples[i];
-        if (r.r >= r.maxR || r.opacity <= 0.003) { ripples.splice(i, 1); continue; }
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(129,140,248,${r.opacity.toFixed(3)})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        r.r += 1.8;
-        r.opacity *= 0.964;
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    draw();
-
-    return () => {
-      cancelAnimationFrame(raf);
-      clearInterval(interval);
-      canvas.removeEventListener("mousemove", onMove);
-      ro.disconnect();
-    };
-  }, []);
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-auto" />;
-}
 
 function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
   const [ref, inView] = useInView();
@@ -423,10 +361,10 @@ export default function HomePage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col bg-gradient-navy overflow-hidden">
+      <section className="relative min-h-screen flex flex-col overflow-hidden" style={{ background: "#050816" }}>
 
-        {/* Wave canvas — mouse ripples */}
-        <WaveCanvas />
+        {/* Particle system */}
+        <ParticleBackground />
 
         {/* Geometric background */}
         {/* Dot grid */}
