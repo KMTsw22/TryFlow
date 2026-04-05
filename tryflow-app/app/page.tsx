@@ -111,10 +111,10 @@ function InteractiveDemo() {
       const typeChar = () => {
         i++;
         setCharCount(i);
-        if (i < DEMO_DESC.length) t(typeChar, 28 + Math.random() * 18);
-        else t(() => setStep(1), 900);
+        if (i < DEMO_DESC.length) t(typeChar, 11 + Math.random() * 8);
+        else t(() => setStep(1), 350);
       };
-      t(typeChar, 600);
+      t(typeChar, 200);
     }
 
     if (step === 1) {
@@ -123,14 +123,14 @@ function InteractiveDemo() {
       let p = 0;
       let line = 0;
       const tick = () => {
-        p = Math.min(100, p + Math.random() * 11 + 5);
+        p = Math.min(100, p + Math.random() * 18 + 10);
         setProgress(Math.floor(p));
         const newLine = Math.floor((p / 100) * ANALYSIS_ITEMS.length);
         if (newLine !== line) { line = newLine; setAnalysisLine(newLine); }
-        if (p < 100) t(tick, 120 + Math.random() * 80);
-        else t(() => setStep(2), 500);
+        if (p < 100) t(tick, 55 + Math.random() * 40);
+        else t(() => setStep(2), 250);
       };
-      t(tick, 400);
+      t(tick, 200);
     }
 
     if (step === 2) {
@@ -140,13 +140,13 @@ function InteractiveDemo() {
         setReportIn(true);
         let s = 0;
         const countUp = () => {
-          s = Math.min(82, s + 5);
+          s = Math.min(82, s + 8);
           setScore(s);
-          if (s < 82) t(countUp, 35);
+          if (s < 82) t(countUp, 25);
         };
-        t(countUp, 300);
-        t(() => setStep(0), 5500);
-      }, 200);
+        t(countUp, 150);
+        t(() => setStep(0), 2800);
+      }, 150);
     }
 
     return () => timers.forEach(clearTimeout);
