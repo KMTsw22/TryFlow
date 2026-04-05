@@ -12,8 +12,8 @@ export async function GET() {
     // All categories
     const CATEGORIES = [
       "SaaS / B2B", "Consumer App", "Marketplace", "Dev Tools",
-      "Health & Wellness", "Education", "Social / Community", "Fintech",
-      "E-commerce", "AI / ML", "Hardware", "Other",
+      "Health & Wellness", "Education", "Fintech",
+      "E-commerce", "Hardware",
     ];
 
     // Total submissions per category (all time)

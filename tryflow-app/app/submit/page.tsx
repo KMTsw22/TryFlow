@@ -12,12 +12,9 @@ const CATEGORIES = [
   "Dev Tools",
   "Health & Wellness",
   "Education",
-  "Social / Community",
   "Fintech",
   "E-commerce",
-  "AI / ML",
   "Hardware",
-  "Other",
 ];
 
 const STEPS = ["Category", "Target User", "Description"];

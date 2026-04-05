@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
+import DeepAnalysis from "@/components/DeepAnalysis";
 
 interface Report {
   viability_score: number;
@@ -184,6 +185,9 @@ export default async function IdeaReportPage({
             </div>
           </div>
         </div>
+
+        {/* AI Deep Analysis */}
+        <DeepAnalysis submissionId={idea.id} />
 
         {/* CTAs */}
         <div className="flex flex-col gap-3">

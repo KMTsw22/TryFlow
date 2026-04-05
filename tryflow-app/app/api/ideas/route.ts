@@ -8,12 +8,9 @@ export const CATEGORIES = [
   "Dev Tools",
   "Health & Wellness",
   "Education",
-  "Social / Community",
   "Fintech",
   "E-commerce",
-  "AI / ML",
   "Hardware",
-  "Other",
 ] as const;
 
 // ── Insight generation (heuristic) ───────────────────────────────────────────

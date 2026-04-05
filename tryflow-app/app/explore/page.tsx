@@ -24,8 +24,8 @@ const SAT_PILL = {
 
 const CATEGORIES = [
   "SaaS / B2B", "Consumer App", "Marketplace", "Dev Tools",
-  "Health & Wellness", "Education", "Social / Community", "Fintech",
-  "E-commerce", "AI / ML", "Hardware", "Other",
+  "Health & Wellness", "Education", "Fintech",
+  "E-commerce", "Hardware",
 ];
 
 export default async function ExplorePage() {
