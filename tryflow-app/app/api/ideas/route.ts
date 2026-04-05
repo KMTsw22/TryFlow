@@ -127,12 +127,16 @@ export async function POST(req: NextRequest) {
     // Generate insight
     const insight = await generateInsight(category, description, supabase);
 
-    // Insert report
+    // Insert report (map camelCase → snake_case for DB columns)
     const reportId = crypto.randomUUID();
     const { error: repErr } = await supabase.from("insight_reports").insert({
       id: reportId,
       submission_id: submissionId,
-      ...insight,
+      viability_score: insight.viabilityScore,
+      saturation_level: insight.saturationLevel,
+      trend_direction: insight.trendDirection,
+      similar_count: insight.similarCount,
+      summary: insight.summary,
     });
     if (repErr) throw repErr;
 

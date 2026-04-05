@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Minus, ArrowRight, BarChart3, Share2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
 
 interface Report {
   viability_score: number;
@@ -59,7 +59,43 @@ export default async function IdeaReportPage({
 
   const idea = data as unknown as Idea;
   const report = getReport(idea);
-  if (!report) notFound();
+  const date = new Date(idea.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  // Navbar (shared)
+  const Navbar = (
+    <nav className="bg-white border-b border-gray-100 px-6 h-[60px] flex items-center justify-between">
+      <Link href="/" className="flex items-center gap-2">
+        <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
+        <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
+      </Link>
+      <div className="flex items-center gap-3">
+        <Link href="/explore" className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
+          <BarChart3 className="w-4 h-4" /> Trends
+        </Link>
+        <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-indigo-400 transition-colors">
+          Submit another →
+        </Link>
+      </div>
+    </nav>
+  );
+
+  if (!report) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {Navbar}
+        <div className="max-w-2xl mx-auto px-4 py-20 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl animate-spin inline-block">⟳</span>
+          </div>
+          <h1 className="text-xl font-extrabold text-gray-900 mb-2">Report is being generated</h1>
+          <p className="text-sm text-gray-400 mb-8">Your idea was submitted on {date}. The insight report is being processed — check back shortly.</p>
+          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-indigo-400 transition-colors">
+            Submit another idea →
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const trend = TREND_CONFIG[report.trend_direction as keyof typeof TREND_CONFIG] ?? TREND_CONFIG.Stable;
   const sat   = SAT_CONFIG[report.saturation_level as keyof typeof SAT_CONFIG] ?? SAT_CONFIG.Medium;
@@ -69,25 +105,9 @@ export default async function IdeaReportPage({
   const vColor = report.viability_score >= 70 ? "text-emerald-600" : report.viability_score >= 50 ? "text-amber-600" : "text-red-600";
   const vBg    = report.viability_score >= 70 ? "#10b981" : report.viability_score >= 50 ? "#f59e0b" : "#ef4444";
 
-  const date = new Date(idea.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 px-6 h-[60px] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
-          <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <Link href="/explore" className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
-            <BarChart3 className="w-4 h-4" /> Trends
-          </Link>
-          <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-indigo-400 transition-colors">
-            Submit another →
-          </Link>
-        </div>
-      </nav>
+      {Navbar}
 
       <div className="max-w-2xl mx-auto px-4 py-12">
         {/* Header */}
