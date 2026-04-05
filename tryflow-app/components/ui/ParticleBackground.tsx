@@ -82,7 +82,7 @@ export function ParticleBackground() {
       const dy = mouseY - prevMouseY;
       mouseSpeed = Math.sqrt(dx * dx + dy * dy);
     };
-    canvas.addEventListener("mousemove", onMove);
+    window.addEventListener("mousemove", onMove, { passive: true });
 
     // ── Constants ─────────────────────────────────────────────────────────
     const CONN_DIST  = 120;   // max distance to draw connections
@@ -190,14 +190,14 @@ export function ParticleBackground() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
-      canvas.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mousemove", onMove);
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
+      className="absolute inset-0 w-full h-full pointer-events-none"
       style={{ zIndex: 0 }}
     />
   );
