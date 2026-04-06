@@ -59,8 +59,6 @@ function RabbitHoppingSVG({ className }: { className?: string }) {
       {/* Feet pushing off / landing */}
       <path d="M8 144 Q14 150 24 146" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
       <path d="M66 138 Q72 144 80 140" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
-      {/* Tail */}
-      <circle cx="65" cy="112" r="5" stroke="currentColor" strokeWidth="1" fill="none"/>
     </svg>
   );
 }
