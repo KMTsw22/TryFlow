@@ -439,10 +439,33 @@ function InteractiveDemo() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+const STYLE_CYCLE = [
+  { fontWeight: 800, fontStyle: "normal" as const, letterSpacing: "-0.03em" },
+  { fontWeight: 300, fontStyle: "italic" as const, letterSpacing: "0.02em" },
+  { fontWeight: 700, fontStyle: "normal" as const, letterSpacing: "0.1em" },
+  { fontWeight: 400, fontStyle: "italic" as const, letterSpacing: "-0.01em" },
+  { fontWeight: 800, fontStyle: "italic" as const, letterSpacing: "-0.02em" },
+  { fontWeight: 500, fontStyle: "normal" as const, letterSpacing: "0.14em" },
+];
+
 export default function HomePage() {
   const scrolled = useScrolled();
   const mouse = useMouse();
   const [revealed, setRevealed] = useState(false);
+  const [styleIdx, setStyleIdx] = useState(0);
+  const [cycleOpacity, setCycleOpacity] = useState(1);
+
+  useEffect(() => {
+    if (!revealed) return;
+    const interval = setInterval(() => {
+      setCycleOpacity(0);
+      setTimeout(() => {
+        setStyleIdx(i => (i + 1) % STYLE_CYCLE.length);
+        setCycleOpacity(1);
+      }, 280);
+    }, 2400);
+    return () => clearInterval(interval);
+  }, [revealed]);
 
   return (
     <div className="min-h-screen font-['Plus_Jakarta_Sans'] overflow-x-hidden" style={{ background: "linear-gradient(to bottom, #050816 0%, #050816 10%, #060d1f 18%, #0a1a3a 26%, #0d2550 34%, #123470 42%, #1a4a90 50%, #2a68b0 58%, #4a90c8 65%, #6ab8c0 71%, #6ab8a0 77%, #4a9878 83%, #2e7058 90%, #1e5040 100%)" }}>
@@ -524,29 +547,32 @@ export default function HomePage() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-center text-[2.8rem] md:text-[5.2rem] font-extrabold text-white leading-[1.06] tracking-tight max-w-5xl">
+          <h1 className="text-center text-[2.8rem] md:text-[5.2rem] font-extrabold text-white leading-[1.12] tracking-tight max-w-5xl">
             <span style={{
               display: "block",
               opacity: revealed ? 1 : 0.18,
               transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1)",
-            }}>Your anonymous idea</span>
+            }}>Before you build,</span>
             <span style={{
               display: "block",
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0px)" : "translateY(10px)",
               transition: "opacity 0.9s cubic-bezier(0.4,0,0.2,1) 0.1s, transform 0.9s cubic-bezier(0.34,1.56,0.64,1) 0.1s",
-            }}>becomes</span>
+            }}>find out if anyone</span>
             <span style={{
               display: "block",
-              whiteSpace: "nowrap",
-              background: "linear-gradient(135deg, #818cf8, #a78bfa)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0px)" : "translateY(14px)",
               transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1) 0.22s, transform 1.1s cubic-bezier(0.34,1.56,0.64,1) 0.22s",
             }}>
-              market intelligence.
+              <span style={{
+                background: "linear-gradient(135deg, #818cf8, #a78bfa)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                opacity: cycleOpacity,
+                transition: "opacity 0.28s ease",
+                ...STYLE_CYCLE[styleIdx],
+              }}>actually cares.</span>
             </span>
           </h1>
 
