@@ -1,23 +1,31 @@
 "use client";
 import { useEffect, useRef } from "react";
 
-interface Bubble {
+interface Emoji {
+  x: number; y: number;
+  vx: number; vy: number;
+  size: number;
+  opacity: number;
+  phase: "floating" | "converging" | "absorbed";
+  wobble: number; wobbleSpeed: number;
+  rotation: number; rotSpeed: number;
+}
+
+interface Particle {
   x: number; y: number;
   vx: number; vy: number;
   radius: number;
   opacity: number;
-  phase: "floating" | "converging" | "absorbing";
   r: number; g: number; b: number;
-  wobble: number; wobbleSpeed: number;
-  fontSize: number;
 }
 
-const PALETTE = [
-  { r: 99,  g: 102, b: 241 }, // indigo-500
-  { r: 129, g: 140, b: 248 }, // indigo-400
-  { r: 139, g: 92,  b: 246 }, // violet-500
-  { r: 167, g: 139, b: 250 }, // violet-400
-  { r: 79,  g: 70,  b: 229 }, // indigo-600
+const BURST_COLORS = [
+  { r: 99,  g: 102, b: 241 },
+  { r: 129, g: 140, b: 248 },
+  { r: 167, g: 139, b: 250 },
+  { r: 251, g: 191, b: 36  },
+  { r: 255, g: 220, b: 80  },
+  { r: 250, g: 204, b: 21  },
 ];
 
 export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
@@ -33,54 +41,59 @@ export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
     let W = canvas.offsetWidth;
     let H = canvas.offsetHeight;
     let raf = 0;
-
-    // Animation state machine
-    // Phase A: floating (8s) → Phase B: converging → Phase C: reveal (2s) → reset
-    const FLOAT_FRAMES   = 420;  // ~7s float
-    const REVEAL_FRAMES  = 140;  // reveal duration
-    const RESET_FRAMES   = 90;   // hold after reveal before reset
-
-    let globalFrame = 0;
-    let absorbedCount = 0;
-    let revealFrame = 0;
-    let resetTimer = 0;
-    let stage: "float" | "converge" | "reveal" | "resetting" = "float";
-
-    interface Ring { x: number; y: number; r: number; op: number; }
-    const rings: Ring[] = [];
-    const bubbles: Bubble[] = [];
+    let frame = 0;
 
     const cx = () => W / 2;
-    const cy = () => H * 0.43; // where the headline lives
+    const cy = () => H * 0.43;
 
-    const makeBubble = (fromEdge = false): Bubble => {
-      const c = PALETTE[Math.floor(Math.random() * PALETTE.length)];
-      const radius = 26 + Math.random() * 16;
+    // ── State machine ────────────────────────────────────────────────────────
+    type Stage = "float" | "converge" | "burst" | "settle" | "done";
+    let stage: Stage = "float";
+    let stageFrame = 0;
+    const FLOAT_DUR   = 320;   // frames before converge starts (~5.3s)
+    const SETTLE_HOLD = 200;   // frames to hold after settling before reset
+
+    // ── Central orb ─────────────────────────────────────────────────────────
+    const ORB_MAX         = 90;
+    const ORB_PER_ABSORB  = ORB_MAX / 12;
+    let orbRadius         = 0;
+    let flashOpacity      = 0; // burst flash
+
+    // ── Particles ────────────────────────────────────────────────────────────
+    const particles: Particle[] = [];
+
+    // ── Emojis ───────────────────────────────────────────────────────────────
+    const N = 13;
+    const emojis: Emoji[] = [];
+
+    const makeEmoji = (fromEdge = false): Emoji => {
+      const pad = 60;
       let x: number, y: number, vx: number, vy: number;
-
       if (fromEdge) {
         const side = Math.floor(Math.random() * 4);
-        const pad = 50;
-        if (side === 0) { x = Math.random() * W; y = -pad; vx = (Math.random() - 0.5) * 0.6; vy = 0.3 + Math.random() * 0.3; }
-        else if (side === 1) { x = W + pad; y = Math.random() * H; vx = -(0.3 + Math.random() * 0.3); vy = (Math.random() - 0.5) * 0.6; }
-        else if (side === 2) { x = Math.random() * W; y = H + pad; vx = (Math.random() - 0.5) * 0.6; vy = -(0.3 + Math.random() * 0.3); }
-        else { x = -pad; y = Math.random() * H; vx = 0.3 + Math.random() * 0.3; vy = (Math.random() - 0.5) * 0.6; }
+        if      (side === 0) { x = Math.random()*W; y = -pad; vx = (Math.random()-.5)*.5; vy =  .3+Math.random()*.4; }
+        else if (side === 1) { x = W+pad; y = Math.random()*H; vx = -(.3+Math.random()*.4); vy = (Math.random()-.5)*.5; }
+        else if (side === 2) { x = Math.random()*W; y = H+pad; vx = (Math.random()-.5)*.5; vy = -(.3+Math.random()*.4); }
+        else                 { x = -pad; y = Math.random()*H; vx =  .3+Math.random()*.4;  vy = (Math.random()-.5)*.5; }
       } else {
-        x = Math.random() * W;
-        y = Math.random() * H;
-        vx = (Math.random() - 0.5) * 0.7;
-        vy = (Math.random() - 0.5) * 0.7;
+        x = 60 + Math.random() * (W - 120);
+        y = 60 + Math.random() * (H - 120);
+        vx = (Math.random() - .5) * .9;
+        vy = (Math.random() - .5) * .9;
       }
-
-      return { x, y, vx, vy, radius, opacity: 0.7 + Math.random() * 0.2,
-        phase: "floating", r: c.r, g: c.g, b: c.b,
-        wobble: Math.random() * Math.PI * 2, wobbleSpeed: 0.018 + Math.random() * 0.015,
-        fontSize: Math.floor(radius * 0.44),
+      return {
+        x, y, vx, vy,
+        size: 30 + Math.random() * 22,
+        opacity: 0.75 + Math.random() * 0.25,
+        phase: "floating",
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: .018 + Math.random() * .015,
+        rotation: (Math.random() - .5) * .25,
+        rotSpeed:  (Math.random() - .5) * .006,
       };
     };
 
-    const N = 13;
-    for (let i = 0; i < N; i++) bubbles.push(makeBubble(false));
+    for (let i = 0; i < N; i++) emojis.push(makeEmoji(false));
 
     const resize = () => {
       W = canvas.offsetWidth; H = canvas.offsetHeight;
@@ -90,186 +103,199 @@ export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    const drawBubble = (b: Bubble) => {
-      const { x, y, radius, opacity, r, g, b: bl, fontSize } = b;
-      ctx.save();
-      ctx.globalAlpha = opacity;
+    // ── Explosion ─────────────────────────────────────────────────────────────
+    const explode = () => {
+      const ox = cx(), oy = cy();
+      flashOpacity = 1;
 
-      // Outer glow
-      const grd = ctx.createRadialGradient(x, y, 0, x, y, radius * 1.8);
-      grd.addColorStop(0, `rgba(${r},${g},${bl},0.18)`);
-      grd.addColorStop(1, `rgba(${r},${g},${bl},0)`);
-      ctx.beginPath(); ctx.arc(x, y, radius * 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = grd; ctx.fill();
-
-      // Circle fill
-      ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${r},${g},${bl},0.12)`;
-      ctx.fill();
-      ctx.strokeStyle = `rgba(${r},${g},${bl},0.55)`;
-      ctx.lineWidth = 1.5; ctx.stroke();
-
-      // "idea" label
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText("idea", x, y);
-
-      ctx.restore();
-    };
-
-    const drawReveal = (progress: number) => {
-      const x = cx(), y = cy();
-
-      // Expanding concentric rings
-      for (let i = 0; i < 5; i++) {
-        const p = Math.max(0, progress - i * 0.07);
-        if (p <= 0) continue;
-        const ringR = p * (100 + i * 50);
-        const op = (1 - p) * 0.5;
-        ctx.beginPath(); ctx.arc(x, y, ringR, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(129,140,248,${op.toFixed(3)})`;
-        ctx.lineWidth = 1.8; ctx.stroke();
+      // Radial burst — 70 particles
+      for (let i = 0; i < 70; i++) {
+        const angle = (Math.PI * 2 * i) / 70 + (Math.random() - .5) * .18;
+        const speed = 2.5 + Math.random() * 9;
+        const c = BURST_COLORS[Math.floor(Math.random() * BURST_COLORS.length)];
+        particles.push({
+          x: ox, y: oy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: 2.5 + Math.random() * 5,
+          opacity: .9 + Math.random() * .1,
+          r: c.r, g: c.g, b: c.b,
+        });
       }
 
-      // "market intelligence" text below center
-      if (progress > 0.35) {
-        const tOp = Math.min(1, (progress - 0.35) / 0.35);
-        const rise = (1 - progress) * 12;
-        ctx.save();
-        ctx.globalAlpha = tOp;
-        ctx.translate(x, y + 90 + rise);
-
-        // Glow shadow
-        ctx.shadowColor = "rgba(129,140,248,0.9)";
-        ctx.shadowBlur = 28;
-
-        // Gradient text
-        const grad = ctx.createLinearGradient(-130, 0, 130, 0);
-        grad.addColorStop(0, "#818cf8");
-        grad.addColorStop(0.5, "#c4b5fd");
-        grad.addColorStop(1, "#818cf8");
-        ctx.fillStyle = grad;
-        ctx.font = "700 18px Inter, system-ui, sans-serif";
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.letterSpacing = "0.05em";
-        ctx.fillText("→ market intelligence", 0, 0);
-
-        ctx.restore();
+      // 💡 emoji shards (10 larger slow ones)
+      for (let i = 0; i < 10; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.2 + Math.random() * 4;
+        particles.push({
+          x: ox, y: oy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          radius: 12, // big = emoji-sized, drawn differently below
+          opacity: .85,
+          r: 251, g: 191, b: 36,
+        });
       }
+
+      stage = "burst";
+      stageFrame = 0;
+      setTimeout(() => onRevealRef.current?.(), 300);
     };
 
-    const resetAll = () => {
-      stage = "float";
-      globalFrame = 0;
-      absorbedCount = 0;
-      revealFrame = 0;
-      resetTimer = 0;
-      bubbles.length = 0;
-      for (let i = 0; i < N; i++) bubbles.push(makeBubble(true));
+    // ── Orb draw ─────────────────────────────────────────────────────────────
+    const drawOrb = () => {
+      if (orbRadius <= 0) return;
+      const ox = cx(), oy = cy();
+      const pulse = 1 + Math.sin(frame * 0.1) * 0.05;
+      const r = orbRadius * pulse;
+      const prog = orbRadius / ORB_MAX;
+
+      // Glow halos
+      for (let i = 3; i >= 0; i--) {
+        const grd = ctx.createRadialGradient(ox, oy, 0, ox, oy, r * (1.6 + i * 0.6));
+        grd.addColorStop(0, `rgba(129,140,248,${(0.1 - i * 0.02) * prog})`);
+        grd.addColorStop(1, "rgba(129,140,248,0)");
+        ctx.beginPath(); ctx.arc(ox, oy, r * (1.6 + i * 0.6), 0, Math.PI * 2);
+        ctx.fillStyle = grd; ctx.fill();
+      }
+
+      // Core
+      const core = ctx.createRadialGradient(ox, oy - r * .25, r * .05, ox, oy, r);
+      core.addColorStop(0,   `rgba(220,225,255,${.65 * prog})`);
+      core.addColorStop(0.4, `rgba(129,140,248,${.45 * prog})`);
+      core.addColorStop(1,   `rgba(79, 70, 229,${.25 * prog})`);
+      ctx.beginPath(); ctx.arc(ox, oy, r, 0, Math.PI * 2);
+      ctx.fillStyle = core; ctx.fill();
+
+      // Rim
+      ctx.beginPath(); ctx.arc(ox, oy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(200,210,255,${.7 * prog})`;
+      ctx.lineWidth = 2.5; ctx.stroke();
     };
 
+    // ── Draw loop ─────────────────────────────────────────────────────────────
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
-      globalFrame++;
+      frame++; stageFrame++;
 
-      const targetX = cx(), targetY = cy();
+      const ox = cx(), oy = cy();
 
       // Stage transitions
-      if (stage === "float" && globalFrame >= FLOAT_FRAMES) stage = "converge";
-      if (stage === "converge" && absorbedCount >= N) {
-        stage = "reveal";
-        revealFrame = 0;
-        onRevealRef.current?.();
+      if (stage === "float" && stageFrame >= FLOAT_DUR) {
+        stage = "converge"; stageFrame = 0;
       }
-      if (stage === "reveal") {
-        revealFrame++;
-        if (revealFrame > REVEAL_FRAMES) {
-          stage = "resetting";
-          resetTimer = 0;
+
+      // Orb visible during converge
+      if (stage === "converge") drawOrb();
+
+      // Burst flash
+      if (flashOpacity > 0) {
+        const flashR = orbRadius * (1 + (1 - flashOpacity) * 4);
+        const grd = ctx.createRadialGradient(ox, oy, 0, ox, oy, flashR);
+        grd.addColorStop(0,   `rgba(240,245,255,${flashOpacity * .9})`);
+        grd.addColorStop(0.3, `rgba(167,139,250,${flashOpacity * .5})`);
+        grd.addColorStop(1,   "rgba(129,140,248,0)");
+        ctx.beginPath(); ctx.arc(ox, oy, flashR, 0, Math.PI * 2);
+        ctx.fillStyle = grd; ctx.fill();
+        flashOpacity = Math.max(0, flashOpacity - 0.045);
+      }
+
+      // Particles
+      if (stage === "burst" || stage === "settle") {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.vx *= .94; p.vy *= .94;
+          p.vy += .04; // subtle gravity
+          p.x += p.vx; p.y += p.vy;
+          p.opacity *= .975;
+          if (p.opacity < 0.02) { particles.splice(i, 1); continue; }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.opacity.toFixed(3)})`;
+          ctx.fill();
         }
-      }
-      if (stage === "resetting") {
-        resetTimer++;
-        if (resetTimer > RESET_FRAMES) resetAll();
-      }
 
-      // Reveal overlay
-      if (stage === "reveal" || stage === "resetting") {
-        const progress = stage === "reveal"
-          ? Math.min(1, revealFrame / (REVEAL_FRAMES * 0.65))
-          : Math.max(0, 1 - resetTimer / RESET_FRAMES);
-        drawReveal(progress);
+        if (stage === "burst" && stageFrame > 15) { stage = "settle"; stageFrame = 0; }
+        if (stage === "settle" && particles.length === 0) { stage = "done"; stageFrame = 0; }
       }
 
-      // Absorption rings
-      for (let i = rings.length - 1; i >= 0; i--) {
-        const ring = rings[i];
-        ring.r += 2.5; ring.op *= 0.93;
-        if (ring.op < 0.01) { rings.splice(i, 1); continue; }
-        ctx.beginPath(); ctx.arc(ring.x, ring.y, ring.r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(129,140,248,${ring.op.toFixed(3)})`;
-        ctx.lineWidth = 1.5; ctx.stroke();
+      // Done → reset
+      if (stage === "done" && stageFrame > SETTLE_HOLD) {
+        stage = "float"; stageFrame = 0;
+        orbRadius = 0; flashOpacity = 0;
+        particles.length = 0;
+        emojis.length = 0;
+        for (let i = 0; i < N; i++) emojis.push(makeEmoji(true));
       }
 
-      // Bubbles
-      for (let i = bubbles.length - 1; i >= 0; i--) {
-        const b = bubbles[i];
-        b.wobble += b.wobbleSpeed;
+      // Check if all absorbed → explode
+      const activeEmojis = emojis.filter(e => e.phase !== "absorbed");
+      if (stage === "converge" && activeEmojis.length === 0) explode();
 
-        const dx = targetX - b.x;
-        const dy = targetY - b.y;
+      // ── Emojis ──────────────────────────────────────────────────────────────
+      for (let i = emojis.length - 1; i >= 0; i--) {
+        const e = emojis[i];
+        if (e.phase === "absorbed") continue;
+        if (stage === "burst" || stage === "settle" || stage === "done") continue;
+
+        e.wobble += e.wobbleSpeed;
+        e.rotation += e.rotSpeed;
+
+        const dx = ox - e.x;
+        const dy = oy - e.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
-        if (stage === "converge" && b.phase !== "absorbing") {
-          // Strong pull toward center
-          const pull = 0.025 + Math.max(0, 1 - dist / 400) * 0.04;
-          b.vx += (dx / dist) * pull;
-          b.vy += (dy / dist) * pull;
-          b.phase = "converging";
+        if (stage === "converge") {
+          // Strong pull
+          const pull = .028 + (1 - Math.min(1, dist / 380)) * .05;
+          e.vx += (dx / dist) * pull;
+          e.vy += (dy / dist) * pull;
+          e.phase = "converging";
 
-          if (dist < 48) b.phase = "absorbing";
-        } else if (stage === "float") {
-          // Gentle wander + soft drift toward center
-          b.vx += (Math.random() - 0.5) * 0.018;
-          b.vy += (Math.random() - 0.5) * 0.018;
-          // Slight passive pull
-          if (dist < 350) {
-            b.vx += (dx / dist) * 0.0008;
-            b.vy += (dy / dist) * 0.0008;
-          }
-        }
-
-        if (b.phase === "absorbing") {
-          b.radius *= 0.87;
-          b.opacity *= 0.87;
-          b.vx = dx * 0.1; b.vy = dy * 0.1;
-          if (b.radius < 3) {
-            bubbles.splice(i, 1);
-            absorbedCount++;
-            rings.push({ x: targetX, y: targetY, r: 8, op: 0.7 });
+          // Absorbed when close enough to orb surface
+          if (dist < 42 + orbRadius) {
+            e.phase = "absorbed";
+            orbRadius = Math.min(ORB_MAX, orbRadius + ORB_PER_ABSORB);
             continue;
+          }
+        } else {
+          // Float: gentle drift + very soft passive pull
+          e.vx += (Math.random() - .5) * .022;
+          e.vy += (Math.random() - .5) * .022;
+          if (dist < 320) {
+            e.vx += (dx / dist) * .0006;
+            e.vy += (dy / dist) * .0006;
           }
         }
 
         // Damping + speed cap
-        b.vx *= 0.978; b.vy *= 0.978;
-        const spd = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-        if (spd > 1.8) { b.vx *= 1.8 / spd; b.vy *= 1.8 / spd; }
+        e.vx *= .98; e.vy *= .98;
+        const spd = Math.sqrt(e.vx * e.vx + e.vy * e.vy);
+        if (spd > 2.2) { e.vx *= 2.2 / spd; e.vy *= 2.2 / spd; }
 
-        b.x += b.vx + Math.sin(b.wobble) * 0.12;
-        b.y += b.vy + Math.cos(b.wobble * 0.7) * 0.08;
+        e.x += e.vx + Math.sin(e.wobble) * .14;
+        e.y += e.vy + Math.cos(e.wobble * .7) * .1;
 
-        // Edge wrap (float stage only)
+        // Edge wrap (float only)
         if (stage === "float") {
-          const pad = b.radius + 10;
-          if (b.x < -pad) b.x = W + pad;
-          else if (b.x > W + pad) b.x = -pad;
-          if (b.y < -pad) b.y = H + pad;
-          else if (b.y > H + pad) b.y = -pad;
+          const pad = e.size + 12;
+          if (e.x < -pad) e.x = W + pad;
+          else if (e.x > W + pad) e.x = -pad;
+          if (e.y < -pad) e.y = H + pad;
+          else if (e.y > H + pad) e.y = -pad;
         }
 
-        drawBubble(b);
+        // Draw 💡
+        ctx.save();
+        ctx.globalAlpha = e.opacity;
+        ctx.translate(e.x, e.y);
+        ctx.rotate(e.rotation);
+        ctx.font = `${Math.floor(e.size)}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("💡", 0, 0);
+        ctx.restore();
       }
 
       raf = requestAnimationFrame(draw);
