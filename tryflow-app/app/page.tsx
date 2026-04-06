@@ -442,12 +442,14 @@ function InteractiveDemo() {
 
 // ─────────────────────────────────────────────────────────────────────────
 const STYLE_CYCLE = [
-  { fontWeight: 800, fontStyle: "normal" as const, letterSpacing: "-0.03em" },
-  { fontWeight: 300, fontStyle: "italic" as const, letterSpacing: "0.02em" },
-  { fontWeight: 700, fontStyle: "normal" as const, letterSpacing: "0.1em" },
-  { fontWeight: 400, fontStyle: "italic" as const, letterSpacing: "-0.01em" },
-  { fontWeight: 800, fontStyle: "italic" as const, letterSpacing: "-0.02em" },
-  { fontWeight: 500, fontStyle: "normal" as const, letterSpacing: "0.14em" },
+  { fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
+  { fontWeight: 100, fontStyle: "italic"  as const, letterSpacing: "0.18em",   fontSize: "0.78em", textTransform: "uppercase" as const },
+  { fontWeight: 800, fontStyle: "italic"  as const, letterSpacing: "-0.04em",  fontSize: "1.08em", textTransform: "none"      as const },
+  { fontWeight: 300, fontStyle: "normal"  as const, letterSpacing: "0.28em",   fontSize: "0.7em",  textTransform: "uppercase" as const },
+  { fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "0.01em",   fontSize: "1.12em", textTransform: "none"      as const },
+  { fontWeight: 200, fontStyle: "italic"  as const, letterSpacing: "0.05em",   fontSize: "0.88em", textTransform: "none"      as const },
+  { fontWeight: 800, fontStyle: "normal"  as const, letterSpacing: "0.22em",   fontSize: "0.72em", textTransform: "uppercase" as const },
+  { fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "-0.02em",  fontSize: "1em",    textTransform: "none"      as const },
 ];
 
 export default function HomePage() {
@@ -464,8 +466,8 @@ export default function HomePage() {
       setTimeout(() => {
         setStyleIdx(i => (i + 1) % STYLE_CYCLE.length);
         setCycleOpacity(1);
-      }, 280);
-    }, 1200);
+      }, 140);
+    }, 700);
     return () => clearInterval(interval);
   }, [revealed]);
 
@@ -573,7 +575,7 @@ export default function HomePage() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 opacity: cycleOpacity,
-                transition: "opacity 0.28s ease",
+                transition: "opacity 0.14s ease",
                 ...STYLE_CYCLE[styleIdx],
               }}>actually cares.</span>
             </span>
