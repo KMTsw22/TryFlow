@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { CursorAlice } from "@/components/ui/CursorAlice";
+import { FallingAlice } from "@/components/ui/FallingAlice";
 
 // ── Tenniel SVGs ──────────────────────────────────────────────────────────
 
@@ -298,16 +298,13 @@ export default function HomePage() {
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 60, damping: 20 });
 
   // Alice falls as user scrolls — within the tunnel column
-  // Tunnel column height is 400vh, so Alice traverses it fully
-  const aliceY = useTransform(smoothProgress, [0, 0.55], ["0vh", "340vh"]);
+  // Tunnel 200vh — rabbit leads, alice follows
+  const aliceY = useTransform(smoothProgress, [0, 0.4], ["0vh", "140vh"]);
+  const rabbitY = useTransform(smoothProgress, [0, 0.4], ["-12vh", "110vh"]);
 
-  // Rabbit always ~200px ahead (below) of Alice, bouncing
-  const rabbitY = useTransform(smoothProgress, [0, 0.55], ["-14vh", "296vh"]);
-
-  // Tunnel rings expand as scroll progresses
   const [tunnelProgress, setTunnelProgress] = useState(0);
   useEffect(() => {
-    return smoothProgress.on("change", (v) => setTunnelProgress(Math.min(1, v / 0.55)));
+    return smoothProgress.on("change", (v) => setTunnelProgress(Math.min(1, v / 0.4)));
   }, [smoothProgress]);
 
   // Rabbit hop: bob up-down independent of scroll
@@ -338,7 +335,7 @@ export default function HomePage() {
       className="overflow-x-hidden"
       style={{ background: "#faf8f4", fontFamily: "'Inter', sans-serif", color: "#1a1a1a" }}
     >
-      <CursorAlice />
+      <FallingAlice />
       <EtchLines opacity={0.022} />
 
       {/* ── Navbar ── */}
@@ -423,7 +420,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════
           THE TUNNEL — 400vh tall falling scene
       ══════════════════════════════════════════ */}
-      <div className="relative" style={{ height: "460vh" }}>
+      <div className="relative" style={{ height: "200vh" }}>
         {/* Left edge: tunnel entrance label */}
         <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden pointer-events-none">
           {/* Tunnel rings */}
