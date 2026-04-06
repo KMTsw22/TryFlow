@@ -2,721 +2,650 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
-import { ArrowRight, Clock, Star, TrendingUp, Eye, Zap } from "lucide-react";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 
-// ── Tenniel-style SVG illustrations (inline) ──────────────────────────────
+// ── Tenniel SVGs ──────────────────────────────────────────────────────────
 
-function RabbitSVG({ className }: { className?: string }) {
+/** Alice falling — dress billowing upward, hair loose */
+function AliceFallingSVG({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Ears */}
-      <path d="M38 80 Q32 30 36 8 Q40 28 44 80" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-      <path d="M36 8 Q39 18 42 80" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.5"/>
-      <path d="M68 80 Q74 30 70 8 Q66 28 62 80" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-      <path d="M70 8 Q67 18 64 80" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.5"/>
+    <svg viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Hair flowing up */}
+      <path d="M38 28 Q20 10 16 -10 Q24 4 30 18" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.7"/>
+      <path d="M58 28 Q76 8 80 -12 Q72 6 64 20" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.7"/>
+      <path d="M42 24 Q38 4 36 -8" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5"/>
+      <path d="M56 24 Q60 4 62 -8" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5"/>
       {/* Head */}
-      <ellipse cx="52" cy="90" rx="22" ry="18" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      {/* Cross-hatch on head */}
-      <path d="M34 84 Q52 80 70 84" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
-      <path d="M33 90 Q52 86 71 90" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
-      <path d="M34 96 Q52 92 70 96" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
-      {/* Eye */}
-      <circle cx="44" cy="88" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <circle cx="44" cy="88" r="1" fill="currentColor"/>
-      <circle cx="60" cy="88" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <circle cx="60" cy="88" r="1" fill="currentColor"/>
+      <ellipse cx="50" cy="34" rx="18" ry="20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Hair band */}
+      <path d="M32 28 Q50 22 68 28" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      {/* Face */}
+      <circle cx="43" cy="30" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      <circle cx="57" cy="30" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      <circle cx="43" cy="30" r="0.7" fill="currentColor"/>
+      <circle cx="57" cy="30" r="0.7" fill="currentColor"/>
+      <path d="M44 38 Q50 42 56 38" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Neck */}
+      <path d="M44 54 L44 62" stroke="currentColor" strokeWidth="1.2"/>
+      <path d="M56 54 L56 62" stroke="currentColor" strokeWidth="1.2"/>
+      {/* Apron / pinafore (billowing) */}
+      <path d="M36 62 Q24 80 20 110 Q36 120 50 118 Q64 120 80 110 Q76 80 64 62 Z"
+        stroke="currentColor" strokeWidth="1.4" fill="none"/>
+      {/* Dress under apron */}
+      <path d="M38 64 Q26 82 22 112 Q36 124 50 122 Q64 124 78 112 Q74 82 62 64"
+        stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.4"/>
+      {/* Apron sash */}
+      <path d="M36 64 Q50 60 64 64" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Apron pocket */}
+      <rect x="43" y="84" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.6"/>
+      {/* Cross-hatch on dress */}
+      {[70,78,86,94,102,110].map((y,i) => (
+        <path key={i} d={`M${28-i} ${y} Q50 ${y+3} ${72+i} ${y}`} stroke="currentColor" strokeWidth="0.4" fill="none" opacity="0.15"/>
+      ))}
+      {/* Arms up (falling) */}
+      <path d="M36 68 Q18 56 12 44 Q16 50 22 60" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      <path d="M64 68 Q82 56 88 44 Q84 50 78 60" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      {/* Hands */}
+      <circle cx="12" cy="44" r="4" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="88" cy="44" r="4" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Stockings */}
+      <path d="M38 118 Q36 148 34 168" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      <path d="M62 118 Q64 148 66 168" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      {/* Shoes */}
+      <path d="M28 168 Q34 174 42 170" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      <path d="M60 170 Q66 174 74 168" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+      {/* Stocking stripes */}
+      <path d="M35 130 Q50 132 65 130" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
+      <path d="M34 140 Q50 142 66 140" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
+      <path d="M33 150 Q50 152 67 150" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
+    </svg>
+  );
+}
+
+/** Rabbit hopping — pocket watch in hand, mid-jump */
+function RabbitHoppingSVG({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 110 160" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Ears — perked forward (running) */}
+      <path d="M34 52 Q28 18 30 2 Q36 20 38 52" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      <path d="M30 2 Q33 14 36 52" stroke="currentColor" strokeWidth="0.7" fill="none" opacity="0.4"/>
+      <path d="M52 50 Q58 16 56 2 Q50 20 48 50" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      <path d="M56 2 Q53 14 50 50" stroke="currentColor" strokeWidth="0.7" fill="none" opacity="0.4"/>
+      {/* Head — tilted (looking back/up urgently) */}
+      <ellipse cx="43" cy="62" rx="18" ry="16" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Worried eyes */}
+      <circle cx="36" cy="58" r="2.5" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="50" cy="56" r="2.5" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="36" cy="58" r="1" fill="currentColor"/>
+      <circle cx="50" cy="56" r="1" fill="currentColor"/>
+      {/* Eyebrow — furrowed */}
+      <path d="M33 54 Q36 52 40 54" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      <path d="M47 52 Q50 50 54 52" stroke="currentColor" strokeWidth="0.8" fill="none"/>
       {/* Nose */}
-      <path d="M50 94 L52 97 L54 94" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <path d="M41 65 L43 68 L45 65" stroke="currentColor" strokeWidth="1" fill="none"/>
       {/* Whiskers */}
-      <path d="M30 93 L43 95" stroke="currentColor" strokeWidth="0.8"/>
-      <path d="M30 97 L43 97" stroke="currentColor" strokeWidth="0.8"/>
-      <path d="M74 93 L61 95" stroke="currentColor" strokeWidth="0.8"/>
-      <path d="M74 97 L61 97" stroke="currentColor" strokeWidth="0.8"/>
+      <path d="M22 62 L38 65" stroke="currentColor" strokeWidth="0.7"/>
+      <path d="M22 66 L38 66" stroke="currentColor" strokeWidth="0.7"/>
+      <path d="M64 62 L48 65" stroke="currentColor" strokeWidth="0.7"/>
+      <path d="M64 66 L48 66" stroke="currentColor" strokeWidth="0.7"/>
+      {/* Open mouth — panting */}
+      <path d="M38 70 Q43 74 48 70" stroke="currentColor" strokeWidth="1" fill="none"/>
       {/* Body */}
-      <path d="M36 104 Q28 120 30 145 Q52 155 74 145 Q76 120 68 104" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M28 76 Q20 94 22 116 Q43 126 64 116 Q66 94 58 76" stroke="currentColor" strokeWidth="1.5" fill="none"/>
       {/* Waistcoat */}
-      <path d="M40 108 L44 130 L52 132 L60 130 L64 108" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <path d="M52 108 L52 132" stroke="currentColor" strokeWidth="0.8"/>
-      {/* Waistcoat buttons */}
-      <circle cx="52" cy="114" r="1.5" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-      <circle cx="52" cy="120" r="1.5" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-      <circle cx="52" cy="126" r="1.5" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-      {/* Watch */}
-      <circle cx="68" cy="118" r="7" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <path d="M68 112 L68 118 L72 118" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
-      {/* Legs */}
-      <path d="M36 144 Q32 162 36 172" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      <path d="M68 144 Q72 162 68 172" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-      {/* Feet */}
-      <path d="M30 172 Q36 176 44 172" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
-      <path d="M62 172 Q68 176 76 172" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+      <path d="M32 80 L36 106 L43 108 L50 106 L54 80" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <path d="M43 80 L43 108" stroke="currentColor" strokeWidth="0.7"/>
+      <circle cx="43" cy="88" r="1.2" stroke="currentColor" strokeWidth="0.7" fill="none"/>
+      <circle cx="43" cy="96" r="1.2" stroke="currentColor" strokeWidth="0.7" fill="none"/>
+      {/* Arm holding watch — raised high */}
+      <path d="M28 82 Q14 68 8 54" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      {/* Pocket watch */}
+      <circle cx="8" cy="50" r="9" stroke="currentColor" strokeWidth="1.3" fill="none"/>
+      <path d="M8 43 L8 50 L13 50" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
+      <path d="M8 41 Q10 38 12 40" stroke="currentColor" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+      {/* Watch chain */}
+      <path d="M17 50 Q22 52 26 54 Q30 56 32 60" stroke="currentColor" strokeWidth="0.7" strokeDasharray="2 1.5"/>
+      {/* Other arm — pumping back */}
+      <path d="M58 82 Q72 72 78 62" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      {/* Legs — mid-hop, both bent */}
+      <path d="M28 114 Q18 128 14 144" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M58 114 Q68 124 72 138" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      {/* Feet pushing off / landing */}
+      <path d="M8 144 Q14 150 24 146" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+      <path d="M66 138 Q72 144 80 140" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+      {/* Tail */}
+      <circle cx="65" cy="112" r="5" stroke="currentColor" strokeWidth="1" fill="none"/>
     </svg>
   );
 }
 
 function CheshireSVG({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Body outline — fading (Cheshire disappearing) */}
-      <ellipse cx="100" cy="75" rx="70" ry="35" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 3" opacity="0.4"/>
-      {/* Stripes */}
+    <svg viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <ellipse cx="100" cy="65" rx="68" ry="30" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 3" opacity="0.3"/>
       {[0,1,2,3,4].map(i => (
-        <path key={i} d={`M${40+i*15} 50 Q${45+i*15} 75 ${40+i*15} 100`} stroke="currentColor" strokeWidth="0.6" fill="none" opacity="0.25"/>
+        <path key={i} d={`M${42+i*14} 44 Q${46+i*14} 65 ${42+i*14} 86`} stroke="currentColor" strokeWidth="0.6" fill="none" opacity="0.15"/>
       ))}
-      {/* Head */}
-      <ellipse cx="100" cy="52" rx="38" ry="30" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      {/* Ears */}
-      <path d="M68 30 L60 10 L78 24" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <path d="M132 30 L140 10 L122 24" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      {/* Eyes — wide grin eyes */}
-      <ellipse cx="84" cy="46" rx="7" ry="5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <ellipse cx="116" cy="46" rx="7" ry="5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <circle cx="86" cy="47" r="2" fill="currentColor"/>
-      <circle cx="118" cy="47" r="2" fill="currentColor"/>
-      <circle cx="85" cy="45" r="0.8" fill="white"/>
-      <circle cx="117" cy="45" r="0.8" fill="white"/>
-      {/* THE GRIN */}
-      <path d="M66 64 Q76 75 100 78 Q124 75 134 64" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
-      <path d="M66 64 Q70 60 74 64" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <path d="M134 64 Q130 60 126 64" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      {/* Teeth */}
+      <ellipse cx="100" cy="44" rx="36" ry="28" stroke="currentColor" strokeWidth="1.4" fill="none"/>
+      <path d="M68 24 L60 6 L76 20" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <path d="M132 24 L140 6 L124 20" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <ellipse cx="85" cy="38" rx="6" ry="4.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <ellipse cx="115" cy="38" rx="6" ry="4.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <circle cx="87" cy="39" r="1.8" fill="currentColor"/>
+      <circle cx="117" cy="39" r="1.8" fill="currentColor"/>
+      <path d="M68 56 Q80 66 100 68 Q120 66 132 56" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
       {[0,1,2,3,4,5].map(i => (
-        <line key={i} x1={72+i*12} y1="64" x2={72+i*12} y2="70" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
+        <line key={i} x1={74+i*11} y1="56" x2={74+i*11} y2="62" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
       ))}
-      {/* Whiskers */}
-      <path d="M40 50 L76 54" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
-      <path d="M38 58 L76 58" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
-      <path d="M160 50 L124 54" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
-      <path d="M162 58 L124 58" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
-      {/* Tail curling */}
-      <path d="M170 75 Q185 60 178 45 Q172 35 180 28" stroke="currentColor" strokeWidth="1.2" fill="none" strokeDasharray="3 2" opacity="0.5"/>
+      <path d="M42 46 L78 50" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
+      <path d="M40 54 L78 54" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
+      <path d="M158 46 L122 50" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
+      <path d="M160 54 L122 54" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
     </svg>
   );
 }
 
-function CaterpillarSVG({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 240 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Mushroom */}
-      <path d="M30 80 Q30 60 60 55 Q90 50 90 80" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <path d="M10 60 Q30 30 60 25 Q90 30 110 60" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <path d="M10 60 Q60 65 110 60" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Spots */}
-      {[[30,45],[50,35],[70,33],[88,42]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r="3" stroke="currentColor" strokeWidth="0.8" fill="none"/>)}
-      {/* Caterpillar body — segments */}
-      {[130,155,178,200,220].map((x,i) => (
-        <ellipse key={i} cx={x} cy={60} rx={i===0?18:14} ry={i===0?20:16} stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      ))}
-      {/* Cross-hatch on segments */}
-      {[130,155,178].map((x,i) => (
-        <g key={i} opacity="0.2">
-          <path d={`M${x-12} ${52} L${x+12} ${52}`} stroke="currentColor" strokeWidth="0.6"/>
-          <path d={`M${x-12} ${60} L${x+12} ${60}`} stroke="currentColor" strokeWidth="0.6"/>
-          <path d={`M${x-12} ${68} L${x+12} ${68}`} stroke="currentColor" strokeWidth="0.6"/>
-        </g>
-      ))}
-      {/* Head */}
-      <ellipse cx="128" cy="58" rx="18" ry="20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      {/* Eyes */}
-      <circle cx="122" cy="52" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <circle cx="134" cy="52" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <circle cx="122" cy="52" r="1.2" fill="currentColor"/>
-      <circle cx="134" cy="52" r="1.2" fill="currentColor"/>
-      {/* Hookah pipe */}
-      <path d="M128 68 Q128 80 120 88 Q112 92 108 88" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-      <ellipse cx="106" cy="88" rx="6" ry="4" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Smoke */}
-      <path d="M108 82 Q100 75 105 68 Q110 62 104 56" stroke="currentColor" strokeWidth="0.8" fill="none" strokeDasharray="2 2" opacity="0.5"/>
-      {/* Antennae */}
-      <path d="M122 40 Q118 28 114 22" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <circle cx="114" cy="21" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-      <path d="M134 40 Q138 28 142 22" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <circle cx="142" cy="21" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-      {/* Legs */}
-      {[145,160,175,192,210].map((x,i) => (
-        <g key={i}>
-          <path d={`M${x} 72 L${x-4} 84`} stroke="currentColor" strokeWidth="0.8"/>
-          <path d={`M${x} 72 L${x+4} 84`} stroke="currentColor" strokeWidth="0.8"/>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-function CardSoldierSVG({ className, label }: { className?: string; label?: string }) {
+function CardSoldierSVG({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 80 140" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Card body */}
-      <rect x="8" y="10" width="64" height="120" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      {/* Corner suit marks */}
-      <text x="14" y="26" fontSize="10" fill="currentColor" fontFamily="serif" opacity="0.7">♠</text>
-      <text x="54" y="122" fontSize="10" fill="currentColor" fontFamily="serif" opacity="0.7" transform="rotate(180 62 117)">♠</text>
-      {/* Face — engraving style */}
-      <ellipse cx="40" cy="55" rx="14" ry="16" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Helmet/crown */}
-      <path d="M26 47 Q40 36 54 47" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <path d="M30 40 L32 47" stroke="currentColor" strokeWidth="1"/>
-      <path d="M40 37 L40 47" stroke="currentColor" strokeWidth="1"/>
-      <path d="M50 40 L48 47" stroke="currentColor" strokeWidth="1"/>
-      {/* Eyes */}
-      <line x1="34" y1="54" x2="38" y2="54" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      <line x1="42" y1="54" x2="46" y2="54" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      {/* Mouth */}
-      <path d="M35 62 Q40 65 45 62" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Body / uniform */}
-      <path d="M26 71 L26 100 L54 100 L54 71" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      {/* Club/spade on chest */}
-      <text x="33" y="90" fontSize="14" fill="currentColor" fontFamily="serif" opacity="0.6">♣</text>
-      {/* Arms */}
-      <path d="M26 75 L14 82 L16 92" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
-      <path d="M54 75 L66 82 L64 92" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
-      {/* Spear / halberd */}
-      <line x1="16" y1="92" x2="16" y2="130" stroke="currentColor" strokeWidth="1.2"/>
-      <path d="M12 96 L16 86 L20 96" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Legs */}
-      <path d="M30 100 L28 128" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      <path d="M50 100 L52 128" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-      {/* Feet */}
-      <path d="M24 128 L34 128" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M48 128 L58 128" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      {/* Label */}
-      {label && <text x="40" y="110" fontSize="7" fill="currentColor" fontFamily="serif" textAnchor="middle" opacity="0.5">{label}</text>}
+      <rect x="8" y="10" width="64" height="120" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <text x="14" y="26" fontSize="10" fill="currentColor" fontFamily="serif" opacity="0.5">♠</text>
+      <text x="54" y="122" fontSize="10" fill="currentColor" fontFamily="serif" opacity="0.5" transform="rotate(180 62 117)">♠</text>
+      <ellipse cx="40" cy="52" rx="13" ry="14" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <path d="M27 44 Q40 36 53 44" stroke="currentColor" strokeWidth="1.1" fill="none"/>
+      <path d="M30 38 L31 44" stroke="currentColor" strokeWidth="1"/>
+      <path d="M40 35 L40 44" stroke="currentColor" strokeWidth="1"/>
+      <path d="M50 38 L49 44" stroke="currentColor" strokeWidth="1"/>
+      <line x1="34" y1="51" x2="37" y2="51" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <line x1="43" y1="51" x2="46" y2="51" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M35 59 Q40 62 45 59" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <path d="M27 66 L27 96 L53 96 L53 66" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <text x="33" y="85" fontSize="13" fill="currentColor" fontFamily="serif" opacity="0.4">♣</text>
+      <path d="M27 72 L16 78 L17 88" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" fill="none"/>
+      <path d="M53 72 L64 78 L63 88" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" fill="none"/>
+      <line x1="17" y1="88" x2="17" y2="124" stroke="currentColor" strokeWidth="1.1"/>
+      <path d="M13 92 L17 83 L21 92" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <path d="M30 96 L28 124" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+      <path d="M50 96 L52 124" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+      <path d="M22 124 L36 124" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M46 124 L60 124" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
     </svg>
   );
 }
 
-// ── Falling objects for hero background ──────────────────────────────────
-const FALLING_ITEMS = ["⌚", "📖", "🔑", "🎩", "☕", "🌹", "🃏", "⚗️"];
-
-function FallingItems() {
+// ── Etching texture ──────────────────────────────────────────────────────
+function EtchLines({ opacity = 0.03, dark = false }: { opacity?: number; dark?: boolean }) {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {FALLING_ITEMS.map((item, i) => (
-        <motion.div
-          key={i}
-          className="absolute text-2xl opacity-10 select-none"
-          style={{ left: `${8 + i * 11.5}%` }}
-          initial={{ y: -80, rotate: 0, opacity: 0 }}
-          animate={{
-            y: ["0vh", "110vh"],
-            rotate: [0, 180 + i * 40],
-            opacity: [0, 0.12, 0.12, 0],
-          }}
-          transition={{
-            duration: 8 + i * 1.2,
-            delay: i * 1.4,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        >
-          {item}
-        </motion.div>
-      ))}
+    <div className="absolute inset-0 pointer-events-none" style={{
+      backgroundImage: `repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(${dark ? "255,255,255" : "0,0,0"},${opacity}) 3px,
+        rgba(${dark ? "255,255,255" : "0,0,0"},${opacity}) 4px
+      )`,
+    }} />
+  );
+}
+
+// ── Falling tunnel visual (the hole) ─────────────────────────────────────
+function TunnelBackground({ progress }: { progress: number }) {
+  const rings = Array.from({ length: 12 }, (_, i) => i);
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+      {rings.map((i) => {
+        const base = 40 + i * 60;
+        const scale = 1 + progress * i * 0.3;
+        const opacity = Math.max(0, 0.06 - i * 0.004) * (1 + progress * 2);
+        return (
+          <div key={i} className="absolute border rounded-full"
+            style={{
+              width: base * scale,
+              height: base * scale * 0.45,
+              borderColor: `rgba(0,0,0,${opacity})`,
+              borderWidth: 1,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
 
-// ── Etching texture overlay ───────────────────────────────────────────────
-function EtchLines({ opacity = 0.03 }: { opacity?: number }) {
-  return (
-    <div
-      className="absolute inset-0 pointer-events-none"
-      style={{
-        backgroundImage: `repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 3px,
-          rgba(0,0,0,${opacity}) 3px,
-          rgba(0,0,0,${opacity}) 4px
-        )`,
-      }}
-    />
-  );
-}
-
-// ── Idea card for investor grid ───────────────────────────────────────────
+// ── Sample investor idea cards ───────────────────────────────────────────
 const SAMPLE_IDEAS = [
-  { id: "A", title: "AI-native legal contract review for SMBs", category: "SaaS / B2B", score: 87, trend: "Rising", tag: "Hot" },
-  { id: "B", title: "Carbon credit marketplace for Southeast Asia", category: "Marketplace", score: 74, trend: "Rising", tag: "Emerging" },
-  { id: "C", title: "Micro-pension app for gig economy workers", category: "Fintech", score: 91, trend: "Rising", tag: "Featured" },
-  { id: "D", title: "Voice-first coding assistant for non-engineers", category: "Dev Tools", score: 68, trend: "Stable", tag: null },
-  { id: "E", title: "Sleep health subscription for remote teams", category: "Health & Wellness", score: 82, trend: "Rising", tag: "New" },
-  { id: "F", title: "B2B procurement automation for restaurants", category: "SaaS / B2B", score: 79, trend: "Stable", tag: null },
+  { title: "AI-native legal review for SMBs", category: "SaaS / B2B", score: 87, trend: "Rising", tag: "Hot" },
+  { title: "Carbon credit marketplace for SE Asia", category: "Marketplace", score: 74, trend: "Rising", tag: "Emerging" },
+  { title: "Micro-pension app for gig workers", category: "Fintech", score: 91, trend: "Rising", tag: "Featured" },
+  { title: "Voice-first coding for non-engineers", category: "Dev Tools", score: 68, trend: "Stable", tag: null },
+  { title: "Sleep health sub for remote teams", category: "Health", score: 82, trend: "Rising", tag: "New" },
+  { title: "B2B procurement for restaurants", category: "SaaS / B2B", score: 79, trend: "Stable", tag: null },
 ];
 
 function IdeaCard({ idea, index }: { idea: typeof SAMPLE_IDEAS[0]; index: number }) {
   const [hovered, setHovered] = useState(false);
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08, duration: 0.5 }}
+      transition={{ delay: index * 0.07, duration: 0.5 }}
       viewport={{ once: true }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="relative p-5 border cursor-pointer overflow-hidden"
+      className="p-6 border cursor-pointer transition-all duration-300 relative overflow-hidden"
       style={{
-        background: hovered ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.03)",
-        borderColor: hovered ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.1)",
-        backdropFilter: "blur(12px)",
-        transition: "all 0.3s ease",
+        borderColor: hovered ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.1)",
+        background: hovered ? "rgba(0,0,0,0.03)" : "white",
       }}
     >
-      {/* Corner suit mark */}
-      <span className="absolute top-3 right-3 text-white/20 font-serif text-lg select-none">♠</span>
-
+      <span className="absolute top-3 right-4 text-black/10 font-serif text-xl select-none">♠</span>
       {idea.tag && (
-        <span className="inline-block text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 mb-3 border"
-          style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }}>
+        <span className="inline-block text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 mb-3 border border-black/15 text-black/35">
           {idea.tag}
         </span>
       )}
-
-      <h3 className="font-serif text-white text-sm leading-snug mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+      <h3 className="font-serif text-black/80 text-sm leading-snug mb-3"
+        style={{ fontFamily: "'Playfair Display', serif" }}>
         "{idea.title}"
       </h3>
-
-      <p className="text-white/30 text-[11px] uppercase tracking-wider mb-4">{idea.category}</p>
-
-      {/* Score bar */}
+      <p className="text-black/30 text-[11px] uppercase tracking-wider mb-4">{idea.category}</p>
       <div className="flex items-center gap-3">
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.1)" }}>
-          <motion.div
-            className="h-px bg-white"
+        <div className="flex-1 h-px bg-black/10">
+          <motion.div className="h-px bg-black/50"
             initial={{ width: 0 }}
             whileInView={{ width: `${idea.score}%` }}
-            transition={{ delay: index * 0.08 + 0.3, duration: 0.8 }}
-            viewport={{ once: true }}
-          />
+            transition={{ delay: index * 0.07 + 0.3, duration: 0.9 }}
+            viewport={{ once: true }} />
         </div>
-        <span className="text-white/60 text-xs font-mono">{idea.score}</span>
+        <span className="text-black/40 text-xs font-mono">{idea.score}</span>
       </div>
-
-      <AnimatePresence>
-        {hovered && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2 }}
-            className="mt-4 pt-3 border-t flex items-center justify-between"
-            style={{ borderColor: "rgba(255,255,255,0.1)" }}
-          >
-            <span className="text-white/40 text-[11px]">{idea.trend} ↗</span>
-            <span className="text-white/60 text-[11px] flex items-center gap-1">
-              View report <ArrowRight className="w-3 h-3" />
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
 export default function HomePage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: containerRef });
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
 
-  const rabbitY = useTransform(scrollYProgress, [0, 0.3], [0, 300]);
-  const rabbitOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
-  const holeScale = useTransform(scrollYProgress, [0.05, 0.3], [0, 1]);
-  const holeOpacity = useTransform(scrollYProgress, [0.05, 0.2, 0.4], [0, 1, 0]);
+  // Smooth spring for scroll progress
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 60, damping: 20 });
 
-  const [ideaText, setIdeaText] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  // Alice falls as user scrolls — within the tunnel column
+  // Tunnel column height is 400vh, so Alice traverses it fully
+  const aliceY = useTransform(smoothProgress, [0, 0.55], ["0vh", "340vh"]);
+
+  // Rabbit always ~200px ahead (below) of Alice, bouncing
+  const rabbitY = useTransform(smoothProgress, [0, 0.55], ["-14vh", "296vh"]);
+
+  // Tunnel rings expand as scroll progresses
+  const [tunnelProgress, setTunnelProgress] = useState(0);
+  useEffect(() => {
+    return smoothProgress.on("change", (v) => setTunnelProgress(Math.min(1, v / 0.55)));
+  }, [smoothProgress]);
+
+  // Rabbit hop: bob up-down independent of scroll
+  const [rabbitBob, setRabbitBob] = useState(0);
+  useEffect(() => {
+    let t = 0;
+    const id = setInterval(() => {
+      t += 0.12;
+      setRabbitBob(Math.sin(t * 2.5) * 18); // bouncing offset in px
+    }, 16);
+    return () => clearInterval(id);
+  }, []);
+
+  // Rabbit tilt left-right while hopping
+  const [rabbitTilt, setRabbitTilt] = useState(0);
+  useEffect(() => {
+    let t = 0;
+    const id = setInterval(() => {
+      t += 0.12;
+      setRabbitTilt(Math.sin(t * 2.5) * 8);
+    }, 16);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      className="min-h-screen overflow-x-hidden"
-      style={{
-        background: "#0a0a0a",
-        fontFamily: "'Inter', sans-serif",
-        color: "white",
-      }}
+      className="overflow-x-hidden"
+      style={{ background: "#faf8f4", fontFamily: "'Inter', sans-serif", color: "#1a1a1a" }}
     >
-      {/* ── Global etching texture ── */}
-      <EtchLines opacity={0.025} />
+      <EtchLines opacity={0.022} />
 
       {/* ── Navbar ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-8 h-16 flex items-center justify-between"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(16px)", background: "rgba(10,10,10,0.8)" }}>
+        style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", backdropFilter: "blur(16px)", background: "rgba(250,248,244,0.92)" }}>
         <div className="flex items-center gap-3">
-          <RabbitSVG className="w-8 h-8 text-white/60" />
-          <span className="font-serif text-white/90 tracking-wide" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Rabbit Hole
-          </span>
+          <RabbitHoppingSVG className="w-7 h-10 text-black/50" />
+          <span className="font-serif text-black/80 tracking-wide text-lg"
+            style={{ fontFamily: "'Playfair Display', serif" }}>Rabbit Hole</span>
         </div>
         <div className="flex items-center gap-6">
-          <Link href="/explore" className="text-white/40 hover:text-white/80 text-sm transition-colors tracking-wide">Trends</Link>
-          <Link href="/login" className="text-white/40 hover:text-white/80 text-sm transition-colors tracking-wide">Sign in</Link>
+          <Link href="/explore" className="text-black/40 hover:text-black text-sm transition-colors tracking-wide">Trends</Link>
+          <Link href="/login" className="text-black/40 hover:text-black text-sm transition-colors tracking-wide">Sign in</Link>
           <Link href="/submit"
-            className="text-sm px-5 py-2 border text-white/80 hover:text-white hover:border-white/40 transition-all tracking-wider"
-            style={{ borderColor: "rgba(255,255,255,0.2)" }}>
+            className="text-sm px-5 py-2 border text-black/70 hover:bg-black hover:text-white transition-all tracking-wider"
+            style={{ borderColor: "rgba(0,0,0,0.2)" }}>
             Submit Idea
           </Link>
         </div>
       </nav>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          HERO — Step into the Rabbit Hole
-      ══════════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-16 overflow-hidden">
+      {/* ══════════════════════════════════════════
+          HERO headline — above the tunnel
+      ══════════════════════════════════════════ */}
+      <section className="pt-32 pb-0 px-6 text-center relative">
+        <motion.p
+          initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }}
+          className="text-black/30 text-xs tracking-[0.4em] uppercase mb-6"
+        >Where ideas fall into something real</motion.p>
 
-        {/* Falling items background */}
-        <FallingItems />
-
-        {/* Subtle radial vignette */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 70% 70% at 50% 50%, transparent 30%, rgba(10,10,10,0.85) 100%)" }} />
-
-        {/* Scrolling rabbit */}
-        <motion.div
-          style={{ y: rabbitY, opacity: rabbitOpacity }}
-          className="absolute top-20 right-16 hidden md:block"
+        <motion.h1
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.35 }}
+          className="text-5xl md:text-8xl font-serif leading-none tracking-tight mb-2"
+          style={{ fontFamily: "'Playfair Display', serif" }}
         >
-          <RabbitSVG className="w-32 h-48 text-white/15" />
+          Step into the
+        </motion.h1>
+        <motion.h1
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.5 }}
+          className="text-5xl md:text-8xl font-serif italic leading-none tracking-tight mb-10"
+          style={{ fontFamily: "'Playfair Display', serif", color: "rgba(0,0,0,0.4)" }}
+        >
+          Rabbit Hole.
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.9 }}
+          className="text-black/40 text-base max-w-md mx-auto mb-12 leading-relaxed"
+        >
+          Submit your idea anonymously.<br/>
+          AI validates it. The right investor finds it.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}
+          className="flex items-center justify-center gap-4 mb-4"
+        >
+          <Link href="/submit">
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              className="px-8 py-3.5 text-sm font-medium tracking-widest transition-all border border-black/80 bg-black text-white hover:bg-black/80">
+              Submit anonymously — free
+            </motion.button>
+          </Link>
+          <Link href="/explore">
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              className="px-8 py-3.5 text-sm font-medium tracking-widest transition-all border text-black/60 hover:border-black/40"
+              style={{ borderColor: "rgba(0,0,0,0.15)" }}>
+              Browse ideas →
+            </motion.button>
+          </Link>
         </motion.div>
 
-        {/* Rabbit hole portal */}
-        <motion.div
-          style={{ scale: holeScale, opacity: holeOpacity }}
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-40 pointer-events-none"
+        {/* Scroll hint */}
+        <motion.p
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}
+          className="text-black/20 text-xs tracking-widest mb-0"
         >
-          <div className="w-full h-full rounded-[50%]"
-            style={{
-              background: "radial-gradient(ellipse at center, #000 0%, rgba(0,0,0,0.6) 60%, transparent 100%)",
-              boxShadow: "0 0 60px 30px rgba(0,0,0,0.8), inset 0 0 40px rgba(255,255,255,0.03)",
-            }} />
-          {/* Hole rim engraving */}
-          <div className="absolute inset-0 rounded-[50%] border"
-            style={{ borderColor: "rgba(255,255,255,0.08)" }} />
-        </motion.div>
-
-        {/* Hero content */}
-        <div className="relative z-10 text-center max-w-4xl">
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-white/30 text-xs tracking-[0.4em] uppercase mb-8"
-          >
-            Where ideas fall into something real
-          </motion.p>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="text-5xl md:text-8xl font-serif leading-none tracking-tight mb-4"
-            style={{ fontFamily: "'Playfair Display', serif" }}
-          >
-            Step into the
-          </motion.h1>
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.55 }}
-            className="text-5xl md:text-8xl font-serif leading-none tracking-tight mb-12 italic"
-            style={{ fontFamily: "'Playfair Display', serif", color: "rgba(255,255,255,0.7)" }}
-          >
-            Rabbit Hole.
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-white/40 text-base leading-relaxed max-w-lg mx-auto mb-12"
-          >
-            Submit your idea anonymously. Our AI validates it.<br />
-            The right investor finds it. And it becomes real.
-          </motion.p>
-
-          {/* Big idea input */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1 }}
-            className="relative max-w-2xl mx-auto"
-          >
-            {/* Ornate border */}
-            <div className="absolute -inset-[1px] pointer-events-none"
-              style={{ border: "1px solid rgba(255,255,255,0.12)" }}>
-              {/* Corner ornaments */}
-              {["top-0 left-0", "top-0 right-0", "bottom-0 left-0", "bottom-0 right-0"].map((pos, i) => (
-                <div key={i} className={`absolute ${pos} w-4 h-4`}
-                  style={{
-                    borderTop: i < 2 ? "2px solid rgba(255,255,255,0.3)" : "none",
-                    borderBottom: i >= 2 ? "2px solid rgba(255,255,255,0.3)" : "none",
-                    borderLeft: i % 2 === 0 ? "2px solid rgba(255,255,255,0.3)" : "none",
-                    borderRight: i % 2 === 1 ? "2px solid rgba(255,255,255,0.3)" : "none",
-                  }} />
-              ))}
-            </div>
-
-            <textarea
-              value={ideaText}
-              onChange={(e) => setIdeaText(e.target.value)}
-              placeholder="Describe your idea... (What problem does it solve? Who is it for?)"
-              rows={4}
-              className="w-full px-6 py-5 text-white/80 text-sm leading-relaxed resize-none outline-none"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                backdropFilter: "blur(8px)",
-                border: "none",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            />
-
-            <div className="flex items-center justify-between px-6 py-3"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              <span className="text-white/20 text-xs tracking-wider">Anonymous · Free · Instant</span>
-              <Link href="/submit">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium tracking-wider transition-all"
-                  style={{ background: "rgba(255,255,255,0.9)", color: "#0a0a0a" }}
-                >
-                  Fall in
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
-              </Link>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.5, duration: 1 }}
-            className="mt-16 flex items-center justify-center gap-2 text-white/20"
-          >
-            <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
-            >
-              <svg width="12" height="20" viewBox="0 0 12 20" fill="none">
-                <rect x="1" y="1" width="10" height="18" rx="5" stroke="currentColor" strokeWidth="1"/>
-                <circle cx="6" cy="6" r="2" fill="currentColor"/>
-              </svg>
-            </motion.div>
-            <span className="text-xs tracking-widest">SCROLL</span>
-          </motion.div>
-        </div>
+          ↓ scroll to fall
+        </motion.p>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          PROCESS — The Caterpillar's Question
-      ══════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-40 px-6 overflow-hidden">
-        <EtchLines opacity={0.02} />
+      {/* ══════════════════════════════════════════
+          THE TUNNEL — 400vh tall falling scene
+      ══════════════════════════════════════════ */}
+      <div className="relative" style={{ height: "460vh" }}>
+        {/* Left edge: tunnel entrance label */}
+        <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden pointer-events-none">
+          {/* Tunnel rings */}
+          <TunnelBackground progress={tunnelProgress} />
+
+          {/* Tunnel wall shelves — floating objects */}
+          {[
+            { item: "⌚", left: "8%",  top: "20%" },
+            { item: "📖", left: "82%", top: "30%" },
+            { item: "🎩", left: "10%", top: "55%" },
+            { item: "🔑", left: "78%", top: "65%" },
+            { item: "☕", left: "14%", top: "78%" },
+            { item: "🌹", left: "80%", top: "82%" },
+          ].map((obj, i) => (
+            <motion.div key={i} className="absolute text-2xl opacity-[0.09] select-none"
+              style={{ left: obj.left, top: obj.top }}
+              animate={{ y: [0, -6, 0], rotate: [0, 4, 0] }}
+              transition={{ duration: 3 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
+            >
+              {obj.item}
+            </motion.div>
+          ))}
+
+          {/* Etching tunnel wall lines */}
+          <div className="absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse 50% 80% at 50% 50%, transparent 20%, rgba(0,0,0,${0.02 + tunnelProgress * 0.04}) 100%)`,
+            }}
+          />
+        </div>
+
+        {/* Rabbit — fixed to viewport, moves as scroll changes */}
+        <motion.div
+          className="fixed pointer-events-none z-20"
+          style={{
+            left: "calc(50% - 36px)",
+            top: 0,
+            y: rabbitY,
+            translateY: rabbitBob,
+            rotate: rabbitTilt,
+          }}
+        >
+          <RabbitHoppingSVG className="w-20 h-28 text-black/55" />
+        </motion.div>
+
+        {/* Alice — falls behind rabbit */}
+        <motion.div
+          className="fixed pointer-events-none z-10"
+          style={{
+            left: "calc(50% - 44px)",
+            top: 0,
+            y: aliceY,
+          }}
+        >
+          {/* Alice bobs slightly, less than rabbit */}
+          <motion.div
+            animate={{ rotate: [-3, 3, -3], y: [0, 4, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <AliceFallingSVG className="w-24 h-40 text-black/60" />
+          </motion.div>
+        </motion.div>
+
+        {/* Tunnel side text — appears at various scroll depths */}
+        {[
+          { scrollStart: 0.08, text: "\"Oh my ears and whiskers, how late it's getting!\"", side: "left" },
+          { scrollStart: 0.20, text: "Anonymous. Validated. Discovered.", side: "right" },
+          { scrollStart: 0.33, text: "8 AI agents. Ruthless. Parallel.", side: "left" },
+          { scrollStart: 0.45, text: "The right investor is already waiting.", side: "right" },
+        ].map((item, i) => (
+          <motion.div
+            key={i}
+            className="fixed pointer-events-none z-30"
+            style={{
+              [item.side]: item.side === "left" ? "4%" : "4%",
+              ...(item.side === "right" ? { right: "4%", left: "auto" } : {}),
+              top: "50%",
+              translateY: "-50%",
+              opacity: useTransform(
+                scrollYProgress,
+                [item.scrollStart - 0.04, item.scrollStart, item.scrollStart + 0.08, item.scrollStart + 0.12],
+                [0, 1, 1, 0]
+              ),
+            }}
+          >
+            <p className={`text-xs text-black/35 max-w-[160px] leading-relaxed font-serif italic
+              ${item.side === "right" ? "text-right" : "text-left"}`}
+              style={{ fontFamily: "'Playfair Display', serif" }}>
+              {item.text}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ══════════════════════════════════════════
+          LANDING — Process section
+      ══════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 overflow-hidden"
+        style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+        <EtchLines opacity={0.018} />
 
         <div className="max-w-6xl mx-auto">
-          {/* Section header */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }} viewport={{ once: true }}
             className="text-center mb-24"
           >
-            <p className="text-white/25 text-xs tracking-[0.4em] uppercase mb-4">The Process</p>
-            <h2 className="text-4xl md:text-6xl font-serif mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <p className="text-black/25 text-xs tracking-[0.4em] uppercase mb-4">The Process</p>
+            <h2 className="text-4xl md:text-6xl font-serif mb-6"
+              style={{ fontFamily: "'Playfair Display', serif" }}>
               "Who are <em>you?</em>"
             </h2>
-            <p className="text-white/40 max-w-md mx-auto text-sm leading-relaxed">
-              The caterpillar asked Alice three times. Our AI asks your idea the same — and doesn't stop until it has an answer.
+            <p className="text-black/40 max-w-md mx-auto text-sm leading-relaxed">
+              The caterpillar asked Alice three times.<br/>
+              Our AI asks your idea the same — until it has a real answer.
             </p>
           </motion.div>
 
-          {/* Caterpillar illustration */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 1.2 }}
-            viewport={{ once: true }}
-            className="flex justify-center mb-20"
-          >
-            <CaterpillarSVG className="w-full max-w-lg text-white/25" />
-          </motion.div>
-
-          {/* 3 process steps */}
           <div className="grid md:grid-cols-3 gap-0">
             {[
               {
                 num: "I.",
-                title: "You fall.",
-                desc: "Drop your idea anonymously. No pitch deck. No network. No name. Just the idea, raw.",
-                icon: <RabbitSVG className="w-16 h-24 text-white/20 mx-auto" />,
+                title: "You fall in.",
+                desc: "Drop your idea anonymously. No pitch deck. No network. No name. Just the raw idea.",
+                svg: <AliceFallingSVG className="w-20 h-32 text-black/20 mx-auto" />,
               },
               {
                 num: "II.",
                 title: "It's questioned.",
                 desc: "8 AI agents run in parallel — market size, competition, timing, moat, defensibility. Ruthlessly.",
-                icon: <CheshireSVG className="w-40 h-24 text-white/20 mx-auto" />,
+                svg: <CheshireSVG className="w-48 h-24 text-black/20 mx-auto" />,
               },
               {
                 num: "III.",
                 title: "The right one finds it.",
-                desc: "Investors browse validated ideas. No cold emails. No warm intros. Just signal.",
-                icon: <CardSoldierSVG className="w-16 h-24 text-white/20 mx-auto" />,
+                desc: "Investors browse AI-validated ideas. No cold emails. No warm intros. Just signal.",
+                svg: <CardSoldierSVG className="w-16 h-24 text-black/20 mx-auto" />,
               },
             ].map((step, i) => (
-              <motion.div
-                key={step.num}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.15, duration: 0.7 }}
-                viewport={{ once: true }}
-                className="py-12 px-8 text-center relative"
+              <motion.div key={step.num}
+                initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.15, duration: 0.7 }} viewport={{ once: true }}
+                className="py-12 px-8 text-center"
                 style={{
-                  borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.07)" : "none",
-                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                  borderLeft: i > 0 ? "1px solid rgba(0,0,0,0.07)" : "none",
+                  borderTop: "1px solid rgba(0,0,0,0.07)",
                 }}
               >
-                {step.icon}
-                <div className="mt-6 mb-3">
-                  <span className="text-white/20 text-xs font-serif tracking-widest"
+                {step.svg}
+                <div className="mt-6 mb-2">
+                  <span className="text-black/20 text-xs font-serif tracking-widest"
                     style={{ fontFamily: "'Playfair Display', serif" }}>{step.num}</span>
                 </div>
-                <h3 className="text-xl font-serif mb-3 text-white/80"
+                <h3 className="text-xl font-serif mb-3 text-black/75"
                   style={{ fontFamily: "'Playfair Display', serif" }}>{step.title}</h3>
-                <p className="text-white/35 text-sm leading-relaxed">{step.desc}</p>
+                <p className="text-black/35 text-sm leading-relaxed">{step.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          INVESTOR VIEW — The Card Soldiers' Grid
-      ══════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-40 px-6 overflow-hidden">
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.02) 50%, transparent)" }} />
+      {/* ══════════════════════════════════════════
+          INVESTOR GRID
+      ══════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 overflow-hidden"
+        style={{ background: "#f5f2ed", borderTop: "1px solid rgba(0,0,0,0.07)" }}>
         <EtchLines opacity={0.02} />
 
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-            >
-              <p className="text-white/25 text-xs tracking-[0.4em] uppercase mb-3">For Investors</p>
-              <h2 className="text-4xl md:text-5xl font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }} viewport={{ once: true }}>
+              <p className="text-black/25 text-xs tracking-[0.4em] uppercase mb-3">For Investors</p>
+              <h2 className="text-4xl md:text-5xl font-serif"
+                style={{ fontFamily: "'Playfair Display', serif" }}>
                 The Queen's<br /><em>Garden of Ideas.</em>
               </h2>
             </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="max-w-xs"
-            >
-              {/* Card soldiers illustration */}
-              <div className="flex gap-2 justify-end mb-4">
-                {["♠","♣","♥"].map((suit, i) => (
-                  <CardSoldierSVG key={i} className="w-10 h-16 text-white/15" />
-                ))}
-              </div>
-              <p className="text-white/35 text-sm leading-relaxed text-right">
-                AI-validated ideas. Scored. Ranked. Anonymous.<br/>
-                The signal without the noise.
-              </p>
+            <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }} viewport={{ once: true }}
+              className="flex gap-3 items-end">
+              {[0, 1, 2].map(i => <CardSoldierSVG key={i} className="w-10 h-16 text-black/15" />)}
             </motion.div>
           </div>
 
-          {/* Idea grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px"
-            style={{ background: "rgba(255,255,255,0.05)" }}>
+            style={{ background: "rgba(0,0,0,0.07)" }}>
             {SAMPLE_IDEAS.map((idea, i) => (
-              <div key={idea.id} style={{ background: "#0a0a0a" }}>
+              <div key={idea.title} style={{ background: "#f5f2ed" }}>
                 <IdeaCard idea={idea} index={i} />
               </div>
             ))}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            viewport={{ once: true }}
-            className="text-center mt-10"
-          >
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }} viewport={{ once: true }}
+            className="text-center mt-10">
             <Link href="/explore"
-              className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors tracking-wider border-b pb-0.5"
-              style={{ borderColor: "rgba(255,255,255,0.15)" }}
-            >
+              className="inline-flex items-center gap-2 text-sm text-black/35 hover:text-black/70 transition-colors tracking-wider border-b pb-0.5"
+              style={{ borderColor: "rgba(0,0,0,0.15)" }}>
               View all validated ideas <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          CHESHIRE QUOTE — The grin without the cat
-      ══════════════════════════════════════════════════════════════════ */}
-      <section className="relative py-40 px-6 text-center overflow-hidden">
-        <EtchLines opacity={0.02} />
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 1.5 }}
-          viewport={{ once: true }}
-          className="max-w-3xl mx-auto"
-        >
-          <CheshireSVG className="w-64 h-32 text-white/12 mx-auto mb-12" />
-
-          <blockquote className="text-3xl md:text-5xl font-serif italic leading-tight text-white/60 mb-8"
+      {/* ══════════════════════════════════════════
+          CHESHIRE QUOTE — CTA
+      ══════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 text-center overflow-hidden"
+        style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+        <EtchLines opacity={0.018} />
+        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
+          transition={{ duration: 1.2 }} viewport={{ once: true }}
+          className="max-w-3xl mx-auto">
+          <CheshireSVG className="w-64 h-32 text-black/12 mx-auto mb-12" />
+          <blockquote className="text-3xl md:text-5xl font-serif italic leading-tight text-black/50 mb-6"
             style={{ fontFamily: "'Playfair Display', serif" }}>
             "We're all mad here."
           </blockquote>
-          <p className="text-white/25 text-sm tracking-wider mb-16">— The Cheshire Cat</p>
-
-          <p className="text-white/40 text-base leading-relaxed max-w-lg mx-auto mb-12">
+          <p className="text-black/25 text-sm tracking-wider mb-14">— The Cheshire Cat</p>
+          <p className="text-black/40 text-base leading-relaxed max-w-lg mx-auto mb-12">
             The best ideas always sound a little mad at first.<br />
             That's exactly why they need a place to be heard.
           </p>
-
           <Link href="/submit">
-            <motion.button
-              whileHover={{ scale: 1.03, borderColor: "rgba(255,255,255,0.4)" }}
-              whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center gap-3 px-10 py-4 border text-white/80 text-sm tracking-widest transition-all"
-              style={{ borderColor: "rgba(255,255,255,0.15)" }}
-            >
-              <RabbitSVG className="w-6 h-9 text-white/50" />
+            <motion.button whileHover={{ scale: 1.03, background: "#1a1a1a" }} whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-3 px-10 py-4 border border-black/20 text-black/70 text-sm tracking-widest transition-all hover:text-white hover:border-black">
+              <RabbitHoppingSVG className="w-6 h-9 text-current" />
               Submit your idea — it's free
             </motion.button>
           </Link>
         </motion.div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════════════════
-          FOOTER
-      ══════════════════════════════════════════════════════════════════ */}
-      <footer className="py-10 px-8" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      {/* ── Footer ── */}
+      <footer className="py-10 px-8" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <RabbitSVG className="w-6 h-9 text-white/30" />
-            <span className="text-white/30 text-sm font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Rabbit Hole
-            </span>
+            <RabbitHoppingSVG className="w-6 h-9 text-black/25" />
+            <span className="text-black/30 text-sm font-serif"
+              style={{ fontFamily: "'Playfair Display', serif" }}>Rabbit Hole</span>
           </div>
           <div className="flex items-center gap-8">
-            <Link href="/explore" className="text-white/20 hover:text-white/50 text-xs tracking-wider transition-colors">Trends</Link>
-            <Link href="/submit" className="text-white/20 hover:text-white/50 text-xs tracking-wider transition-colors">Submit</Link>
-            <Link href="/login" className="text-white/20 hover:text-white/50 text-xs tracking-wider transition-colors">Sign in</Link>
+            <Link href="/explore" className="text-black/20 hover:text-black/50 text-xs tracking-wider transition-colors">Trends</Link>
+            <Link href="/submit" className="text-black/20 hover:text-black/50 text-xs tracking-wider transition-colors">Submit</Link>
+            <Link href="/login" className="text-black/20 hover:text-black/50 text-xs tracking-wider transition-colors">Sign in</Link>
           </div>
-          <p className="text-white/15 text-xs">© 2026 Rabbit Hole</p>
+          <p className="text-black/15 text-xs">© 2026 Rabbit Hole</p>
         </div>
       </footer>
     </div>
