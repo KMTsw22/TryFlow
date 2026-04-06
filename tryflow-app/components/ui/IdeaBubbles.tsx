@@ -61,7 +61,7 @@ export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
     type Stage = "float" | "converge" | "burst" | "settle" | "done";
     let stage: Stage = "float";
     let stageFrame = 0;
-    const FLOAT_DUR   = 320;
+    const FLOAT_DUR   = 160;
     const SETTLE_HOLD = 180;
 
     const ORB_MAX        = 88;
@@ -268,7 +268,7 @@ export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
         if (stage === "converge") {
-          const pull = .025 + (1 - Math.min(1, dist / 400)) * .05;
+          const pull = .055 + (1 - Math.min(1, dist / 400)) * .10;
           o.vx += (dx / dist) * pull;
           o.vy += (dy / dist) * pull;
           o.phase = "converging";

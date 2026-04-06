@@ -464,7 +464,7 @@ export default function HomePage() {
         setStyleIdx(i => (i + 1) % STYLE_CYCLE.length);
         setCycleOpacity(1);
       }, 280);
-    }, 2400);
+    }, 1200);
     return () => clearInterval(interval);
   }, [revealed]);
 
