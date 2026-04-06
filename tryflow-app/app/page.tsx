@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, TrendingUp, Minus, CheckCircle2, XCircle, ChevronDown, Sparkles, BarChart3, FileText, ShieldCheck } from "lucide-react";
+import { ArrowRight, TrendingUp, Minus, ChevronDown, Sparkles, BarChart3 } from "lucide-react";
 import { ParticleBackground } from "@/components/ui/ParticleBackground";
 import { IdeaBubbles } from "@/components/ui/IdeaBubbles";
 import { ScrollSeeds } from "@/components/ui/ScrollSeeds";
@@ -696,29 +696,22 @@ export default function HomePage() {
               },
             ].map((item, i) => (
               <FallIn key={item.step} delay={i * 80}>
-                <div className="py-12 border-t flex flex-col md:flex-row md:items-start gap-8 md:gap-16"
-                  style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                  {/* Step number */}
-                  <div className="shrink-0 w-24">
-                    <span className="text-[5rem] font-black leading-none"
-                      style={{ color: "rgba(255,255,255,0.12)" }}>{item.step}</span>
+                <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                  {/* Top row: step + tags */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-black tracking-widest text-white/20 uppercase">{item.step}</span>
+                    <div className="flex gap-5">
+                      {item.extra.map(tag => (
+                        <span key={tag} className="text-xs text-white/25 font-medium tracking-wide hidden md:block">{tag}</span>
+                      ))}
+                    </div>
                   </div>
-                  {/* Title */}
-                  <div className="flex-1">
-                    <h3 className="text-[2.4rem] md:text-[3.8rem] font-black text-white leading-none tracking-tight mb-1">{item.title}</h3>
-                    <h3 className="text-[2.4rem] md:text-[3.8rem] font-black leading-none tracking-tight mb-6"
-                      style={{ color: "rgba(255,255,255,0.35)" }}>{item.detail}</h3>
-                    <p className="text-white/50 text-base leading-relaxed max-w-md">{item.body}</p>
-                  </div>
-                  {/* Detail tags */}
-                  <div className="shrink-0 space-y-2 pt-2">
-                    {item.extra.map(tag => (
-                      <div key={tag} className="flex items-center gap-2">
-                        <div className="w-1 h-1 bg-white/30" />
-                        <span className="text-xs text-white/40 font-medium tracking-wide">{tag}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {/* Full-width title */}
+                  <h3 className="text-[2.8rem] md:text-[5rem] font-black text-white leading-none tracking-tight mb-1">{item.title}</h3>
+                  <h3 className="text-[2.8rem] md:text-[5rem] font-black leading-none tracking-tight mb-6"
+                    style={{ color: "rgba(255,255,255,0.28)" }}>{item.detail}</h3>
+                  {/* Body */}
+                  <p className="text-white/45 text-base leading-relaxed max-w-xl">{item.body}</p>
                 </div>
               </FallIn>
             ))}
@@ -826,14 +819,13 @@ export default function HomePage() {
               },
             ].map((f, i) => (
               <FallIn key={f.label} delay={i * 60}>
-                <div className="py-10 border-t grid grid-cols-1 md:grid-cols-[200px_1fr_200px] gap-6 md:gap-12 items-start"
-                  style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                  <p className="text-xs font-bold tracking-widest text-white/30 uppercase pt-1">{f.label}</p>
-                  <div>
-                    <h3 className="text-xl md:text-2xl font-black text-white mb-3 tracking-tight">{f.title}</h3>
-                    <p className="text-white/45 text-sm leading-relaxed max-w-lg">{f.desc}</p>
+                <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-bold tracking-widest text-white/25 uppercase">{f.label}</p>
+                    <p className="text-xs text-white/20 font-medium tracking-wide">{f.detail}</p>
                   </div>
-                  <p className="text-xs text-white/25 font-medium tracking-wide pt-1 md:text-right">{f.detail}</p>
+                  <h3 className="text-[2rem] md:text-[3.2rem] font-black text-white leading-tight tracking-tight mb-3">{f.title}</h3>
+                  <p className="text-white/45 text-sm leading-relaxed max-w-2xl">{f.desc}</p>
                 </div>
               </FallIn>
             ))}
@@ -849,39 +841,30 @@ export default function HomePage() {
           backgroundSize: "32px 32px",
         }} />
 
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative max-w-6xl mx-auto text-center">
           <FallIn>
-            <div className="flex flex-col md:flex-row md:items-end gap-12 md:gap-20">
-              <div className="flex-1">
-                <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-6">Your idea. Grounded.</p>
-                <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter mb-8">
-                  Land your<br />
-                  idea.
-                </h2>
-                <Link href="/submit"
-                  className="inline-flex items-center gap-3 font-black text-base px-8 py-4 transition-all duration-200 hover:-translate-y-0.5"
-                  style={{ background: "rgba(255,255,255,0.95)", color: "#0d2040" }}>
-                  Submit anonymously — free
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
-              <div className="flex-1 max-w-sm">
-                <div className="space-y-6">
-                  {[
-                    ["Anonymous", "No account. No public record."],
-                    ["Free", "Always. No paywalls."],
-                    ["Instant", "Report delivered in seconds."],
-                    ["Collective", "Your signal helps every founder."],
-                  ].map(([title, desc]) => (
-                    <div key={title} className="flex items-start gap-4" style={{ borderLeft: "2px solid rgba(255,255,255,0.15)", paddingLeft: "16px" }}>
-                      <div>
-                        <p className="text-sm font-black text-white">{title}</p>
-                        <p className="text-xs text-white/40 mt-0.5">{desc}</p>
-                      </div>
-                    </div>
-                  ))}
+            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-6">Your idea. Grounded.</p>
+            <h2 className="text-[3.5rem] md:text-[7rem] font-black text-white leading-none tracking-tighter mb-10">
+              Land your idea.
+            </h2>
+            <Link href="/submit"
+              className="inline-flex items-center gap-3 font-black text-base px-10 py-5 transition-all duration-200 hover:-translate-y-0.5 mb-16"
+              style={{ background: "rgba(255,255,255,0.95)", color: "#0d2040" }}>
+              Submit anonymously — free
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <div className="flex flex-wrap justify-center gap-x-12 gap-y-4 mt-2">
+              {[
+                ["Anonymous", "No account. No public record."],
+                ["Free", "Always. No paywalls."],
+                ["Instant", "Report in seconds."],
+                ["Collective", "Your signal helps every founder."],
+              ].map(([title, desc]) => (
+                <div key={title} className="text-left" style={{ borderLeft: "2px solid rgba(255,255,255,0.15)", paddingLeft: "14px" }}>
+                  <p className="text-sm font-black text-white">{title}</p>
+                  <p className="text-xs text-white/40 mt-0.5">{desc}</p>
                 </div>
-              </div>
+              ))}
             </div>
           </FallIn>
         </div>
