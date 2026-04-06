@@ -24,7 +24,7 @@ interface LandSpot {
   y: number;        // current screen y
   groundX: number;
   landed: boolean;
-  ripples: Array<{ r: number; alpha: number; maxR: number; speed: number }>;
+  ripples: Array<{ r: number; alpha: number; maxR: number; speed: number; delay: number; born: number }>;
 }
 
 export function ScrollSeeds() {
@@ -150,31 +150,57 @@ export function ScrollSeeds() {
 
           if (!ls.landed && Math.abs(ls.y - groundY) < 3) {
             ls.landed = true;
-            // 2–3 irregular ripples per spot
-            const count = Math.random() < 0.4 ? 2 : 3;
-            ls.ripples = Array.from({ length: count }, (_, j) => ({
-              r: j * rnd(3, 7),
-              alpha: rnd(0.3, 0.55) - j * 0.08,
-              maxR: rnd(10, 20),
-              speed: rnd(0.25, 0.55),
+            // 4 rings staggered — each takes ~2s to expand and fade
+            ls.ripples = Array.from({ length: 4 }, (_, j) => ({
+              r: 0,
+              alpha: 0,
+              maxR: rnd(55, 95) + j * 18,
+              speed: rnd(0.52, 0.72) - j * 0.06,
+              delay: j * 14, // frame delay between rings
+              born: 0,
             }));
           }
 
           if (!ls.landed) {
             ctx.beginPath();
-            ctx.arc(ls.x, ls.y, 1.2, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(200, 220, 255, 0.3)";
+            ctx.arc(ls.x, ls.y, 1.4, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(200, 220, 255, 0.4)";
             ctx.fill();
           } else {
-            ls.ripples.forEach((rp) => {
-              if (rp.alpha < 0.005 || rp.r > rp.maxR) return;
-              rp.r += rp.speed;
-              rp.alpha = Math.max(0, rp.alpha - 0.009);
+            ls.ripples.forEach((rp: any) => {
+              rp.born++;
+              if (rp.born < rp.delay) return;
+
+              // Kick alpha on first active frame
+              if (rp.alpha === 0) rp.alpha = 0.72;
+
+              if (rp.r < rp.maxR) rp.r += rp.speed;
+              // Fade: slow start, fast at end — 2s total ≈ 120 frames @60fps
+              const progress = rp.r / rp.maxR;
+              rp.alpha = Math.max(0, 0.72 * Math.pow(1 - progress, 1.4));
+
+              if (rp.alpha < 0.005) return;
+
+              const rx = rp.r;
+              const ry = rp.r * 0.32; // flat ellipse for ground perspective
+
+              // Gradient stroke: bright center → transparent edge
+              const grad = ctx.createRadialGradient(
+                ls.groundX, groundY, Math.max(0, rx - 12),
+                ls.groundX, groundY, rx + 8
+              );
+              grad.addColorStop(0, `rgba(180, 225, 255, ${rp.alpha})`);
+              grad.addColorStop(0.5, `rgba(130, 200, 255, ${rp.alpha * 0.6})`);
+              grad.addColorStop(1, `rgba(100, 180, 240, 0)`);
+
+              ctx.save();
+              ctx.scale(1, ry / rx); // squish to ellipse
               ctx.beginPath();
-              ctx.ellipse(ls.groundX, groundY, rp.r, rp.r * 0.3, 0, 0, Math.PI * 2);
-              ctx.strokeStyle = `rgba(160, 210, 240, ${rp.alpha})`;
-              ctx.lineWidth = 0.8;
+              ctx.arc(ls.groundX, groundY * (rx / ry), rx, 0, Math.PI * 2);
+              ctx.strokeStyle = grad;
+              ctx.lineWidth = 2.5 * (1 - progress * 0.5);
               ctx.stroke();
+              ctx.restore();
             });
           }
         }
