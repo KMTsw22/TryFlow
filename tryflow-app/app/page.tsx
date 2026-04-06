@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { CursorAlice } from "@/components/ui/CursorAlice";
 
 // ── Tenniel SVGs ──────────────────────────────────────────────────────────
 
@@ -221,6 +222,40 @@ const SAMPLE_IDEAS = [
   { title: "B2B procurement for restaurants", category: "SaaS / B2B", score: 79, trend: "Stable", tag: null },
 ];
 
+const TUNNEL_TEXTS = [
+  { scrollStart: 0.08, text: "\"Oh my ears and whiskers, how late it's getting!\"", side: "left" as const },
+  { scrollStart: 0.20, text: "Anonymous. Validated. Discovered.", side: "right" as const },
+  { scrollStart: 0.33, text: "8 AI agents. Ruthless. Parallel.", side: "left" as const },
+  { scrollStart: 0.45, text: "The right investor is already waiting.", side: "right" as const },
+];
+
+function TunnelText({ scrollYProgress }: { scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"] }) {
+  return (
+    <>
+      {TUNNEL_TEXTS.map((item, i) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const opacity = useTransform(
+          scrollYProgress,
+          [item.scrollStart - 0.04, item.scrollStart, item.scrollStart + 0.08, item.scrollStart + 0.12],
+          [0, 1, 1, 0]
+        );
+        return (
+          <motion.div key={i} className="fixed pointer-events-none z-30"
+            style={{
+              ...(item.side === "right" ? { right: "4%", left: "auto" } : { left: "4%" }),
+              top: "50%", translateY: "-50%", opacity,
+            }}>
+            <p className={`text-xs text-black/35 max-w-[160px] leading-relaxed font-serif italic ${item.side === "right" ? "text-right" : "text-left"}`}
+              style={{ fontFamily: "'Playfair Display', serif" }}>
+              {item.text}
+            </p>
+          </motion.div>
+        );
+      })}
+    </>
+  );
+}
+
 function IdeaCard({ idea, index }: { idea: typeof SAMPLE_IDEAS[0]; index: number }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -311,6 +346,7 @@ export default function HomePage() {
       className="overflow-x-hidden"
       style={{ background: "#faf8f4", fontFamily: "'Inter', sans-serif", color: "#1a1a1a" }}
     >
+      <CursorAlice />
       <EtchLines opacity={0.022} />
 
       {/* ── Navbar ── */}
@@ -459,35 +495,8 @@ export default function HomePage() {
           </motion.div>
         </motion.div>
 
-        {/* Tunnel side text — appears at various scroll depths */}
-        {[
-          { scrollStart: 0.08, text: "\"Oh my ears and whiskers, how late it's getting!\"", side: "left" },
-          { scrollStart: 0.20, text: "Anonymous. Validated. Discovered.", side: "right" },
-          { scrollStart: 0.33, text: "8 AI agents. Ruthless. Parallel.", side: "left" },
-          { scrollStart: 0.45, text: "The right investor is already waiting.", side: "right" },
-        ].map((item, i) => (
-          <motion.div
-            key={i}
-            className="fixed pointer-events-none z-30"
-            style={{
-              [item.side]: item.side === "left" ? "4%" : "4%",
-              ...(item.side === "right" ? { right: "4%", left: "auto" } : {}),
-              top: "50%",
-              translateY: "-50%",
-              opacity: useTransform(
-                scrollYProgress,
-                [item.scrollStart - 0.04, item.scrollStart, item.scrollStart + 0.08, item.scrollStart + 0.12],
-                [0, 1, 1, 0]
-              ),
-            }}
-          >
-            <p className={`text-xs text-black/35 max-w-[160px] leading-relaxed font-serif italic
-              ${item.side === "right" ? "text-right" : "text-left"}`}
-              style={{ fontFamily: "'Playfair Display', serif" }}>
-              {item.text}
-            </p>
-          </motion.div>
-        ))}
+        {/* Tunnel side text */}
+        <TunnelText scrollYProgress={scrollYProgress} />
       </div>
 
       {/* ══════════════════════════════════════════
