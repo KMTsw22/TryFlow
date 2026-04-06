@@ -71,18 +71,129 @@ function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
 }
 
-// ── Sample idea cards (mock data) ──────────────────────────────────────────
-const SAMPLE_IDEAS = [
-  { category: "AI / ML", score: 82, trend: "Rising", color: "indigo", desc: "An AI copilot that auto-generates investor update emails from your metrics dashboard." },
-  { category: "SaaS / B2B", score: 71, trend: "Stable", color: "violet", desc: "A single-click contract tool for freelancers that skips the legal jargon." },
-  { category: "Dev Tools", score: 88, trend: "Rising", color: "blue", desc: "Auto-generated API docs from code comments — zero configuration required." },
+// ── Sparkline trend cards ──────────────────────────────────────────────────
+const TREND_CARDS = [
+  {
+    category: "AI / ML", score: 82, direction: "Rising",
+    points: [18, 22, 19, 28, 25, 35, 38, 33, 45, 52, 58, 65],
+    color: "#818cf8", glow: "rgba(129,140,248,0.18)",
+  },
+  {
+    category: "SaaS / B2B", score: 71, direction: "Stable",
+    points: [38, 42, 36, 44, 40, 43, 38, 45, 41, 44, 40, 43],
+    color: "#a78bfa", glow: "rgba(167,139,250,0.18)",
+  },
+  {
+    category: "Dev Tools", score: 88, direction: "Rising",
+    points: [12, 18, 15, 22, 20, 30, 28, 38, 42, 50, 55, 62],
+    color: "#34d399", glow: "rgba(52,211,153,0.18)",
+  },
 ];
 
-const CARD_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
-  indigo: { bg: "bg-indigo-50", text: "text-indigo-600", badge: "bg-indigo-100 text-indigo-700" },
-  violet: { bg: "bg-violet-50", text: "text-violet-600", badge: "bg-violet-100 text-violet-700" },
-  blue:   { bg: "bg-blue-50",   text: "text-blue-600",   badge: "bg-blue-100 text-blue-700" },
-};
+function Sparkline({ points, color, animated }: { points: number[]; color: string; animated: boolean }) {
+  const W = 120, H = 40;
+  const min = Math.min(...points), max = Math.max(...points);
+  const range = max - min || 1;
+  const coords = points.map((v, i) => {
+    const x = (i / (points.length - 1)) * W;
+    const y = H - ((v - min) / range) * H * 0.85 - H * 0.08;
+    return `${x},${y}`;
+  }).join(" ");
+  const totalLen = 300; // approximate
+
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none">
+      <defs>
+        <linearGradient id={`sg-${color.replace("#","")}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* Area fill */}
+      <polyline
+        points={`0,${H} ${coords} ${W},${H}`}
+        fill={`url(#sg-${color.replace("#","")})`}
+      />
+      {/* Line */}
+      <polyline
+        points={coords}
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+        style={animated ? {
+          strokeDasharray: totalLen,
+          strokeDashoffset: 0,
+          animation: `sparkDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards`,
+        } : {}}
+      />
+      {/* End dot */}
+      {(() => {
+        const last = points[points.length - 1];
+        const x = W;
+        const y = H - ((last - min) / range) * H * 0.85 - H * 0.08;
+        return (
+          <circle cx={x} cy={y} r="3" fill={color}
+            style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
+        );
+      })()}
+    </svg>
+  );
+}
+
+function SparkCard({ card, delay }: { card: typeof TREND_CARDS[0]; delay: number }) {
+  const [ref, inView] = useInView(0.1);
+  const isRising = card.direction === "Rising";
+  const dirColor = isRising ? "#34d399" : card.direction === "Stable" ? "#fbbf24" : "#f87171";
+
+  return (
+    <div ref={ref} style={{
+      opacity: inView ? 1 : 0,
+      transform: inView ? "translateY(0)" : "translateY(20px)",
+      transition: `opacity 0.6s ease ${delay}ms, transform 0.8s cubic-bezier(0.34,1.56,0.64,1) ${delay}ms`,
+    }}>
+      <div className="rounded-2xl p-5 relative overflow-hidden"
+        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        {/* Glow bg */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at 50% 100%, ${card.glow} 0%, transparent 70%)` }} />
+
+        <div className="relative">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
+              {card.category}
+            </span>
+            <span className="text-xs font-bold" style={{ color: dirColor }}>
+              {isRising ? "↑" : card.direction === "Stable" ? "→" : "↓"} {card.direction}
+            </span>
+          </div>
+
+          {/* Sparkline */}
+          <div className="mb-4">
+            <Sparkline points={card.points} color={card.color} animated={inView} />
+          </div>
+
+          {/* Score */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Viability</p>
+              <div className="flex items-center gap-2">
+                <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: inView ? `${card.score}%` : "0%", background: card.color, transitionDelay: `${delay + 400}ms` }} />
+                </div>
+                <span className="text-xs font-bold" style={{ color: card.color }}>{card.score}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Interactive Demo ───────────────────────────────────────────────────────
 const DEMO_DESC = "An AI copilot that auto-generates investor update emails from your product metrics — no manual writing needed.";
@@ -469,41 +580,10 @@ export default function HomePage() {
             <div className="absolute inset-x-0 bottom-0 h-32 pointer-events-none z-10"
               style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,1))" }} />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-8"
-              style={{ animation: "fadeInUp 0.8s ease 0.9s both" }}>
-              {SAMPLE_IDEAS.map((idea, i) => {
-                const c = CARD_COLORS[idea.color];
-                return (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-xl p-5 relative overflow-hidden"
-                    style={{ transform: `translateY(${i % 2 === 1 ? "16px" : "0px"})` }}>
-                    {/* Top accent line */}
-                    <div className={`absolute top-0 left-0 right-0 h-0.5 ${idea.color === "indigo" ? "bg-indigo-400" : idea.color === "violet" ? "bg-violet-400" : "bg-blue-400"}`} />
-
-                    <div className="flex items-center justify-between mb-3">
-                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${c.badge}`}>{idea.category}</span>
-                      <div className="flex items-center gap-1.5">
-                        <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="text-xs font-bold text-emerald-600">{idea.trend}</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed mb-4 line-clamp-2">{idea.desc}</p>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-0.5">Viability</p>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full ${idea.score >= 80 ? "bg-emerald-400" : "bg-amber-400"}`} style={{ width: `${idea.score}%` }} />
-                          </div>
-                          <span className={`text-xs font-bold ${idea.score >= 80 ? "text-emerald-600" : "text-amber-600"}`}>{idea.score}</span>
-                        </div>
-                      </div>
-                      <div className={`w-8 h-8 rounded-xl ${c.bg} flex items-center justify-center`}>
-                        <Sparkles className={`w-3.5 h-3.5 ${c.text}`} />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-8">
+              {TREND_CARDS.map((card, i) => (
+                <SparkCard key={card.category} card={card} delay={i * 120} />
+              ))}
             </div>
           </div>
         </div>
