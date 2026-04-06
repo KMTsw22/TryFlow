@@ -216,7 +216,8 @@ function InteractiveDemo() {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const t = (fn: () => void, ms: number) => { const id = setTimeout(fn, ms); timers.push(id); };
+    const S = 1 / 0.7; // 0.7x speed = 1/0.7 longer durations
+    const t = (fn: () => void, ms: number) => { const id = setTimeout(fn, ms * S); timers.push(id); };
 
     if (step === 0) {
       setCharCount(0);
