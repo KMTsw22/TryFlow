@@ -22,22 +22,22 @@ interface Particle {
 
 // Warm-cool palette: amber + indigo/violet mix
 const ORB_PALETTE = [
-  { r: 251, g: 191, b: 36  }, // amber
-  { r: 253, g: 211, b: 77  }, // gold
-  { r: 129, g: 140, b: 248 }, // indigo-400
-  { r: 167, g: 139, b: 250 }, // violet-400
-  { r: 99,  g: 102, b: 241 }, // indigo-500
-  { r: 250, g: 204, b: 21  }, // yellow
-  { r: 196, g: 181, b: 253 }, // violet-300
+  { r: 255, g: 243, b: 180 }, // 파스텔 레몬
+  { r: 254, g: 240, b: 138 }, // 파스텔 옐로우
+  { r: 253, g: 230, b: 138 }, // 파스텔 amber
+  { r: 255, g: 247, b: 200 }, // 크림 옐로우
+  { r: 254, g: 249, b: 195 }, // 연한 레몬
+  { r: 252, g: 211, b: 77  }, // 살짝 진한 골드 (포인트)
+  { r: 255, g: 237, b: 160 }, // 파스텔 허니
 ];
 
 const BURST_COLORS = [
-  { r: 129, g: 140, b: 248 },
-  { r: 167, g: 139, b: 250 },
-  { r: 251, g: 191, b: 36  },
-  { r: 253, g: 211, b: 77  },
+  { r: 255, g: 243, b: 180 },
+  { r: 254, g: 240, b: 138 },
+  { r: 253, g: 230, b: 138 },
   { r: 255, g: 255, b: 255 },
-  { r: 196, g: 181, b: 253 },
+  { r: 255, g: 247, b: 200 },
+  { r: 252, g: 211, b: 77  },
 ];
 
 export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
