@@ -8,62 +8,6 @@ import { CursorAlice } from "@/components/ui/CursorAlice";
 
 // ── Tenniel SVGs ──────────────────────────────────────────────────────────
 
-/** Alice falling — dress billowing upward, hair loose */
-function AliceFallingSVG({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Hair flowing up */}
-      <path d="M38 28 Q20 10 16 -10 Q24 4 30 18" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.7"/>
-      <path d="M58 28 Q76 8 80 -12 Q72 6 64 20" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.7"/>
-      <path d="M42 24 Q38 4 36 -8" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5"/>
-      <path d="M56 24 Q60 4 62 -8" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5"/>
-      {/* Head */}
-      <ellipse cx="50" cy="34" rx="18" ry="20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      {/* Hair band */}
-      <path d="M32 28 Q50 22 68 28" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      {/* Face */}
-      <circle cx="43" cy="30" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-      <circle cx="57" cy="30" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-      <circle cx="43" cy="30" r="0.7" fill="currentColor"/>
-      <circle cx="57" cy="30" r="0.7" fill="currentColor"/>
-      <path d="M44 38 Q50 42 56 38" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Neck */}
-      <path d="M44 54 L44 62" stroke="currentColor" strokeWidth="1.2"/>
-      <path d="M56 54 L56 62" stroke="currentColor" strokeWidth="1.2"/>
-      {/* Apron / pinafore (billowing) */}
-      <path d="M36 62 Q24 80 20 110 Q36 120 50 118 Q64 120 80 110 Q76 80 64 62 Z"
-        stroke="currentColor" strokeWidth="1.4" fill="none"/>
-      {/* Dress under apron */}
-      <path d="M38 64 Q26 82 22 112 Q36 124 50 122 Q64 124 78 112 Q74 82 62 64"
-        stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.4"/>
-      {/* Apron sash */}
-      <path d="M36 64 Q50 60 64 64" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Apron pocket */}
-      <rect x="43" y="84" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.6"/>
-      {/* Cross-hatch on dress */}
-      {[70,78,86,94,102,110].map((y,i) => (
-        <path key={i} d={`M${28-i} ${y} Q50 ${y+3} ${72+i} ${y}`} stroke="currentColor" strokeWidth="0.4" fill="none" opacity="0.15"/>
-      ))}
-      {/* Arms up (falling) */}
-      <path d="M36 68 Q18 56 12 44 Q16 50 22 60" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      <path d="M64 68 Q82 56 88 44 Q84 50 78 60" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      {/* Hands */}
-      <circle cx="12" cy="44" r="4" stroke="currentColor" strokeWidth="1" fill="none"/>
-      <circle cx="88" cy="44" r="4" stroke="currentColor" strokeWidth="1" fill="none"/>
-      {/* Stockings */}
-      <path d="M38 118 Q36 148 34 168" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      <path d="M62 118 Q64 148 66 168" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      {/* Shoes */}
-      <path d="M28 168 Q34 174 42 170" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      <path d="M60 170 Q66 174 74 168" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-      {/* Stocking stripes */}
-      <path d="M35 130 Q50 132 65 130" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
-      <path d="M34 140 Q50 142 66 140" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
-      <path d="M33 150 Q50 152 67 150" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
-    </svg>
-  );
-}
-
 /** Rabbit hopping — pocket watch in hand, mid-jump */
 function RabbitHoppingSVG({ className }: { className?: string }) {
   return (
@@ -253,6 +197,54 @@ function TunnelText({ scrollYProgress }: { scrollYProgress: ReturnType<typeof us
         );
       })}
     </>
+  );
+}
+
+// ── Alice image with occasional spin ─────────────────────────────────────
+function AliceImage() {
+  const [spinning, setSpinning] = useState(false);
+
+  useEffect(() => {
+    // randomly spin every 4–9 seconds
+    const schedule = () => {
+      const delay = 4000 + Math.random() * 5000;
+      return setTimeout(() => {
+        setSpinning(true);
+        setTimeout(() => {
+          setSpinning(false);
+          schedule();
+        }, 900);
+      }, delay);
+    };
+    const t = schedule();
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <motion.div
+      animate={spinning
+        ? { rotate: [0, 360], y: [0, -12, 0] }
+        : { rotate: [-4, 4, -4], y: [0, 6, 0] }
+      }
+      transition={spinning
+        ? { duration: 0.85, ease: "easeInOut" }
+        : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
+      }
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/alice.png"
+        alt="Alice falling"
+        draggable={false}
+        style={{
+          width: 140,
+          height: "auto",
+          filter: "grayscale(100%) contrast(1.05)",
+          mixBlendMode: "multiply",
+          userSelect: "none",
+        }}
+      />
+    </motion.div>
   );
 }
 
@@ -477,22 +469,16 @@ export default function HomePage() {
           <RabbitHoppingSVG className="w-20 h-28 text-black/55" />
         </motion.div>
 
-        {/* Alice — falls behind rabbit */}
+        {/* Alice — falls behind rabbit, uses real image */}
         <motion.div
           className="fixed pointer-events-none z-10"
           style={{
-            left: "calc(50% - 44px)",
+            left: "calc(50% - 70px)",
             top: 0,
             y: aliceY,
           }}
         >
-          {/* Alice bobs slightly, less than rabbit */}
-          <motion.div
-            animate={{ rotate: [-3, 3, -3], y: [0, 4, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <AliceFallingSVG className="w-24 h-40 text-black/60" />
-          </motion.div>
+          <AliceImage />
         </motion.div>
 
         {/* Tunnel side text */}
@@ -529,7 +515,7 @@ export default function HomePage() {
                 num: "I.",
                 title: "You fall in.",
                 desc: "Drop your idea anonymously. No pitch deck. No network. No name. Just the raw idea.",
-                svg: <AliceFallingSVG className="w-20 h-32 text-black/20 mx-auto" />,
+                svg: <img src="/alice.png" alt="Alice" style={{ width: 80, margin: "0 auto", filter: "grayscale(100%) contrast(1.05) opacity(0.22)", mixBlendMode: "multiply" }} />,
               },
               {
                 num: "II.",
