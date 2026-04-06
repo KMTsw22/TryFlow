@@ -22,7 +22,7 @@ export function TopBar({ userName = "User", userImage }: TopBarProps) {
       <div className="flex items-center gap-3 ml-auto">
         <Link
           href="/submit"
-          className="inline-flex items-center gap-1.5 bg-indigo-500 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-indigo-400 transition-colors"
+          className="inline-flex items-center gap-1.5 bg-indigo-500 text-white text-sm font-bold px-4 py-2  hover:bg-indigo-400 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" /> Submit idea
         </Link>

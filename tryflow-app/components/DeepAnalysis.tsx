@@ -181,9 +181,9 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
   // Loading state
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-indigo-200 p-8 shadow-sm">
+      <div className="bg-white  border border-indigo-200 p-8 shadow-sm">
         <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16  bg-indigo-50 flex items-center justify-center mx-auto mb-4">
             <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
           </div>
           <h3 className="text-lg font-extrabold text-gray-900 mb-2">
@@ -240,7 +240,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
     return (
       <div className="space-y-4">
         {/* Header */}
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-sm">
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600  p-6 text-white shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <Brain className="w-5 h-5" />
             <span className="text-xs font-bold uppercase tracking-widest opacity-80">
@@ -273,7 +273,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
         </div>
 
         {/* Agent scores grid */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+        <div className="bg-white  border border-gray-200 p-6 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
             8-Agent Analysis Breakdown
           </p>
@@ -286,12 +286,12 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
               const isExpanded = expandedAgent === key;
 
               return (
-                <div key={key} className="border border-gray-100 rounded-xl overflow-hidden">
+                <div key={key} className="border border-gray-100  overflow-hidden">
                   <button
                     onClick={() => setExpandedAgent(isExpanded ? null : key)}
                     className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors"
                   >
-                    <div className={`w-8 h-8 rounded-lg ${meta.bg} flex items-center justify-center shrink-0`}>
+                    <div className={`w-8 h-8  ${meta.bg} flex items-center justify-center shrink-0`}>
                       <Icon className={`w-4 h-4 ${meta.color}`} />
                     </div>
                     <div className="flex-1 min-w-0 text-left">
@@ -309,7 +309,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
                   </button>
                   {isExpanded && (
                     <div className="px-3 pb-3 pt-0">
-                      <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="bg-gray-50  p-3">
                         <p className="text-xs text-gray-600 leading-relaxed">
                           {agentData.assessment}
                         </p>
@@ -324,7 +324,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
 
         {/* Cross-agent insights */}
         {report.cross_agent_insights?.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="bg-white  border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Brain className="w-4 h-4 text-indigo-500" />
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -348,7 +348,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Opportunities */}
           {report.opportunities?.length > 0 && (
-            <div className="bg-white rounded-2xl border border-emerald-200 p-6 shadow-sm">
+            <div className="bg-white  border border-emerald-200 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Lightbulb className="w-4 h-4 text-emerald-500" />
                 <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
@@ -368,7 +368,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
 
           {/* Risks */}
           {report.risks?.length > 0 && (
-            <div className="bg-white rounded-2xl border border-red-200 p-6 shadow-sm">
+            <div className="bg-white  border border-red-200 p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="w-4 h-4 text-red-500" />
                 <p className="text-xs font-bold text-red-600 uppercase tracking-widest">
@@ -389,7 +389,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
 
         {/* Next Steps */}
         {report.next_steps?.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="bg-white  border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <ArrowRight className="w-4 h-4 text-indigo-500" />
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
@@ -398,7 +398,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
             </div>
             <ul className="space-y-2">
               {report.next_steps.map((step, i) => (
-                <li key={i} className="flex items-start gap-3 p-2 bg-indigo-50 rounded-lg">
+                <li key={i} className="flex items-start gap-3 p-2 bg-indigo-50 ">
                   <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                     {i + 1}
                   </span>
@@ -414,8 +414,8 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
 
   // Default: show analysis button
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200 p-8 text-center shadow-sm">
-      <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-4">
+    <div className="bg-gradient-to-br from-indigo-50 to-purple-50  border border-indigo-200 p-8 text-center shadow-sm">
+      <div className="w-14 h-14  bg-indigo-100 flex items-center justify-center mx-auto mb-4">
         <Sparkles className="w-7 h-7 text-indigo-500" />
       </div>
       <h3 className="text-lg font-extrabold text-gray-900 mb-2">
@@ -428,7 +428,7 @@ export default function DeepAnalysis({ submissionId }: { submissionId: string })
       </p>
       <button
         onClick={startAnalysis}
-        className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-indigo-400 transition-colors cursor-pointer"
+        className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3  text-sm hover:bg-indigo-400 transition-colors cursor-pointer"
       >
         <Sparkles className="w-4 h-4" />
         Run AI Deep Analysis

@@ -67,7 +67,7 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-extrabold text-gray-900">My Ideas</h1>
           <p className="text-sm text-gray-400 mt-1">Your anonymous submissions and insight reports</p>
         </div>
-        <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-sm hover:bg-indigo-400 transition-colors">
+        <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2.5  text-sm hover:bg-indigo-400 transition-colors">
           <Plus className="w-4 h-4" /> New idea
         </Link>
       </div>
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
             { label: "Avg. Viability Score", value: avgScore ?? "—" },
             { label: "Latest Category", value: ideas[0]?.category ?? "—" },
           ].map((s) => (
-            <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+            <div key={s.label} className="bg-white  border border-gray-200 p-4 text-center">
               <div className="text-2xl font-extrabold text-gray-900">{s.value}</div>
               <div className="text-xs text-gray-400 mt-1">{s.label}</div>
             </div>
@@ -90,8 +90,8 @@ export default async function DashboardPage() {
 
       {/* Empty state */}
       {!hasIdeas && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-          <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+        <div className="bg-white  border border-gray-200 p-12 text-center">
+          <div className="w-16 h-16 bg-indigo-50  flex items-center justify-center mx-auto mb-5">
             <FileText className="w-7 h-7 text-indigo-400" />
           </div>
           <h2 className="text-lg font-bold text-gray-900 mb-2">No ideas yet</h2>
@@ -104,14 +104,14 @@ export default async function DashboardPage() {
               { step: "02", label: "AI analyzes & clusters", desc: "Groups similar ideas, identifies trends" },
               { step: "03", label: "Get your report", desc: "Viability score, saturation, trend direction" },
             ].map((s) => (
-              <div key={s.step} className="p-4 bg-gray-50 rounded-xl">
+              <div key={s.step} className="p-4 bg-gray-50 ">
                 <div className="text-2xl font-black text-gray-200 mb-2">{s.step}</div>
                 <div className="text-xs font-bold text-gray-700 mb-1">{s.label}</div>
                 <div className="text-xs text-gray-400">{s.desc}</div>
               </div>
             ))}
           </div>
-          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-indigo-400 transition-colors">
+          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3  text-sm hover:bg-indigo-400 transition-colors">
             Submit your first idea <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -134,7 +134,7 @@ export default async function DashboardPage() {
               <Link
                 key={idea.id}
                 href={`/ideas/${idea.id}`}
-                className="block bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-indigo-200 transition-all duration-200 group"
+                className="block bg-white  border border-gray-200 p-6 hover:shadow-md hover:border-indigo-200 transition-all duration-200 group"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -156,7 +156,7 @@ export default async function DashboardPage() {
                         </p>
                         <p className="text-xs text-gray-400">score</p>
                       </div>
-                      <div className={`w-9 h-9 rounded-xl ${trend?.bg} flex items-center justify-center`}>
+                      <div className={`w-9 h-9  ${trend?.bg} flex items-center justify-center`}>
                         <TIcon className={`w-4 h-4 ${trend?.color}`} />
                       </div>
                       <div className="text-gray-300 group-hover:text-indigo-400 transition-colors">
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
 
       {/* Explore trends CTA */}
       {hasIdeas && (
-        <div className="mt-6 bg-indigo-50 rounded-2xl border border-indigo-100 p-5 flex items-center justify-between">
+        <div className="mt-6 bg-indigo-50  border border-indigo-100 p-5 flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-indigo-800 mb-0.5">See how your ideas compare</p>
             <p className="text-xs text-indigo-500">Live trend data from all anonymous submissions</p>

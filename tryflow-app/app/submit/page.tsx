@@ -61,7 +61,7 @@ export default function SubmitPage() {
       {/* Navbar */}
       <nav className="flex items-center justify-between px-8 h-[60px] border-b border-white/5">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
+          <img src="/logo.png" className="w-7 h-7 " alt="Try.Wepp" />
           <span className="font-bold text-white text-sm">Try.Wepp</span>
         </Link>
         <span className="text-xs text-gray-500 font-medium">Anonymous · Secure · Free</span>
@@ -96,7 +96,7 @@ export default function SubmitPage() {
           </div>
 
           {/* Card */}
-          <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <div className="bg-white  shadow-2xl p-8">
 
             {/* Step 0: Category */}
             {step === 0 && (
@@ -108,7 +108,7 @@ export default function SubmitPage() {
                     <button
                       key={cat}
                       onClick={() => setForm({ ...form, category: cat })}
-                      className={`text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all duration-150
+                      className={`text-left px-4 py-3  border-2 text-sm font-medium transition-all duration-150
                         ${form.category === cat
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                           : "border-gray-100 text-gray-600 hover:border-indigo-200 hover:bg-indigo-50/50"}`}
@@ -135,7 +135,7 @@ export default function SubmitPage() {
                     <button
                       key={example}
                       onClick={() => setForm({ ...form, target_user: example })}
-                      className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm transition-all duration-150
+                      className={`w-full text-left px-4 py-3  border-2 text-sm transition-all duration-150
                         ${form.target_user === example
                           ? "border-indigo-500 bg-indigo-50 text-indigo-700 font-medium"
                           : "border-gray-100 text-gray-500 hover:border-gray-200"}`}
@@ -149,7 +149,7 @@ export default function SubmitPage() {
                       value={form.target_user}
                       onChange={(e) => setForm({ ...form, target_user: e.target.value })}
                       placeholder="Or write your own..."
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-400 transition-colors"
+                      className="w-full border-2 border-gray-200  px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-400 transition-colors"
                     />
                   </div>
                 </div>
@@ -166,7 +166,7 @@ export default function SubmitPage() {
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="e.g. A tool that automatically generates API docs from code comments, targeted at solo developers who hate writing documentation manually..."
                   rows={6}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-400 transition-colors resize-none leading-relaxed"
+                  className="w-full border-2 border-gray-200  px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-400 transition-colors resize-none leading-relaxed"
                 />
                 <div className="flex justify-between mt-2">
                   <span className="text-xs text-gray-400">Min 30 characters</span>
@@ -189,7 +189,7 @@ export default function SubmitPage() {
               <button
                 onClick={handleNext}
                 disabled={!canNext() || loading}
-                className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm
+                className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-2.5  text-sm
                   hover:bg-indigo-400 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed
                   hover:shadow-lg hover:shadow-indigo-500/25"
               >

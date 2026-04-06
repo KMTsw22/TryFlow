@@ -58,7 +58,7 @@ export function PreferencesPanel() {
       {items.map((pref) => (
         <div key={pref.key} className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+            <div className="mt-0.5 w-8 h-8  bg-gray-50 flex items-center justify-center shrink-0">
               {pref.icon}
             </div>
             <div>

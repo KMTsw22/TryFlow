@@ -66,14 +66,14 @@ export default async function IdeaReportPage({
   const Navbar = (
     <nav className="bg-white border-b border-gray-100 px-6 h-[60px] flex items-center justify-between">
       <Link href="/" className="flex items-center gap-2">
-        <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
+        <img src="/logo.png" className="w-7 h-7 " alt="Try.Wepp" />
         <span className="font-bold text-gray-900 text-sm">Try.Wepp</span>
       </Link>
       <div className="flex items-center gap-3">
         <Link href="/explore" className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
           <BarChart3 className="w-4 h-4" /> Trends
         </Link>
-        <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-indigo-400 transition-colors">
+        <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2  hover:bg-indigo-400 transition-colors">
           Submit another →
         </Link>
       </div>
@@ -85,12 +85,12 @@ export default async function IdeaReportPage({
       <div className="min-h-screen bg-gray-50">
         {Navbar}
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16  bg-indigo-50 flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl animate-spin inline-block">⟳</span>
           </div>
           <h1 className="text-xl font-extrabold text-gray-900 mb-2">Report is being generated</h1>
           <p className="text-sm text-gray-400 mb-8">Your idea was submitted on {date}. The insight report is being processed — check back shortly.</p>
-          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-indigo-400 transition-colors">
+          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3  text-sm hover:bg-indigo-400 transition-colors">
             Submit another idea →
           </Link>
         </div>
@@ -121,7 +121,7 @@ export default async function IdeaReportPage({
         </div>
 
         {/* Viability score */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-4 text-center shadow-sm">
+        <div className="bg-white  border border-gray-200 p-8 mb-4 text-center shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Viability Score</p>
           <div className="relative w-32 h-32 mx-auto mb-4">
             <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
@@ -146,25 +146,25 @@ export default async function IdeaReportPage({
         {/* Metrics grid */}
         <div className="grid grid-cols-3 gap-4 mb-4">
           {/* Trend */}
-          <div className={`bg-white rounded-2xl border ${trend.border} p-5 text-center shadow-sm`}>
+          <div className={`bg-white  border ${trend.border} p-5 text-center shadow-sm`}>
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Market Trend</p>
-            <div className={`w-10 h-10 rounded-xl ${trend.bg} flex items-center justify-center mx-auto mb-2`}>
+            <div className={`w-10 h-10  ${trend.bg} flex items-center justify-center mx-auto mb-2`}>
               <TrendIcon className={`w-5 h-5 ${trend.color}`} />
             </div>
             <p className={`text-sm font-bold ${trend.color}`}>{report.trend_direction}</p>
           </div>
 
           {/* Saturation */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center shadow-sm">
+          <div className="bg-white  border border-gray-200 p-5 text-center shadow-sm">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Saturation</p>
-            <div className={`w-10 h-10 rounded-xl ${sat.bg} flex items-center justify-center mx-auto mb-2`}>
+            <div className={`w-10 h-10  ${sat.bg} flex items-center justify-center mx-auto mb-2`}>
               <span className={`text-sm font-black ${sat.color}`}>{report.saturation_level[0]}</span>
             </div>
             <p className={`text-sm font-bold ${sat.color}`}>{report.saturation_level}</p>
           </div>
 
           {/* Similar ideas */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center shadow-sm">
+          <div className="bg-white  border border-gray-200 p-5 text-center shadow-sm">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Similar Ideas</p>
             <p className="text-3xl font-extrabold text-gray-900 mb-1">{report.similar_count}</p>
             <p className="text-xs text-gray-400">last 30 days</p>
@@ -172,7 +172,7 @@ export default async function IdeaReportPage({
         </div>
 
         {/* Idea summary */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4 shadow-sm">
+        <div className="bg-white  border border-gray-100 p-6 mb-4 shadow-sm">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Your Submitted Idea</p>
           <div className="space-y-3">
             <div>
@@ -191,10 +191,10 @@ export default async function IdeaReportPage({
 
         {/* CTAs */}
         <div className="flex flex-col gap-3">
-          <Link href="/explore" className="w-full bg-indigo-500 text-white font-bold py-3 rounded-xl text-sm text-center hover:bg-indigo-400 transition-colors flex items-center justify-center gap-2">
+          <Link href="/explore" className="w-full bg-indigo-500 text-white font-bold py-3  text-sm text-center hover:bg-indigo-400 transition-colors flex items-center justify-center gap-2">
             <BarChart3 className="w-4 h-4" /> Explore market trends in {idea.category}
           </Link>
-          <Link href="/submit" className="w-full border border-gray-200 text-gray-700 font-medium py-3 rounded-xl text-sm text-center hover:border-gray-300 hover:bg-gray-50 transition-colors">
+          <Link href="/submit" className="w-full border border-gray-200 text-gray-700 font-medium py-3  text-sm text-center hover:border-gray-300 hover:bg-gray-50 transition-colors">
             Submit another idea →
           </Link>
         </div>

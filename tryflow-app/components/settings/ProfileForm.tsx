@@ -69,7 +69,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={50}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+            className="w-full border border-gray-200  px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
           />
         </div>
         <div>
@@ -78,7 +78,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
             type="email"
             value={email}
             disabled
-            className="w-full border border-gray-100 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+            className="w-full border border-gray-100  px-3 py-2.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
           />
           <p className="text-xs text-gray-400 mt-1">Email cannot be changed for Google accounts.</p>
         </div>
@@ -87,7 +87,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-teal-600 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 bg-teal-500 text-white text-sm font-semibold px-5 py-2.5  hover:bg-teal-600 disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? "Saving..." : "Save Changes"}

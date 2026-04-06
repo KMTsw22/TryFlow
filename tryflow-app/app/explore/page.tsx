@@ -81,7 +81,7 @@ export default async function ExplorePage() {
       <nav className="border-b px-6 h-[60px] flex items-center justify-between"
         style={{ background: "rgba(5,8,22,0.95)", borderColor: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}>
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7 rounded-lg" alt="Try.Wepp" />
+          <img src="/logo.png" className="w-7 h-7 " alt="Try.Wepp" />
           <span className="font-bold text-white text-sm">Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default async function ExplorePage() {
           ) : (
             <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
           )}
-          <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-indigo-400 transition-colors">
+          <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2  hover:bg-indigo-400 transition-colors">
             Submit idea →
           </Link>
         </div>
@@ -113,7 +113,7 @@ export default async function ExplorePage() {
             { label: "Rising Categories",     value: risingCount },
             { label: "Categories Tracked",    value: CATEGORIES.length },
           ].map((s) => (
-            <div key={s.label} className="rounded-2xl border p-5 text-center"
+            <div key={s.label} className=" border p-5 text-center"
               style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }}>
               <div className="text-3xl font-extrabold text-white">{s.value}</div>
               <div className="text-xs text-gray-500 mt-1">{s.label}</div>
@@ -122,7 +122,7 @@ export default async function ExplorePage() {
         </div>
 
         {/* Category list */}
-        <div className="rounded-2xl border overflow-hidden"
+        <div className=" border overflow-hidden"
           style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
           <div className="px-6 py-4 border-b flex items-center justify-between"
             style={{ borderColor: "rgba(255,255,255,0.06)" }}>
@@ -143,7 +143,7 @@ export default async function ExplorePage() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
 
-                  <div className={`w-9 h-9 rounded-xl ${tConf.bg} flex items-center justify-center shrink-0`}>
+                  <div className={`w-9 h-9  ${tConf.bg} flex items-center justify-center shrink-0`}>
                     <TIcon className={`w-4 h-4 ${tConf.color}`} />
                   </div>
 
@@ -177,7 +177,7 @@ export default async function ExplorePage() {
         </div>
 
         {/* CTA */}
-        <div className="mt-8 rounded-2xl p-8 text-center border"
+        <div className="mt-8  p-8 text-center border"
           style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))", borderColor: "rgba(129,140,248,0.2)" }}>
           <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">Add your signal</p>
           <h3 className="text-2xl font-extrabold text-white mb-3">
@@ -186,7 +186,7 @@ export default async function ExplorePage() {
           <p className="text-sm text-gray-400 mb-6 max-w-sm mx-auto">
             Your anonymous submission helps every founder see where the market is heading.
           </p>
-          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-indigo-400 transition-colors">
+          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3  text-sm hover:bg-indigo-400 transition-colors">
             Submit your idea <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

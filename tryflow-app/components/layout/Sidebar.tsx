@@ -54,7 +54,7 @@ export function Sidebar({ isLoggedIn }: Props) {
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100 shrink-0 h-[60px]">
         <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-2.5">
-          <img src="/logo.png" className="w-8 h-8 shrink-0 rounded-lg" alt="Try.Wepp" />
+          <img src="/logo.png" className="w-8 h-8 shrink-0 " alt="Try.Wepp" />
           <span className={cn(
             "font-bold text-gray-900 text-sm whitespace-nowrap transition-all duration-150",
             expanded ? "opacity-100 delay-75" : "opacity-0"
@@ -74,7 +74,7 @@ export function Sidebar({ isLoggedIn }: Props) {
               href={href}
               title={!expanded ? label : undefined}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 whitespace-nowrap",
+                "flex items-center gap-3 px-3 py-2.5  text-sm font-medium transition-all duration-150 whitespace-nowrap",
                 active
                   ? "bg-indigo-50 text-indigo-700"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
@@ -99,7 +99,7 @@ export function Sidebar({ isLoggedIn }: Props) {
             <Link
               href="/submit"
               title={!expanded ? "Submit Idea" : undefined}
-              className="flex items-center justify-center gap-2 w-full bg-indigo-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-indigo-400 transition-colors overflow-hidden"
+              className="flex items-center justify-center gap-2 w-full bg-indigo-500 text-white text-sm font-bold py-2.5  hover:bg-indigo-400 transition-colors overflow-hidden"
             >
               <Plus className="w-4 h-4 shrink-0" />
               <span className={cn(
@@ -113,7 +113,7 @@ export function Sidebar({ isLoggedIn }: Props) {
             <button
               onClick={handleLogout}
               title={!expanded ? "Logout" : undefined}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full whitespace-nowrap"
+              className="flex items-center gap-3 px-3 py-2.5  text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full whitespace-nowrap"
             >
               <LogOut className="w-4 h-4 text-gray-400 shrink-0" />
               <span className={cn("transition-all duration-150", expanded ? "opacity-100 delay-75" : "opacity-0 w-0")}>
@@ -125,7 +125,7 @@ export function Sidebar({ isLoggedIn }: Props) {
           <Link
             href="/login"
             title={!expanded ? "Log in" : undefined}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors whitespace-nowrap"
+            className="flex items-center gap-3 px-3 py-2.5  text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors whitespace-nowrap"
           >
             <LogIn className="w-4 h-4 shrink-0 text-indigo-600" />
             <span className={cn("transition-all duration-150", expanded ? "opacity-100 delay-75" : "opacity-0 w-0")}>

@@ -20,13 +20,13 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Link href="/" className="flex items-center gap-2.5 mb-4">
-            <img src="/logo.png" className="w-11 h-11 rounded-xl" alt="Try.Wepp" />
+            <img src="/logo.png" className="w-11 h-11 " alt="Try.Wepp" />
           </Link>
           <h1 className="text-2xl font-extrabold text-white">Try.Wepp</h1>
           <p className="text-sm text-gray-400 mt-1">Anonymous Founder Idea Signals</p>
         </div>
 
-        <div className="bg-[#0E1630] border border-white/10 rounded-2xl p-8">
+        <div className="bg-[#0E1630] border border-white/10  p-8">
           <h2 className="text-lg font-bold text-white text-center">Sign in to continue</h2>
           <p className="text-sm text-gray-400 text-center mt-1 mb-8">
             New or returning — just click below
@@ -34,7 +34,7 @@ export default function LoginPage() {
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-white/10 bg-white/5 hover:bg-white/10 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-3 border border-white/10 bg-white/5 hover:bg-white/10 text-white font-semibold px-6 py-3  transition-colors text-sm"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
