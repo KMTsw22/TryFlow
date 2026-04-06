@@ -13,6 +13,12 @@ const PALETTE = [
   { r: 255, g: 237, b: 160 },
 ];
 
+interface Ripple {
+  r: number;
+  alpha: number;
+  speed: number;
+}
+
 interface Star {
   x: number;
   y: number;
@@ -24,8 +30,8 @@ interface Star {
   color: { r: number; g: number; b: number };
   groundX: number;
   landed: boolean;
-  bloomR: number;
-  sproutH: number;
+  ripples: Ripple[];
+  glowAlpha: number;
 }
 
 export function ScrollSeeds() {
@@ -34,8 +40,9 @@ export function ScrollSeeds() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ctxRaw = canvas.getContext("2d");
+    if (!ctxRaw) return;
+    const ctx = ctxRaw as CanvasRenderingContext2D;
 
     let W = window.innerWidth;
     let H = window.innerHeight;
@@ -62,8 +69,8 @@ export function ScrollSeeds() {
       color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
       groundX: rnd(W * 0.06, W * 0.94),
       landed: false,
-      bloomR: 0,
-      sproutH: 0,
+      ripples: [],
+      glowAlpha: 0,
     }));
 
     function getScrollProg() {
@@ -93,52 +100,28 @@ export function ScrollSeeds() {
       ctx.fill();
     }
 
-    function drawBloom(x: number, y: number, r: number, sproutH: number) {
-      // Expanding ring
-      const ringAlpha = Math.max(0, 1 - r / 26);
-      if (ringAlpha > 0) {
+    function drawRipples(x: number, y: number, ripples: Ripple[], glowAlpha: number) {
+      // Persistent soft glow where star landed
+      if (glowAlpha > 0.01) {
+        const grd = ctx.createRadialGradient(x, y, 0, x, y, 14);
+        grd.addColorStop(0, `rgba(180, 210, 255, ${glowAlpha * 0.55})`);
+        grd.addColorStop(0.5, `rgba(140, 180, 255, ${glowAlpha * 0.2})`);
+        grd.addColorStop(1, "rgba(0,0,0,0)");
         ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(100, 220, 130, ${ringAlpha * 0.75})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.arc(x, y, 14, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
       }
 
-      // Seed glow dot
-      const seedGrd = ctx.createRadialGradient(x, y, 0, x, y, 5);
-      seedGrd.addColorStop(0, `rgba(180, 240, 160, ${Math.min(1, ringAlpha + 0.5)})`);
-      seedGrd.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = seedGrd;
-      ctx.fill();
-
-      // Sprout stem
-      if (sproutH > 1) {
-        ctx.strokeStyle = `rgba(110, 210, 120, 0.85)`;
-        ctx.lineWidth = 1.5;
-        ctx.lineCap = "round";
+      // Ripple rings
+      ripples.forEach((rp) => {
+        if (rp.alpha < 0.005) return;
         ctx.beginPath();
-        ctx.moveTo(x, y - 2);
-        ctx.lineTo(x, y - sproutH);
+        ctx.ellipse(x, y, rp.r, rp.r * 0.35, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(160, 210, 255, ${rp.alpha})`;
+        ctx.lineWidth = 0.8;
         ctx.stroke();
-
-        // Leaf — appears once stem is tall enough
-        if (sproutH > 12) {
-          const leafP = Math.min(1, (sproutH - 12) / 18);
-          ctx.strokeStyle = `rgba(120, 220, 120, ${leafP * 0.8})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(x, y - sproutH * 0.55);
-          ctx.quadraticCurveTo(
-            x + 11 * leafP,
-            y - sproutH * 0.55 - 7 * leafP,
-            x + 5 * leafP,
-            y - sproutH * 0.55 - 15 * leafP
-          );
-          ctx.stroke();
-        }
-      }
+      });
     }
 
     function draw() {
@@ -152,12 +135,12 @@ export function ScrollSeeds() {
 
       const groundY = H * 0.84;
 
-      // Reset bloom if user scrolled back up
+      // Reset if scrolled back up
       if (sp < BLOOM_START - 0.03) {
         stars.forEach((s) => {
           s.landed = false;
-          s.bloomR = 0;
-          s.sproutH = 0;
+          s.ripples = [];
+          s.glowAlpha = 0;
         });
       }
 
@@ -166,7 +149,7 @@ export function ScrollSeeds() {
         const floatY = Math.cos(frame * 0.003 + star.phase * 1.3) * 1.6;
 
         if (sp < CONVERGE_START) {
-          // Floating + parallax scroll follow
+          // Floating + parallax
           star.x += star.vx + floatX * 0.04;
           star.y += star.vy + scrollVel;
 
@@ -186,20 +169,38 @@ export function ScrollSeeds() {
           const alpha = star.opacity * (1 - t * 0.45);
           drawStar(star.x, star.y, star.size, alpha, star.color);
         } else {
-          // Landing + bloom
+          // Landing + ripple
           star.x += (star.groundX - star.x) * 0.1;
           star.y += (groundY - star.y) * 0.1;
 
           if (!star.landed && Math.abs(star.y - groundY) < 4) {
             star.landed = true;
+            // Emit 3 staggered ripple rings
+            star.ripples = [
+              { r: 1, alpha: 0.75, speed: 0.7 },
+              { r: 1, alpha: 0,    speed: 0.55 }, // delayed — starts invisible
+              { r: 1, alpha: 0,    speed: 0.42 }, // more delayed
+            ];
           }
 
           if (!star.landed) {
             drawStar(star.x, star.y, star.size, star.opacity * 0.45, star.color);
           } else {
-            star.bloomR = Math.min(star.bloomR + 0.42, 26);
-            star.sproutH = Math.min(star.sproutH + 0.36, 30);
-            drawBloom(star.groundX, groundY, star.bloomR, star.sproutH);
+            // Expand ripples, stagger emit
+            star.ripples.forEach((rp, i) => {
+              const delay = i * 18; // frame delay between rings
+              const framesSinceLand = star.ripples[0].r / star.ripples[0].speed;
+              if (framesSinceLand >= delay) {
+                if (rp.alpha === 0 && i > 0) rp.alpha = 0.55 - i * 0.1;
+                rp.r += rp.speed;
+                rp.alpha = Math.max(0, rp.alpha - 0.006);
+              }
+            });
+
+            // Soft glow builds up
+            star.glowAlpha = Math.min(star.glowAlpha + 0.015, 0.38);
+
+            drawRipples(star.groundX, groundY, star.ripples, star.glowAlpha);
           }
         }
       });
