@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, TrendingUp, Minus, CheckCircle2, XCircle, ChevronDown, Sparkles, BarChart3, FileText, ShieldCheck } from "lucide-react";
 import { ParticleBackground } from "@/components/ui/ParticleBackground";
+import { IdeaBubbles } from "@/components/ui/IdeaBubbles";
 
 // ── Hooks ──────────────────────────────────────────────────────────────────
 function useScrolled(threshold = 12) {
@@ -365,6 +366,9 @@ export default function HomePage() {
 
         {/* Particle system */}
         <ParticleBackground />
+
+        {/* Idea bubbles converging toward title */}
+        <IdeaBubbles />
 
         {/* Geometric background */}
         {/* Dot grid */}
