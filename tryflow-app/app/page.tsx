@@ -445,7 +445,7 @@ export default function HomePage() {
   const [revealed, setRevealed] = useState(false);
 
   return (
-    <div className="min-h-screen font-['Inter'] overflow-x-hidden" style={{ background: "#050816" }}>
+    <div className="min-h-screen font-['Inter'] overflow-x-hidden" style={{ background: "linear-gradient(to bottom, #050816 0%, #050816 10%, #060d1f 18%, #0a1a3a 26%, #0d2550 34%, #123470 42%, #1a4a90 50%, #2a68b0 58%, #4a90c8 65%, #6ab8c0 71%, #6ab8a0 77%, #4a9878 83%, #2e7058 90%, #1e5040 100%)" }}>
 
       {/* ── Navbar ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300" style={{
@@ -596,54 +596,101 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Stats bar ── */}
-      <section className="py-10" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="max-w-4xl mx-auto px-6 grid grid-cols-3 gap-8 text-center">
-          {[
-            { target: 0, suffix: " ideas", label: "submitted so far" },
-            { target: 3, suffix: " steps", label: "to your insight report" },
-            { target: 12, suffix: " categories", label: "tracked in real time" },
-          ].map((s, i) => (
-            <FallIn key={i} delay={i * 100}>
-              <div className="text-3xl font-extrabold text-white">
-                <Counter target={s.target} suffix={s.suffix} />
+      {/* ── Signal strip ── */}
+      <section className="py-24 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="max-w-6xl mx-auto">
+          <FallIn>
+            <div className="flex flex-col md:flex-row items-start md:items-end gap-8 md:gap-20">
+              {/* Big statement */}
+              <div className="flex-1">
+                <p className="text-[4rem] md:text-[7rem] font-black text-white leading-none tracking-tighter">
+                  <Counter target={0} suffix="" />
+                </p>
+                <p className="text-lg font-bold text-white/60 mt-2 uppercase tracking-widest">founder ideas mapped</p>
               </div>
-              <div className="text-xs text-gray-500 mt-1">{s.label}</div>
-            </FallIn>
-          ))}
+              {/* Details alongside */}
+              <div className="flex-1 max-w-sm">
+                <p className="text-white/40 text-sm leading-relaxed mb-6">
+                  Every anonymous idea submitted becomes a data point. The more founders contribute, the sharper the collective signal becomes.
+                </p>
+                <div className="flex gap-8">
+                  <div>
+                    <p className="text-2xl font-extrabold text-white">3</p>
+                    <p className="text-xs text-white/40 mt-0.5">steps to insight</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-extrabold text-white">9</p>
+                    <p className="text-xs text-white/40 mt-0.5">categories tracked</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-extrabold text-white">∞</p>
+                    <p className="text-xs text-white/40 mt-0.5">signal potential</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </FallIn>
         </div>
       </section>
 
-      {/* ── How it works ── */}
+      {/* ── How it works — editorial rows ── */}
       <section className="py-28 px-6">
-        <div className="max-w-5xl mx-auto">
-          <FallIn className="text-center mb-16">
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">How it works</p>
-            <h2 className="text-4xl font-extrabold text-white tracking-tight">Three steps. Real intelligence.</h2>
+        <div className="max-w-6xl mx-auto">
+          <FallIn className="mb-20">
+            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-4">How it works</p>
+            <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter">
+              The idea<br />descends.
+            </h2>
           </FallIn>
 
-          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="hidden md:block absolute top-10 left-1/3 right-1/3 h-px"
-              style={{ background: "linear-gradient(to right, rgba(129,140,248,0.4), rgba(167,139,250,0.4), rgba(129,140,248,0.4))" }} />
-
+          <div className="space-y-0">
             {[
-              { step: "01", icon: FileText, title: "Submit anonymously", sub: "Category + target user + brief description. Under 2 minutes. Zero public exposure.", color: "#818cf8" },
-              { step: "02", icon: Sparkles, title: "AI analyzes & clusters", sub: "Groups your idea with similar ones. Measures saturation, trend velocity, market timing.", color: "#a78bfa" },
-              { step: "03", icon: BarChart3, title: "Get your report", sub: "Viability score, saturation level, trend direction, and a full market intelligence snapshot.", color: "#34d399" },
+              {
+                step: "01",
+                title: "You submit.",
+                detail: "Anonymously.",
+                body: "Category, target user, a short description. No account, no exposure. Under 2 minutes. Your identity stays in the sky.",
+                extra: ["Category", "Target user", "Description", "Anonymous"]
+              },
+              {
+                step: "02",
+                title: "We read",
+                detail: "the constellation.",
+                body: "AI clusters your idea with similar ones across the network. Measures submission velocity — this week vs last. Counts the stars around yours.",
+                extra: ["847 ideas analyzed", "7-day velocity", "Category saturation", "Pattern matching"]
+              },
+              {
+                step: "03",
+                title: "Your signal",
+                detail: "lands.",
+                body: "A viability score. Saturation level. Trend direction. A market intelligence snapshot that exists nowhere else — delivered instantly.",
+                extra: ["Viability score", "Rising / Stable / Declining", "Saturation level", "Market snapshot"]
+              },
             ].map((item, i) => (
-              <FallIn key={item.step} delay={i * 140}>
-                <div className="relative p-8 border transition-all duration-300 group"
-                  style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = item.color + "44")}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
-                  <span className="absolute top-4 right-5 text-7xl font-black leading-none select-none"
-                    style={{ color: "rgba(255,255,255,0.03)" }}>{item.step}</span>
-                  <div className="w-11 h-11 flex items-center justify-center mb-5"
-                    style={{ background: item.color + "18", border: `1px solid ${item.color}33` }}>
-                    <item.icon className="w-5 h-5" style={{ color: item.color }} />
+              <FallIn key={item.step} delay={i * 80}>
+                <div className="py-12 border-t flex flex-col md:flex-row md:items-start gap-8 md:gap-16"
+                  style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                  {/* Step number */}
+                  <div className="shrink-0 w-24">
+                    <span className="text-[5rem] font-black leading-none"
+                      style={{ color: "rgba(255,255,255,0.12)" }}>{item.step}</span>
                   </div>
-                  <h3 className="font-bold text-white mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">{item.sub}</p>
+                  {/* Title */}
+                  <div className="flex-1">
+                    <h3 className="text-[2.4rem] md:text-[3.8rem] font-black text-white leading-none tracking-tight mb-1">{item.title}</h3>
+                    <h3 className="text-[2.4rem] md:text-[3.8rem] font-black leading-none tracking-tight mb-6"
+                      style={{ color: "rgba(255,255,255,0.35)" }}>{item.detail}</h3>
+                    <p className="text-white/50 text-base leading-relaxed max-w-md">{item.body}</p>
+                  </div>
+                  {/* Detail tags */}
+                  <div className="shrink-0 space-y-2 pt-2">
+                    {item.extra.map(tag => (
+                      <div key={tag} className="flex items-center gap-2">
+                        <div className="w-1 h-1 bg-white/30" />
+                        <span className="text-xs text-white/40 font-medium tracking-wide">{tag}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </FallIn>
             ))}
@@ -652,7 +699,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Interactive Demo ── */}
-      <section className="py-28 px-6" style={{ background: "linear-gradient(180deg, #050816 0%, #0d1230 50%, #050816 100%)" }}>
+      <section className="py-28 px-6">
         <div className="max-w-5xl mx-auto">
           <FallIn className="text-center mb-14">
             <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">See how it works</p>
@@ -665,175 +712,149 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Market gap ── */}
+      {/* ── Market gap — editorial ── */}
       <section className="py-28 px-6">
-        <div className="max-w-5xl mx-auto">
-          <FallIn className="text-center mb-14">
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">Market Research</p>
-            <h2 className="text-4xl font-extrabold text-white tracking-tight">The data no one else has.</h2>
-          </FallIn>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <FallIn>
-              <div className="p-8 border h-full" style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-5 h-5 border-2 flex items-center justify-center" style={{ borderColor: "rgba(255,255,255,0.2)" }}>
-                    <div className="w-1.5 h-1.5" style={{ background: "rgba(255,255,255,0.2)" }} />
-                  </div>
-                  <span className="text-sm font-bold text-gray-500">Existing tools</span>
-                </div>
-                {["Rely on company & investment data that already exists", "Search trends only capture already-popular keywords", "Zero data on the early 'idea consideration' stage"].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 mb-4">
-                    <XCircle className="w-4 h-4 text-gray-600 shrink-0 mt-0.5" />
-                    <p className="text-sm text-gray-500">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </FallIn>
-
-            <FallIn delay={120}>
-              <div className="p-8 border h-full relative overflow-hidden"
-                style={{ background: "rgba(99,102,241,0.08)", borderColor: "rgba(129,140,248,0.3)" }}>
-                <div className="absolute top-0 right-0 w-40 h-40 opacity-20 pointer-events-none"
-                  style={{ background: "radial-gradient(circle, #818cf8, transparent)", transform: "translate(30%, -30%)" }} />
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-5 h-5 bg-indigo-500 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-white" />
-                  </div>
-                  <span className="text-sm font-bold text-indigo-300">Try.Wepp&apos;s edge</span>
-                </div>
-                {["Captures the earliest 'Founder Intent' data on the market", "Creates a new 'idea-stage data' layer that never existed", "Trends get stronger and more precise as submissions grow"].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 mb-4">
-                    <CheckCircle2 className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
-                    <p className="text-sm text-indigo-200 font-medium">{item}</p>
-                  </div>
-                ))}
-                <p className="mt-2 text-xs text-indigo-400 pt-4 font-medium" style={{ borderTop: "1px solid rgba(129,140,248,0.2)" }}>B2B expansion: VCs, accelerators, research institutions</p>
-              </div>
-            </FallIn>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section className="py-28 px-6" style={{ background: "linear-gradient(180deg, #050816 0%, #0d1230 50%, #050816 100%)" }}>
-        <div className="max-w-5xl mx-auto">
-          <FallIn className="text-center mb-14">
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">Core MVP</p>
-            <h2 className="text-4xl font-extrabold text-white tracking-tight">Four features. One flywheel.</h2>
-          </FallIn>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {[
-              { icon: FileText, title: "Anonymous Submission", sub: "ANONYMOUS SUBMISSION", desc: "Category, target user, brief description. No account needed. No public exposure.", color: "indigo" },
-              { icon: Sparkles, title: "Personal Insight Report", sub: "PERSONAL INSIGHT", desc: "Immediate feedback on viability, saturation, and trend direction — delivered as an incentive to submit.", color: "violet" },
-              { icon: BarChart3, title: "Trend Dashboard", sub: "TREND DASHBOARD", desc: "Visualize growing categories and saturated areas based on aggregated idea data no platform else has.", color: "blue" },
-              { icon: ShieldCheck, title: "Quality Filter", sub: "QUALITY FILTER", desc: "AI-powered duplicate detection and spam filtering keeps the trend data accurate at scale.", color: "emerald" },
-            ].map((f, i) => {
-              const configs = {
-                indigo:  { hex: "#818cf8" },
-                violet:  { hex: "#a78bfa" },
-                blue:    { hex: "#60a5fa" },
-                emerald: { hex: "#34d399" },
-              };
-              const c = configs[f.color as keyof typeof configs];
-              return (
-                <FallIn key={f.title} delay={i * 90}>
-                  <div className="p-8 border transition-all duration-300 h-full"
-                    style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = c.hex + "44")}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
-                    <div className="w-11 h-11 flex items-center justify-center mb-5"
-                      style={{ background: c.hex + "18", border: `1px solid ${c.hex}33` }}>
-                      <f.icon className="w-5 h-5" style={{ color: c.hex }} />
-                    </div>
-                    <h3 className="font-bold text-white mb-1">{f.title}</h3>
-                    <p className="text-[10px] font-bold tracking-widest text-gray-600 uppercase mb-4">{f.sub}</p>
-                    <p className="text-sm text-gray-400 leading-relaxed">{f.desc}</p>
-                  </div>
-                </FallIn>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Competitive table ── */}
-      <section className="py-28 px-6">
-        <div className="max-w-5xl mx-auto">
-          <FallIn className="text-center mb-14">
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">Competitive Landscape</p>
-            <h2 className="text-4xl font-extrabold text-white tracking-tight">A category of one.</h2>
-          </FallIn>
-          <FallIn>
-            <div className="overflow-x-auto border" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-              <table className="w-full text-sm" style={{ background: "rgba(255,255,255,0.02)" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <th className="text-left p-5 text-xs font-bold text-gray-600 uppercase tracking-wider w-[200px]">Feature</th>
-                    {[
-                      { name: "Harmonic", type: "STARTUP DB" },
-                      { name: "Exploding Topics", type: "TREND TOOL" },
-                      { name: "ValidatorAI", type: "AI VALIDATOR" },
-                      { name: "Try.Wepp", type: "IDEA SIGNALS", highlight: true },
-                    ].map((col) => (
-                      <th key={col.name} className="p-5 text-center"
-                        style={col.highlight ? { background: "rgba(99,102,241,0.2)" } : {}}>
-                        <div className={`text-[10px] font-bold tracking-widest uppercase mb-1 ${col.highlight ? "text-indigo-300" : "text-gray-600"}`}>{col.type}</div>
-                        <div className={`font-extrabold text-sm ${col.highlight ? "text-white" : "text-gray-400"}`}>{col.name}</div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { label: "Idea-stage data", vals: [false, false, false, true] },
-                    { label: "Anonymous input", vals: [false, false, false, true] },
-                    { label: "Personal report", vals: [false, false, true, true] },
-                    { label: "Trend report", vals: [false, true, false, true] },
-                    { label: "Pre-founding focus", vals: [false, false, false, true] },
-                  ].map((row, ri) => (
-                    <tr key={row.label} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: ri % 2 === 1 ? "rgba(255,255,255,0.015)" : "transparent" }}>
-                      <td className="p-5 text-sm font-semibold text-gray-400">{row.label}</td>
-                      {row.vals.map((v, vi) => (
-                        <td key={vi} className="p-5 text-center"
-                          style={vi === 3 ? { background: "rgba(99,102,241,0.1)" } : {}}>
-                          {v
-                            ? <CheckCircle2 className={`w-4 h-4 mx-auto ${vi === 3 ? "text-indigo-400" : "text-gray-600"}`} />
-                            : <XCircle className="w-4 h-4 text-gray-700 mx-auto" />
-                          }
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </FallIn>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section className="bg-gradient-navy py-32 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.05]" style={{
-          backgroundImage: "radial-gradient(circle, #a5b4fc 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)" }} />
-
-        <div className="relative max-w-3xl mx-auto text-center">
-          <FallIn>
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-5">Join the early wave</p>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
-              Your idea is a <span style={{ color: "#818cf8" }}>market signal.</span><br />
-              Start contributing.
+        <div className="max-w-6xl mx-auto">
+          <FallIn className="mb-16">
+            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-4">The gap no one filled</p>
+            <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter">
+              The data<br />
+              <span style={{ color: "rgba(255,255,255,0.35)" }}>no one else has.</span>
             </h2>
-            <p className="text-gray-400 text-base mb-10 max-w-md mx-auto">
-              Anonymous. Free. Instant results. The more founders submit, the smarter the platform gets for everyone.
-            </p>
-            <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-9 py-4  text-base hover:bg-indigo-400 transition-all duration-200 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5">
-              Submit your idea — it&apos;s free <ArrowRight className="w-5 h-5" />
-            </Link>
+          </FallIn>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-px" style={{ background: "rgba(255,255,255,0.08)" }}>
+            <FallIn>
+              <div className="p-10" style={{ background: "rgba(0,0,0,0.2)" }}>
+                <p className="text-xs font-bold tracking-widest text-white/30 uppercase mb-8">Before Try.Wepp</p>
+                {[
+                  ["Company data", "Only captures what already launched — too late."],
+                  ["Search trends", "Tracks popularity, not pre-launch intent."],
+                  ["No idea layer", "Zero data on the 'idea consideration' stage."],
+                ].map(([title, desc]) => (
+                  <div key={title} className="mb-8 pb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <p className="text-sm font-bold text-white/30 mb-1 line-through">{title}</p>
+                    <p className="text-sm text-white/20">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </FallIn>
+            <FallIn delay={100}>
+              <div className="p-10" style={{ background: "rgba(99,102,241,0.1)" }}>
+                <p className="text-xs font-bold tracking-widest text-indigo-300/70 uppercase mb-8">Try.Wepp captures</p>
+                {[
+                  ["Founder Intent", "The earliest signal — before a company exists."],
+                  ["Pre-founding data", "A category that never existed, now being built."],
+                  ["Growing precision", "More submissions = sharper trend signal for all."],
+                ].map(([title, desc]) => (
+                  <div key={title} className="mb-8 pb-8" style={{ borderBottom: "1px solid rgba(129,140,248,0.15)" }}>
+                    <p className="text-sm font-black text-white mb-1">{title}</p>
+                    <p className="text-sm text-white/50">{desc}</p>
+                  </div>
+                ))}
+                <p className="text-xs text-white/30">B2B expansion: VCs · accelerators · research institutions</p>
+              </div>
+            </FallIn>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Features — what you actually get ── */}
+      <section className="py-28 px-6">
+        <div className="max-w-6xl mx-auto">
+          <FallIn className="mb-20">
+            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-4">What lands in your hands</p>
+            <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter">
+              Concrete.<br />
+              <span style={{ color: "rgba(255,255,255,0.35)" }}>Immediate.</span>
+            </h2>
+          </FallIn>
+
+          <div className="space-y-0">
+            {[
+              {
+                label: "01 — Submission",
+                title: "Your idea enters the system.",
+                desc: "Category, target user, description. No account. No public record. What you share stays anonymous — forever.",
+                detail: "2 min · Anonymous · No account",
+              },
+              {
+                label: "02 — Insight Report",
+                title: "A personal signal, just for you.",
+                desc: "Viability score from 0–100. Saturation level: Low / Medium / High. Trend direction: Rising, Stable, or Declining. Delivered in seconds.",
+                detail: "Viability · Saturation · Trend",
+              },
+              {
+                label: "03 — Trend Dashboard",
+                title: "See where the market is moving.",
+                desc: "Real-time aggregated data across 9 categories. Watch which ideas are clustering, which markets are filling up, and where the gaps are.",
+                detail: "9 categories · Real-time · Public",
+              },
+              {
+                label: "04 — Quality Filter",
+                title: "Signal, not noise.",
+                desc: "AI detects duplicates and low-effort submissions. Keeps the trend data accurate. The more quality goes in, the more precision comes out.",
+                detail: "AI filter · Spam detection · Accuracy",
+              },
+            ].map((f, i) => (
+              <FallIn key={f.label} delay={i * 60}>
+                <div className="py-10 border-t grid grid-cols-1 md:grid-cols-[200px_1fr_200px] gap-6 md:gap-12 items-start"
+                  style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                  <p className="text-xs font-bold tracking-widest text-white/30 uppercase pt-1">{f.label}</p>
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-black text-white mb-3 tracking-tight">{f.title}</h3>
+                    <p className="text-white/45 text-sm leading-relaxed max-w-lg">{f.desc}</p>
+                  </div>
+                  <p className="text-xs text-white/25 font-medium tracking-wide pt-1 md:text-right">{f.detail}</p>
+                </div>
+              </FallIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Final CTA — earth landing ── */}
+      <section className="py-40 px-6 relative overflow-hidden">
+        {/* Subtle ground texture */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }} />
+
+        <div className="relative max-w-6xl mx-auto">
+          <FallIn>
+            <div className="flex flex-col md:flex-row md:items-end gap-12 md:gap-20">
+              <div className="flex-1">
+                <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-6">Your idea. Grounded.</p>
+                <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter mb-8">
+                  Land your<br />
+                  idea.
+                </h2>
+                <Link href="/submit"
+                  className="inline-flex items-center gap-3 font-black text-base px-8 py-4 transition-all duration-200 hover:-translate-y-0.5"
+                  style={{ background: "rgba(255,255,255,0.95)", color: "#0d2040" }}>
+                  Submit anonymously — free
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+              <div className="flex-1 max-w-sm">
+                <div className="space-y-6">
+                  {[
+                    ["Anonymous", "No account. No public record."],
+                    ["Free", "Always. No paywalls."],
+                    ["Instant", "Report delivered in seconds."],
+                    ["Collective", "Your signal helps every founder."],
+                  ].map(([title, desc]) => (
+                    <div key={title} className="flex items-start gap-4" style={{ borderLeft: "2px solid rgba(255,255,255,0.15)", paddingLeft: "16px" }}>
+                      <div>
+                        <p className="text-sm font-black text-white">{title}</p>
+                        <p className="text-xs text-white/40 mt-0.5">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </FallIn>
         </div>
       </section>
@@ -845,7 +866,7 @@ export default function HomePage() {
             <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
             <span className="text-sm font-bold text-white">Try.Wepp</span>
           </Link>
-          <p className="text-xs text-gray-400">© 2026 Try.Wepp · Anonymous Founder Idea Signals</p>
+          <p className="text-xs text-white/30">© 2026 Try.Wepp · Anonymous Founder Idea Signals</p>
         </div>
       </footer>
     </div>
