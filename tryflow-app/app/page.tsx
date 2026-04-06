@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, TrendingUp, Minus, CheckCircle2, XCircle, ChevronDown, Sparkles, BarChart3, FileText, ShieldCheck } from "lucide-react";
 import { ParticleBackground } from "@/components/ui/ParticleBackground";
 import { IdeaBubbles } from "@/components/ui/IdeaBubbles";
+import { ScrollSeeds } from "@/components/ui/ScrollSeeds";
 
 // ── Hooks ──────────────────────────────────────────────────────────────────
 function useScrolled(threshold = 12) {
@@ -469,6 +470,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen font-['Plus_Jakarta_Sans'] overflow-x-hidden" style={{ background: "linear-gradient(to bottom, #050816 0%, #050816 10%, #060d1f 18%, #0a1a3a 26%, #0d2550 34%, #123470 42%, #1a4a90 50%, #2a68b0 58%, #4a90c8 65%, #6ab8c0 71%, #6ab8a0 77%, #4a9878 83%, #2e7058 90%, #1e5040 100%)" }}>
+      <ScrollSeeds />
 
       {/* ── Navbar ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300" style={{
