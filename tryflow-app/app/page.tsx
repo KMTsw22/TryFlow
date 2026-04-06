@@ -557,7 +557,7 @@ export default function HomePage() {
               display: "block",
               opacity: revealed ? 1 : 0.18,
               transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1)",
-            }}>Before you build,</span>
+            }}>hihi you build,</span>
             <span style={{
               display: "block",
               opacity: revealed ? 1 : 0,
