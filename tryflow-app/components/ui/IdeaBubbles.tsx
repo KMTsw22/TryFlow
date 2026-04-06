@@ -20,8 +20,10 @@ const PALETTE = [
   { r: 79,  g: 70,  b: 229 }, // indigo-600
 ];
 
-export function IdeaBubbles() {
+export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const onRevealRef = useRef(onReveal);
+  onRevealRef.current = onReveal;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -178,6 +180,7 @@ export function IdeaBubbles() {
       if (stage === "converge" && absorbedCount >= N) {
         stage = "reveal";
         revealFrame = 0;
+        onRevealRef.current?.();
       }
       if (stage === "reveal") {
         revealFrame++;

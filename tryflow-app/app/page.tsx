@@ -331,6 +331,7 @@ function InteractiveDemo() {
 export default function HomePage() {
   const scrolled = useScrolled();
   const mouse = useMouse();
+  const [revealed, setRevealed] = useState(false);
 
   return (
     <div className="min-h-screen bg-white font-['Inter'] overflow-x-hidden">
@@ -368,7 +369,7 @@ export default function HomePage() {
         <ParticleBackground />
 
         {/* Idea bubbles converging toward title */}
-        <IdeaBubbles />
+        <IdeaBubbles onReveal={() => setRevealed(true)} />
 
         {/* Geometric background */}
         {/* Dot grid */}
@@ -413,8 +414,20 @@ export default function HomePage() {
 
           {/* Headline */}
           <h1 className="text-center text-[3rem] md:text-[5.5rem] font-extrabold text-white leading-[1.03] tracking-tight max-w-5xl">
-            <span style={{ animation: "fadeInUp 0.6s ease 0.2s both", display: "block" }}>Your anonymous idea</span>
-            <span style={{ animation: "fadeInUp 0.6s ease 0.35s both", display: "block", background: "linear-gradient(135deg, #818cf8, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <span style={{
+              display: "block",
+              opacity: revealed ? 1 : 0.18,
+              transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1)",
+            }}>Your anonymous idea</span>
+            <span style={{
+              display: "block",
+              background: "linear-gradient(135deg, #818cf8, #a78bfa)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              opacity: revealed ? 1 : 0,
+              transform: revealed ? "translateY(0px)" : "translateY(10px)",
+              transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1) 0.15s, transform 1.1s cubic-bezier(0.34,1.56,0.64,1) 0.15s",
+            }}>
               becomes market intelligence.
             </span>
           </h1>
