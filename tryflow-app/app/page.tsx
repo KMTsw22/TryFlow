@@ -2,892 +2,721 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, TrendingUp, Minus, ChevronDown, Sparkles, BarChart3 } from "lucide-react";
-import { ParticleBackground } from "@/components/ui/ParticleBackground";
-import { IdeaBubbles } from "@/components/ui/IdeaBubbles";
-import { ScrollSeeds } from "@/components/ui/ScrollSeeds";
+import { motion, useScroll, useTransform, useSpring, AnimatePresence } from "framer-motion";
+import { ArrowRight, Clock, Star, TrendingUp, Eye, Zap } from "lucide-react";
 
-// ── Hooks ──────────────────────────────────────────────────────────────────
-function useScrolled(threshold = 12) {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > threshold);
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
-  }, [threshold]);
-  return scrolled;
-}
+// ── Tenniel-style SVG illustrations (inline) ──────────────────────────────
 
-function useInView(threshold = 0.1) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current; if (!el) return;
-    const obs = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return [ref, inView] as const;
-}
-
-function useMouse() {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  useEffect(() => {
-    const fn = (e: MouseEvent) => setPos({ x: e.clientX / window.innerWidth - 0.5, y: e.clientY / window.innerHeight - 0.5 });
-    window.addEventListener("mousemove", fn);
-    return () => window.removeEventListener("mousemove", fn);
-  }, []);
-  return pos;
-}
-
-// Spring physics drop-in (replaces FadeUp)
-function FallIn({ children, delay = 0, className = "", rotate = true }: { children: React.ReactNode; delay?: number; className?: string; rotate?: boolean }) {
-  const [ref, inView] = useInView(0.08);
+function RabbitSVG({ className }: { className?: string }) {
   return (
-    <div ref={ref} className={className} style={{
-      opacity: inView ? 1 : 0,
-      transform: inView
-        ? "translateY(0px) rotate(0deg) scale(1)"
-        : `translateY(-38px) ${rotate ? "rotate(-1.5deg)" : ""} scale(0.96)`,
-      transition: `opacity 0.45s ease ${delay}ms, transform 0.85s cubic-bezier(0.34,1.56,0.64,1) ${delay}ms`,
-    }}>{children}</div>
-  );
-}
-
-
-function Counter({ target, suffix = "" }: { target: number; suffix?: string }) {
-  const [ref, inView] = useInView();
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!inView) return;
-    let start = 0;
-    const step = target / 40;
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) { setCount(target); clearInterval(timer); }
-      else setCount(Math.floor(start));
-    }, 30);
-    return () => clearInterval(timer);
-  }, [inView, target]);
-  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
-}
-
-// ── Sparkline trend cards ──────────────────────────────────────────────────
-const TREND_CARDS = [
-  {
-    category: "AI / ML", score: 82, direction: "Rising",
-    points: [18, 22, 19, 28, 25, 35, 38, 33, 45, 52, 58, 65],
-    color: "#818cf8", glow: "rgba(129,140,248,0.18)",
-  },
-  {
-    category: "SaaS / B2B", score: 71, direction: "Stable",
-    points: [38, 42, 36, 44, 40, 43, 38, 45, 41, 44, 40, 43],
-    color: "#a78bfa", glow: "rgba(167,139,250,0.18)",
-  },
-  {
-    category: "Dev Tools", score: 88, direction: "Rising",
-    points: [12, 18, 15, 22, 20, 30, 28, 38, 42, 50, 55, 62],
-    color: "#34d399", glow: "rgba(52,211,153,0.18)",
-  },
-];
-
-function Sparkline({ points, color, animated }: { points: number[]; color: string; animated: boolean }) {
-  const W = 120, H = 40;
-  const min = Math.min(...points), max = Math.max(...points);
-  const range = max - min || 1;
-  const coords = points.map((v, i) => {
-    const x = (i / (points.length - 1)) * W;
-    const y = H - ((v - min) / range) * H * 0.85 - H * 0.08;
-    return `${x},${y}`;
-  }).join(" ");
-  const totalLen = 300; // approximate
-
-  return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none">
-      <defs>
-        <linearGradient id={`sg-${color.replace("#","")}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {/* Area fill */}
-      <polyline
-        points={`0,${H} ${coords} ${W},${H}`}
-        fill={`url(#sg-${color.replace("#","")})`}
-      />
-      {/* Line */}
-      <polyline
-        points={coords}
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-        style={animated ? {
-          strokeDasharray: totalLen,
-          strokeDashoffset: 0,
-          animation: `sparkDraw 1.4s cubic-bezier(0.4,0,0.2,1) forwards`,
-        } : {}}
-      />
-      {/* End dot */}
-      {(() => {
-        const last = points[points.length - 1];
-        const x = W;
-        const y = H - ((last - min) / range) * H * 0.85 - H * 0.08;
-        return (
-          <circle cx={x} cy={y} r="3" fill={color}
-            style={{ filter: `drop-shadow(0 0 4px ${color})` }} />
-        );
-      })()}
+    <svg viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Ears */}
+      <path d="M38 80 Q32 30 36 8 Q40 28 44 80" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      <path d="M36 8 Q39 18 42 80" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.5"/>
+      <path d="M68 80 Q74 30 70 8 Q66 28 62 80" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+      <path d="M70 8 Q67 18 64 80" stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.5"/>
+      {/* Head */}
+      <ellipse cx="52" cy="90" rx="22" ry="18" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Cross-hatch on head */}
+      <path d="M34 84 Q52 80 70 84" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
+      <path d="M33 90 Q52 86 71 90" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
+      <path d="M34 96 Q52 92 70 96" stroke="currentColor" strokeWidth="0.5" fill="none" opacity="0.3"/>
+      {/* Eye */}
+      <circle cx="44" cy="88" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="44" cy="88" r="1" fill="currentColor"/>
+      <circle cx="60" cy="88" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="60" cy="88" r="1" fill="currentColor"/>
+      {/* Nose */}
+      <path d="M50 94 L52 97 L54 94" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Whiskers */}
+      <path d="M30 93 L43 95" stroke="currentColor" strokeWidth="0.8"/>
+      <path d="M30 97 L43 97" stroke="currentColor" strokeWidth="0.8"/>
+      <path d="M74 93 L61 95" stroke="currentColor" strokeWidth="0.8"/>
+      <path d="M74 97 L61 97" stroke="currentColor" strokeWidth="0.8"/>
+      {/* Body */}
+      <path d="M36 104 Q28 120 30 145 Q52 155 74 145 Q76 120 68 104" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Waistcoat */}
+      <path d="M40 108 L44 130 L52 132 L60 130 L64 108" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <path d="M52 108 L52 132" stroke="currentColor" strokeWidth="0.8"/>
+      {/* Waistcoat buttons */}
+      <circle cx="52" cy="114" r="1.5" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      <circle cx="52" cy="120" r="1.5" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      <circle cx="52" cy="126" r="1.5" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      {/* Watch */}
+      <circle cx="68" cy="118" r="7" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <path d="M68 112 L68 118 L72 118" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
+      {/* Legs */}
+      <path d="M36 144 Q32 162 36 172" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M68 144 Q72 162 68 172" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      {/* Feet */}
+      <path d="M30 172 Q36 176 44 172" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+      <path d="M62 172 Q68 176 76 172" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
     </svg>
   );
 }
 
-function SparkCard({ card, delay }: { card: typeof TREND_CARDS[0]; delay: number }) {
-  const [ref, inView] = useInView(0.1);
-  const isRising = card.direction === "Rising";
-  const dirColor = isRising ? "#34d399" : card.direction === "Stable" ? "#fbbf24" : "#f87171";
-
+function CheshireSVG({ className }: { className?: string }) {
   return (
-    <div ref={ref} style={{
-      opacity: inView ? 1 : 0,
-      transform: inView ? "translateY(0)" : "translateY(20px)",
-      transition: `opacity 0.6s ease ${delay}ms, transform 0.8s cubic-bezier(0.34,1.56,0.64,1) ${delay}ms`,
-    }}>
-      <div className=" p-5 relative overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-        {/* Glow bg */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: `radial-gradient(ellipse at 50% 100%, ${card.glow} 0%, transparent 70%)` }} />
+    <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Body outline — fading (Cheshire disappearing) */}
+      <ellipse cx="100" cy="75" rx="70" ry="35" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 3" opacity="0.4"/>
+      {/* Stripes */}
+      {[0,1,2,3,4].map(i => (
+        <path key={i} d={`M${40+i*15} 50 Q${45+i*15} 75 ${40+i*15} 100`} stroke="currentColor" strokeWidth="0.6" fill="none" opacity="0.25"/>
+      ))}
+      {/* Head */}
+      <ellipse cx="100" cy="52" rx="38" ry="30" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Ears */}
+      <path d="M68 30 L60 10 L78 24" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <path d="M132 30 L140 10 L122 24" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      {/* Eyes — wide grin eyes */}
+      <ellipse cx="84" cy="46" rx="7" ry="5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <ellipse cx="116" cy="46" rx="7" ry="5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <circle cx="86" cy="47" r="2" fill="currentColor"/>
+      <circle cx="118" cy="47" r="2" fill="currentColor"/>
+      <circle cx="85" cy="45" r="0.8" fill="white"/>
+      <circle cx="117" cy="45" r="0.8" fill="white"/>
+      {/* THE GRIN */}
+      <path d="M66 64 Q76 75 100 78 Q124 75 134 64" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+      <path d="M66 64 Q70 60 74 64" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <path d="M134 64 Q130 60 126 64" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      {/* Teeth */}
+      {[0,1,2,3,4,5].map(i => (
+        <line key={i} x1={72+i*12} y1="64" x2={72+i*12} y2="70" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
+      ))}
+      {/* Whiskers */}
+      <path d="M40 50 L76 54" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
+      <path d="M38 58 L76 58" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
+      <path d="M160 50 L124 54" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
+      <path d="M162 58 L124 58" stroke="currentColor" strokeWidth="0.8" opacity="0.7"/>
+      {/* Tail curling */}
+      <path d="M170 75 Q185 60 178 45 Q172 35 180 28" stroke="currentColor" strokeWidth="1.2" fill="none" strokeDasharray="3 2" opacity="0.5"/>
+    </svg>
+  );
+}
 
-        <div className="relative">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-              style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
-              {card.category}
-            </span>
-            <span className="text-xs font-bold" style={{ color: dirColor }}>
-              {isRising ? "↑" : card.direction === "Stable" ? "→" : "↓"} {card.direction}
-            </span>
-          </div>
+function CaterpillarSVG({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 240 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Mushroom */}
+      <path d="M30 80 Q30 60 60 55 Q90 50 90 80" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <path d="M10 60 Q30 30 60 25 Q90 30 110 60" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      <path d="M10 60 Q60 65 110 60" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Spots */}
+      {[[30,45],[50,35],[70,33],[88,42]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r="3" stroke="currentColor" strokeWidth="0.8" fill="none"/>)}
+      {/* Caterpillar body — segments */}
+      {[130,155,178,200,220].map((x,i) => (
+        <ellipse key={i} cx={x} cy={60} rx={i===0?18:14} ry={i===0?20:16} stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      ))}
+      {/* Cross-hatch on segments */}
+      {[130,155,178].map((x,i) => (
+        <g key={i} opacity="0.2">
+          <path d={`M${x-12} ${52} L${x+12} ${52}`} stroke="currentColor" strokeWidth="0.6"/>
+          <path d={`M${x-12} ${60} L${x+12} ${60}`} stroke="currentColor" strokeWidth="0.6"/>
+          <path d={`M${x-12} ${68} L${x+12} ${68}`} stroke="currentColor" strokeWidth="0.6"/>
+        </g>
+      ))}
+      {/* Head */}
+      <ellipse cx="128" cy="58" rx="18" ry="20" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Eyes */}
+      <circle cx="122" cy="52" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="134" cy="52" r="3" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="122" cy="52" r="1.2" fill="currentColor"/>
+      <circle cx="134" cy="52" r="1.2" fill="currentColor"/>
+      {/* Hookah pipe */}
+      <path d="M128 68 Q128 80 120 88 Q112 92 108 88" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+      <ellipse cx="106" cy="88" rx="6" ry="4" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Smoke */}
+      <path d="M108 82 Q100 75 105 68 Q110 62 104 56" stroke="currentColor" strokeWidth="0.8" fill="none" strokeDasharray="2 2" opacity="0.5"/>
+      {/* Antennae */}
+      <path d="M122 40 Q118 28 114 22" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="114" cy="21" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      <path d="M134 40 Q138 28 142 22" stroke="currentColor" strokeWidth="1" fill="none"/>
+      <circle cx="142" cy="21" r="2" stroke="currentColor" strokeWidth="0.8" fill="none"/>
+      {/* Legs */}
+      {[145,160,175,192,210].map((x,i) => (
+        <g key={i}>
+          <path d={`M${x} 72 L${x-4} 84`} stroke="currentColor" strokeWidth="0.8"/>
+          <path d={`M${x} 72 L${x+4} 84`} stroke="currentColor" strokeWidth="0.8"/>
+        </g>
+      ))}
+    </svg>
+  );
+}
 
-          {/* Sparkline */}
-          <div className="mb-4">
-            <Sparkline points={card.points} color={card.color} animated={inView} />
-          </div>
+function CardSoldierSVG({ className, label }: { className?: string; label?: string }) {
+  return (
+    <svg viewBox="0 0 80 140" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Card body */}
+      <rect x="8" y="10" width="64" height="120" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+      {/* Corner suit marks */}
+      <text x="14" y="26" fontSize="10" fill="currentColor" fontFamily="serif" opacity="0.7">♠</text>
+      <text x="54" y="122" fontSize="10" fill="currentColor" fontFamily="serif" opacity="0.7" transform="rotate(180 62 117)">♠</text>
+      {/* Face — engraving style */}
+      <ellipse cx="40" cy="55" rx="14" ry="16" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Helmet/crown */}
+      <path d="M26 47 Q40 36 54 47" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      <path d="M30 40 L32 47" stroke="currentColor" strokeWidth="1"/>
+      <path d="M40 37 L40 47" stroke="currentColor" strokeWidth="1"/>
+      <path d="M50 40 L48 47" stroke="currentColor" strokeWidth="1"/>
+      {/* Eyes */}
+      <line x1="34" y1="54" x2="38" y2="54" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <line x1="42" y1="54" x2="46" y2="54" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Mouth */}
+      <path d="M35 62 Q40 65 45 62" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Body / uniform */}
+      <path d="M26 71 L26 100 L54 100 L54 71" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+      {/* Club/spade on chest */}
+      <text x="33" y="90" fontSize="14" fill="currentColor" fontFamily="serif" opacity="0.6">♣</text>
+      {/* Arms */}
+      <path d="M26 75 L14 82 L16 92" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+      <path d="M54 75 L66 82 L64 92" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+      {/* Spear / halberd */}
+      <line x1="16" y1="92" x2="16" y2="130" stroke="currentColor" strokeWidth="1.2"/>
+      <path d="M12 96 L16 86 L20 96" stroke="currentColor" strokeWidth="1" fill="none"/>
+      {/* Legs */}
+      <path d="M30 100 L28 128" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M50 100 L52 128" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+      {/* Feet */}
+      <path d="M24 128 L34 128" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M48 128 L58 128" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      {/* Label */}
+      {label && <text x="40" y="110" fontSize="7" fill="currentColor" fontFamily="serif" textAnchor="middle" opacity="0.5">{label}</text>}
+    </svg>
+  );
+}
 
-          {/* Score */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Viability</p>
-              <div className="flex items-center gap-2">
-                <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
-                  <div className="h-full rounded-full transition-all duration-700"
-                    style={{ width: inView ? `${card.score}%` : "0%", background: card.color, transitionDelay: `${delay + 400}ms` }} />
-                </div>
-                <span className="text-xs font-bold" style={{ color: card.color }}>{card.score}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+// ── Falling objects for hero background ──────────────────────────────────
+const FALLING_ITEMS = ["⌚", "📖", "🔑", "🎩", "☕", "🌹", "🃏", "⚗️"];
+
+function FallingItems() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {FALLING_ITEMS.map((item, i) => (
+        <motion.div
+          key={i}
+          className="absolute text-2xl opacity-10 select-none"
+          style={{ left: `${8 + i * 11.5}%` }}
+          initial={{ y: -80, rotate: 0, opacity: 0 }}
+          animate={{
+            y: ["0vh", "110vh"],
+            rotate: [0, 180 + i * 40],
+            opacity: [0, 0.12, 0.12, 0],
+          }}
+          transition={{
+            duration: 8 + i * 1.2,
+            delay: i * 1.4,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        >
+          {item}
+        </motion.div>
+      ))}
     </div>
   );
 }
 
-// ── Interactive Demo ───────────────────────────────────────────────────────
-const DEMO_DESC = "An AI copilot that auto-generates investor update emails from your product metrics — no manual writing needed.";
-const ANALYSIS_ITEMS = [
-  "Scanning 847 submitted ideas in AI / ML...",
-  "Comparing target user overlap...",
-  "Measuring market saturation level...",
-  "Calculating 7-day trend velocity...",
-  "Generating your insight report...",
-];
-
-function InteractiveDemo() {
-  const [step, setStep] = useState(0);
-  const [charCount, setCharCount] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [analysisLine, setAnalysisLine] = useState(0);
-  const [reportIn, setReportIn] = useState(false);
-  const [score, setScore] = useState(0);
-
-  useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const S = 1 / 0.7; // 0.7x speed = 1/0.7 longer durations
-    const t = (fn: () => void, ms: number) => { const id = setTimeout(fn, ms * S); timers.push(id); };
-
-    if (step === 0) {
-      setCharCount(0);
-      let i = 0;
-      const typeChar = () => {
-        i++;
-        setCharCount(i);
-        if (i < DEMO_DESC.length) t(typeChar, 11 + Math.random() * 8);
-        else t(() => setStep(1), 350);
-      };
-      t(typeChar, 200);
-    }
-
-    if (step === 1) {
-      setProgress(0);
-      setAnalysisLine(0);
-      let p = 0;
-      let line = 0;
-      const tick = () => {
-        p = Math.min(100, p + Math.random() * 18 + 10);
-        setProgress(Math.floor(p));
-        const newLine = Math.floor((p / 100) * ANALYSIS_ITEMS.length);
-        if (newLine !== line) { line = newLine; setAnalysisLine(newLine); }
-        if (p < 100) t(tick, 55 + Math.random() * 40);
-        else t(() => setStep(2), 250);
-      };
-      t(tick, 200);
-    }
-
-    if (step === 2) {
-      setReportIn(false);
-      setScore(0);
-      t(() => {
-        setReportIn(true);
-        let s = 0;
-        const countUp = () => {
-          s = Math.min(82, s + 8);
-          setScore(s);
-          if (s < 82) t(countUp, 25);
-        };
-        t(countUp, 150);
-        t(() => setStep(0), 2800);
-      }, 150);
-    }
-
-    return () => timers.forEach(clearTimeout);
-  }, [step]);
-
-  const STEP_LABELS = ["Submit idea", "AI analyzes", "Your report"];
-  const STEP_URLS   = ["try-flow-ten.vercel.app/submit", "try-flow-ten.vercel.app/submit", "try-flow-ten.vercel.app/ideas/f3a2•••"];
-
+// ── Etching texture overlay ───────────────────────────────────────────────
+function EtchLines({ opacity = 0.03 }: { opacity?: number }) {
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Step indicator */}
-      <div className="flex items-center justify-center mb-8 gap-0">
-        {STEP_LABELS.map((label, i) => (
-          <div key={label} className="flex items-center">
-            <button onClick={() => setStep(i)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-400 cursor-pointer
-                ${step === i ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25" : "text-gray-400 hover:text-gray-600"}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
-                ${step === i ? "bg-white text-indigo-600" : step > i ? "bg-indigo-400 text-white" : "border-2 border-gray-300 text-gray-400"}`}>
-                {step > i ? "✓" : i + 1}
-              </span>
-              <span className="text-xs font-semibold">{label}</span>
-            </button>
-            {i < 2 && (
-              <div className={`w-10 h-px transition-all duration-500 ${step > i ? "bg-indigo-400" : "bg-gray-200"}`} />
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Browser window */}
-      <div className=" border border-gray-200 shadow-2xl overflow-hidden">
-        {/* Chrome bar */}
-        <div className="bg-gray-100 border-b border-gray-200 px-4 py-2.5 flex items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-            <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-          </div>
-          <div className="flex-1 bg-white border border-gray-200  px-3 py-1 text-[11px] text-gray-400 text-center font-mono truncate">
-            {STEP_URLS[step]}
-          </div>
-        </div>
-
-        {/* ── Step 0: Submit form ── */}
-        {step === 0 && (
-          <div className="bg-gradient-navy p-8 min-h-[360px]">
-            <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6">Step 2 of 3 — Describe your idea</p>
-
-            {/* Pre-filled fields */}
-            <div className="space-y-3 mb-5">
-              <div className="bg-indigo-500/20 border border-indigo-400/30  px-4 py-2.5 flex items-center justify-between">
-                <span className="text-xs text-indigo-300 font-medium">Category</span>
-                <span className="text-xs font-bold text-indigo-200 bg-indigo-500/30 px-2 py-0.5 rounded-full">AI / ML ✓</span>
-              </div>
-              <div className="bg-indigo-500/20 border border-indigo-400/30  px-4 py-2.5 flex items-center justify-between">
-                <span className="text-xs text-indigo-300 font-medium">Target user</span>
-                <span className="text-xs font-bold text-indigo-200">Solo developers ✓</span>
-              </div>
-            </div>
-
-            {/* Typing field */}
-            <div className="bg-white/5 border border-white/10  p-4 mb-5 min-h-[90px]">
-              <p className="text-xs text-gray-500 mb-2 font-medium">Description</p>
-              <p className="text-sm text-white leading-relaxed">
-                {DEMO_DESC.slice(0, charCount)}
-                <span className="inline-block w-px h-4 bg-indigo-400 ml-0.5 animate-pulse" />
-              </p>
-            </div>
-
-            {/* Submit button */}
-            <button className={`w-full py-3  font-bold text-sm transition-all duration-300
-              ${charCount >= DEMO_DESC.length
-                ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 scale-[1.02]"
-                : "bg-white/10 text-white/40 cursor-not-allowed"}`}>
-              {charCount >= DEMO_DESC.length ? "✓ Get my insight report →" : "Get my insight report →"}
-            </button>
-            <p className="text-center text-[11px] text-gray-600 mt-3">100% anonymous · Never made public</p>
-          </div>
-        )}
-
-        {/* ── Step 1: AI Analysis ── */}
-        {step === 1 && (
-          <div className="bg-white p-8 min-h-[360px] flex flex-col justify-center">
-            <div className="text-center mb-8">
-              <div className="w-14 h-14  bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="w-6 h-6 text-indigo-500 animate-pulse" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-lg">Analyzing your idea...</h3>
-              <p className="text-sm text-gray-400 mt-1">AI is clustering and scoring your submission</p>
-            </div>
-
-            {/* Progress bar */}
-            <div className="mb-6">
-              <div className="flex justify-between text-xs text-gray-400 mb-2">
-                <span>Processing</span>
-                <span className="font-bold text-indigo-500">{progress}%</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-200"
-                  style={{ width: `${progress}%` }} />
-              </div>
-            </div>
-
-            {/* Analysis log */}
-            <div className="space-y-2">
-              {ANALYSIS_ITEMS.slice(0, Math.max(1, analysisLine)).map((item, i) => (
-                <div key={i} className={`flex items-center gap-2.5 text-xs transition-all duration-300
-                  ${i === analysisLine - 1 ? "opacity-100" : "opacity-40"}`}>
-                  <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0
-                    ${i < analysisLine - 1 ? "bg-emerald-100" : "bg-indigo-100"}`}>
-                    {i < analysisLine - 1
-                      ? <span className="text-emerald-600 text-[9px]">✓</span>
-                      : <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse block" />}
-                  </div>
-                  <span className={i < analysisLine - 1 ? "text-gray-400 line-through" : "text-gray-700 font-medium"}>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Step 2: Report ── */}
-        {step === 2 && (
-          <div className={`min-h-[360px] transition-all duration-700 ${reportIn ? "opacity-100" : "opacity-0 translate-y-2"}`}>
-            {/* Report header */}
-            <div className="bg-gradient-navy p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 pointer-events-none"
-                style={{ background: "radial-gradient(circle, #818cf8, transparent)", transform: "translate(30%,-30%)" }} />
-              <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-widest mb-2">Personal Insight Report</p>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white font-bold text-sm">AI / ML · For: Solo developers</p>
-                  <p className="text-gray-400 text-xs mt-0.5">Submitted anonymously · Just now</p>
-                </div>
-                <div className="text-center">
-                  <div className={`text-4xl font-extrabold transition-colors duration-300 ${score >= 70 ? "text-emerald-400" : "text-amber-400"}`}>{score}</div>
-                  <div className="text-[10px] text-gray-400">viability</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Metrics */}
-            <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100 bg-white">
-              {[
-                { label: "Market Trend", value: "Rising",   icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
-                { label: "Saturation",   value: "Low",      icon: Minus,      color: "text-indigo-500",  bg: "bg-indigo-50" },
-                { label: "Similar Ideas",value: "3",        icon: Sparkles,   color: "text-violet-500",  bg: "bg-violet-50" },
-              ].map((m) => (
-                <div key={m.label} className="p-4 text-center">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{m.label}</p>
-                  <div className={`w-8 h-8  ${m.bg} flex items-center justify-center mx-auto mb-1`}>
-                    <m.icon className={`w-3.5 h-3.5 ${m.color}`} />
-                  </div>
-                  <p className={`text-xs font-bold ${m.color}`}>{m.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Summary */}
-            <div className="p-5 bg-white">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">AI Insight</p>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                High-signal opportunity. The AI/ML space is gaining momentum with very few similar ideas —
-                you may be <span className="font-semibold text-indigo-600">early to a genuine market gap</span>.
-                Low saturation + rising trend = ideal timing.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <p className="text-center text-xs text-gray-400 mt-4">
-        Click the steps above to explore · Auto-plays on loop
-      </p>
-    </div>
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: `repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          rgba(0,0,0,${opacity}) 3px,
+          rgba(0,0,0,${opacity}) 4px
+        )`,
+      }}
+    />
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-const STYLE_CYCLE = [
-  { fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
-  { fontWeight: 100, fontStyle: "italic"  as const, letterSpacing: "0.18em",   fontSize: "0.78em", textTransform: "uppercase" as const },
-  { fontWeight: 800, fontStyle: "italic"  as const, letterSpacing: "-0.04em",  fontSize: "1.08em", textTransform: "none"      as const },
-  { fontWeight: 300, fontStyle: "normal"  as const, letterSpacing: "0.28em",   fontSize: "0.7em",  textTransform: "uppercase" as const },
-  { fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "0.01em",   fontSize: "1.12em", textTransform: "none"      as const },
-  { fontWeight: 200, fontStyle: "italic"  as const, letterSpacing: "0.05em",   fontSize: "0.88em", textTransform: "none"      as const },
-  { fontWeight: 800, fontStyle: "normal"  as const, letterSpacing: "0.22em",   fontSize: "0.72em", textTransform: "uppercase" as const },
-  { fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "-0.02em",  fontSize: "1em",    textTransform: "none"      as const },
+// ── Idea card for investor grid ───────────────────────────────────────────
+const SAMPLE_IDEAS = [
+  { id: "A", title: "AI-native legal contract review for SMBs", category: "SaaS / B2B", score: 87, trend: "Rising", tag: "Hot" },
+  { id: "B", title: "Carbon credit marketplace for Southeast Asia", category: "Marketplace", score: 74, trend: "Rising", tag: "Emerging" },
+  { id: "C", title: "Micro-pension app for gig economy workers", category: "Fintech", score: 91, trend: "Rising", tag: "Featured" },
+  { id: "D", title: "Voice-first coding assistant for non-engineers", category: "Dev Tools", score: 68, trend: "Stable", tag: null },
+  { id: "E", title: "Sleep health subscription for remote teams", category: "Health & Wellness", score: 82, trend: "Rising", tag: "New" },
+  { id: "F", title: "B2B procurement automation for restaurants", category: "SaaS / B2B", score: 79, trend: "Stable", tag: null },
 ];
 
+function IdeaCard({ idea, index }: { idea: typeof SAMPLE_IDEAS[0]; index: number }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08, duration: 0.5 }}
+      viewport={{ once: true }}
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      className="relative p-5 border cursor-pointer overflow-hidden"
+      style={{
+        background: hovered ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.03)",
+        borderColor: hovered ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.1)",
+        backdropFilter: "blur(12px)",
+        transition: "all 0.3s ease",
+      }}
+    >
+      {/* Corner suit mark */}
+      <span className="absolute top-3 right-3 text-white/20 font-serif text-lg select-none">♠</span>
+
+      {idea.tag && (
+        <span className="inline-block text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 mb-3 border"
+          style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }}>
+          {idea.tag}
+        </span>
+      )}
+
+      <h3 className="font-serif text-white text-sm leading-snug mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+        "{idea.title}"
+      </h3>
+
+      <p className="text-white/30 text-[11px] uppercase tracking-wider mb-4">{idea.category}</p>
+
+      {/* Score bar */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.1)" }}>
+          <motion.div
+            className="h-px bg-white"
+            initial={{ width: 0 }}
+            whileInView={{ width: `${idea.score}%` }}
+            transition={{ delay: index * 0.08 + 0.3, duration: 0.8 }}
+            viewport={{ once: true }}
+          />
+        </div>
+        <span className="text-white/60 text-xs font-mono">{idea.score}</span>
+      </div>
+
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            className="mt-4 pt-3 border-t flex items-center justify-between"
+            style={{ borderColor: "rgba(255,255,255,0.1)" }}
+          >
+            <span className="text-white/40 text-[11px]">{idea.trend} ↗</span>
+            <span className="text-white/60 text-[11px] flex items-center gap-1">
+              View report <ArrowRight className="w-3 h-3" />
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const scrolled = useScrolled();
-  const mouse = useMouse();
-  const [revealed, setRevealed] = useState(false);
-  const [styleIdx, setStyleIdx] = useState(0);
-  const [cycleOpacity, setCycleOpacity] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: containerRef });
 
-  useEffect(() => {
-    if (!revealed) return;
-    const interval = setInterval(() => {
-      setCycleOpacity(0);
-      setTimeout(() => {
-        setStyleIdx(i => (i + 1) % STYLE_CYCLE.length);
-        setCycleOpacity(1);
-      }, 140);
-    }, 700);
-    return () => clearInterval(interval);
-  }, [revealed]);
+  const rabbitY = useTransform(scrollYProgress, [0, 0.3], [0, 300]);
+  const rabbitOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
+  const holeScale = useTransform(scrollYProgress, [0.05, 0.3], [0, 1]);
+  const holeOpacity = useTransform(scrollYProgress, [0.05, 0.2, 0.4], [0, 1, 0]);
+
+  const [ideaText, setIdeaText] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   return (
-    <div className="min-h-screen font-['Plus_Jakarta_Sans'] overflow-x-hidden" style={{ background: "linear-gradient(to bottom, #050816 0%, #050816 10%, #060d1f 18%, #0a1a3a 26%, #0d2550 34%, #123470 42%, #1a4a90 50%, #2a68b0 58%, #4a90c8 65%, #6ab8c0 71%, #6ab8a0 77%, #4a9878 83%, #2e7058 90%, #1e5040 100%)" }}>
-      <ScrollSeeds />
+    <div
+      ref={containerRef}
+      className="min-h-screen overflow-x-hidden"
+      style={{
+        background: "#0a0a0a",
+        fontFamily: "'Inter', sans-serif",
+        color: "white",
+      }}
+    >
+      {/* ── Global etching texture ── */}
+      <EtchLines opacity={0.025} />
 
       {/* ── Navbar ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300" style={{
-        background: scrolled ? "rgba(255,255,255,0.97)" : "transparent",
-        backdropFilter: scrolled ? "blur(16px)" : "none",
-        borderBottom: scrolled ? "1px solid #f0f0f0" : "none",
-        boxShadow: scrolled ? "0 1px 20px rgba(0,0,0,0.06)" : "none",
-      }}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-[60px]">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" className="w-7 h-7 " alt="Try.Wepp" />
-            <span className="font-bold text-sm tracking-tight transition-colors duration-300"
-              style={{ color: scrolled ? "#0B1026" : "white" }}>Try.Wepp</span>
+      <nav className="fixed top-0 left-0 right-0 z-50 px-8 h-16 flex items-center justify-between"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(16px)", background: "rgba(10,10,10,0.8)" }}>
+        <div className="flex items-center gap-3">
+          <RabbitSVG className="w-8 h-8 text-white/60" />
+          <span className="font-serif text-white/90 tracking-wide" style={{ fontFamily: "'Playfair Display', serif" }}>
+            Rabbit Hole
+          </span>
+        </div>
+        <div className="flex items-center gap-6">
+          <Link href="/explore" className="text-white/40 hover:text-white/80 text-sm transition-colors tracking-wide">Trends</Link>
+          <Link href="/login" className="text-white/40 hover:text-white/80 text-sm transition-colors tracking-wide">Sign in</Link>
+          <Link href="/submit"
+            className="text-sm px-5 py-2 border text-white/80 hover:text-white hover:border-white/40 transition-all tracking-wider"
+            style={{ borderColor: "rgba(255,255,255,0.2)" }}>
+            Submit Idea
           </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors duration-300"
-              style={{ color: scrolled ? "#6b7280" : "rgba(255,255,255,0.7)" }}>
-              Log in
-            </Link>
-            <Link href="/signup" className="text-sm font-bold px-4 py-2  transition-all duration-300"
-              style={{ background: scrolled ? "#0B1026" : "white", color: scrolled ? "white" : "#0B1026" }}>
-              Get early access →
-            </Link>
-          </div>
         </div>
       </nav>
 
-      {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col overflow-hidden" style={{ background: "#050816" }}>
+      {/* ══════════════════════════════════════════════════════════════════
+          HERO — Step into the Rabbit Hole
+      ══════════════════════════════════════════════════════════════════ */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-16 overflow-hidden">
 
-        {/* Particle system */}
-        <ParticleBackground />
+        {/* Falling items background */}
+        <FallingItems />
 
-        {/* Idea bubbles converging toward title */}
-        <IdeaBubbles onReveal={() => setRevealed(true)} />
+        {/* Subtle radial vignette */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "radial-gradient(ellipse 70% 70% at 50% 50%, transparent 30%, rgba(10,10,10,0.85) 100%)" }} />
 
-        {/* Geometric background */}
-        {/* Dot grid */}
-        <div className="absolute inset-0 opacity-[0.07]" style={{
-          backgroundImage: "radial-gradient(circle, #a5b4fc 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-          transform: `translate(${mouse.x * -12}px, ${mouse.y * -12}px)`,
-          transition: "transform 0.3s ease",
-        }} />
+        {/* Scrolling rabbit */}
+        <motion.div
+          style={{ y: rabbitY, opacity: rabbitOpacity }}
+          className="absolute top-20 right-16 hidden md:block"
+        >
+          <RabbitSVG className="w-32 h-48 text-white/15" />
+        </motion.div>
 
-        {/* Large ring 1 */}
-        <div className="absolute top-[-200px] left-[-200px] w-[700px] h-[700px] rounded-full border border-indigo-500/10 pointer-events-none"
-          style={{ transform: `translate(${mouse.x * 20}px, ${mouse.y * 20}px)`, transition: "transform 0.5s ease" }} />
-        <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full border border-indigo-500/10 pointer-events-none"
-          style={{ transform: `translate(${mouse.x * 15}px, ${mouse.y * 15}px)`, transition: "transform 0.5s ease" }} />
-
-        {/* Large ring 2 */}
-        <div className="absolute bottom-[-300px] right-[-300px] w-[800px] h-[800px] rounded-full border border-violet-500/10 pointer-events-none"
-          style={{ transform: `translate(${mouse.x * -25}px, ${mouse.y * -25}px)`, transition: "transform 0.6s ease" }} />
-
-        {/* Glow blobs */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)", transform: `translate(calc(-50% + ${mouse.x * 30}px), calc(-50% + ${mouse.y * 30}px))`, transition: "transform 0.4s ease" }} />
-        <div className="absolute top-2/3 right-1/4 w-[300px] h-[300px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)" }} />
-
-        {/* Diagonal line */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-5" preserveAspectRatio="none">
-          <line x1="0" y1="100%" x2="100%" y2="0" stroke="#818cf8" strokeWidth="1" />
-          <line x1="0" y1="80%" x2="80%" y2="0" stroke="#818cf8" strokeWidth="0.5" />
-        </svg>
+        {/* Rabbit hole portal */}
+        <motion.div
+          style={{ scale: holeScale, opacity: holeOpacity }}
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-40 pointer-events-none"
+        >
+          <div className="w-full h-full rounded-[50%]"
+            style={{
+              background: "radial-gradient(ellipse at center, #000 0%, rgba(0,0,0,0.6) 60%, transparent 100%)",
+              boxShadow: "0 0 60px 30px rgba(0,0,0,0.8), inset 0 0 40px rgba(255,255,255,0.03)",
+            }} />
+          {/* Hole rim engraving */}
+          <div className="absolute inset-0 rounded-[50%] border"
+            style={{ borderColor: "rgba(255,255,255,0.08)" }} />
+        </motion.div>
 
         {/* Hero content */}
-        <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-8">
+        <div className="relative z-10 text-center max-w-4xl">
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-white/30 text-xs tracking-[0.4em] uppercase mb-8"
+          >
+            Where ideas fall into something real
+          </motion.p>
 
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 border border-indigo-400/30 bg-indigo-500/10 text-indigo-300 text-xs font-semibold px-4 py-1.5 rounded-full mb-8"
-            style={{ animation: "fadeInUp 0.5s ease 0.1s both" }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-            Anonymous Founder Idea Signals
-          </div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.4 }}
+            className="text-5xl md:text-8xl font-serif leading-none tracking-tight mb-4"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Step into the
+          </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.55 }}
+            className="text-5xl md:text-8xl font-serif leading-none tracking-tight mb-12 italic"
+            style={{ fontFamily: "'Playfair Display', serif", color: "rgba(255,255,255,0.7)" }}
+          >
+            Rabbit Hole.
+          </motion.h1>
 
-          {/* Headline */}
-          <h1 className="text-center text-[2.8rem] md:text-[5.2rem] font-extrabold text-white leading-[1.12] tracking-tight max-w-5xl">
-            <span style={{
-              display: "block",
-              opacity: revealed ? 1 : 0.18,
-              transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1)",
-            }}>hihi you build,</span>
-            <span style={{
-              display: "block",
-              opacity: revealed ? 1 : 0,
-              transform: revealed ? "translateY(0px)" : "translateY(10px)",
-              transition: "opacity 0.9s cubic-bezier(0.4,0,0.2,1) 0.1s, transform 0.9s cubic-bezier(0.34,1.56,0.64,1) 0.1s",
-            }}>find out if anyone</span>
-            <span style={{
-              display: "block",
-              opacity: revealed ? 1 : 0,
-              transform: revealed ? "translateY(0px)" : "translateY(14px)",
-              transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1) 0.22s, transform 1.1s cubic-bezier(0.34,1.56,0.64,1) 0.22s",
-            }}>
-              <span style={{
-                background: "linear-gradient(135deg, #818cf8, #a78bfa)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                opacity: cycleOpacity,
-                transition: "opacity 0.14s ease",
-                ...STYLE_CYCLE[styleIdx],
-              }}>actually cares.</span>
-            </span>
-          </h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="text-white/40 text-base leading-relaxed max-w-lg mx-auto mb-12"
+          >
+            Submit your idea anonymously. Our AI validates it.<br />
+            The right investor finds it. And it becomes real.
+          </motion.p>
 
-          <p className="mt-7 text-center text-[1.05rem] text-gray-400 leading-relaxed max-w-[520px]"
-            style={{ animation: "fadeInUp 0.6s ease 0.5s both" }}>
-            Submit your startup idea in 2 minutes. AI clusters it, reveals where the market is heading, and gives you a personal insight report — instantly.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-9"
-            style={{ animation: "fadeInUp 0.6s ease 0.64s both" }}>
-            <Link href="/submit" className="group inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-7 py-3.5  text-sm hover:bg-indigo-400 transition-all duration-200 hover:shadow-2xl hover:shadow-indigo-500/30 hover:-translate-y-0.5">
-              Submit your idea
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-            <Link href="/explore" className="inline-flex items-center gap-2 border border-white/15 text-gray-300 font-medium px-7 py-3.5  text-sm hover:border-white/35 hover:text-white hover:bg-white/5 transition-all duration-200">
-              <BarChart3 className="w-4 h-4" /> View live trends
-            </Link>
-          </div>
-
-          <p className="mt-5 text-xs text-gray-600" style={{ animation: "fadeInUp 0.5s ease 0.78s both" }}>
-            Free · Anonymous · No account needed
-          </p>
-
-          {/* Scroll cue */}
-          <div className="mt-10 flex flex-col items-center gap-2 opacity-40"
-            style={{ animation: "fadeIn 1s ease 1.2s both" }}>
-            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">See live ideas</span>
-            <ChevronDown className="w-4 h-4 text-gray-400 animate-bounce" />
-          </div>
-        </div>
-
-        {/* ── Peek cards at bottom ── */}
-        <div className="relative w-full px-4 pb-0" style={{ marginTop: "-20px" }}>
-          <div className="max-w-5xl mx-auto">
-            {/* Fade gradient over cards */}
-            <div className="absolute inset-x-0 top-0 h-16 pointer-events-none z-10"
-              style={{ background: "linear-gradient(to bottom, rgba(11,16,38,1), transparent)" }} />
-            <div className="absolute inset-x-0 bottom-0 h-32 pointer-events-none z-10"
-              style={{ background: "linear-gradient(to bottom, transparent, rgba(5,8,22,1))" }} />
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-8">
-              {TREND_CARDS.map((card, i) => (
-                <SparkCard key={card.category} card={card} delay={i * 120} />
+          {/* Big idea input */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1 }}
+            className="relative max-w-2xl mx-auto"
+          >
+            {/* Ornate border */}
+            <div className="absolute -inset-[1px] pointer-events-none"
+              style={{ border: "1px solid rgba(255,255,255,0.12)" }}>
+              {/* Corner ornaments */}
+              {["top-0 left-0", "top-0 right-0", "bottom-0 left-0", "bottom-0 right-0"].map((pos, i) => (
+                <div key={i} className={`absolute ${pos} w-4 h-4`}
+                  style={{
+                    borderTop: i < 2 ? "2px solid rgba(255,255,255,0.3)" : "none",
+                    borderBottom: i >= 2 ? "2px solid rgba(255,255,255,0.3)" : "none",
+                    borderLeft: i % 2 === 0 ? "2px solid rgba(255,255,255,0.3)" : "none",
+                    borderRight: i % 2 === 1 ? "2px solid rgba(255,255,255,0.3)" : "none",
+                  }} />
               ))}
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ── Signal strip ── */}
-      <section className="py-24 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-        <div className="max-w-6xl mx-auto">
-          <FallIn>
-            <div className="flex flex-col md:flex-row items-start md:items-end gap-8 md:gap-20">
-              {/* Big statement */}
-              <div className="flex-1">
-                <p className="text-[4rem] md:text-[7rem] font-black text-white leading-none tracking-tighter">
-                  <Counter target={0} suffix="" />
-                </p>
-                <p className="text-lg font-bold text-white/60 mt-2 uppercase tracking-widest">founder ideas mapped</p>
-              </div>
-              {/* Details alongside */}
-              <div className="flex-1 max-w-sm">
-                <p className="text-white/40 text-sm leading-relaxed mb-6">
-                  Every anonymous idea submitted becomes a data point. The more founders contribute, the sharper the collective signal becomes.
-                </p>
-                <div className="flex gap-8">
-                  <div>
-                    <p className="text-2xl font-extrabold text-white">3</p>
-                    <p className="text-xs text-white/40 mt-0.5">steps to insight</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-extrabold text-white">9</p>
-                    <p className="text-xs text-white/40 mt-0.5">categories tracked</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-extrabold text-white">∞</p>
-                    <p className="text-xs text-white/40 mt-0.5">signal potential</p>
-                  </div>
-                </div>
-              </div>
+            <textarea
+              value={ideaText}
+              onChange={(e) => setIdeaText(e.target.value)}
+              placeholder="Describe your idea... (What problem does it solve? Who is it for?)"
+              rows={4}
+              className="w-full px-6 py-5 text-white/80 text-sm leading-relaxed resize-none outline-none"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                backdropFilter: "blur(8px)",
+                border: "none",
+                fontFamily: "'Inter', sans-serif",
+              }}
+            />
+
+            <div className="flex items-center justify-between px-6 py-3"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <span className="text-white/20 text-xs tracking-wider">Anonymous · Free · Instant</span>
+              <Link href="/submit">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium tracking-wider transition-all"
+                  style={{ background: "rgba(255,255,255,0.9)", color: "#0a0a0a" }}
+                >
+                  Fall in
+                  <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              </Link>
             </div>
-          </FallIn>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5, duration: 1 }}
+            className="mt-16 flex items-center justify-center gap-2 text-white/20"
+          >
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+            >
+              <svg width="12" height="20" viewBox="0 0 12 20" fill="none">
+                <rect x="1" y="1" width="10" height="18" rx="5" stroke="currentColor" strokeWidth="1"/>
+                <circle cx="6" cy="6" r="2" fill="currentColor"/>
+              </svg>
+            </motion.div>
+            <span className="text-xs tracking-widest">SCROLL</span>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── How it works — editorial rows ── */}
-      <section className="py-28 px-6">
-        <div className="max-w-6xl mx-auto">
-          <FallIn className="mb-20">
-            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-4">How it works</p>
-            <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter">
-              The idea<br />descends.
-            </h2>
-          </FallIn>
+      {/* ══════════════════════════════════════════════════════════════════
+          PROCESS — The Caterpillar's Question
+      ══════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 overflow-hidden">
+        <EtchLines opacity={0.02} />
 
-          <div className="space-y-0">
+        <div className="max-w-6xl mx-auto">
+          {/* Section header */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-24"
+          >
+            <p className="text-white/25 text-xs tracking-[0.4em] uppercase mb-4">The Process</p>
+            <h2 className="text-4xl md:text-6xl font-serif mb-6" style={{ fontFamily: "'Playfair Display', serif" }}>
+              "Who are <em>you?</em>"
+            </h2>
+            <p className="text-white/40 max-w-md mx-auto text-sm leading-relaxed">
+              The caterpillar asked Alice three times. Our AI asks your idea the same — and doesn't stop until it has an answer.
+            </p>
+          </motion.div>
+
+          {/* Caterpillar illustration */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 1.2 }}
+            viewport={{ once: true }}
+            className="flex justify-center mb-20"
+          >
+            <CaterpillarSVG className="w-full max-w-lg text-white/25" />
+          </motion.div>
+
+          {/* 3 process steps */}
+          <div className="grid md:grid-cols-3 gap-0">
             {[
               {
-                step: "01",
-                title: "You submit.",
-                detail: "Anonymously.",
-                body: "Category, target user, a short description. No account, no exposure. Under 2 minutes. Your identity stays in the sky.",
-                extra: ["Category", "Target user", "Description", "Anonymous"]
+                num: "I.",
+                title: "You fall.",
+                desc: "Drop your idea anonymously. No pitch deck. No network. No name. Just the idea, raw.",
+                icon: <RabbitSVG className="w-16 h-24 text-white/20 mx-auto" />,
               },
               {
-                step: "02",
-                title: "We read",
-                detail: "the constellation.",
-                body: "AI clusters your idea with similar ones across the network. Measures submission velocity — this week vs last. Counts the stars around yours.",
-                extra: ["847 ideas analyzed", "7-day velocity", "Category saturation", "Pattern matching"]
+                num: "II.",
+                title: "It's questioned.",
+                desc: "8 AI agents run in parallel — market size, competition, timing, moat, defensibility. Ruthlessly.",
+                icon: <CheshireSVG className="w-40 h-24 text-white/20 mx-auto" />,
               },
               {
-                step: "03",
-                title: "Your signal",
-                detail: "lands.",
-                body: "A viability score. Saturation level. Trend direction. A market intelligence snapshot that exists nowhere else — delivered instantly.",
-                extra: ["Viability score", "Rising / Stable / Declining", "Saturation level", "Market snapshot"]
+                num: "III.",
+                title: "The right one finds it.",
+                desc: "Investors browse validated ideas. No cold emails. No warm intros. Just signal.",
+                icon: <CardSoldierSVG className="w-16 h-24 text-white/20 mx-auto" />,
               },
-            ].map((item, i) => {
-              const right = i % 2 === 1;
-              return (
-                <FallIn key={item.step} delay={i * 80}>
-                  <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                    <div className={`flex items-center justify-between mb-4 ${right ? "flex-row-reverse" : ""}`}>
-                      <span className="text-xs font-black tracking-widest text-white/20 uppercase">{item.step}</span>
-                      <div className={`flex gap-5 ${right ? "flex-row-reverse" : ""}`}>
-                        {item.extra.map(tag => (
-                          <span key={tag} className="text-xs text-white/25 font-medium tracking-wide hidden md:block">{tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className={right ? "text-right" : "text-left"}>
-                      <h3 className="text-[2.8rem] md:text-[5rem] font-black text-white leading-none tracking-tight mb-1">{item.title}</h3>
-                      <h3 className="text-[2.8rem] md:text-[5rem] font-black leading-none tracking-tight mb-6"
-                        style={{ color: "rgba(255,255,255,0.28)" }}>{item.detail}</h3>
-                      <p className={`text-white/45 text-base leading-relaxed max-w-xl ${right ? "ml-auto" : ""}`}>{item.body}</p>
-                    </div>
-                  </div>
-                </FallIn>
-              );
-            })}
+            ].map((step, i) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.15, duration: 0.7 }}
+                viewport={{ once: true }}
+                className="py-12 px-8 text-center relative"
+                style={{
+                  borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                }}
+              >
+                {step.icon}
+                <div className="mt-6 mb-3">
+                  <span className="text-white/20 text-xs font-serif tracking-widest"
+                    style={{ fontFamily: "'Playfair Display', serif" }}>{step.num}</span>
+                </div>
+                <h3 className="text-xl font-serif mb-3 text-white/80"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>{step.title}</h3>
+                <p className="text-white/35 text-sm leading-relaxed">{step.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Interactive Demo ── */}
-      <section className="py-28 px-6">
-        <div className="max-w-5xl mx-auto">
-          <FallIn className="text-center mb-14">
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">See how it works</p>
-            <h2 className="text-4xl font-extrabold text-white tracking-tight">From idea to insight in 3 steps.</h2>
-            <p className="mt-4 text-gray-400 max-w-md mx-auto text-sm">Watch the full journey — or click any step to explore it yourself.</p>
-          </FallIn>
-          <FallIn>
-            <InteractiveDemo />
-          </FallIn>
-        </div>
-      </section>
+      {/* ══════════════════════════════════════════════════════════════════
+          INVESTOR VIEW — The Card Soldiers' Grid
+      ══════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 overflow-hidden">
+        <div className="absolute inset-0"
+          style={{ background: "linear-gradient(180deg, transparent, rgba(255,255,255,0.02) 50%, transparent)" }} />
+        <EtchLines opacity={0.02} />
 
-      {/* ── Market gap — editorial ── */}
-      <section className="py-28 px-6">
         <div className="max-w-6xl mx-auto">
-          <FallIn className="mb-16">
-            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-4">The gap no one filled</p>
-            <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter">
-              The data<br />
-              <span style={{ color: "rgba(255,255,255,0.35)" }}>no one else has.</span>
-            </h2>
-          </FallIn>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-px" style={{ background: "rgba(255,255,255,0.08)" }}>
-            <FallIn>
-              <div className="p-10" style={{ background: "rgba(0,0,0,0.2)" }}>
-                <p className="text-xs font-bold tracking-widest text-white/30 uppercase mb-8">Before Try.Wepp</p>
-                {[
-                  ["Company data", "Only captures what already launched — too late."],
-                  ["Search trends", "Tracks popularity, not pre-launch intent."],
-                  ["No idea layer", "Zero data on the 'idea consideration' stage."],
-                ].map(([title, desc]) => (
-                  <div key={title} className="mb-8 pb-8" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <p className="text-sm font-bold text-white/30 mb-1 line-through">{title}</p>
-                    <p className="text-sm text-white/20">{desc}</p>
-                  </div>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-white/25 text-xs tracking-[0.4em] uppercase mb-3">For Investors</p>
+              <h2 className="text-4xl md:text-5xl font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
+                The Queen's<br /><em>Garden of Ideas.</em>
+              </h2>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="max-w-xs"
+            >
+              {/* Card soldiers illustration */}
+              <div className="flex gap-2 justify-end mb-4">
+                {["♠","♣","♥"].map((suit, i) => (
+                  <CardSoldierSVG key={i} className="w-10 h-16 text-white/15" />
                 ))}
               </div>
-            </FallIn>
-            <FallIn delay={100}>
-              <div className="p-10" style={{ background: "rgba(99,102,241,0.1)" }}>
-                <p className="text-xs font-bold tracking-widest text-indigo-300/70 uppercase mb-8">Try.Wepp captures</p>
-                {[
-                  ["Founder Intent", "The earliest signal — before a company exists."],
-                  ["Pre-founding data", "A category that never existed, now being built."],
-                  ["Growing precision", "More submissions = sharper trend signal for all."],
-                ].map(([title, desc]) => (
-                  <div key={title} className="mb-8 pb-8" style={{ borderBottom: "1px solid rgba(129,140,248,0.15)" }}>
-                    <p className="text-sm font-black text-white mb-1">{title}</p>
-                    <p className="text-sm text-white/50">{desc}</p>
-                  </div>
-                ))}
-                <p className="text-xs text-white/30">B2B expansion: VCs · accelerators · research institutions</p>
+              <p className="text-white/35 text-sm leading-relaxed text-right">
+                AI-validated ideas. Scored. Ranked. Anonymous.<br/>
+                The signal without the noise.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Idea grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px"
+            style={{ background: "rgba(255,255,255,0.05)" }}>
+            {SAMPLE_IDEAS.map((idea, i) => (
+              <div key={idea.id} style={{ background: "#0a0a0a" }}>
+                <IdeaCard idea={idea} index={i} />
               </div>
-            </FallIn>
+            ))}
           </div>
-        </div>
-      </section>
 
-      {/* ── Features — what you actually get ── */}
-      <section className="py-28 px-6">
-        <div className="max-w-6xl mx-auto">
-          <FallIn className="mb-20">
-            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-4">What lands in your hands</p>
-            <h2 className="text-[3.5rem] md:text-[6rem] font-black text-white leading-none tracking-tighter">
-              Concrete.<br />
-              <span style={{ color: "rgba(255,255,255,0.35)" }}>Immediate.</span>
-            </h2>
-          </FallIn>
-
-          <div className="space-y-0">
-            {[
-              {
-                label: "01 — Submission",
-                title: "Your idea enters the system.",
-                desc: "Category, target user, description. No account. No public record. What you share stays anonymous — forever.",
-                detail: "2 min · Anonymous · No account",
-              },
-              {
-                label: "02 — Insight Report",
-                title: "A personal signal, just for you.",
-                desc: "Viability score from 0–100. Saturation level: Low / Medium / High. Trend direction: Rising, Stable, or Declining. Delivered in seconds.",
-                detail: "Viability · Saturation · Trend",
-              },
-              {
-                label: "03 — Trend Dashboard",
-                title: "See where the market is moving.",
-                desc: "Real-time aggregated data across 9 categories. Watch which ideas are clustering, which markets are filling up, and where the gaps are.",
-                detail: "9 categories · Real-time · Public",
-              },
-              {
-                label: "04 — Quality Filter",
-                title: "Signal, not noise.",
-                desc: "AI detects duplicates and low-effort submissions. Keeps the trend data accurate. The more quality goes in, the more precision comes out.",
-                detail: "AI filter · Spam detection · Accuracy",
-              },
-            ].map((f, i) => {
-              const right = i % 2 === 1;
-              return (
-                <FallIn key={f.label} delay={i * 60}>
-                  <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                    <div className={`flex items-center justify-between mb-3 ${right ? "flex-row-reverse" : ""}`}>
-                      <p className="text-xs font-bold tracking-widest text-white/25 uppercase">{f.label}</p>
-                      <p className="text-xs text-white/20 font-medium tracking-wide">{f.detail}</p>
-                    </div>
-                    <div className={right ? "text-right" : "text-left"}>
-                      <h3 className="text-[2rem] md:text-[3.2rem] font-black text-white leading-tight tracking-tight mb-3">{f.title}</h3>
-                      <p className={`text-white/45 text-sm leading-relaxed max-w-2xl ${right ? "ml-auto" : ""}`}>{f.desc}</p>
-                    </div>
-                  </div>
-                </FallIn>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA — earth landing ── */}
-      <section className="py-40 px-6 relative overflow-hidden">
-        {/* Subtle ground texture */}
-        <div className="absolute inset-0 opacity-[0.04]" style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }} />
-
-        <div className="relative max-w-6xl mx-auto text-center">
-          <FallIn>
-            <p className="text-xs font-bold tracking-widest text-white/40 uppercase mb-6">Your idea. Grounded.</p>
-            <h2 className="text-[3.5rem] md:text-[7rem] font-black text-white leading-none tracking-tighter mb-10">
-              Land your idea.
-            </h2>
-            <Link href="/submit"
-              className="inline-flex items-center gap-3 font-black text-base px-10 py-5 transition-all duration-200 hover:-translate-y-0.5 mb-16"
-              style={{ background: "rgba(255,255,255,0.95)", color: "#0d2040" }}>
-              Submit anonymously — free
-              <ArrowRight className="w-5 h-5" />
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="text-center mt-10"
+          >
+            <Link href="/explore"
+              className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/70 transition-colors tracking-wider border-b pb-0.5"
+              style={{ borderColor: "rgba(255,255,255,0.15)" }}
+            >
+              View all validated ideas <ArrowRight className="w-4 h-4" />
             </Link>
-            <div className="flex flex-wrap justify-center gap-x-12 gap-y-4 mt-2">
-              {[
-                ["Anonymous", "No account. No public record."],
-                ["Free", "Always. No paywalls."],
-                ["Instant", "Report in seconds."],
-                ["Collective", "Your signal helps every founder."],
-              ].map(([title, desc]) => (
-                <div key={title} className="text-left" style={{ borderLeft: "2px solid rgba(255,255,255,0.15)", paddingLeft: "14px" }}>
-                  <p className="text-sm font-black text-white">{title}</p>
-                  <p className="text-xs text-white/40 mt-0.5">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </FallIn>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="py-8 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-            <span className="text-sm font-bold text-white">Try.Wepp</span>
+      {/* ══════════════════════════════════════════════════════════════════
+          CHESHIRE QUOTE — The grin without the cat
+      ══════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-40 px-6 text-center overflow-hidden">
+        <EtchLines opacity={0.02} />
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 1.5 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto"
+        >
+          <CheshireSVG className="w-64 h-32 text-white/12 mx-auto mb-12" />
+
+          <blockquote className="text-3xl md:text-5xl font-serif italic leading-tight text-white/60 mb-8"
+            style={{ fontFamily: "'Playfair Display', serif" }}>
+            "We're all mad here."
+          </blockquote>
+          <p className="text-white/25 text-sm tracking-wider mb-16">— The Cheshire Cat</p>
+
+          <p className="text-white/40 text-base leading-relaxed max-w-lg mx-auto mb-12">
+            The best ideas always sound a little mad at first.<br />
+            That's exactly why they need a place to be heard.
+          </p>
+
+          <Link href="/submit">
+            <motion.button
+              whileHover={{ scale: 1.03, borderColor: "rgba(255,255,255,0.4)" }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-3 px-10 py-4 border text-white/80 text-sm tracking-widest transition-all"
+              style={{ borderColor: "rgba(255,255,255,0.15)" }}
+            >
+              <RabbitSVG className="w-6 h-9 text-white/50" />
+              Submit your idea — it's free
+            </motion.button>
           </Link>
-          <p className="text-xs text-white/30">© 2026 Try.Wepp · Anonymous Founder Idea Signals</p>
+        </motion.div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          FOOTER
+      ══════════════════════════════════════════════════════════════════ */}
+      <footer className="py-10 px-8" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <RabbitSVG className="w-6 h-9 text-white/30" />
+            <span className="text-white/30 text-sm font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Rabbit Hole
+            </span>
+          </div>
+          <div className="flex items-center gap-8">
+            <Link href="/explore" className="text-white/20 hover:text-white/50 text-xs tracking-wider transition-colors">Trends</Link>
+            <Link href="/submit" className="text-white/20 hover:text-white/50 text-xs tracking-wider transition-colors">Submit</Link>
+            <Link href="/login" className="text-white/20 hover:text-white/50 text-xs tracking-wider transition-colors">Sign in</Link>
+          </div>
+          <p className="text-white/15 text-xs">© 2026 Rabbit Hole</p>
         </div>
       </footer>
     </div>
