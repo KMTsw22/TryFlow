@@ -138,10 +138,8 @@ export default async function ExplorePage() {
 
               return (
                 <div key={t.category}
-                  className="px-6 py-4 flex items-center gap-4 transition-colors"
-                  style={{ borderColor: "rgba(255,255,255,0.04)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  className="px-6 py-4 flex items-center gap-4 transition-colors hover:bg-white/[0.03]"
+                  style={{ borderColor: "rgba(255,255,255,0.04)" }}>
 
                   <div className={`w-9 h-9  ${tConf.bg} flex items-center justify-center shrink-0`}>
                     <TIcon className={`w-4 h-4 ${tConf.color}`} />
