@@ -694,27 +694,29 @@ export default function HomePage() {
                 body: "A viability score. Saturation level. Trend direction. A market intelligence snapshot that exists nowhere else — delivered instantly.",
                 extra: ["Viability score", "Rising / Stable / Declining", "Saturation level", "Market snapshot"]
               },
-            ].map((item, i) => (
-              <FallIn key={item.step} delay={i * 80}>
-                <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                  {/* Top row: step + tags */}
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-black tracking-widest text-white/20 uppercase">{item.step}</span>
-                    <div className="flex gap-5">
-                      {item.extra.map(tag => (
-                        <span key={tag} className="text-xs text-white/25 font-medium tracking-wide hidden md:block">{tag}</span>
-                      ))}
+            ].map((item, i) => {
+              const right = i % 2 === 1;
+              return (
+                <FallIn key={item.step} delay={i * 80}>
+                  <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                    <div className={`flex items-center justify-between mb-4 ${right ? "flex-row-reverse" : ""}`}>
+                      <span className="text-xs font-black tracking-widest text-white/20 uppercase">{item.step}</span>
+                      <div className={`flex gap-5 ${right ? "flex-row-reverse" : ""}`}>
+                        {item.extra.map(tag => (
+                          <span key={tag} className="text-xs text-white/25 font-medium tracking-wide hidden md:block">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className={right ? "text-right" : "text-left"}>
+                      <h3 className="text-[2.8rem] md:text-[5rem] font-black text-white leading-none tracking-tight mb-1">{item.title}</h3>
+                      <h3 className="text-[2.8rem] md:text-[5rem] font-black leading-none tracking-tight mb-6"
+                        style={{ color: "rgba(255,255,255,0.28)" }}>{item.detail}</h3>
+                      <p className={`text-white/45 text-base leading-relaxed max-w-xl ${right ? "ml-auto" : ""}`}>{item.body}</p>
                     </div>
                   </div>
-                  {/* Full-width title */}
-                  <h3 className="text-[2.8rem] md:text-[5rem] font-black text-white leading-none tracking-tight mb-1">{item.title}</h3>
-                  <h3 className="text-[2.8rem] md:text-[5rem] font-black leading-none tracking-tight mb-6"
-                    style={{ color: "rgba(255,255,255,0.28)" }}>{item.detail}</h3>
-                  {/* Body */}
-                  <p className="text-white/45 text-base leading-relaxed max-w-xl">{item.body}</p>
-                </div>
-              </FallIn>
-            ))}
+                </FallIn>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -817,18 +819,23 @@ export default function HomePage() {
                 desc: "AI detects duplicates and low-effort submissions. Keeps the trend data accurate. The more quality goes in, the more precision comes out.",
                 detail: "AI filter · Spam detection · Accuracy",
               },
-            ].map((f, i) => (
-              <FallIn key={f.label} delay={i * 60}>
-                <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-bold tracking-widest text-white/25 uppercase">{f.label}</p>
-                    <p className="text-xs text-white/20 font-medium tracking-wide">{f.detail}</p>
+            ].map((f, i) => {
+              const right = i % 2 === 1;
+              return (
+                <FallIn key={f.label} delay={i * 60}>
+                  <div className="py-10 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                    <div className={`flex items-center justify-between mb-3 ${right ? "flex-row-reverse" : ""}`}>
+                      <p className="text-xs font-bold tracking-widest text-white/25 uppercase">{f.label}</p>
+                      <p className="text-xs text-white/20 font-medium tracking-wide">{f.detail}</p>
+                    </div>
+                    <div className={right ? "text-right" : "text-left"}>
+                      <h3 className="text-[2rem] md:text-[3.2rem] font-black text-white leading-tight tracking-tight mb-3">{f.title}</h3>
+                      <p className={`text-white/45 text-sm leading-relaxed max-w-2xl ${right ? "ml-auto" : ""}`}>{f.desc}</p>
+                    </div>
                   </div>
-                  <h3 className="text-[2rem] md:text-[3.2rem] font-black text-white leading-tight tracking-tight mb-3">{f.title}</h3>
-                  <p className="text-white/45 text-sm leading-relaxed max-w-2xl">{f.desc}</p>
-                </div>
-              </FallIn>
-            ))}
+                </FallIn>
+              );
+            })}
           </div>
         </div>
       </section>
