@@ -51,6 +51,7 @@ Assess how hard this is to build and what engineering challenges exist.
   "score": 0-100,
   "level": "Low" | "Medium" | "High" | "Very High",
   "assessment": "2-3 sentence analysis",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: core technical challenges in detail, integration complexity with existing systems, AI/ML requirements, infrastructure needs, estimated MVP timeline and rationale, team skill requirements, and technical debt risks.",
   "signals": {
     "core_challenge": "string — the hardest technical problem",
     "integration_complexity": "Low" | "Medium" | "High" | "Very High",

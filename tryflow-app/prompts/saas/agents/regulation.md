@@ -52,6 +52,7 @@ Identify regulatory risks AND tailwinds for this idea.
   "score": 0-100,
   "risk_level": "Minimal" | "Moderate" | "Heavy" | "Prohibitive",
   "assessment": "2-3 sentence analysis",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: specific applicable regulations and their requirements, compliance cost breakdown, timeline to achieve compliance, regulatory tailwinds that create demand, jurisdiction-specific risks, ongoing compliance burden, and how regulation affects competitive dynamics.",
   "signals": {
     "applicable_regulations": ["string — e.g. 'GDPR', 'SOC 2'"],
     "compliance_cost": "Low (<$50K)" | "Medium ($50-200K)" | "High ($200K+)",

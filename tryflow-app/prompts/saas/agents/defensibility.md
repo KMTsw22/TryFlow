@@ -57,6 +57,7 @@ Evaluate what competitive advantages this product can build and how durable they
   "agent": "defensibility",
   "score": 0-100,
   "assessment": "2-3 sentence analysis",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: primary moat type and how it compounds over time, secondary moat opportunities, time required to build meaningful defensibility, durability against well-funded competitors, data network effects, switching cost dynamics, and brand/community moat potential.",
   "signals": {
     "primary_moat": "Network Effects" | "Switching Costs" | "Scale" | "Brand" | "Technology" | "None",
     "moats": ["string — all applicable moat types"],

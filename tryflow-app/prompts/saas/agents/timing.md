@@ -59,6 +59,7 @@ Determine if the timing is right — too early, right on time, or too late.
   "score": 0-100,
   "signal": "Too Early" | "Early" | "Right Time" | "Late" | "Too Late",
   "assessment": "2-3 sentence analysis",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: specific forcing functions driving urgency, technology enablers that make this newly possible, buyer readiness signals, market maturity stage, window of opportunity duration, and risks of being too early or too late.",
   "signals": {
     "forcing_function": "string or null — the key 'why now' driver",
     "tech_enabler": "string or null — what makes this newly possible",

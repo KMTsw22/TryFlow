@@ -37,6 +37,7 @@ Evaluate TAM, SAM, and realistic SOM for this idea.
   "agent": "market_size",
   "score": 0-100,
   "assessment": "2-3 sentence analysis grounded in specific data points",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: market sizing methodology, target segment dynamics, buyer willingness to pay, growth trajectory, adjacent market opportunities, and key assumptions behind the estimate.",
   "signals": {
     "tam_estimate": "string — e.g. '$5-10B'",
     "sam_estimate": "string",

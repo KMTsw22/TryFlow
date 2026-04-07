@@ -53,6 +53,7 @@ Evaluate whether this idea can generate sustainable, scalable revenue.
   "agent": "monetization",
   "score": 0-100,
   "assessment": "2-3 sentence analysis",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: recommended pricing model rationale, ACV estimation logic, expansion revenue potential, margin structure, competitive pricing benchmarks, willingness-to-pay signals, and path to profitability.",
   "signals": {
     "recommended_model": "Per-seat" | "Usage-based" | "Tiered" | "Hybrid" | "Outcome-based",
     "estimated_acv": "string — e.g. '$5K-15K/yr'",

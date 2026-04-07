@@ -49,6 +49,7 @@ Map the competitive landscape and assess how hard it will be to win.
   "intensity": "Blue Ocean" | "Emerging" | "Competitive" | "Red Ocean",
   "key_players": ["string — up to 5 most relevant competitors"],
   "assessment": "2-3 sentence analysis",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: specific competitor strengths/weaknesses, market positioning gaps, switching cost dynamics, consolidation risk, open-source alternatives, feature overlap, and differentiation opportunities.",
   "signals": {
     "feature_risk": "Low" | "Medium" | "High",
     "oss_alternative": true | false,

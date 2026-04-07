@@ -61,6 +61,7 @@ Evaluate how this product will acquire customers and at what cost.
   "agent": "user_acquisition",
   "score": 0-100,
   "assessment": "2-3 sentence analysis",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: primary and secondary acquisition channels with rationale, CAC estimation logic, sales cycle length and complexity, virality/word-of-mouth potential, content/SEO opportunity, partnership leverage, and path to scalable repeatable growth.",
   "signals": {
     "primary_channel": "PLG" | "Content/SEO" | "Outbound Sales" | "Partnerships" | "Paid" | "Community",
     "channels": ["string — all viable channels"],
