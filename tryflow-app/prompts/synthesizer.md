@@ -96,46 +96,54 @@ Extract 3-5 **specific** risks:
   "analysis": {
     "market_size": {
       "score": number,
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     },
     "competition": {
       "score": number,
       "intensity": "Blue Ocean" | "Emerging" | "Competitive" | "Red Ocean",
       "key_players": ["string"],
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     },
     "regulation": {
       "score": number,
       "risk_level": "Minimal" | "Moderate" | "Heavy" | "Prohibitive",
       "key_concerns": ["string"],
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     },
     "technical_difficulty": {
       "score": number,
       "level": "Low" | "Medium" | "High" | "Very High",
       "key_challenges": ["string"],
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     },
     "monetization": {
       "score": number,
       "models": ["string"],
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     },
     "timing": {
       "score": number,
       "signal": "Too Early" | "Early" | "Right Time" | "Late" | "Too Late",
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     },
     "defensibility": {
       "score": number,
       "moats": ["string"],
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     },
     "user_acquisition": {
       "score": number,
       "channels": ["string"],
       "estimated_cac": "Low" | "Medium" | "High",
-      "assessment": "string"
+      "assessment": "string — 2-3 sentence summary",
+      "detailed_assessment": "string — 7-9 sentence in-depth analysis"
     }
   },
   "cross_agent_insights": [
