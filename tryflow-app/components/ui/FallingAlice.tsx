@@ -2,164 +2,154 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const GRID = 32;
-const TRAIL_MS = 1800;
-const W_MARGIN = 0.1; // 10% from edges
 const ALICE_SRC = "/alice.png";
-/** Grid lines — avoid pure black “cells” on white */
-const GRID_LINE = "rgba(0,0,0,0.1)";
-const TRAIL_PEAK_ALPHA = 0.14;
-const TRAIL_FADE_IN = 0.22;
 const ROLL_DURATION_S = 0.88;
 const ROLL_DURATION_MS = Math.round(ROLL_DURATION_S * 1000);
+const LERP = 0.12;
+const COLLISION_DIST = 65;
+const ITEM_SIZE = 56;
 
-interface TrailCell {
+interface FloatingItem {
   id: number;
-  col: number;
-  row: number;
-  born: number;
+  type: "cake" | "drink";
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  frameCount: number;
 }
 
 export function FallingAlice() {
   const [pos, setPos] = useState({ x: -200, y: -200 });
-  const [trail, setTrail] = useState<TrailCell[]>([]);
-  /** Full roll animation (reset key after so idle rotate doesn’t jump from 360°) */
   const [spinNonce, setSpinNonce] = useState(0);
   const [rolling, setRolling] = useState(false);
-  /** Trail only after Alice bitmap is decoded (no grid before the figure) */
-  const trailAllowedRef = useRef(false);
+  const [items, setItems] = useState<FloatingItem[]>([]);
+  const [aliceScale, setAliceScale] = useState(1);
+
   const rafRef = useRef<number>();
-  const stateRef = useRef({
-    x: 0,
-    y: -220,
-    vx: 1.2,
-    vy: 0.8,
-    lastCol: -1,
-    lastRow: -1,
-    idCounter: 0,
-    frameCount: 0,
-    W: 0,
-    H: 0,
-  });
+  const targetRef = useRef({ x: -200, y: -200 });
+  const displayRef = useRef({ x: -200, y: -200 });
+  const itemsRef = useRef<FloatingItem[]>([]);
+  const itemIdRef = useRef(0);
+  const scaleTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // Track mouse
   useEffect(() => {
-    const s = stateRef.current;
-    s.W = window.innerWidth;
-    s.H = window.innerHeight;
-    s.x = s.W * 0.4 + Math.random() * s.W * 0.2;
-    s.y = -160;
-    s.vx = (Math.random() - 0.5) * 2.4;
-
-    const onResize = () => {
-      s.W = window.innerWidth;
-      s.H = window.innerHeight;
+    const onMove = (e: MouseEvent) => {
+      targetRef.current = { x: e.clientX, y: e.clientY };
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
 
+  // Main loop: smooth follow + item movement + collision
+  useEffect(() => {
     let cancelled = false;
-    let loopStarted = false;
 
     const tick = () => {
       if (cancelled) return;
-      s.frameCount++;
-      const minX = s.W * W_MARGIN;
-      const maxX = s.W * (1 - W_MARGIN);
 
-      s.vy = Math.min(s.vy + 0.07, 3.2);
+      const t = targetRef.current;
+      const d = displayRef.current;
+      const nx = d.x + (t.x - d.x) * LERP;
+      const ny = d.y + (t.y - d.y) * LERP;
+      displayRef.current = { x: nx, y: ny };
+      setPos({ x: nx, y: ny });
 
-      if (s.frameCount % 55 === 0) {
-        const nudge = (Math.random() - 0.5) * 3.5;
-        s.vx += nudge;
-        s.vx = Math.max(-4, Math.min(4, s.vx));
-      }
+      // Move items + collision
+      if (itemsRef.current.length > 0) {
+        let collided = false;
+        let collisionType: "cake" | "drink" = "cake";
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const survived: FloatingItem[] = [];
 
-      s.x += s.vx;
-      s.y += s.vy;
+        for (const item of itemsRef.current) {
+          let { vx, vy, frameCount } = item;
 
-      if (s.x < minX) { s.x = minX; s.vx = Math.abs(s.vx) * 0.7; }
-      if (s.x > maxX) { s.x = maxX; s.vx = -Math.abs(s.vx) * 0.7; }
+          // Random direction nudge every ~120 frames
+          frameCount++;
+          if (frameCount % 120 === 0) {
+            vx += (Math.random() - 0.5) * 1.2;
+            vy += (Math.random() - 0.5) * 1.2;
+            const spd = Math.sqrt(vx * vx + vy * vy);
+            if (spd > 1.8) { vx = (vx / spd) * 1.8; vy = (vy / spd) * 1.8; }
+          }
 
-      if (s.y > s.H + 180) {
-        s.y = -180;
-        s.vy = 0.6 + Math.random() * 0.8;
-        s.vx = (Math.random() - 0.5) * 2.4;
-        s.x = minX + Math.random() * (maxX - minX);
-      }
+          let ix = item.x + vx;
+          let iy = item.y + vy;
 
-      setPos({ x: s.x, y: s.y });
+          // Bounce off edges
+          if (ix < 0) { ix = 0; vx = Math.abs(vx); }
+          if (ix > W) { ix = W; vx = -Math.abs(vx); }
+          if (iy < 0) { iy = 0; vy = Math.abs(vy); }
+          if (iy > H) { iy = H; vy = -Math.abs(vy); }
 
-      const col = Math.floor(s.x / GRID);
-      const row = Math.floor(s.y / GRID);
-      if (trailAllowedRef.current) {
-        if (col !== s.lastCol || row !== s.lastRow) {
-          s.lastCol = col;
-          s.lastRow = row;
-          const now = Date.now();
-          setTrail(prev => [
-            ...prev.filter(c => now - c.born < TRAIL_MS),
-            { id: s.idCounter++, col, row, born: now },
-          ]);
+          const dx = nx - ix;
+          const dy = ny - iy;
+          if (Math.sqrt(dx * dx + dy * dy) < COLLISION_DIST) {
+            collided = true;
+            collisionType = item.type;
+            continue;
+          }
+          survived.push({ ...item, x: ix, y: iy, vx, vy, frameCount });
         }
-      } else {
-        s.lastCol = col;
-        s.lastRow = row;
+
+        itemsRef.current = survived;
+        setItems([...survived]);
+
+        if (collided) {
+          const newScale = collisionType === "cake" ? 1.9 : 0.5;
+          setAliceScale(newScale);
+          if (scaleTimeoutRef.current) clearTimeout(scaleTimeoutRef.current);
+          scaleTimeoutRef.current = setTimeout(() => setAliceScale(1), 2800);
+        }
       }
 
       rafRef.current = requestAnimationFrame(tick);
     };
 
-    const startLoop = () => {
-      if (cancelled || loopStarted) return;
-      loopStarted = true;
-      trailAllowedRef.current = true;
-      setTrail([]);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    const warmDecode = () => {
-      if (cancelled || loopStarted) return;
-      const im = new Image();
-      im.onload = () => {
-        if (cancelled || loopStarted) return;
-        const d = im.decode?.();
-        if (d && typeof (d as Promise<void>).then === "function") {
-          (d as Promise<void>).then(startLoop).catch(startLoop);
-        } else {
-          startLoop();
-        }
-      };
-      im.onerror = startLoop;
-      im.src = ALICE_SRC;
-      if (im.complete && im.naturalWidth > 0) {
-        im.onload = null;
-        const d = im.decode?.();
-        if (d && typeof (d as Promise<void>).then === "function") {
-          (d as Promise<void>).then(startLoop).catch(startLoop);
-        } else {
-          startLoop();
-        }
-      }
-    };
-
-    warmDecode();
-
+    rafRef.current = requestAnimationFrame(tick);
     return () => {
       cancelled = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", onResize);
     };
   }, []);
 
-  // Expire old trail
+  // Spawn items
   useEffect(() => {
-    const id = setInterval(() => {
-      const now = Date.now();
-      setTrail(prev => prev.filter(c => now - c.born < TRAIL_MS));
-    }, 150);
-    return () => clearInterval(id);
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const spawn = () => {
+      const delay = 4000 + Math.random() * 5000;
+      timeoutId = setTimeout(() => {
+        if (cancelled) return;
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        const type: "cake" | "drink" = Math.random() < 0.5 ? "cake" : "drink";
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 0.8 + Math.random() * 0.8;
+        const newItem: FloatingItem = {
+          id: itemIdRef.current++,
+          type,
+          x: W * 0.1 + Math.random() * W * 0.8,
+          y: H * 0.1 + Math.random() * H * 0.8,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          frameCount: 0,
+        };
+        itemsRef.current = [...itemsRef.current, newItem];
+        setItems([...itemsRef.current]);
+        spawn();
+      }, delay);
+    };
+
+    spawn();
+    return () => { cancelled = true; clearTimeout(timeoutId); };
   }, []);
 
-  // Occasional tumble / full roll, then gentle idle sway
+  // Occasional roll
   useEffect(() => {
     let cancelled = false;
     let waitId: ReturnType<typeof setTimeout>;
@@ -187,40 +177,39 @@ export function FallingAlice() {
     };
   }, []);
 
-  const now = Date.now();
-
   return (
     <div className="fixed inset-0 pointer-events-none z-20 overflow-hidden">
-      {/* Trail behind Alice so the figure never reads as "under" the grid */}
-      {trail.map(cell => {
-        const age = now - cell.born;
-        const t = age / TRAIL_MS;
-        const alpha = t < TRAIL_FADE_IN
-          ? (t / TRAIL_FADE_IN) * TRAIL_PEAK_ALPHA
-          : TRAIL_PEAK_ALPHA * Math.pow(1 - t, 1.4);
-        if (alpha < 0.003) return null;
-        return (
-          <div
-            key={cell.id}
+      {/* Floating items */}
+      {items.map(item => (
+        <div
+          key={item.id}
+          style={{
+            position: "absolute",
+            zIndex: 2,
+            left: item.x - ITEM_SIZE / 2,
+            top: item.y - ITEM_SIZE / 2,
+            width: ITEM_SIZE,
+            height: ITEM_SIZE,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.type === "cake" ? "/eattme.png" : "/drink-removebg-preview.png"}
+            alt={item.type}
+            draggable={false}
             style={{
-              position: "absolute",
-              zIndex: 0,
-              left: cell.col * GRID,
-              top: cell.row * GRID,
-              width: GRID,
-              height: GRID,
-              opacity: alpha,
-              backgroundImage: `
-                linear-gradient(${GRID_LINE} 1px, transparent 1px),
-                linear-gradient(90deg, ${GRID_LINE} 1px, transparent 1px)
-              `,
-              backgroundSize: "8px 8px",
-              backgroundPosition: "0 0",
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              filter: "grayscale(100%) contrast(1.3)",
+              mixBlendMode: "multiply",
+              userSelect: "none",
             }}
           />
-        );
-      })}
+        </div>
+      ))}
 
+      {/* Alice */}
       <div
         style={{
           position: "absolute",
@@ -229,6 +218,8 @@ export function FallingAlice() {
           top: pos.y - 100,
           width: 110,
           willChange: "transform",
+          transform: `scale(${aliceScale})`,
+          transition: "transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
       >
         <motion.div
@@ -256,7 +247,7 @@ export function FallingAlice() {
               width: "100%",
               height: "auto",
               display: "block",
-              filter: "grayscale(100%) contrast(1.1)",
+              filter: "grayscale(100%) contrast(1.4)",
               mixBlendMode: "multiply",
               userSelect: "none",
             }}

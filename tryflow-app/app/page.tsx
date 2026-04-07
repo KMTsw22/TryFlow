@@ -154,7 +154,8 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 px-8 h-16 flex items-center justify-between"
         style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", backdropFilter: "blur(16px)", background: "rgba(255,255,255,0.92)" }}>
         <div className="flex items-center gap-3">
-          <RabbitHoppingSVG className="w-7 h-10 text-black/50" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/rabbit.png" alt="Rabbit Hole" style={{ width: 36, height: "auto", filter: "grayscale(100%) contrast(1.3)", mixBlendMode: "multiply" }} />
           <span className="font-serif text-black/80 tracking-wide text-lg"
             style={{ fontFamily: "'Playfair Display', serif" }}>Rabbit Hole</span>
         </div>
@@ -243,19 +244,19 @@ export default function HomePage() {
                 num: "I.",
                 title: "You fall in.",
                 desc: "Drop your idea anonymously. No pitch deck. No network. No name. Just the raw idea.",
-                svg: <img src="/alice.png" alt="Alice" style={{ width: 80, margin: "0 auto", filter: "grayscale(100%) contrast(1.05) opacity(0.22)", mixBlendMode: "multiply" }} />,
+                svg: <img src="/alice.png" alt="Alice" style={{ width: 160, margin: "0 auto", filter: "grayscale(100%) contrast(1.4) opacity(0.75)", mixBlendMode: "multiply" }} />,
               },
               {
                 num: "II.",
                 title: "It's questioned.",
                 desc: "8 AI agents run in parallel — market size, competition, timing, moat, defensibility. Ruthlessly.",
-                svg: <img src="/chat.png" alt="Cheshire Cat" style={{ width: 120, margin: "0 auto", filter: "grayscale(100%) contrast(1.2) opacity(0.58)", mixBlendMode: "multiply" }} />,
+                svg: <img src="/cata.png" alt="Caterpillar" style={{ width: 200, margin: "0 auto", filter: "grayscale(100%) contrast(1.4) opacity(0.85)", mixBlendMode: "multiply" }} />,
               },
               {
                 num: "III.",
                 title: "The right one finds it.",
                 desc: "Investors browse AI-validated ideas. No cold emails. No warm intros. Just signal.",
-                svg: <CardSoldierSVG className="w-16 h-24 text-black/20 mx-auto" />,
+                svg: <img src="/tea-party.png" alt="Tea Party" style={{ width: 240, margin: "0 auto", filter: "grayscale(100%) contrast(1.4) opacity(0.85)", mixBlendMode: "multiply" }} />,
               },
             ].map((step, i) => (
               <motion.div key={step.num}
@@ -267,7 +268,9 @@ export default function HomePage() {
                   borderTop: "1px solid rgba(0,0,0,0.07)",
                 }}
               >
-                {step.svg}
+                <div style={{ height: 260, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {step.svg}
+                </div>
                 <div className="mt-6 mb-2">
                   <span className="text-black/20 text-xs font-serif tracking-widest"
                     style={{ fontFamily: "'Playfair Display', serif" }}>{step.num}</span>
@@ -334,7 +337,7 @@ export default function HomePage() {
           transition={{ duration: 1.2 }} viewport={{ once: true }}
           className="max-w-3xl mx-auto">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/chat.png" alt="Cheshire Cat" style={{ width: 200, margin: "0 auto 3rem", filter: "grayscale(100%) contrast(1.2) opacity(0.52)", mixBlendMode: "multiply" }} />
+          <img src="/chat.png" alt="Cheshire Cat" style={{ width: 200, margin: "0 auto 3rem", filter: "grayscale(100%) contrast(1.4) opacity(0.82)", mixBlendMode: "multiply" }} />
           <blockquote className="text-3xl md:text-5xl font-serif italic leading-tight text-black/50 mb-6"
             style={{ fontFamily: "'Playfair Display', serif" }}>
             "We're all mad here."
