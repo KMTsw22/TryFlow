@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import OpenAI from "openai";
+import { readFile } from "fs/promises";
+import path from "path";
 
 export const CATEGORIES = [
   "SaaS / B2B",
@@ -91,6 +94,41 @@ async function generateInsight(
   return { viabilityScore, saturationLevel, trendDirection, similarCount, summary };
 }
 
+// ── AI Description ───────────────────────────────────────────────────────────
+
+async function generateAiDescription(
+  category: string,
+  targetUser: string,
+  description: string
+): Promise<string | null> {
+  if (!process.env.OPENAI_API_KEY) return null;
+
+  try {
+    const systemPrompt = await readFile(
+      path.join(process.cwd(), "prompts/idea_summarizer.md"),
+      "utf-8"
+    );
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 300,
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `Category: ${category}\nTarget User: ${targetUser}\nDescription: ${description}`,
+        },
+      ],
+    });
+
+    return res.choices[0]?.message?.content?.trim() ?? null;
+  } catch (err) {
+    console.error("AI description failed:", err);
+    return null;
+  }
+}
+
 // ── POST /api/ideas ───────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -121,8 +159,11 @@ export async function POST(req: NextRequest) {
     });
     if (subErr) throw subErr;
 
-    // Generate insight
-    const insight = await generateInsight(category, description, supabase);
+    // Generate insight + AI description in parallel
+    const [insight, aiDescription] = await Promise.all([
+      generateInsight(category, description, supabase),
+      generateAiDescription(category, target_user, description),
+    ]);
 
     // Insert report (map camelCase → snake_case for DB columns)
     const reportId = crypto.randomUUID();
@@ -134,10 +175,11 @@ export async function POST(req: NextRequest) {
       trend_direction: insight.trendDirection,
       similar_count: insight.similarCount,
       summary: insight.summary,
+      ai_description: aiDescription,
     });
     if (repErr) throw repErr;
 
-    return NextResponse.json({ submissionId, report: insight }, { status: 201 });
+    return NextResponse.json({ submissionId, report: { ...insight, aiDescription } }, { status: 201 });
   } catch (err) {
     console.error("POST /api/ideas", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
