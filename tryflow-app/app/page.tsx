@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { FallingAlice } from "@/components/ui/FallingAlice";
 
@@ -63,32 +63,6 @@ function RabbitHoppingSVG({ className }: { className?: string }) {
   );
 }
 
-function CheshireSVG({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <ellipse cx="100" cy="65" rx="68" ry="30" stroke="currentColor" strokeWidth="1" fill="none" strokeDasharray="4 3" opacity="0.3"/>
-      {[0,1,2,3,4].map(i => (
-        <path key={i} d={`M${42+i*14} 44 Q${46+i*14} 65 ${42+i*14} 86`} stroke="currentColor" strokeWidth="0.6" fill="none" opacity="0.15"/>
-      ))}
-      <ellipse cx="100" cy="44" rx="36" ry="28" stroke="currentColor" strokeWidth="1.4" fill="none"/>
-      <path d="M68 24 L60 6 L76 20" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <path d="M132 24 L140 6 L124 20" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <ellipse cx="85" cy="38" rx="6" ry="4.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <ellipse cx="115" cy="38" rx="6" ry="4.5" stroke="currentColor" strokeWidth="1.2" fill="none"/>
-      <circle cx="87" cy="39" r="1.8" fill="currentColor"/>
-      <circle cx="117" cy="39" r="1.8" fill="currentColor"/>
-      <path d="M68 56 Q80 66 100 68 Q120 66 132 56" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
-      {[0,1,2,3,4,5].map(i => (
-        <line key={i} x1={74+i*11} y1="56" x2={74+i*11} y2="62" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
-      ))}
-      <path d="M42 46 L78 50" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
-      <path d="M40 54 L78 54" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
-      <path d="M158 46 L122 50" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
-      <path d="M160 54 L122 54" stroke="currentColor" strokeWidth="0.8" opacity="0.6"/>
-    </svg>
-  );
-}
-
 function CardSoldierSVG({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 80 140" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
@@ -117,43 +91,6 @@ function CardSoldierSVG({ className }: { className?: string }) {
   );
 }
 
-// ── Etching texture ──────────────────────────────────────────────────────
-function EtchLines({ opacity = 0.03, dark = false }: { opacity?: number; dark?: boolean }) {
-  return (
-    <div className="absolute inset-0 pointer-events-none" style={{
-      backgroundImage: `repeating-linear-gradient(
-        0deg, transparent, transparent 3px,
-        rgba(${dark ? "255,255,255" : "0,0,0"},${opacity}) 3px,
-        rgba(${dark ? "255,255,255" : "0,0,0"},${opacity}) 4px
-      )`,
-    }} />
-  );
-}
-
-// ── Falling tunnel visual (the hole) ─────────────────────────────────────
-function TunnelBackground({ progress }: { progress: number }) {
-  const rings = Array.from({ length: 12 }, (_, i) => i);
-  return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-      {rings.map((i) => {
-        const base = 40 + i * 60;
-        const scale = 1 + progress * i * 0.3;
-        const opacity = Math.max(0, 0.06 - i * 0.004) * (1 + progress * 2);
-        return (
-          <div key={i} className="absolute border rounded-full"
-            style={{
-              width: base * scale,
-              height: base * scale * 0.45,
-              borderColor: `rgba(0,0,0,${opacity})`,
-              borderWidth: 1,
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 // ── Sample investor idea cards ───────────────────────────────────────────
 const SAMPLE_IDEAS = [
   { title: "AI-native legal review for SMBs", category: "SaaS / B2B", score: 87, trend: "Rising", tag: "Hot" },
@@ -163,88 +100,6 @@ const SAMPLE_IDEAS = [
   { title: "Sleep health sub for remote teams", category: "Health", score: 82, trend: "Rising", tag: "New" },
   { title: "B2B procurement for restaurants", category: "SaaS / B2B", score: 79, trend: "Stable", tag: null },
 ];
-
-const TUNNEL_TEXTS = [
-  { scrollStart: 0.08, text: "\"Oh my ears and whiskers, how late it's getting!\"", side: "left" as const },
-  { scrollStart: 0.20, text: "Anonymous. Validated. Discovered.", side: "right" as const },
-  { scrollStart: 0.33, text: "8 AI agents. Ruthless. Parallel.", side: "left" as const },
-  { scrollStart: 0.45, text: "The right investor is already waiting.", side: "right" as const },
-];
-
-function TunnelText({ scrollYProgress }: { scrollYProgress: ReturnType<typeof useScroll>["scrollYProgress"] }) {
-  return (
-    <>
-      {TUNNEL_TEXTS.map((item, i) => {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const opacity = useTransform(
-          scrollYProgress,
-          [item.scrollStart - 0.04, item.scrollStart, item.scrollStart + 0.08, item.scrollStart + 0.12],
-          [0, 1, 1, 0]
-        );
-        return (
-          <motion.div key={i} className="fixed pointer-events-none z-30"
-            style={{
-              ...(item.side === "right" ? { right: "4%", left: "auto" } : { left: "4%" }),
-              top: "50%", translateY: "-50%", opacity,
-            }}>
-            <p className={`text-xs text-black/35 max-w-[160px] leading-relaxed font-serif italic ${item.side === "right" ? "text-right" : "text-left"}`}
-              style={{ fontFamily: "'Playfair Display', serif" }}>
-              {item.text}
-            </p>
-          </motion.div>
-        );
-      })}
-    </>
-  );
-}
-
-// ── Alice image with occasional spin ─────────────────────────────────────
-function AliceImage() {
-  const [spinning, setSpinning] = useState(false);
-
-  useEffect(() => {
-    // randomly spin every 4–9 seconds
-    const schedule = () => {
-      const delay = 4000 + Math.random() * 5000;
-      return setTimeout(() => {
-        setSpinning(true);
-        setTimeout(() => {
-          setSpinning(false);
-          schedule();
-        }, 900);
-      }, delay);
-    };
-    const t = schedule();
-    return () => clearTimeout(t);
-  }, []);
-
-  return (
-    <motion.div
-      animate={spinning
-        ? { rotate: [0, 360], y: [0, -12, 0] }
-        : { rotate: [-4, 4, -4], y: [0, 6, 0] }
-      }
-      transition={spinning
-        ? { duration: 0.85, ease: "easeInOut" }
-        : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
-      }
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/alice.png"
-        alt="Alice falling"
-        draggable={false}
-        style={{
-          width: 140,
-          height: "auto",
-          filter: "grayscale(100%) contrast(1.05)",
-          mixBlendMode: "multiply",
-          userSelect: "none",
-        }}
-      />
-    </motion.div>
-  );
-}
 
 function IdeaCard({ idea, index }: { idea: typeof SAMPLE_IDEAS[0]; index: number }) {
   const [hovered, setHovered] = useState(false);
@@ -289,56 +144,15 @@ function IdeaCard({ idea, index }: { idea: typeof SAMPLE_IDEAS[0]; index: number
 
 // ══════════════════════════════════════════════════════════════════════════
 export default function HomePage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end end"] });
-
-  // Smooth spring for scroll progress
-  const smoothProgress = useSpring(scrollYProgress, { stiffness: 60, damping: 20 });
-
-  // Alice falls as user scrolls — within the tunnel column
-  // Tunnel 200vh — rabbit leads, alice follows
-  const aliceY = useTransform(smoothProgress, [0, 0.4], ["0vh", "140vh"]);
-  const rabbitY = useTransform(smoothProgress, [0, 0.4], ["-12vh", "110vh"]);
-
-  const [tunnelProgress, setTunnelProgress] = useState(0);
-  useEffect(() => {
-    return smoothProgress.on("change", (v) => setTunnelProgress(Math.min(1, v / 0.4)));
-  }, [smoothProgress]);
-
-  // Rabbit hop: bob up-down independent of scroll
-  const [rabbitBob, setRabbitBob] = useState(0);
-  useEffect(() => {
-    let t = 0;
-    const id = setInterval(() => {
-      t += 0.12;
-      setRabbitBob(Math.sin(t * 2.5) * 18); // bouncing offset in px
-    }, 16);
-    return () => clearInterval(id);
-  }, []);
-
-  // Rabbit tilt left-right while hopping
-  const [rabbitTilt, setRabbitTilt] = useState(0);
-  useEffect(() => {
-    let t = 0;
-    const id = setInterval(() => {
-      t += 0.12;
-      setRabbitTilt(Math.sin(t * 2.5) * 8);
-    }, 16);
-    return () => clearInterval(id);
-  }, []);
-
   return (
     <div
-      ref={containerRef}
       className="overflow-x-hidden"
-      style={{ background: "#faf8f4", fontFamily: "'Inter', sans-serif", color: "#1a1a1a" }}
+      style={{ background: "#ffffff", fontFamily: "'Inter', sans-serif", color: "#1a1a1a" }}
     >
       <FallingAlice />
-      <EtchLines opacity={0.022} />
-
       {/* ── Navbar ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-8 h-16 flex items-center justify-between"
-        style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", backdropFilter: "blur(16px)", background: "rgba(250,248,244,0.92)" }}>
+        style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", backdropFilter: "blur(16px)", background: "rgba(255,255,255,0.92)" }}>
         <div className="flex items-center gap-3">
           <RabbitHoppingSVG className="w-7 h-10 text-black/50" />
           <span className="font-serif text-black/80 tracking-wide text-lg"
@@ -356,7 +170,7 @@ export default function HomePage() {
       </nav>
 
       {/* ══════════════════════════════════════════
-          HERO headline — above the tunnel
+          HERO
       ══════════════════════════════════════════ */}
       <section className="pt-32 pb-0 px-6 text-center relative">
         <motion.p
@@ -406,102 +220,21 @@ export default function HomePage() {
           </Link>
         </motion.div>
 
-        {/* Scroll hint */}
-        <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}
-          className="text-black/20 text-xs tracking-widest mb-0"
-        >
-          ↓ scroll to fall
-        </motion.p>
       </section>
-
-      {/* ══════════════════════════════════════════
-          THE TUNNEL — 400vh tall falling scene
-      ══════════════════════════════════════════ */}
-      <div className="relative" style={{ height: "200vh" }}>
-        {/* Left edge: tunnel entrance label */}
-        <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden pointer-events-none">
-          {/* Tunnel rings */}
-          <TunnelBackground progress={tunnelProgress} />
-
-          {/* Tunnel wall shelves — floating objects */}
-          {[
-            { item: "⌚", left: "8%",  top: "20%" },
-            { item: "📖", left: "82%", top: "30%" },
-            { item: "🎩", left: "10%", top: "55%" },
-            { item: "🔑", left: "78%", top: "65%" },
-            { item: "☕", left: "14%", top: "78%" },
-            { item: "🌹", left: "80%", top: "82%" },
-          ].map((obj, i) => (
-            <motion.div key={i} className="absolute text-2xl opacity-[0.09] select-none"
-              style={{ left: obj.left, top: obj.top }}
-              animate={{ y: [0, -6, 0], rotate: [0, 4, 0] }}
-              transition={{ duration: 3 + i * 0.4, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 }}
-            >
-              {obj.item}
-            </motion.div>
-          ))}
-
-          {/* Etching tunnel wall lines */}
-          <div className="absolute inset-0"
-            style={{
-              background: `radial-gradient(ellipse 50% 80% at 50% 50%, transparent 20%, rgba(0,0,0,${0.02 + tunnelProgress * 0.04}) 100%)`,
-            }}
-          />
-        </div>
-
-        {/* Rabbit — fixed to viewport, moves as scroll changes */}
-        <motion.div
-          className="fixed pointer-events-none z-20"
-          style={{
-            left: "calc(50% - 36px)",
-            top: 0,
-            y: rabbitY,
-            translateY: rabbitBob,
-            rotate: rabbitTilt,
-          }}
-        >
-          <RabbitHoppingSVG className="w-20 h-28 text-black/55" />
-        </motion.div>
-
-        {/* Alice — falls behind rabbit, uses real image */}
-        <motion.div
-          className="fixed pointer-events-none z-10"
-          style={{
-            left: "calc(50% - 70px)",
-            top: 0,
-            y: aliceY,
-          }}
-        >
-          <AliceImage />
-        </motion.div>
-
-        {/* Tunnel side text */}
-        <TunnelText scrollYProgress={scrollYProgress} />
-      </div>
 
       {/* ══════════════════════════════════════════
           LANDING — Process section
       ══════════════════════════════════════════ */}
       <section className="relative py-40 px-6 overflow-hidden"
-        style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
-        <EtchLines opacity={0.018} />
+        style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff" }}>
 
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }} viewport={{ once: true }}
-            className="text-center mb-24"
+            className="text-center mb-16"
           >
-            <p className="text-black/25 text-xs tracking-[0.4em] uppercase mb-4">The Process</p>
-            <h2 className="text-4xl md:text-6xl font-serif mb-6"
-              style={{ fontFamily: "'Playfair Display', serif" }}>
-              "Who are <em>you?</em>"
-            </h2>
-            <p className="text-black/40 max-w-md mx-auto text-sm leading-relaxed">
-              The caterpillar asked Alice three times.<br/>
-              Our AI asks your idea the same — until it has a real answer.
-            </p>
+            <p className="text-black/25 text-xs tracking-[0.4em] uppercase">The Process</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-0">
@@ -516,7 +249,7 @@ export default function HomePage() {
                 num: "II.",
                 title: "It's questioned.",
                 desc: "8 AI agents run in parallel — market size, competition, timing, moat, defensibility. Ruthlessly.",
-                svg: <CheshireSVG className="w-48 h-24 text-black/20 mx-auto" />,
+                svg: <img src="/chat.png" alt="Cheshire Cat" style={{ width: 120, margin: "0 auto", filter: "grayscale(100%) contrast(1.2) opacity(0.58)", mixBlendMode: "multiply" }} />,
               },
               {
                 num: "III.",
@@ -552,8 +285,7 @@ export default function HomePage() {
           INVESTOR GRID
       ══════════════════════════════════════════ */}
       <section className="relative py-40 px-6 overflow-hidden"
-        style={{ background: "#f5f2ed", borderTop: "1px solid rgba(0,0,0,0.07)" }}>
-        <EtchLines opacity={0.02} />
+        style={{ background: "#ffffff", borderTop: "1px solid rgba(0,0,0,0.07)" }}>
 
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
@@ -575,7 +307,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px"
             style={{ background: "rgba(0,0,0,0.07)" }}>
             {SAMPLE_IDEAS.map((idea, i) => (
-              <div key={idea.title} style={{ background: "#f5f2ed" }}>
+              <div key={idea.title} style={{ background: "#ffffff" }}>
                 <IdeaCard idea={idea} index={i} />
               </div>
             ))}
@@ -597,12 +329,12 @@ export default function HomePage() {
           CHESHIRE QUOTE — CTA
       ══════════════════════════════════════════ */}
       <section className="relative py-40 px-6 text-center overflow-hidden"
-        style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
-        <EtchLines opacity={0.018} />
+        style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff" }}>
         <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
           transition={{ duration: 1.2 }} viewport={{ once: true }}
           className="max-w-3xl mx-auto">
-          <CheshireSVG className="w-64 h-32 text-black/12 mx-auto mb-12" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/chat.png" alt="Cheshire Cat" style={{ width: 200, margin: "0 auto 3rem", filter: "grayscale(100%) contrast(1.2) opacity(0.52)", mixBlendMode: "multiply" }} />
           <blockquote className="text-3xl md:text-5xl font-serif italic leading-tight text-black/50 mb-6"
             style={{ fontFamily: "'Playfair Display', serif" }}>
             "We're all mad here."
@@ -623,7 +355,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="py-10 px-8" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+      <footer className="py-10 px-8" style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "#ffffff" }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <RabbitHoppingSVG className="w-6 h-9 text-black/25" />
