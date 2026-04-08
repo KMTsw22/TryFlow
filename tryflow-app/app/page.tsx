@@ -30,6 +30,16 @@ function useInView(threshold = 0.1) {
   return [ref, inView] as const;
 }
 
+function useScrollY() {
+  const [y, setY] = useState(0);
+  useEffect(() => {
+    const fn = () => setY(window.scrollY);
+    window.addEventListener('scroll', fn, { passive: true });
+    return () => window.removeEventListener('scroll', fn);
+  }, []);
+  return y;
+}
+
 function useMouse() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   useEffect(() => {
@@ -440,6 +450,28 @@ function InteractiveDemo() {
   );
 }
 
+// ── Star field (deterministic to avoid hydration mismatch) ───────────────
+const STARS = Array.from({ length: 80 }, (_, i) => ({
+  top:     ((i * 17.31 + 5.13) % 88) + 2,
+  left:    ((i * 23.71 + 8.37) % 98) + 1,
+  size:    i % 5 === 0 ? 2.5 : i % 3 === 0 ? 1.8 : 1.2,
+  opacity: 0.15 + (i % 7) * 0.08,
+  delay:   (i % 6) * 0.9,
+  dur:     2.5 + (i % 5) * 0.8,
+  twinkle: i % 4 === 0,
+}));
+
+// ── Cloud layer data ──────────────────────────────────────────────────────
+const CLOUDS = [
+  // [bottom%, left%, width, height, opacity, blur, parallaxFactor]
+  { bottom: 18, left:  -5, w: 420, h: 90,  op: 0.12, blur: 28, p: 0.12 },
+  { bottom: 14, left:  30, w: 340, h: 70,  op: 0.09, blur: 24, p: 0.08 },
+  { bottom: 22, left:  60, w: 500, h: 110, op: 0.14, blur: 32, p: 0.15 },
+  { bottom: 10, left:  75, w: 280, h: 60,  op: 0.08, blur: 20, p: 0.06 },
+  { bottom: 26, left:  15, w: 380, h: 80,  op: 0.10, blur: 26, p: 0.10 },
+  { bottom: 8,  left:  45, w: 460, h: 85,  op: 0.11, blur: 30, p: 0.13 },
+];
+
 // ─────────────────────────────────────────────────────────────────────────
 const STYLE_CYCLE = [
   { fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
@@ -457,6 +489,7 @@ const STYLE_CYCLE = [
 export default function HomePage() {
   const scrolled = useScrolled();
   const mouse = useMouse();
+  const scrollY = useScrollY();
   const [revealed, setRevealed] = useState(false);
   const [styleIdx, setStyleIdx] = useState(0);
   const [flipState, setFlipState] = useState<"exit" | "enter">("enter");
@@ -543,6 +576,141 @@ export default function HomePage() {
           <line x1="0" y1="80%" x2="80%" y2="0" stroke="#818cf8" strokeWidth="0.5" />
         </svg>
 
+        {/* ── Star field — parallax upward on scroll ── */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ transform: `translateY(${-scrollY * 0.25}px)`, willChange: "transform" }}
+        >
+          {STARS.map((s, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full bg-white"
+              style={{
+                top: `${s.top}%`,
+                left: `${s.left}%`,
+                width: s.size,
+                height: s.size,
+                opacity: Math.max(0, s.opacity - scrollY * 0.001),
+                animation: s.twinkle
+                  ? `twinkle ${s.dur}s ease-in-out ${s.delay}s infinite`
+                  : undefined,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* ── Satellite orbits — fade out as we descend ── */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: "8%", right: "6%", width: 220, height: 100,
+            opacity: Math.max(0, 1 - scrollY * 0.004),
+            transform: `translateY(${-scrollY * 0.15}px)`,
+          }}
+        >
+          <svg width="220" height="100" viewBox="0 0 220 100" style={{ overflow: "visible" }}>
+            <defs>
+              <path id="sat-path-1" d="M 215 50 A 105 42 0 1 0 215 50.001" fill="none" />
+              <path id="sat-path-2" d="M 180 50 A 70 28 0 1 1 180 50.001" fill="none" />
+            </defs>
+            {/* Outer orbit ring */}
+            <ellipse cx="110" cy="50" rx="105" ry="42"
+              fill="none" stroke="rgba(165,180,252,0.10)" strokeWidth="1" strokeDasharray="3 7" />
+            {/* Inner orbit ring */}
+            <ellipse cx="110" cy="50" rx="70" ry="28"
+              fill="none" stroke="rgba(165,180,252,0.07)" strokeWidth="1" strokeDasharray="2 8" />
+            {/* Satellite 1 */}
+            <g>
+              <animateMotion dur="14s" repeatCount="indefinite">
+                <mpath href="#sat-path-1" />
+              </animateMotion>
+              <circle r="2.5" fill="#a5b4fc" opacity="0.9" />
+              <circle r="5" fill="rgba(165,180,252,0.18)" />
+            </g>
+            {/* Satellite 2 — slower, opposite */}
+            <g>
+              <animateMotion dur="9s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear">
+                <mpath href="#sat-path-2" />
+              </animateMotion>
+              <circle r="1.8" fill="#c4b5fd" opacity="0.7" />
+            </g>
+          </svg>
+        </div>
+
+        {/* ── Atmosphere glow band — intensifies on scroll ── */}
+        <div
+          className="absolute inset-x-0 pointer-events-none"
+          style={{
+            bottom: "28%",
+            height: "160px",
+            background: "linear-gradient(to bottom, transparent, rgba(56,120,200,0.06) 50%, transparent)",
+            animation: "atmospherePulse 5s ease-in-out infinite",
+            opacity: 0.4 + Math.min(0.6, scrollY * 0.002),
+            transform: `translateY(${scrollY * 0.05}px)`,
+          }}
+        />
+
+        {/* ── Cloud layer — appears as we enter atmosphere ── */}
+        {CLOUDS.map((c, i) => {
+          const cloudOpacity = Math.min(c.op, (scrollY / 300) * c.op);
+          const translateY = -scrollY * c.p;
+          return (
+            <div
+              key={i}
+              className="absolute pointer-events-none rounded-full"
+              style={{
+                bottom: `${c.bottom}%`,
+                left: `${c.left}%`,
+                width: c.w,
+                height: c.h,
+                opacity: cloudOpacity,
+                transform: `translateY(${translateY}px)`,
+                background: "radial-gradient(ellipse at center, rgba(180,210,255,0.9) 0%, rgba(140,180,255,0.5) 40%, transparent 75%)",
+                filter: `blur(${c.blur}px)`,
+                willChange: "transform, opacity",
+              }}
+            />
+          );
+        })}
+
+        {/* ── Earth curve arc — grows as we descend ── */}
+        <div
+          className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          style={{
+            height: 220,
+            zIndex: 1,
+            transform: `translateY(${scrollY * 0.08}px) scaleY(${1 + scrollY * 0.0008})`,
+            transformOrigin: "bottom center",
+            opacity: Math.min(1, 0.5 + scrollY * 0.002),
+          }}
+        >
+          <svg width="100%" height="220" viewBox="0 0 1440 220" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="earthAtmGrad" cx="50%" cy="110%" r="55%">
+                <stop offset="0%"   stopColor="#3b82f6" stopOpacity="0.18" />
+                <stop offset="45%"  stopColor="#1d4ed8" stopOpacity="0.08" />
+                <stop offset="100%" stopColor="#050816" stopOpacity="0" />
+              </radialGradient>
+              <filter id="earthBlur">
+                <feGaussianBlur stdDeviation="6" />
+              </filter>
+            </defs>
+            {/* Atmosphere halo fill */}
+            <ellipse cx="720" cy="320" rx="900" ry="220"
+              fill="url(#earthAtmGrad)" />
+            {/* Atmosphere outer glow (blurred) */}
+            <ellipse cx="720" cy="330" rx="860" ry="200"
+              fill="none" stroke="rgba(96,165,250,0.12)" strokeWidth="18"
+              filter="url(#earthBlur)" />
+            {/* Earth surface arc — crisp line */}
+            <ellipse cx="720" cy="340" rx="820" ry="180"
+              fill="none" stroke="rgba(147,197,253,0.22)" strokeWidth="1.5" />
+            {/* Second arc — inner atmosphere */}
+            <ellipse cx="720" cy="360" rx="760" ry="155"
+              fill="none" stroke="rgba(96,165,250,0.08)" strokeWidth="1" />
+          </svg>
+        </div>
+
         {/* Hero content */}
         <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-8">
 
@@ -570,8 +738,8 @@ export default function HomePage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              height: "1.4em",
-              perspective: "700px",
+              height: "1.6em",
+              overflow: "visible",
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0px)" : "translateY(14px)",
               transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1) 0.22s, transform 1.1s cubic-bezier(0.34,1.56,0.64,1) 0.22s",
@@ -582,7 +750,9 @@ export default function HomePage() {
                 WebkitTextFillColor: "transparent",
                 display: "inline-block",
                 transformOrigin: "center top",
-                transform: flipState === "exit" ? "rotateX(90deg)" : "rotateX(0deg)",
+                transform: flipState === "exit"
+                  ? "perspective(700px) rotateX(90deg)"
+                  : "perspective(700px) rotateX(0deg)",
                 opacity: flipState === "exit" ? 0 : 1,
                 transition: flipState === "exit"
                   ? "transform 0.1s ease-in, opacity 0.08s ease-in"
@@ -621,7 +791,7 @@ export default function HomePage() {
         </div>
 
         {/* ── Peek cards at bottom ── */}
-        <div className="relative w-full px-4 pb-0" style={{ marginTop: "-20px" }}>
+        <div className="relative w-full px-4 pb-0" style={{ marginTop: "-20px", zIndex: 2 }}>
           <div className="max-w-5xl mx-auto">
             {/* Fade gradient over cards */}
             <div className="absolute inset-x-0 top-0 h-16 pointer-events-none z-10"

@@ -27,6 +27,10 @@ interface InsightReport {
   summary: string;
 }
 
+interface AnalysisReport {
+  viability_score: number;
+}
+
 interface IdeaRow {
   id: string;
   category: string;
@@ -34,12 +38,19 @@ interface IdeaRow {
   description: string;
   created_at: string;
   insight_reports: InsightReport | InsightReport[] | null;
+  analysis_reports: AnalysisReport | AnalysisReport[] | null;
 }
 
 function getReport(idea: IdeaRow): InsightReport | null {
   if (!idea.insight_reports) return null;
   if (Array.isArray(idea.insight_reports)) return idea.insight_reports[0] ?? null;
   return idea.insight_reports;
+}
+
+function getAiScore(idea: IdeaRow): number | null {
+  if (!idea.analysis_reports) return null;
+  const r = Array.isArray(idea.analysis_reports) ? idea.analysis_reports[0] : idea.analysis_reports;
+  return r?.viability_score ?? null;
 }
 
 function truncate(text: string, max: number) {
@@ -63,7 +74,8 @@ export default async function CategoryIdeasPage({
     .from("idea_submissions")
     .select(`
       id, category, target_user, description, created_at,
-      insight_reports (viability_score, saturation_level, trend_direction, summary)
+      insight_reports (viability_score, saturation_level, trend_direction, summary),
+      analysis_reports (viability_score)
     `)
     .eq("category", category)
     .order("created_at", { ascending: false });
@@ -127,8 +139,11 @@ export default async function CategoryIdeasPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ideas.map((idea) => {
               const report = getReport(idea);
+              const aiScore = getAiScore(idea);
 
-              const vScore = report?.viability_score ?? null;
+              // AI score overrides heuristic (same logic as ideas page)
+              const vScore = aiScore ?? report?.viability_score ?? null;
+              const hasAiScore = aiScore !== null;
               const vColor =
                 vScore === null ? "text-gray-500"
                 : vScore >= 70 ? "text-emerald-400"
@@ -156,14 +171,19 @@ export default async function CategoryIdeasPage({
                 >
                   {/* Top row: score + anonymous badge */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-full border ${vRing}`}>
-                      {vScore !== null ? (
-                        <>
-                          <span className={`text-base font-extrabold leading-none ${vColor}`}>{vScore}</span>
-                          <span className="text-[9px] text-gray-600 leading-none mt-0.5">/100</span>
-                        </>
-                      ) : (
-                        <span className="text-gray-600 text-xs">—</span>
+                    <div className="flex flex-col items-start gap-1">
+                      <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-full border ${vRing}`}>
+                        {vScore !== null ? (
+                          <>
+                            <span className={`text-base font-extrabold leading-none ${vColor}`}>{vScore}</span>
+                            <span className="text-[9px] text-gray-600 leading-none mt-0.5">/100</span>
+                          </>
+                        ) : (
+                          <span className="text-gray-600 text-xs">—</span>
+                        )}
+                      </div>
+                      {hasAiScore && (
+                        <span className="text-[9px] font-bold text-indigo-400">✦ AI</span>
                       )}
                     </div>
                     <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider pt-1">Anonymous</span>

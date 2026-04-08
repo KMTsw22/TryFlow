@@ -65,6 +65,24 @@
   }
 }
 
+/* ── Space scene animations ─────────────────────────────── */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50%       { opacity: 0.9;  transform: scale(1.6); }
+}
+@keyframes atmospherePulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.65; }
+}
+@keyframes orbitRotate {
+  from { transform: rotate(0deg) translateX(90px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(90px) rotate(-360deg); }
+}
+@keyframes orbitRotate2 {
+  from { transform: rotate(0deg) translateX(130px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(130px) rotate(-360deg); }
+}
+
 /* ── Landing page animations ───────────────────────────── */
 @keyframes sparkDraw {
   from { stroke-dashoffset: 300; }

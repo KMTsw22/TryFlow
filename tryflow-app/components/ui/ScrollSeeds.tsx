@@ -189,8 +189,9 @@ export function ScrollSeeds() {
                 ls.groundX, groundY, Math.max(0, rx - 12),
                 ls.groundX, groundY, rx + 8
               );
-              grad.addColorStop(0, `rgba(180, 225, 255, ${rp.alpha})`);
-              grad.addColorStop(0.5, `rgba(130, 200, 255, ${rp.alpha * 0.6})`);
+              const safeAlpha = isNaN(rp.alpha) ? 0 : Math.max(0, Math.min(1, rp.alpha));
+              grad.addColorStop(0, `rgba(180, 225, 255, ${safeAlpha})`);
+              grad.addColorStop(0.5, `rgba(130, 200, 255, ${safeAlpha * 0.6})`);
               grad.addColorStop(1, `rgba(100, 180, 240, 0)`);
 
               ctx.save();
