@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from "react";
 import {
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+} from "recharts";
+import {
   Sparkles,
   Loader2,
-  ChevronDown,
-  ChevronUp,
   Target,
   Shield,
   Clock,
@@ -21,6 +27,8 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 interface AgentAnalysis {
@@ -35,7 +43,7 @@ interface AnalysisReport {
   summary: string;
   analysis: {
     market_size: AgentAnalysis & { tam_estimate?: string; signals?: { tam_estimate?: string; sam_estimate?: string; segment?: string; buyer_type?: string } };
-    competition: AgentAnalysis & { intensity?: string; key_players?: string[]; signals?: { feature_risk?: string; oss_alternative?: string; switching_cost?: string; consolidation_trend?: string } };
+    competition: AgentAnalysis & { intensity?: string; key_players?: string[]; signals?: { feature_risk?: string; switching_cost?: string; consolidation_trend?: string } };
     regulation: AgentAnalysis & { risk_level?: string; key_concerns?: string[]; signals?: { key_concerns?: string[]; applicable_regulations?: string[]; compliance_cost?: string; time_to_compliance?: string; tailwind?: string } };
     technical_difficulty: AgentAnalysis & { level?: string; key_challenges?: string[]; signals?: { core_challenge?: string; integration_complexity?: string; ai_ml_required?: boolean; estimated_mvp_months?: number } };
     monetization: AgentAnalysis & { models?: string[]; signals?: { recommended_model?: string; estimated_acv?: string; nrr_potential?: string; margin_risk?: string; models?: string[] } };
@@ -58,6 +66,8 @@ interface DeepAnalysisProps {
   similarCount: number;
 }
 
+// ── Weights & scoring ─────────────────────────────────────────────────────────
+
 const AGENT_WEIGHTS: Record<string, number> = {
   market_size: 0.20,
   competition: 0.15,
@@ -78,18 +88,20 @@ function calcWeightedScore(analysis: AnalysisReport["analysis"]): number {
   return Math.round(Math.min(95, Math.max(5, total)));
 }
 
+// ── Agent metadata ────────────────────────────────────────────────────────────
+
 const AGENT_META: Record<
   string,
   { label: string; icon: typeof Target; color: string; bg: string; weight: string }
 > = {
-  market_size: { label: "Market Size", icon: Target, color: "text-blue-600", bg: "bg-blue-50", weight: "20%" },
-  competition: { label: "Competition", icon: Shield, color: "text-purple-600", bg: "bg-purple-50", weight: "15%" },
-  timing: { label: "Timing", icon: Clock, color: "text-orange-600", bg: "bg-orange-50", weight: "10%" },
-  monetization: { label: "Monetization", icon: DollarSign, color: "text-green-600", bg: "bg-green-50", weight: "15%" },
-  technical_difficulty: { label: "Technical", icon: Wrench, color: "text-red-600", bg: "bg-red-50", weight: "15%" },
-  regulation: { label: "Regulation", icon: Scale, color: "text-amber-600", bg: "bg-amber-50", weight: "10%" },
-  defensibility: { label: "Defensibility", icon: Rocket, color: "text-indigo-600", bg: "bg-indigo-50", weight: "10%" },
-  user_acquisition: { label: "Acquisition", icon: Users, color: "text-teal-600", bg: "bg-teal-50", weight: "5%" },
+  market_size:          { label: "Market Size",   icon: Target,      color: "text-blue-400",   bg: "bg-blue-500/10",   weight: "20%" },
+  competition:          { label: "Competition",   icon: Shield,      color: "text-purple-400", bg: "bg-purple-500/10", weight: "15%" },
+  timing:               { label: "Timing",        icon: Clock,       color: "text-orange-400", bg: "bg-orange-500/10", weight: "10%" },
+  monetization:         { label: "Monetization",  icon: DollarSign,  color: "text-emerald-400",bg: "bg-emerald-500/10",weight: "15%" },
+  technical_difficulty: { label: "Technical",     icon: Wrench,      color: "text-red-400",    bg: "bg-red-500/10",    weight: "15%" },
+  regulation:           { label: "Regulation",    icon: Scale,       color: "text-amber-400",  bg: "bg-amber-500/10",  weight: "10%" },
+  defensibility:        { label: "Defensibility", icon: Rocket,      color: "text-indigo-400", bg: "bg-indigo-500/10", weight: "10%" },
+  user_acquisition:     { label: "Acquisition",   icon: Users,       color: "text-teal-400",   bg: "bg-teal-500/10",   weight: "5%"  },
 };
 
 const ANALYSIS_STEPS = [
@@ -106,23 +118,28 @@ const ANALYSIS_STEPS = [
   "Generating final report...",
 ];
 
-const TREND_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; border: string }> = {
-  Rising:    { icon: TrendingUp,   color: "text-emerald-500", bg: "bg-emerald-50", border: "border-emerald-200" },
-  Stable:    { icon: Minus,        color: "text-amber-500",   bg: "bg-amber-50",   border: "border-amber-200" },
-  Declining: { icon: TrendingDown, color: "text-red-500",     bg: "bg-red-50",     border: "border-red-200" },
+// ── Dark-themed configs ───────────────────────────────────────────────────────
+
+const TREND_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; border: string; label: string }> = {
+  Rising:    { icon: TrendingUp,   color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", label: "Rising" },
+  Stable:    { icon: Minus,        color: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/20",   label: "Stable" },
+  Declining: { icon: TrendingDown, color: "text-red-400",     bg: "bg-red-500/10",     border: "border-red-500/20",     label: "Declining" },
 };
 
-const SAT_CONFIG: Record<string, { color: string; bg: string }> = {
-  Low:    { color: "text-emerald-600", bg: "bg-emerald-50" },
-  Medium: { color: "text-amber-600",   bg: "bg-amber-50" },
-  High:   { color: "text-red-600",     bg: "bg-red-50" },
+const SAT_CONFIG: Record<string, { color: string; bg: string; bar: string }> = {
+  Low:    { color: "text-emerald-400", bg: "bg-emerald-500/10", bar: "#34d399" },
+  Medium: { color: "text-amber-400",   bg: "bg-amber-500/10",   bar: "#fbbf24" },
+  High:   { color: "text-red-400",     bg: "bg-red-500/10",     bar: "#f87171" },
 };
+
+// ── Signal badges ─────────────────────────────────────────────────────────────
 
 function SignalBadge({ label, value }: { label: string; value: string }) {
   return (
-    <div className="inline-flex items-center gap-1.5 bg-white border border-gray-200 px-2 py-1 text-[11px]">
-      <span className="text-gray-400">{label}</span>
-      <span className="font-semibold text-gray-700">{value}</span>
+    <div className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px]"
+      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+      <span className="text-gray-500">{label}</span>
+      <span className="font-semibold text-gray-300">{value}</span>
     </div>
   );
 }
@@ -206,31 +223,14 @@ function AgentSignals({ agentKey, data }: { agentKey: string; data: AgentAnalysi
   }
 
   if (items.length === 0) return null;
-
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
-      {items.map((item, i) => (
-        <SignalBadge key={i} label={item.label} value={item.value} />
-      ))}
+      {items.map((item, i) => <SignalBadge key={i} label={item.label} value={item.value} />)}
     </div>
   );
 }
 
-function ScoreBar({ score, color }: { score: number; color: string }) {
-  const barColor =
-    score >= 70 ? "bg-emerald-400" : score >= 50 ? "bg-amber-400" : "bg-red-400";
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${barColor}`}
-          style={{ width: `${score}%` }}
-        />
-      </div>
-      <span className={`text-sm font-bold ${color} w-8 text-right`}>{score}</span>
-    </div>
-  );
-}
+// ── MetricsGrid ───────────────────────────────────────────────────────────────
 
 function MetricsGrid({ trendDirection, saturationLevel, similarCount }: { trendDirection: string; saturationLevel: string; similarCount: number }) {
   const trend = TREND_CONFIG[trendDirection] ?? TREND_CONFIG.Stable;
@@ -238,70 +238,70 @@ function MetricsGrid({ trendDirection, saturationLevel, similarCount }: { trendD
   const TrendIcon = trend.icon;
 
   return (
-    <div className="grid grid-cols-3 gap-4 mb-4">
-      <div className={`bg-white  border ${trend.border} p-5 text-center shadow-sm`}>
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Market Trend</p>
-        <div className={`w-10 h-10  ${trend.bg} flex items-center justify-center mx-auto mb-2`}>
+    <div className="grid grid-cols-3 gap-3 mb-4">
+      <div className={`border p-5 text-center ${trend.border}`}
+        style={{ background: "rgba(255,255,255,0.03)" }}>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Market Trend</p>
+        <div className={`w-10 h-10 ${trend.bg} flex items-center justify-center mx-auto mb-2`}>
           <TrendIcon className={`w-5 h-5 ${trend.color}`} />
         </div>
         <p className={`text-sm font-bold ${trend.color}`}>{trendDirection}</p>
       </div>
 
-      <div className="bg-white  border border-gray-200 p-5 text-center shadow-sm">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Saturation</p>
-        <div className={`w-10 h-10  ${sat.bg} flex items-center justify-center mx-auto mb-2`}>
+      <div className="border p-5 text-center"
+        style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Saturation</p>
+        <div className={`w-10 h-10 ${sat.bg} flex items-center justify-center mx-auto mb-2`}>
           <span className={`text-sm font-black ${sat.color}`}>{saturationLevel[0]}</span>
         </div>
         <p className={`text-sm font-bold ${sat.color}`}>{saturationLevel}</p>
       </div>
 
-      <div className="bg-white  border border-gray-200 p-5 text-center shadow-sm">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Similar Ideas</p>
-        <p className="text-3xl font-extrabold text-gray-900 mb-1">{similarCount}</p>
-        <p className="text-xs text-gray-400">last 30 days</p>
+      <div className="border p-5 text-center"
+        style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Similar Ideas</p>
+        <p className="text-3xl font-extrabold text-white mb-1">{similarCount}</p>
+        <p className="text-xs text-gray-600">last 30 days</p>
       </div>
     </div>
   );
 }
 
+// ── Verdict & OverallSignal ───────────────────────────────────────────────────
+
 function getVerdict(score: number, trend: string, saturation: string): { label: string; color: string; bg: string } {
-  // High score
   if (score >= 75) {
-    if (saturation === "Low") return { label: "Strong early opportunity", color: "text-emerald-700", bg: "bg-emerald-50" };
-    if (saturation === "High") return { label: "Promising but crowded", color: "text-amber-700", bg: "bg-amber-50" };
-    return { label: "Strong signal — move fast", color: "text-emerald-700", bg: "bg-emerald-50" };
+    if (saturation === "Low") return { label: "Strong early opportunity", color: "text-emerald-400", bg: "rgba(16,185,129,0.12)" };
+    if (saturation === "High") return { label: "Promising but crowded", color: "text-amber-400", bg: "rgba(245,158,11,0.12)" };
+    return { label: "Strong signal — move fast", color: "text-emerald-400", bg: "rgba(16,185,129,0.12)" };
   }
-  // Mid-high score
   if (score >= 60) {
-    if (trend === "Rising" && saturation === "Low") return { label: "Early opportunity — validate quickly", color: "text-emerald-700", bg: "bg-emerald-50" };
-    if (trend === "Rising" && saturation === "High") return { label: "Hot space — differentiation is key", color: "text-amber-700", bg: "bg-amber-50" };
-    if (trend === "Declining") return { label: "Timing risk — watch momentum", color: "text-amber-700", bg: "bg-amber-50" };
-    if (saturation === "High") return { label: "Competitive — needs sharper positioning", color: "text-amber-700", bg: "bg-amber-50" };
-    return { label: "Moderate potential — refine your angle", color: "text-amber-700", bg: "bg-amber-50" };
+    if (trend === "Rising" && saturation === "Low") return { label: "Early opportunity — validate quickly", color: "text-emerald-400", bg: "rgba(16,185,129,0.12)" };
+    if (trend === "Rising" && saturation === "High") return { label: "Hot space — differentiation is key", color: "text-amber-400", bg: "rgba(245,158,11,0.12)" };
+    if (trend === "Declining") return { label: "Timing risk — watch momentum", color: "text-amber-400", bg: "rgba(245,158,11,0.12)" };
+    return { label: "Moderate potential — refine your angle", color: "text-amber-400", bg: "rgba(245,158,11,0.12)" };
   }
-  // Mid score
   if (score >= 45) {
-    if (saturation === "Low") return { label: "Unproven space — high risk, high reward", color: "text-amber-700", bg: "bg-amber-50" };
-    if (trend === "Declining") return { label: "Fading interest — consider pivoting", color: "text-red-700", bg: "bg-red-50" };
-    return { label: "Needs sharper positioning", color: "text-amber-700", bg: "bg-amber-50" };
+    if (saturation === "Low") return { label: "Unproven space — high risk, high reward", color: "text-amber-400", bg: "rgba(245,158,11,0.12)" };
+    if (trend === "Declining") return { label: "Fading interest — consider pivoting", color: "text-red-400", bg: "rgba(239,68,68,0.12)" };
+    return { label: "Needs sharper positioning", color: "text-amber-400", bg: "rgba(245,158,11,0.12)" };
   }
-  // Low score
-  if (trend === "Declining" && saturation === "High") return { label: "Crowded and cooling — rethink approach", color: "text-red-700", bg: "bg-red-50" };
-  if (saturation === "High") return { label: "Saturated market — major pivot needed", color: "text-red-700", bg: "bg-red-50" };
-  return { label: "Weak signal — explore adjacent angles", color: "text-red-700", bg: "bg-red-50" };
+  if (trend === "Declining" && saturation === "High") return { label: "Crowded and cooling — rethink approach", color: "text-red-400", bg: "rgba(239,68,68,0.12)" };
+  return { label: "Weak signal — explore adjacent angles", color: "text-red-400", bg: "rgba(239,68,68,0.12)" };
 }
 
 function OverallSignal({ score, summary, trend, saturation }: { score: number; summary: string; trend: string; saturation: string }) {
-  const vColor = score >= 70 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-600";
+  const vColor = score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
   const vBg = score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
   const verdict = getVerdict(score, trend, saturation);
 
   return (
-    <div className="bg-white  border border-gray-200 p-8 mb-4 text-center shadow-sm">
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Overall Signal</p>
+    <div className="border p-8 mb-4 text-center"
+      style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Overall Signal</p>
       <div className="relative w-32 h-32 mx-auto mb-4">
         <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="#f3f4f6" strokeWidth="12" />
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="12" />
           <circle
             cx="60" cy="60" r="52" fill="none"
             stroke={vBg} strokeWidth="12"
@@ -313,29 +313,66 @@ function OverallSignal({ score, summary, trend, saturation }: { score: number; s
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className={`text-3xl font-extrabold ${vColor}`}>{score}</span>
-          <span className="text-xs text-gray-400">/100</span>
+          <span className="text-xs text-gray-600">/100</span>
         </div>
       </div>
-      {/* Verdict badge */}
-      <div className={`inline-flex items-center gap-1.5 ${verdict.bg} px-3 py-1.5 rounded-full mb-3`}>
+      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-3"
+        style={{ background: verdict.bg }}>
         <span className={`text-xs font-bold ${verdict.color}`}>{verdict.label}</span>
       </div>
-      <p className="text-sm text-gray-600 leading-relaxed max-w-sm mx-auto">{summary}</p>
+      <p className="text-sm text-gray-400 leading-relaxed max-w-sm mx-auto">{summary}</p>
     </div>
   );
 }
 
-export default function DeepAnalysis({ submissionId, fallbackScore, fallbackSummary, trendDirection, saturationLevel, similarCount }: DeepAnalysisProps) {
+// ── Radar custom tick ─────────────────────────────────────────────────────────
+
+function RadarTick({
+  x, y, cx, cy, payload, scoreMap,
+}: {
+  x: number; y: number; cx: number; cy: number;
+  payload: { value: string };
+  scoreMap: Record<string, number>;
+  [k: string]: unknown;
+}) {
+  const score = scoreMap[payload.value] ?? 0;
+  const scoreColor = score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171";
+  const dx = x - cx;
+  const anchor: "start" | "middle" | "end" = dx > 8 ? "start" : dx < -8 ? "end" : "middle";
+  const dy = y - cy;
+  const nameY = dy <= 0 ? y - 10 : y + 2;
+  const scoreY = dy <= 0 ? y + 6 : y + 18;
+
+  return (
+    <g>
+      <text x={x} y={nameY} textAnchor={anchor} fill="#6b7280" fontSize={10} fontWeight="600">
+        {payload.value}
+      </text>
+      <text x={x} y={scoreY} textAnchor={anchor} fill={scoreColor} fontSize={15} fontWeight="800">
+        {score}
+      </text>
+    </g>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
+export default function DeepAnalysis({
+  submissionId,
+  fallbackScore,
+  fallbackSummary,
+  trendDirection,
+  saturationLevel,
+  similarCount,
+}: DeepAnalysisProps) {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
-  const [detailedAgent, setDetailedAgent] = useState<string | null>(null);
+  const [fullAgent, setFullAgent] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
-  const [detailOpen, setDetailOpen] = useState(false);
 
-  // Check if analysis already exists on mount
   useEffect(() => {
     async function check() {
       try {
@@ -352,16 +389,12 @@ export default function DeepAnalysis({ submissionId, fallbackScore, fallbackSumm
             next_steps: data.report.next_steps,
           });
         }
-      } catch {
-        // Ignore — just means no existing analysis
-      } finally {
-        setChecked(true);
-      }
+      } catch { /* no existing analysis */ }
+      finally { setChecked(true); }
     }
     check();
   }, [submissionId]);
 
-  // Animate loading steps
   useEffect(() => {
     if (!loading) return;
     const interval = setInterval(() => {
@@ -374,37 +407,21 @@ export default function DeepAnalysis({ submissionId, fallbackScore, fallbackSumm
     setLoading(true);
     setError(null);
     setStepIndex(0);
-
     try {
       const res = await fetch("/api/analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ submissionId }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         if (res.status === 409 && data.analysisId) {
           const getRes = await fetch(`/api/analysis?submissionId=${submissionId}`);
           const getData = await getRes.json();
-          if (getData.report) {
-            setReport({
-              viability_score: getData.report.viability_score,
-              summary: getData.report.summary,
-              analysis: getData.report.analysis,
-              cross_agent_insights: getData.report.cross_agent_insights,
-              opportunities: getData.report.opportunities,
-              risks: getData.report.risks,
-              next_steps: getData.report.next_steps,
-            });
-            setLoading(false);
-            return;
-          }
+          if (getData.report) { setReport(getData.report); setLoading(false); return; }
         }
         throw new Error(data.error || "Analysis failed");
       }
-
       setReport(data.report);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -415,40 +432,27 @@ export default function DeepAnalysis({ submissionId, fallbackScore, fallbackSumm
 
   if (!checked) return null;
 
-  // Loading state
+  // ── Loading ───────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="bg-white  border border-indigo-200 p-8 shadow-sm mb-4">
+      <div className="border p-8"
+        style={{ background: "rgba(99,102,241,0.05)", borderColor: "rgba(99,102,241,0.2)" }}>
         <div className="text-center">
-          <div className="w-16 h-16  bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4"
+            style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}>
+            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
           </div>
-          <h3 className="text-lg font-extrabold text-gray-900 mb-2">
-            AI Deep Analysis in Progress
-          </h3>
-          <p className="text-sm text-gray-400 mb-6">
-            8 specialist agents are analyzing your idea in parallel
-          </p>
-
+          <h3 className="text-lg font-extrabold text-white mb-2">AI Deep Analysis in Progress</h3>
+          <p className="text-sm text-gray-500 mb-6">8 specialist agents analyzing in parallel</p>
           <div className="max-w-sm mx-auto space-y-2">
             {ANALYSIS_STEPS.map((step, i) => (
-              <div
-                key={step}
+              <div key={step}
                 className={`flex items-center gap-2 text-xs transition-all duration-300 ${
-                  i < stepIndex
-                    ? "text-emerald-500"
-                    : i === stepIndex
-                    ? "text-indigo-600 font-bold"
-                    : "text-gray-300"
-                }`}
-              >
-                {i < stepIndex ? (
-                  <span className="w-4 text-center">&#10003;</span>
-                ) : i === stepIndex ? (
-                  <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-                ) : (
-                  <span className="w-4 text-center">&#8226;</span>
-                )}
+                  i < stepIndex ? "text-emerald-500" : i === stepIndex ? "text-indigo-400 font-bold" : "text-gray-700"
+                }`}>
+                {i < stepIndex ? <span className="w-4 text-center">✓</span>
+                  : i === stepIndex ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+                  : <span className="w-4 text-center">·</span>}
                 {step}
               </div>
             ))}
@@ -458,199 +462,266 @@ export default function DeepAnalysis({ submissionId, fallbackScore, fallbackSumm
     );
   }
 
-  // Show results with new hierarchy
+  // ── Results ───────────────────────────────────────────────────────────────────
   if (report) {
     const weightedScore = calcWeightedScore(report.analysis);
+    const radarData = Object.entries(AGENT_META).map(([key, meta]) => ({
+      subject: meta.label,
+      key,
+      score: report.analysis?.[key as keyof typeof report.analysis]?.score ?? 0,
+    }));
+    const scoreMap = Object.fromEntries(radarData.map((d) => [d.subject, d.score]));
 
     return (
-      <div className="space-y-4 mb-4">
-        {/* 2. Overall Signal — weighted average from 8 agents */}
+      <div className="space-y-4">
+
+        {/* Overall Signal — weighted score from 8 agents */}
         <OverallSignal score={weightedScore} summary={report.summary} trend={trendDirection} saturation={saturationLevel} />
 
-        {/* 3. Why This Result */}
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600  p-6 text-white shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Brain className="w-5 h-5" />
-            <span className="text-xs font-bold uppercase tracking-widest opacity-80">
-              Why This Result
-            </span>
+        {/* Metrics — trend / saturation / similar count */}
+        <MetricsGrid trendDirection={trendDirection} saturationLevel={saturationLevel} similarCount={similarCount} />
+
+        {/* Radar + agent cards */}
+        <div className="border p-6"
+          style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center gap-2 mb-5">
+            <Brain className="w-4 h-4 text-indigo-400" />
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">8-Agent Analysis Breakdown</p>
           </div>
-          <p className="text-sm leading-relaxed opacity-90 mb-4">{report.summary}</p>
-          {report.cross_agent_insights?.length > 0 && (
+
+          {/* Radar */}
+          <div style={{ height: 340 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={radarData} margin={{ top: 28, right: 48, bottom: 28, left: 48 }}>
+                <PolarGrid stroke="rgba(255,255,255,0.07)" gridType="polygon" />
+                <PolarAngleAxis
+                  dataKey="subject"
+                  tick={(props) => <RadarTick {...props} scoreMap={scoreMap} />}
+                  tickLine={false}
+                />
+                <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} tickCount={5} />
+                <Radar
+                  dataKey="score"
+                  stroke="#818cf8"
+                  strokeWidth={2}
+                  fill="url(#radarGrad)"
+                  fillOpacity={1}
+                  dot={{ fill: "#818cf8", r: 3, strokeWidth: 0 }}
+                />
+                <defs>
+                  <radialGradient id="radarGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.1} />
+                  </radialGradient>
+                </defs>
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Agent cards 4×2 */}
+          <div className="grid grid-cols-4 gap-2 mt-5">
+            {Object.entries(AGENT_META).map(([key, meta]) => {
+              const agentData = report.analysis?.[key as keyof typeof report.analysis];
+              if (!agentData) return null;
+              const Icon = meta.icon;
+              const score = agentData.score;
+              const isExpanded = expandedAgent === key;
+              const scoreColor = score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
+
+              return (
+                <div key={key}>
+                  <button
+                    onClick={() => { setExpandedAgent(isExpanded ? null : key); setFullAgent(null); }}
+                    className="w-full border p-3 text-left transition-all duration-150 hover:bg-white/[0.04] flex flex-col gap-2"
+                    style={{
+                      background: isExpanded ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
+                      borderColor: isExpanded ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className={`w-6 h-6 ${meta.bg} flex items-center justify-center`}>
+                        <Icon className={`w-3 h-3 ${meta.color}`} />
+                      </div>
+                      <span className="text-[9px] font-bold text-gray-700">{meta.weight}</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-gray-600 uppercase tracking-wider leading-none mb-1">
+                        {meta.label}
+                      </p>
+                      <div className="flex items-end gap-1">
+                        <span className={`text-xl font-extrabold leading-none ${scoreColor}`}>{score}</span>
+                        <span className="text-[9px] text-gray-700 mb-0.5">/100</span>
+                      </div>
+                    </div>
+                    <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${score}%`, background: score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171" }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] text-gray-600">Details</span>
+                      {isExpanded ? <ChevronUp className="w-3 h-3 text-gray-600" /> : <ChevronDown className="w-3 h-3 text-gray-600" />}
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Expanded assessment panel */}
+          {expandedAgent && (() => {
+            const agentData = report.analysis?.[expandedAgent as keyof typeof report.analysis];
+            const meta = AGENT_META[expandedAgent];
+            if (!agentData || !meta) return null;
+            const Icon = meta.icon;
+            const isFull = fullAgent === expandedAgent;
+            const SHORT_LIMIT = 110;
+            const isLong = agentData.assessment.length > SHORT_LIMIT;
+            const shortText = isLong
+              ? agentData.assessment.slice(0, SHORT_LIMIT).trimEnd() + "…"
+              : agentData.assessment;
+
+            return (
+              <div className="mt-3 p-4 border"
+                style={{ background: "rgba(99,102,241,0.05)", borderColor: "rgba(99,102,241,0.2)" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-6 h-6 ${meta.bg} flex items-center justify-center`}>
+                    <Icon className={`w-3 h-3 ${meta.color}`} />
+                  </div>
+                  <span className="text-xs font-bold text-gray-300">{meta.label} — Agent Assessment</span>
+                </div>
+                {/* Signal badges */}
+                <AgentSignals agentKey={expandedAgent} data={agentData} />
+                {/* Short summary — always visible */}
+                <p className="text-xs text-gray-400 leading-relaxed">{shortText}</p>
+                {/* Full text — shown when expanded */}
+                {isFull && isLong && (
+                  <p className="text-xs text-gray-400 leading-relaxed mt-2">
+                    {agentData.assessment.slice(SHORT_LIMIT)}
+                  </p>
+                )}
+                {/* Detailed assessment — if available */}
+                {isFull && agentData.detailed_assessment && (
+                  <div className="mt-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                    <p className="text-[10px] text-indigo-400 font-bold mb-1">Detailed Analysis</p>
+                    <p className="text-xs text-gray-400 leading-relaxed">{agentData.detailed_assessment}</p>
+                  </div>
+                )}
+                {(isLong || agentData.detailed_assessment) && (
+                  <button
+                    onClick={() => setFullAgent(isFull ? null : expandedAgent)}
+                    className="mt-2 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+                  >
+                    {isFull ? "Show less ↑" : "Read full analysis ↓"}
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Cross-agent insights */}
+        {report.cross_agent_insights?.length > 0 && (
+          <div className="border p-6"
+            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Brain className="w-4 h-4 text-indigo-400" />
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Cross-Agent Insights</p>
+            </div>
             <ul className="space-y-2">
               {report.cross_agent_insights.map((insight, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="w-5 h-5 rounded-full bg-white/20 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full text-indigo-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)" }}>
                     {i + 1}
                   </span>
-                  <p className="text-xs leading-relaxed opacity-90">{insight}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* 4. Trend / Saturation / Similar Ideas */}
-        <MetricsGrid trendDirection={trendDirection} saturationLevel={saturationLevel} similarCount={similarCount} />
-
-        {/* 5. Top Opportunities & Top Risks */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {report.opportunities?.length > 0 && (
-            <div className="bg-white  border border-emerald-200 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="w-4 h-4 text-emerald-500" />
-                <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">
-                  Top Opportunities
-                </p>
-              </div>
-              <ul className="space-y-3">
-                {report.opportunities.map((opp, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-emerald-400 mt-0.5 shrink-0">+</span>
-                    <p className="text-xs text-gray-600 leading-relaxed">{opp}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {report.risks?.length > 0 && (
-            <div className="bg-white  border border-red-200 p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-                <p className="text-xs font-bold text-red-600 uppercase tracking-widest">
-                  Top Risks
-                </p>
-              </div>
-              <ul className="space-y-3">
-                {report.risks.map((risk, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-red-400 mt-0.5 shrink-0">!</span>
-                    <p className="text-xs text-gray-600 leading-relaxed">{risk}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* 6. Next Steps */}
-        {report.next_steps?.length > 0 && (
-          <div className="bg-white  border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <ArrowRight className="w-4 h-4 text-indigo-500" />
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                Next Steps This Week
-              </p>
-            </div>
-            <ul className="space-y-2">
-              {report.next_steps.map((step, i) => (
-                <li key={i} className="flex items-start gap-3 p-2 bg-indigo-50 ">
-                  <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                    {i + 1}
-                  </span>
-                  <p className="text-xs text-gray-700 leading-relaxed">{step}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">{insight}</p>
                 </li>
               ))}
             </ul>
           </div>
         )}
 
-        {/* 7. Detailed Breakdown (collapsible) */}
-        <div className="bg-white  border border-gray-200 shadow-sm overflow-hidden">
-          <button
-            onClick={() => setDetailOpen(!detailOpen)}
-            className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-500" />
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                Detailed Breakdown — 8 Agents
-              </p>
+        {/* Opportunities & Risks */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {report.opportunities?.length > 0 && (
+            <div className="border p-6"
+              style={{ background: "rgba(16,185,129,0.04)", borderColor: "rgba(16,185,129,0.2)" }}>
+              <div className="flex items-center gap-2 mb-4">
+                <Lightbulb className="w-4 h-4 text-emerald-400" />
+                <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Opportunities</p>
+              </div>
+              <ul className="space-y-3">
+                {report.opportunities.map((opp, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-emerald-500 mt-0.5 shrink-0 font-bold">+</span>
+                    <p className="text-xs text-gray-400 leading-relaxed">{opp}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
-            {detailOpen ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            )}
-          </button>
-          {detailOpen && (
-            <div className="px-6 pb-6 space-y-3">
-              {Object.entries(AGENT_META).map(([key, meta]) => {
-                const agentData = report.analysis?.[key as keyof typeof report.analysis];
-                if (!agentData) return null;
-
-                const Icon = meta.icon;
-                const isExpanded = expandedAgent === key;
-
-                return (
-                  <div key={key} className="border border-gray-100  overflow-hidden">
-                    <button
-                      onClick={() => setExpandedAgent(isExpanded ? null : key)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className={`w-8 h-8  ${meta.bg} flex items-center justify-center shrink-0`}>
-                        <Icon className={`w-4 h-4 ${meta.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold text-gray-700">{meta.label}</span>
-                          <span className="text-[10px] text-gray-400">{meta.weight}</span>
-                        </div>
-                        <ScoreBar score={agentData.score} color={meta.color} />
-                      </div>
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
-                      )}
-                    </button>
-                    {isExpanded && (
-                      <div className="px-3 pb-3 pt-0">
-                        <div className="bg-gray-50  p-3 space-y-2">
-                          <AgentSignals agentKey={key} data={agentData} />
-                          <p className="text-xs text-gray-600 leading-relaxed">
-                            {detailedAgent === key && agentData.detailed_assessment
-                              ? agentData.detailed_assessment
-                              : agentData.assessment}
-                          </p>
-                          {agentData.detailed_assessment && (
-                            <button
-                              onClick={() => setDetailedAgent(detailedAgent === key ? null : key)}
-                              className="text-[11px] text-indigo-500 font-semibold hover:text-indigo-700 transition-colors cursor-pointer"
-                            >
-                              {detailedAgent === key ? "← 요약 보기" : "상세히 보기 →"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          )}
+          {report.risks?.length > 0 && (
+            <div className="border p-6"
+              style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.2)" }}>
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+                <p className="text-xs font-bold text-red-500 uppercase tracking-widest">Risks</p>
+              </div>
+              <ul className="space-y-3">
+                {report.risks.map((risk, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-red-500 mt-0.5 shrink-0 font-bold">!</span>
+                    <p className="text-xs text-gray-400 leading-relaxed">{risk}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
+
+        {/* Next Steps */}
+        {report.next_steps?.length > 0 && (
+          <div className="border p-6"
+            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <ArrowRight className="w-4 h-4 text-indigo-400" />
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Next Steps This Week</p>
+            </div>
+            <ul className="space-y-2">
+              {report.next_steps.map((step, i) => (
+                <li key={i} className="flex items-start gap-3 p-2"
+                  style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}>
+                  <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                    {i + 1}
+                  </span>
+                  <p className="text-xs text-gray-400 leading-relaxed">{step}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Default: show fallback score + metrics + analysis button
+  // ── CTA (no analysis yet) ─────────────────────────────────────────────────────
   return (
     <>
-      {/* Overall Signal — fallback from quick insight */}
+      {/* Show fallback score while no AI analysis */}
       <OverallSignal score={fallbackScore} summary={fallbackSummary} trend={trendDirection} saturation={saturationLevel} />
 
-      {/* Trend / Saturation / Similar — always visible */}
+      {/* Metrics */}
       <MetricsGrid trendDirection={trendDirection} saturationLevel={saturationLevel} similarCount={similarCount} />
 
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50  border border-indigo-200 p-8 text-center shadow-sm mb-4">
-        <div className="w-14 h-14  bg-indigo-100 flex items-center justify-center mx-auto mb-4">
-          <Sparkles className="w-7 h-7 text-indigo-500" />
+      <div className="border p-8 text-center"
+        style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))", borderColor: "rgba(99,102,241,0.2)" }}>
+        <div className="w-14 h-14 flex items-center justify-center mx-auto mb-4"
+          style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)" }}>
+          <Sparkles className="w-7 h-7 text-indigo-400" />
         </div>
-        <h3 className="text-lg font-extrabold text-gray-900 mb-2">
-          Want a deeper analysis?
-        </h3>
+        <h3 className="text-lg font-extrabold text-white mb-2">Want a deeper analysis?</h3>
         <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
           Our AI system runs 8 specialist agents in parallel to analyze market size,
           competition, timing, monetization, technical complexity, regulation,
@@ -658,14 +729,12 @@ export default function DeepAnalysis({ submissionId, fallbackScore, fallbackSumm
         </p>
         <button
           onClick={startAnalysis}
-          className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3  text-sm hover:bg-indigo-400 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 text-sm hover:bg-indigo-400 transition-colors cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
           Run AI Deep Analysis
         </button>
-        {error && (
-          <p className="mt-4 text-xs text-red-500">{error}</p>
-        )}
+        {error && <p className="mt-4 text-xs text-red-400">{error}</p>}
       </div>
     </>
   );

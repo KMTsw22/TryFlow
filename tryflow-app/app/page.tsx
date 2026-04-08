@@ -442,14 +442,16 @@ function InteractiveDemo() {
 
 // ─────────────────────────────────────────────────────────────────────────
 const STYLE_CYCLE = [
-  { fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
-  { fontWeight: 100, fontStyle: "italic"  as const, letterSpacing: "0.18em",   fontSize: "0.78em", textTransform: "uppercase" as const },
-  { fontWeight: 800, fontStyle: "italic"  as const, letterSpacing: "-0.04em",  fontSize: "1.08em", textTransform: "none"      as const },
-  { fontWeight: 300, fontStyle: "normal"  as const, letterSpacing: "0.28em",   fontSize: "0.7em",  textTransform: "uppercase" as const },
-  { fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "0.01em",   fontSize: "1.12em", textTransform: "none"      as const },
-  { fontWeight: 200, fontStyle: "italic"  as const, letterSpacing: "0.05em",   fontSize: "0.88em", textTransform: "none"      as const },
-  { fontWeight: 800, fontStyle: "normal"  as const, letterSpacing: "0.22em",   fontSize: "0.72em", textTransform: "uppercase" as const },
-  { fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "-0.02em",  fontSize: "1em",    textTransform: "none"      as const },
+  { fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
+  { fontFamily: "'Playfair Display', serif",       fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "0.01em",   fontSize: "1.05em", textTransform: "none"      as const },
+  { fontFamily: "'Bebas Neue', sans-serif",        fontWeight: 400, fontStyle: "normal"  as const, letterSpacing: "0.12em",   fontSize: "1.15em", textTransform: "uppercase" as const },
+  { fontFamily: "'Space Mono', monospace",         fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "-0.04em",  fontSize: "0.72em", textTransform: "none"      as const },
+  { fontFamily: "'DM Serif Display', serif",       fontWeight: 400, fontStyle: "normal"  as const, letterSpacing: "-0.02em",  fontSize: "1.1em",  textTransform: "none"      as const },
+  { fontFamily: "'Oswald', sans-serif",            fontWeight: 200, fontStyle: "normal"  as const, letterSpacing: "0.3em",    fontSize: "0.68em", textTransform: "uppercase" as const },
+  { fontFamily: "'Caveat', cursive",               fontWeight: 700, fontStyle: "normal"  as const, letterSpacing: "0.02em",   fontSize: "1.18em", textTransform: "none"      as const },
+  { fontFamily: "'Playfair Display', serif",       fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.03em",  fontSize: "1.0em",  textTransform: "none"      as const },
+  { fontFamily: "'Oswald', sans-serif",            fontWeight: 700, fontStyle: "normal"  as const, letterSpacing: "0.06em",   fontSize: "1.0em",  textTransform: "none"      as const },
+  { fontFamily: "'Space Mono', monospace",         fontWeight: 700, fontStyle: "normal"  as const, letterSpacing: "-0.05em",  fontSize: "0.78em", textTransform: "none"      as const },
 ];
 
 export default function HomePage() {
@@ -457,17 +459,17 @@ export default function HomePage() {
   const mouse = useMouse();
   const [revealed, setRevealed] = useState(false);
   const [styleIdx, setStyleIdx] = useState(0);
-  const [cycleOpacity, setCycleOpacity] = useState(1);
+  const [flipState, setFlipState] = useState<"exit" | "enter">("enter");
 
   useEffect(() => {
     if (!revealed) return;
     const interval = setInterval(() => {
-      setCycleOpacity(0);
+      setFlipState("exit");
       setTimeout(() => {
         setStyleIdx(i => (i + 1) % STYLE_CYCLE.length);
-        setCycleOpacity(1);
-      }, 140);
-    }, 700);
+        setFlipState("enter");
+      }, 110);
+    }, 850);
     return () => clearInterval(interval);
   }, [revealed]);
 
@@ -565,7 +567,11 @@ export default function HomePage() {
               transition: "opacity 0.9s cubic-bezier(0.4,0,0.2,1) 0.1s, transform 0.9s cubic-bezier(0.34,1.56,0.64,1) 0.1s",
             }}>find out if anyone</span>
             <span style={{
-              display: "block",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "1.4em",
+              perspective: "700px",
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0px)" : "translateY(14px)",
               transition: "opacity 1.1s cubic-bezier(0.4,0,0.2,1) 0.22s, transform 1.1s cubic-bezier(0.34,1.56,0.64,1) 0.22s",
@@ -574,8 +580,13 @@ export default function HomePage() {
                 background: "linear-gradient(135deg, #818cf8, #a78bfa)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                opacity: cycleOpacity,
-                transition: "opacity 0.14s ease",
+                display: "inline-block",
+                transformOrigin: "center top",
+                transform: flipState === "exit" ? "rotateX(90deg)" : "rotateX(0deg)",
+                opacity: flipState === "exit" ? 0 : 1,
+                transition: flipState === "exit"
+                  ? "transform 0.1s ease-in, opacity 0.08s ease-in"
+                  : "transform 0.2s cubic-bezier(0.34,1.56,0.64,1) 0.02s, opacity 0.12s ease-out 0.02s",
                 ...STYLE_CYCLE[styleIdx],
               }}>actually cares.</span>
             </span>

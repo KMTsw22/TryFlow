@@ -61,8 +61,8 @@ export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
     type Stage = "float" | "converge" | "burst" | "settle" | "done";
     let stage: Stage = "float";
     let stageFrame = 0;
-    const FLOAT_DUR   = 160;
-    const SETTLE_HOLD = 180;
+    const FLOAT_DUR   = 80;
+    const SETTLE_HOLD = 40;
 
     const ORB_MAX        = 88;
     const N              = 14;
@@ -246,10 +246,9 @@ export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
       }
 
       if (stage === "done" && stageFrame > SETTLE_HOLD) {
-        stage = "float"; stageFrame = 0;
-        orbRadius = 0; flashOpacity = 0;
-        particles.length = 0; orbs.length = 0;
-        for (let i = 0; i < N; i++) orbs.push(makeOrb(false));
+        cancelAnimationFrame(raf);
+        ctx.clearRect(0, 0, W, H);
+        return;
       }
 
       // Check all absorbed
@@ -268,7 +267,7 @@ export function IdeaBubbles({ onReveal }: { onReveal?: () => void } = {}) {
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
 
         if (stage === "converge") {
-          const pull = .055 + (1 - Math.min(1, dist / 400)) * .10;
+          const pull = .13 + (1 - Math.min(1, dist / 400)) * .20;
           o.vx += (dx / dist) * pull;
           o.vy += (dy / dist) * pull;
           o.phase = "converging";

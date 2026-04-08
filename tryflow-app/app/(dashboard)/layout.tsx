@@ -13,7 +13,7 @@ export default async function DashboardLayout({
   if (!user) redirect("/login");
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen" style={{ background: "#050816" }}>
       <TopBar
         userName={user.user_metadata?.full_name ?? user.email ?? "User"}
         userImage={user.user_metadata?.avatar_url}

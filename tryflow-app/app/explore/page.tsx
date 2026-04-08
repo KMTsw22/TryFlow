@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Minus, ArrowRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ArrowRight, ChevronRight } from "lucide-react";
 
 interface CategoryTrend {
   category: string;
@@ -137,16 +137,18 @@ export default async function ExplorePage() {
               const barPct = maxLast30 > 0 ? (t.last30 / maxLast30) * 100 : 0;
 
               return (
-                <div key={t.category}
-                  className="px-6 py-4 flex items-center gap-4 transition-colors hover:bg-white/[0.03]"
-                  style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-
+                <Link
+                  key={t.category}
+                  href={`/explore/${encodeURIComponent(t.category)}`}
+                  className="px-6 py-4 flex items-center gap-4 transition-colors hover:bg-white/[0.03] group"
+                  style={{ borderColor: "rgba(255,255,255,0.04)" }}
+                >
                   <div className={`w-9 h-9  ${tConf.bg} flex items-center justify-center shrink-0`}>
                     <TIcon className={`w-4 h-4 ${tConf.color}`} />
                   </div>
 
                   <div className="w-40 shrink-0">
-                    <p className="text-sm font-semibold text-gray-200">{t.category}</p>
+                    <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">{t.category}</p>
                   </div>
 
                   <div className="flex-1">
@@ -168,7 +170,9 @@ export default async function ExplorePage() {
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${SAT_PILL[t.saturation]} shrink-0`}>
                     {t.saturation} sat.
                   </span>
-                </div>
+
+                  <ChevronRight className="w-4 h-4 text-gray-700 group-hover:text-gray-400 transition-colors shrink-0" />
+                </Link>
               );
             })}
           </div>
