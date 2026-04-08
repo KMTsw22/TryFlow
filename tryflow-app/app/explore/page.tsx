@@ -16,10 +16,23 @@ const TREND_ICON = {
   Declining: { icon: TrendingDown, color: "text-red-400",     bg: "bg-red-500/10",     pill: "bg-red-500/15 text-red-400 border border-red-500/20" },
 };
 
-const SAT_PILL = {
-  Low:    "bg-indigo-500/15 text-indigo-300 border border-indigo-500/20",
-  Medium: "bg-violet-500/15 text-violet-300 border border-violet-500/20",
-  High:   "bg-orange-500/15 text-orange-300 border border-orange-500/20",
+// Combined trend + saturation → opportunity signal
+const OPPORTUNITY: Record<string, Record<string, { label: string; sub: string; color: string; bg: string; border: string; dot: string }>> = {
+  Rising: {
+    Low:    { label: "Hot Gap",      sub: "Growing · space wide open",  color: "text-emerald-300", bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.25)", dot: "#34d399" },
+    Medium: { label: "Heating Up",   sub: "Growing · moderate crowd",   color: "text-emerald-400", bg: "rgba(16,185,129,0.08)",  border: "rgba(16,185,129,0.18)", dot: "#6ee7b7" },
+    High:   { label: "Competitive",  sub: "Growing · very crowded",     color: "text-amber-300",   bg: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.22)", dot: "#fbbf24" },
+  },
+  Stable: {
+    Low:    { label: "Open Space",   sub: "Stable · low competition",   color: "text-indigo-300",  bg: "rgba(99,102,241,0.10)",  border: "rgba(99,102,241,0.22)", dot: "#818cf8" },
+    Medium: { label: "Balanced",     sub: "Stable · average crowd",     color: "text-gray-400",    bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", dot: "#6b7280" },
+    High:   { label: "Crowded",      sub: "Stable · high saturation",   color: "text-orange-400",  bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.2)",  dot: "#fb923c" },
+  },
+  Declining: {
+    Low:    { label: "Fading Niche", sub: "Declining · few players",    color: "text-amber-400",   bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.18)", dot: "#fbbf24" },
+    Medium: { label: "Slowing",      sub: "Declining · losing interest",color: "text-orange-400",  bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.18)", dot: "#fb923c" },
+    High:   { label: "Avoid",        sub: "Declining · very crowded",   color: "text-red-400",     bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.2)",   dot: "#f87171" },
+  },
 };
 
 const CATEGORIES = [
@@ -135,41 +148,49 @@ export default async function ExplorePage() {
               const tConf = TREND_ICON[t.direction];
               const TIcon = tConf.icon;
               const barPct = maxLast30 > 0 ? (t.last30 / maxLast30) * 100 : 0;
+              const opp = OPPORTUNITY[t.direction]?.[t.saturation] ?? OPPORTUNITY.Stable.Medium;
 
               return (
                 <Link
                   key={t.category}
                   href={`/explore/${encodeURIComponent(t.category)}`}
-                  className="px-6 py-4 flex items-center gap-4 transition-colors hover:bg-white/[0.03] group"
+                  className="px-6 py-5 flex items-center gap-5 transition-colors hover:bg-white/[0.03] group"
                   style={{ borderColor: "rgba(255,255,255,0.04)" }}
                 >
-                  <div className={`w-9 h-9  ${tConf.bg} flex items-center justify-center shrink-0`}>
+                  {/* Trend icon */}
+                  <div className={`w-9 h-9 ${tConf.bg} flex items-center justify-center shrink-0`}>
                     <TIcon className={`w-4 h-4 ${tConf.color}`} />
                   </div>
 
-                  <div className="w-40 shrink-0">
-                    <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors">{t.category}</p>
+                  {/* Category name + submission count */}
+                  <div className="w-36 shrink-0">
+                    <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors leading-tight">{t.category}</p>
+                    <p className="text-[11px] text-gray-600 mt-0.5">
+                      <span className="text-gray-400 font-semibold">{t.last30}</span> in 30d · {t.total} total
+                    </p>
                   </div>
 
+                  {/* Volume bar */}
                   <div className="flex-1">
-                    <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
-                      <div className="h-full bg-indigo-400/60 rounded-full transition-all duration-700"
-                        style={{ width: `${barPct}%` }} />
+                    <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${barPct}%`, background: opp.dot }}
+                      />
                     </div>
                   </div>
 
-                  <div className="text-sm font-bold text-gray-300 w-14 text-right shrink-0">
-                    {t.last30}
-                    <span className="text-xs font-normal text-gray-600 ml-0.5"> ideas</span>
+                  {/* Opportunity signal (combined trend + saturation) */}
+                  <div
+                    className="shrink-0 px-3 py-2 flex flex-col items-start"
+                    style={{ background: opp.bg, border: `1px solid ${opp.border}`, minWidth: 140 }}
+                  >
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: opp.dot }} />
+                      <span className={`text-[11px] font-bold ${opp.color}`}>{opp.label}</span>
+                    </div>
+                    <span className="text-[10px] text-gray-600 leading-tight">{opp.sub}</span>
                   </div>
-
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${tConf.pill} shrink-0 w-20 text-center`}>
-                    {t.direction}
-                  </span>
-
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${SAT_PILL[t.saturation]} shrink-0`}>
-                    {t.saturation} sat.
-                  </span>
 
                   <ChevronRight className="w-4 h-4 text-gray-700 group-hover:text-gray-400 transition-colors shrink-0" />
                 </Link>
