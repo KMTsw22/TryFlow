@@ -28,11 +28,13 @@ export async function middleware(request: NextRequest) {
   // Refresh session (must call getUser)
   const { data: { user } } = await supabase.auth.getUser();
 
+  const pathname = request.nextUrl.pathname;
+
   // Protect dashboard routes — redirect to /login if not authenticated
   const isDashboardRoute =
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/analytics") ||
-    request.nextUrl.pathname.startsWith("/settings");
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/analytics") ||
+    pathname.startsWith("/settings");
 
   if (isDashboardRoute && !user) {
     const url = request.nextUrl.clone();
@@ -41,10 +43,34 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from /login to dashboard
-  if (request.nextUrl.pathname === "/login" && user) {
+  if (pathname === "/login" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  // Protect /explore routes — require active subscription
+  if (pathname.startsWith("/explore")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", pathname);
+      return NextResponse.redirect(url);
+    }
+
+    // Check for active subscription in subscriptions table
+    const { data: subscription } = await supabase
+      .from("subscriptions")
+      .select("status")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!subscription) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/pricing";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

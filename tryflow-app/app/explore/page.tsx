@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus, ArrowRight, ChevronRight } from "lucide-react";
 
@@ -44,6 +45,18 @@ const CATEGORIES = [
 export default async function ExplorePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Guard: require active subscription (middleware handles redirect, this is a safety net)
+  if (!user) redirect("/login?next=/explore");
+
+  const { data: subscription } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!subscription) redirect("/pricing");
 
   const now = new Date();
   const d7  = new Date(now); d7.setDate(now.getDate() - 7);

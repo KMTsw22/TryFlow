@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { TrendingUp, TrendingDown, Minus, ArrowLeft, ArrowRight } from "lucide-react";
 
 const CATEGORIES = [
@@ -69,6 +69,18 @@ export default async function CategoryIdeasPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Guard: require active subscription
+  if (!user) redirect("/login?next=/explore");
+
+  const { data: subscription } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", user.id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!subscription) redirect("/pricing");
 
   const { data } = await supabase
     .from("idea_submissions")
