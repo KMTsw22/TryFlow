@@ -133,7 +133,7 @@ async function generateAiDescription(
 
 export async function POST(req: NextRequest) {
   try {
-    const { category, target_user, description } = await req.json();
+    const { category, target_user, description, allow_contact, contact_email } = await req.json();
 
     if (!category || !target_user || !description) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -156,6 +156,8 @@ export async function POST(req: NextRequest) {
       category,
       target_user,
       description,
+      allow_contact: allow_contact === true,
+      contact_email: allow_contact === true ? (contact_email ?? null) : null,
     });
     if (subErr) throw subErr;
 

@@ -9,59 +9,40 @@ const PLANS = [
     name: "Free",
     price: "$0",
     period: "",
-    description: "아이디어를 제출하고 AI 인사이트를 확인하세요.",
+    description: "Submit your ideas and get AI-powered insights.",
     features: [
-      "아이디어 익명 제출",
-      "제출 결과 AI 인사이트 확인",
+      "Anonymous idea submission",
+      "AI insights on your submission",
     ],
     locked: [
-      "Trends 대시보드 열람",
-      "카테고리별 심층 트렌드 분석",
-      "투자자/기업 연락 수신",
+      "Trends dashboard access",
+      "In-depth category trend analysis",
+      "Contact from investors & companies",
     ],
     highlighted: false,
-    ctaLabel: "시작하기",
+    ctaLabel: "Get Started",
     ctaHref: "/submit",
     plan: null,
   },
   {
     id: "pro",
     name: "Pro",
-    price: "$99",
-    period: "/월",
-    description: "VC·투자자·기업을 위한 전체 트렌드 인텔리전스.",
+    price: "$20",
+    period: "/month",
+    description: "Full trend intelligence for VCs, investors, and companies.",
     features: [
-      "Trends 대시보드 전체 열람",
-      "9개 카테고리 심층 트렌드 분석",
-      "실시간 아이디어 흐름 모니터링",
-      "카테고리별 기회 시그널 지표",
-      "연락 요청 하루 10건",
-      "7일 무료 체험",
+      "Full Trends dashboard access",
+      "In-depth analysis across 9 categories",
+      "Real-time idea flow monitoring",
+      "Opportunity signal indicators by category",
+      "Up to 10 contact requests per day",
+      "7-day free trial",
     ],
     locked: [],
     highlighted: true,
-    ctaLabel: "Pro 구독하기",
+    ctaLabel: "Subscribe to Pro",
     ctaHref: null,
     plan: "pro",
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: "$499",
-    period: "/월",
-    description: "기업 이노베이션팀·대형 VC를 위한 무제한 플랜.",
-    features: [
-      "Pro 플랜 모든 기능 포함",
-      "무제한 연락 요청",
-      "API 접근 권한",
-      "커스텀 리포트 제공",
-      "팀 멤버 최대 5명",
-    ],
-    locked: [],
-    highlighted: false,
-    ctaLabel: "문의하기",
-    ctaHref: "mailto:contact@trywepp.com",
-    plan: null,
   },
 ];
 
@@ -110,23 +91,23 @@ export default async function PricingPage() {
             }}
           >
             <Lock className="w-3.5 h-3.5" />
-            Trends 대시보드는 구독자 전용 콘텐츠입니다
+            Trends dashboard is for subscribers only
           </div>
 
           <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">
             Subscription Plans
           </p>
           <h1 className="text-4xl font-extrabold text-white tracking-tight mb-4">
-            시장 인텔리전스를 구독하세요
+            Subscribe to Market Intelligence
           </h1>
           <p className="text-gray-400 text-base max-w-lg mx-auto">
-            예비 창업자들이 익명으로 제출한 아이디어 트렌드를 실시간으로 분석합니다.
-            VC·기업 구독자만 열람 가능합니다.
+            Analyze idea trends submitted anonymously by aspiring founders in real time.
+            Available exclusively to VC and corporate subscribers.
           </p>
         </div>
 
         {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 max-w-3xl mx-auto w-full">
           {PLANS.map((plan) => (
             <PricingCard
               key={plan.id}
@@ -145,24 +126,24 @@ export default async function PricingPage() {
           }}
         >
           <h2 className="text-lg font-bold text-white mb-6 text-center">
-            Pro 구독으로 얻을 수 있는 것
+            What you get with Pro
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 color: "#818cf8",
-                title: "실시간 트렌드 대시보드",
-                desc: "9개 카테고리의 아이디어 흐름을 실시간으로 모니터링. Rising · Stable · Declining 방향성과 시장 포화도를 한눈에 확인.",
+                title: "Real-time Trends Dashboard",
+                desc: "Monitor idea flows across 9 categories in real time. See Rising · Stable · Declining directions and market saturation at a glance.",
               },
               {
                 color: "#34d399",
-                title: "기회 시그널 지표",
-                desc: "트렌드와 포화도를 결합한 Hot Gap · Heating Up · Competitive 등 9가지 시그널로 투자 적기를 포착.",
+                title: "Opportunity Signal Indicators",
+                desc: "Capture the right investment timing with 9 signals — Hot Gap · Heating Up · Competitive and more — combining trend and saturation data.",
               },
               {
                 color: "#f472b6",
-                title: "아이디어 제출자 연락",
-                desc: "관심 있는 아이디어 제출자에게 하루 10건까지 연락. 제출자 이메일은 직접 노출되지 않습니다.",
+                title: "Contact Idea Submitters",
+                desc: "Reach up to 10 idea submitters per day. Submitter emails are never directly exposed.",
               },
             ].map(({ color, title, desc }) => (
               <div key={title} className="flex flex-col gap-3">
@@ -180,8 +161,8 @@ export default async function PricingPage() {
         <div className="flex items-center gap-3 justify-center">
           <Shield className="w-4 h-4 text-gray-600 shrink-0" />
           <p className="text-xs text-gray-600">
-            결제는 Stripe를 통해 안전하게 처리됩니다. 언제든지 구독을 취소할 수 있으며,
-            취소 시 당월 기간이 끝날 때까지 계속 이용 가능합니다.
+            Payments are securely processed via Stripe. You can cancel anytime,
+            and your access continues until the end of the current billing period.
           </p>
         </div>
       </div>

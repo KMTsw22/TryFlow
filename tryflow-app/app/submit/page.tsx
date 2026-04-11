@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Lock, ChevronDown } from "lucide-react";
+import { ArrowRight, Lock, ChevronDown, Mail, EyeOff } from "lucide-react";
 
 const CATEGORIES = [
   "SaaS / B2B",
@@ -17,12 +17,14 @@ const CATEGORIES = [
   "Hardware",
 ];
 
-const STEPS = ["Category", "Target User", "Description"];
+const STEPS = ["Category", "Target User", "Description", "Contact"];
 
 export default function SubmitPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ category: "", target_user: "", description: "" });
+  const [allowContact, setAllowContact] = useState<boolean | null>(null);
+  const [contactEmail, setContactEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,11 +32,16 @@ export default function SubmitPage() {
     if (step === 0) return form.category !== "";
     if (step === 1) return form.target_user.trim().length >= 5;
     if (step === 2) return form.description.trim().length >= 30;
+    if (step === 3) {
+      if (allowContact === null) return false;
+      if (allowContact === true) return contactEmail.includes("@") && contactEmail.includes(".");
+      return true; // allowContact === false → can proceed
+    }
     return false;
   };
 
   const handleNext = () => {
-    if (step < 2) { setStep(step + 1); return; }
+    if (step < 3) { setStep(step + 1); return; }
     handleSubmit();
   };
 
@@ -45,7 +52,11 @@ export default function SubmitPage() {
       const res = await fetch("/api/ideas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          allow_contact: allowContact === true,
+          contact_email: allowContact === true ? contactEmail : null,
+        }),
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error || "Something went wrong"); setLoading(false); return; }
@@ -90,7 +101,7 @@ export default function SubmitPage() {
                   </div>
                   <span className={`text-xs font-medium ${i === step ? "text-white" : "text-gray-500"}`}>{s}</span>
                 </div>
-                {i < 2 && <div className="flex-1 h-px bg-white/10 mx-2" />}
+                {i < 3 && <div className="flex-1 h-px bg-white/10 mx-2" />}
               </div>
             ))}
           </div>
@@ -178,6 +189,53 @@ export default function SubmitPage() {
               </div>
             )}
 
+            {/* Step 3: Contact */}
+            {step === 3 && (
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 mb-1">투자자/기업으로부터 연락 받기</h2>
+                <p className="text-sm text-gray-400 mb-6">
+                  구독 VC·기업이 당신의 아이디어에 관심을 가질 경우 연락을 받을 수 있습니다.
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setAllowContact(true)}
+                    className={`w-full text-left px-4 py-4 border-2 text-sm transition-all duration-150 flex items-start gap-3
+                      ${allowContact === true
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                        : "border-gray-100 text-gray-600 hover:border-indigo-200"}`}
+                  >
+                    <Mail className="w-4 h-4 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold">네, 연락을 받고 싶습니다</p>
+                      <p className="text-xs text-gray-400 mt-0.5">이메일 주소는 직접 공개되지 않으며, 서버를 통해 안전하게 전달됩니다.</p>
+                    </div>
+                  </button>
+                  {allowContact === true && (
+                    <input
+                      type="email"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      placeholder="연락받을 이메일 주소"
+                      className="w-full border-2 border-indigo-300 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-500 transition-colors"
+                    />
+                  )}
+                  <button
+                    onClick={() => { setAllowContact(false); setContactEmail(""); }}
+                    className={`w-full text-left px-4 py-4 border-2 text-sm transition-all duration-150 flex items-start gap-3
+                      ${allowContact === false
+                        ? "border-gray-400 bg-gray-50 text-gray-700"
+                        : "border-gray-100 text-gray-600 hover:border-gray-300"}`}
+                  >
+                    <EyeOff className="w-4 h-4 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-semibold">아니요, 익명을 유지하겠습니다</p>
+                      <p className="text-xs text-gray-400 mt-0.5">어떤 개인정보도 공개되지 않습니다.</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Navigation */}
             <div className="flex items-center justify-between mt-8">
               <button
@@ -198,7 +256,7 @@ export default function SubmitPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Analyzing...
                   </>
-                ) : step === 2 ? (
+                ) : step === 3 ? (
                   <>Get my insight report <ArrowRight className="w-4 h-4" /></>
                 ) : (
                   <>Next <ArrowRight className="w-4 h-4" /></>
