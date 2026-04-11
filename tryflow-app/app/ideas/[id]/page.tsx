@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import DeepAnalysis from "@/components/DeepAnalysis";
+import { ContactSection } from "@/components/vc/ContactSection";
 
 interface Report {
   viability_score: number;
@@ -19,6 +20,7 @@ interface Idea {
   target_user: string;
   description: string;
   created_at: string;
+  user_id: string | null;
   insight_reports: Report | Report[] | null;
 }
 
@@ -36,11 +38,13 @@ export default async function IdeaReportPage({
   const { id } = await params;
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+
   const [{ data, error }, { data: aiData }] = await Promise.all([
     supabase
       .from("idea_submissions")
       .select(`
-        id, category, target_user, description, created_at,
+        id, category, target_user, description, created_at, user_id,
         insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary, ai_description)
       `)
       .eq("id", id)
@@ -56,6 +60,28 @@ export default async function IdeaReportPage({
 
   const idea = data as unknown as Idea;
   const report = getReport(idea);
+
+  // 구독 여부 확인
+  const { data: subscription } = user
+    ? await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle()
+    : { data: null };
+
+  // 제출자 연락정보
+  const { data: submitterProfile } = idea.user_id
+    ? await supabase
+        .from("user_profiles")
+        .select("allow_contact, contact_email, contact_phone, contact_linkedin, contact_other")
+        .eq("id", idea.user_id)
+        .maybeSingle()
+    : { data: null };
+
+  const isSubscriber = !!subscription;
+  const canContact = isSubscriber && !!submitterProfile?.allow_contact;
   const date = new Date(idea.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
   const hasAiScore = !!aiData?.viability_score;
@@ -152,6 +178,14 @@ export default async function IdeaReportPage({
           trendDirection={report.trend_direction}
           saturationLevel={report.saturation_level}
           similarCount={report.similar_count}
+        />
+
+        {/* Contact Section */}
+        <ContactSection
+          ideaId={idea.id}
+          category={idea.category}
+          canContact={canContact}
+          isSubscriber={isSubscriber}
         />
 
         {/* CTAs */}

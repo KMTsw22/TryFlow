@@ -67,4 +67,5 @@ SELECT
   raw_user_meta_data->>'avatar_url',
   email
 FROM auth.users
+WHERE id NOT IN (SELECT id FROM user_profiles)
 ON CONFLICT (id) DO NOTHING;

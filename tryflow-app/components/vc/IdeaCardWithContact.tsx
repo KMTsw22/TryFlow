@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Mail } from "lucide-react";
-import { ContactModal } from "./ContactModal";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 interface InsightReport {
   viability_score: number;
@@ -28,7 +27,7 @@ interface IdeaRow {
 
 interface Props {
   idea: IdeaRow;
-  isSubscriber: boolean;
+  isSubscriber: boolean; // kept for future use
 }
 
 const TREND_PILL = {
@@ -59,9 +58,7 @@ function getAiScore(idea: IdeaRow): number | null {
   return r?.viability_score ?? null;
 }
 
-export function IdeaCardWithContact({ idea, isSubscriber }: Props) {
-  const [showModal, setShowModal] = useState(false);
-
+export function IdeaCardWithContact({ idea }: Props) {
   const report = getReport(idea);
   const aiScore = getAiScore(idea);
   const vScore = aiScore ?? report?.viability_score ?? null;
@@ -85,85 +82,61 @@ export function IdeaCardWithContact({ idea, isSubscriber }: Props) {
     ? SAT_PILL[report.saturation_level as keyof typeof SAT_PILL] ?? SAT_PILL.Low
     : null;
 
-  const canContact = isSubscriber && idea.allow_contact;
-
   return (
-    <>
-      <div
-        className="flex flex-col border p-5 transition-all duration-200 hover:bg-white/[0.04]"
-        style={{
-          background: "rgba(255,255,255,0.03)",
-          borderColor: canContact ? "rgba(129,140,248,0.2)" : "rgba(255,255,255,0.07)",
-        }}
-      >
-        {/* Top row: score + anonymous badge */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex flex-col items-start gap-1">
-            <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-full border ${vRing}`}>
-              {vScore !== null ? (
-                <>
-                  <span className={`text-base font-extrabold leading-none ${vColor}`}>{vScore}</span>
-                  <span className="text-[9px] text-gray-600 leading-none mt-0.5">/100</span>
-                </>
-              ) : (
-                <span className="text-gray-600 text-xs">—</span>
-              )}
-            </div>
-            {hasAiScore && (
-              <span className="text-[9px] font-bold text-indigo-400">✦ AI</span>
+    <Link
+      href={`/ideas/${idea.id}`}
+      className="flex flex-col border p-5 transition-all duration-200 hover:bg-white/[0.04] hover:border-indigo-500/30 cursor-pointer"
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        borderColor: idea.allow_contact ? "rgba(129,140,248,0.2)" : "rgba(255,255,255,0.07)",
+      }}
+    >
+      {/* Top row: score + anonymous badge */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-col items-start gap-1">
+          <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-full border ${vRing}`}>
+            {vScore !== null ? (
+              <>
+                <span className={`text-base font-extrabold leading-none ${vColor}`}>{vScore}</span>
+                <span className="text-[9px] text-gray-600 leading-none mt-0.5">/100</span>
+              </>
+            ) : (
+              <span className="text-gray-600 text-xs">—</span>
             )}
           </div>
-          <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider pt-1">Anonymous</span>
-        </div>
-
-        {/* Target user */}
-        <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider mb-1.5">
-          For: {truncate(idea.target_user, 45)}
-        </p>
-
-        {/* Description */}
-        <p className="text-sm text-gray-300 leading-relaxed flex-1 mb-4">
-          {truncate(idea.description, 130)}
-        </p>
-
-        {/* Bottom row */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {trendPill && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${trendPill}`}>
-              {report!.trend_direction}
-            </span>
+          {hasAiScore && (
+            <span className="text-[9px] font-bold text-indigo-400">✦ AI</span>
           )}
-          {satPill && (
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${satPill}`}>
-              {report!.saturation_level} sat.
-            </span>
-          )}
-
-          <div className="ml-auto flex items-center gap-2">
-            {canContact && (
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-1 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors px-2 py-1 border"
-                style={{ borderColor: "rgba(129,140,248,0.3)", background: "rgba(99,102,241,0.08)" }}
-              >
-                <Mail className="w-3 h-3" />
-                연락하기
-              </button>
-            )}
-            <span className="text-[11px] text-gray-600 flex items-center gap-0.5">
-              <ArrowRight className="w-3 h-3" />
-            </span>
-          </div>
         </div>
+        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider pt-1">Anonymous</span>
       </div>
 
-      {showModal && (
-        <ContactModal
-          ideaId={idea.id}
-          category={idea.category}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-    </>
+      {/* Target user */}
+      <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider mb-1.5">
+        For: {truncate(idea.target_user, 45)}
+      </p>
+
+      {/* Description */}
+      <p className="text-sm text-gray-300 leading-relaxed flex-1 mb-4">
+        {truncate(idea.description, 130)}
+      </p>
+
+      {/* Bottom row */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {trendPill && (
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${trendPill}`}>
+            {report!.trend_direction}
+          </span>
+        )}
+        {satPill && (
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${satPill}`}>
+            {report!.saturation_level} sat.
+          </span>
+        )}
+        <span className="ml-auto text-[11px] text-gray-500 flex items-center gap-0.5">
+          자세히 보기 <ArrowRight className="w-3 h-3" />
+        </span>
+      </div>
+    </Link>
   );
 }
