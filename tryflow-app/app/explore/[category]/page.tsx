@@ -26,6 +26,7 @@ interface IdeaRow {
   target_user: string;
   description: string;
   created_at: string;
+  user_id: string | null;
   allow_contact: boolean;
   insight_reports: InsightReport | InsightReport[] | null;
   analysis_reports: AnalysisReport | AnalysisReport[] | null;
@@ -59,14 +60,30 @@ export default async function CategoryIdeasPage({
   const { data } = await supabase
     .from("idea_submissions")
     .select(`
-      id, category, target_user, description, created_at, allow_contact,
+      id, category, target_user, description, created_at, user_id,
       insight_reports (viability_score, saturation_level, trend_direction, summary),
       analysis_reports (viability_score)
     `)
     .eq("category", category)
     .order("created_at", { ascending: false });
 
-  const ideas = (data ?? []) as IdeaRow[];
+  const rawIdeas = (data ?? []) as Omit<IdeaRow, "allow_contact">[];
+
+  // Fetch allow_contact from user_profiles for each submitter
+  const userIds = [...new Set(rawIdeas.map((i) => i.user_id).filter(Boolean))] as string[];
+  const { data: profiles } = userIds.length > 0
+    ? await supabase
+        .from("user_profiles")
+        .select("id, allow_contact")
+        .in("id", userIds)
+    : { data: [] };
+
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.allow_contact]));
+
+  const ideas: IdeaRow[] = rawIdeas.map((idea) => ({
+    ...idea,
+    allow_contact: idea.user_id ? (profileMap.get(idea.user_id) ?? false) : false,
+  }));
 
   return (
     <div className="min-h-screen" style={{ background: "#050816" }}>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { PreferencesPanel } from "@/components/settings/PreferencesPanel";
+import { ContactInfoForm } from "@/components/settings/ContactInfoForm";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -13,6 +14,15 @@ export default async function SettingsPage() {
   const joined   = user?.created_at
     ? new Date(user.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : "—";
+
+  // Fetch user profile contact info
+  const { data: profile } = user
+    ? await supabase
+        .from("user_profiles")
+        .select("contact_email, contact_phone, contact_linkedin, contact_other, allow_contact")
+        .eq("id", user.id)
+        .maybeSingle()
+    : { data: null };
 
   return (
     <div className="max-w-[720px] mx-auto space-y-6">
@@ -43,6 +53,21 @@ export default async function SettingsPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Contact Info */}
+      <div className="bg-white  border border-gray-100 p-6 card-shadow">
+        <h2 className="text-sm font-semibold text-gray-900 mb-1">연락처 설정</h2>
+        <p className="text-xs text-gray-500 mb-5">
+          구독자(VC/기업)가 내 아이디어에 관심을 보일 때 사용할 연락처를 설정합니다.
+        </p>
+        <ContactInfoForm
+          initialEmail={profile?.contact_email ?? email}
+          initialPhone={profile?.contact_phone ?? ""}
+          initialLinkedin={profile?.contact_linkedin ?? ""}
+          initialOther={profile?.contact_other ?? ""}
+          initialAllowContact={profile?.allow_contact ?? false}
+        />
       </div>
 
       {/* Preferences */}

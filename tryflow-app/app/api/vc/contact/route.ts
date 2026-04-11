@@ -27,35 +27,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing ideaId" }, { status: 400 });
   }
 
-  // 아이디어 조회 (allow_contact=true인 것만)
+  // 아이디어 조회 → 제출자 user_id 가져오기
   const { data: idea } = await supabase
     .from("idea_submissions")
-    .select("id, category, contact_email, allow_contact")
+    .select("id, category, user_id")
     .eq("id", ideaId)
-    .eq("allow_contact", true)
     .maybeSingle();
 
-  if (!idea?.contact_email) {
+  if (!idea?.user_id) {
+    return NextResponse.json({ error: "Idea not found" }, { status: 404 });
+  }
+
+  // 제출자의 user_profiles 조회
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("contact_email, contact_phone, contact_linkedin, contact_other, allow_contact")
+    .eq("id", idea.user_id)
+    .maybeSingle();
+
+  if (!profile?.allow_contact || !profile?.contact_email) {
     return NextResponse.json({ error: "This idea does not allow contact" }, { status: 400 });
   }
 
-  // 이력 저장 (실제 발송은 VC가 Gmail에서 직접)
-  await supabase.from("contact_requests").insert({
-    id: crypto.randomUUID(),
-    sender_id: user.id,
-    idea_id: ideaId,
-    recipient_email: idea.contact_email,
-    subject: subject ?? "",
-    message: message ?? "",
-    status: "opened",
-  });
-
-  // Gmail 작성 URL 생성
+  // Gmail 작성 URL (이메일로 열기)
   const gmailUrl =
     `https://mail.google.com/mail/?view=cm` +
-    `&to=${encodeURIComponent(idea.contact_email)}` +
+    `&to=${encodeURIComponent(profile.contact_email)}` +
     `&su=${encodeURIComponent(subject ?? "")}` +
     `&body=${encodeURIComponent(message ?? "")}`;
 
-  return NextResponse.json({ gmailUrl });
+  return NextResponse.json({
+    gmailUrl,
+    contactInfo: {
+      email: profile.contact_email,
+      phone: profile.contact_phone ?? null,
+      linkedin: profile.contact_linkedin ?? null,
+      other: profile.contact_other ?? null,
+    },
+  });
 }
