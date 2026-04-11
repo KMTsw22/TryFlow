@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Check, Lock, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { PricingCard } from "@/components/pricing/PricingCard";
 
 const PLANS = [
@@ -29,13 +29,10 @@ const PLANS = [
     name: "Pro",
     price: "$20",
     period: "/month",
-    description: "Full trend intelligence for VCs, investors, and companies.",
+    description: "다른 사람의 아이디어를 보고, 관심 있는 제출자에게 바로 연락할 수 있습니다.",
     features: [
-      "Full Trends dashboard access",
-      "In-depth analysis across 9 categories",
-      "Real-time idea flow monitoring",
-      "Opportunity signal indicators by category",
-      "Up to 10 contact requests per day",
+      "다른 창업자들의 아이디어 열람",
+      "아이디어 제출자에게 연락 이메일 발송 (하루 10건)",
       "7-day free trial",
     ],
     locked: [],
@@ -82,18 +79,6 @@ export default async function PricingPage() {
       <div className="max-w-5xl mx-auto px-6 py-16">
         {/* Header */}
         <div className="text-center mb-14">
-          <div
-            className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-xs font-semibold"
-            style={{
-              background: "rgba(239,68,68,0.1)",
-              border: "1px solid rgba(239,68,68,0.25)",
-              color: "#f87171",
-            }}
-          >
-            <Lock className="w-3.5 h-3.5" />
-            Trends dashboard is for subscribers only
-          </div>
-
           <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">
             Subscription Plans
           </p>
