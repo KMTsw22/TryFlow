@@ -49,7 +49,8 @@ const AGENT_LABELS: Record<string, string> = {
 
 // Custom axis tick: label + A score (indigo) · B score (emerald)
 function DualAxisTick(props: {
-  x?: number; y?: number; payload?: { value: string }; textAnchor?: string;
+  x?: number; y?: number; payload?: { value: string };
+  textAnchor?: "inherit" | "end" | "start" | "middle";
   data: { subject: string; A: number; B: number }[];
 }) {
   const { x = 0, y = 0, payload, textAnchor = "middle", data } = props;
