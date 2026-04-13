@@ -110,12 +110,16 @@ function DualRadar({ analysisA, analysisB }: { analysisA: Analysis | null; analy
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
             <span className="text-xs text-gray-500">A avg</span>
-            <span className="text-xs font-extrabold text-indigo-300">{avgA}</span>
+            {analysisA
+              ? <span className="text-xs font-extrabold text-indigo-300">{avgA}</span>
+              : <span className="text-xs text-gray-600 italic">no analysis</span>}
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
             <span className="text-xs text-gray-500">B avg</span>
-            <span className="text-xs font-extrabold text-emerald-300">{avgB}</span>
+            {analysisB
+              ? <span className="text-xs font-extrabold text-emerald-300">{avgB}</span>
+              : <span className="text-xs text-gray-600 italic">no analysis</span>}
           </div>
         </div>
       </div>
