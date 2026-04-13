@@ -11,7 +11,6 @@ import {
   Plus,
   LogIn,
   Home,
-  GitCompare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -24,7 +23,6 @@ const GUEST_NAV = [
 const AUTH_NAV = [
   { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
   { label: "Plans",    icon: BarChart3,        href: "/explore" },
-  { label: "Compare",  icon: GitCompare,        href: "/compare" },
   { label: "Settings", icon: Settings,          href: "/settings" },
 ];
 
