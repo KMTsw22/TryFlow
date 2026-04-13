@@ -356,16 +356,16 @@ function CompareRow({
       <div className="px-4 py-3.5 flex items-center">
         <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{label}</span>
       </div>
-      <div className={`px-4 py-3.5 flex items-center border-l ${winner === "a" ? "bg-emerald-500/5" : ""}`}
+      <div className={`px-4 py-3.5 flex items-center border-l min-w-0 overflow-hidden ${winner === "a" ? "bg-emerald-500/5" : ""}`}
         style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-        <div className="flex items-center gap-2 w-full">
+        <div className="flex items-center gap-2 w-full min-w-0">
           {a}
           {winner === "a" && <Trophy className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />}
         </div>
       </div>
-      <div className={`px-4 py-3.5 flex items-center border-l ${winner === "b" ? "bg-emerald-500/5" : ""}`}
+      <div className={`px-4 py-3.5 flex items-center border-l min-w-0 overflow-hidden ${winner === "b" ? "bg-emerald-500/5" : ""}`}
         style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-        <div className="flex items-center gap-2 w-full">
+        <div className="flex items-center gap-2 w-full min-w-0">
           {b}
           {winner === "b" && <Trophy className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />}
         </div>
@@ -478,12 +478,12 @@ export default function ComparePage() {
             style={{ borderColor: "rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
             <div className="px-4 py-3" />
             {([["A", ideaA], ["B", ideaB]] as [string, Idea][]).map(([label, idea]) => (
-              <div key={label} className="px-4 py-3 border-l" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-extrabold flex items-center justify-center">
+              <div key={label} className="px-4 py-3 border-l min-w-0 overflow-hidden" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+                <div className="flex items-center gap-2 mb-0.5 min-w-0">
+                  <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-extrabold flex items-center justify-center shrink-0">
                     {label}
                   </span>
-                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{idea.category}</span>
+                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider truncate">{idea.category}</span>
                 </div>
                 <p className="text-xs text-gray-400 truncate">{idea.target_user}</p>
               </div>
