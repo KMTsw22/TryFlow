@@ -29,10 +29,10 @@ const PLANS = [
     name: "Pro",
     price: "$20",
     period: "/month",
-    description: "다른 사람의 아이디어를 보고, 관심 있는 제출자에게 바로 연락할 수 있습니다.",
+    description: "Browse other founders' ideas and contact submitters you're interested in directly.",
     features: [
-      "다른 창업자들의 아이디어 열람",
-      "아이디어 제출자에게 연락 이메일 발송 (하루 10건)",
+      "Browse all submitted ideas",
+      "Contact idea submitters via email (up to 10/day)",
       "7-day free trial",
     ],
     locked: [],
