@@ -18,12 +18,12 @@ import { createClient } from "@/lib/supabase/client";
 
 const GUEST_NAV = [
   { label: "Home",   icon: Home,     href: "/" },
-  { label: "Trends", icon: BarChart3, href: "/explore" },
+  { label: "Plans", icon: BarChart3, href: "/explore" },
 ];
 
 const AUTH_NAV = [
   { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Trends",   icon: BarChart3,        href: "/explore" },
+  { label: "Plans",    icon: BarChart3,        href: "/explore" },
   { label: "Compare",  icon: GitCompare,        href: "/compare" },
   { label: "Settings", icon: Settings,          href: "/settings" },
 ];

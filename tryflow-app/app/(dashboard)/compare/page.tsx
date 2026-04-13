@@ -6,6 +6,26 @@ import {
   TrendingUp, TrendingDown, Minus, ArrowRight,
   CheckCircle2, Circle, GitCompare, Trophy, ArrowLeft, Search,
 } from "lucide-react";
+import {
+  RadarChart, Radar, PolarGrid, PolarAngleAxis,
+  PolarRadiusAxis, ResponsiveContainer, Legend,
+} from "recharts";
+
+interface AgentScore {
+  score: number;
+  reasoning?: string;
+}
+
+interface Analysis {
+  market_size?: AgentScore;
+  competition?: AgentScore;
+  timing?: AgentScore;
+  monetization?: AgentScore;
+  technical_difficulty?: AgentScore;
+  regulation?: AgentScore;
+  defensibility?: AgentScore;
+  user_acquisition?: AgentScore;
+}
 
 interface Report {
   viability_score: number;
@@ -13,6 +33,147 @@ interface Report {
   trend_direction: string;
   similar_count: number;
   summary: string;
+  analysis?: Analysis;
+}
+
+const AGENT_LABELS: Record<string, string> = {
+  market_size:          "Market",
+  competition:          "Competition",
+  timing:               "Timing",
+  monetization:         "Monetization",
+  technical_difficulty: "Technical",
+  regulation:           "Regulation",
+  defensibility:        "Defensibility",
+  user_acquisition:     "Acquisition",
+};
+
+// Custom axis tick: label + A score (indigo) · B score (emerald)
+function DualAxisTick(props: {
+  x?: number; y?: number; payload?: { value: string }; textAnchor?: string;
+  data: { subject: string; A: number; B: number }[];
+}) {
+  const { x = 0, y = 0, payload, textAnchor = "middle", data } = props;
+  const entry = data.find((d) => d.subject === payload?.value);
+  return (
+    <g>
+      <text x={x} y={y} textAnchor={textAnchor}
+        fill="rgba(255,255,255,0.55)" fontSize={11} fontWeight={700}>
+        {payload?.value}
+      </text>
+      <text x={x} y={y + 16} textAnchor={textAnchor} fontSize={11} fontWeight={800}>
+        <tspan fill="#818cf8">{entry?.A ?? 0}</tspan>
+        <tspan fill="rgba(255,255,255,0.25)"> · </tspan>
+        <tspan fill="#34d399">{entry?.B ?? 0}</tspan>
+      </text>
+    </g>
+  );
+}
+
+function DualRadar({ analysisA, analysisB }: { analysisA: Analysis | null; analysisB: Analysis | null }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+
+  const data = Object.keys(AGENT_LABELS).map((key) => ({
+    subject: AGENT_LABELS[key],
+    A: analysisA?.[key as keyof Analysis]?.score ?? 0,
+    B: analysisB?.[key as keyof Analysis]?.score ?? 0,
+  }));
+
+  const hasData = data.some((d) => d.A > 0 || d.B > 0);
+  if (!hasData) return null;
+
+  const avgA = Math.round(data.reduce((s, d) => s + d.A, 0) / data.length);
+  const avgB = Math.round(data.reduce((s, d) => s + d.B, 0) / data.length);
+
+  return (
+    <div className="border mb-6 overflow-hidden"
+      style={{
+        background: "rgba(255,255,255,0.02)",
+        borderColor: "rgba(255,255,255,0.08)",
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(12px)",
+        transition: "opacity 0.5s ease, transform 0.5s ease",
+      }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 pt-5 pb-3"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+          8-Agent Radar Comparison
+        </p>
+        {/* Avg score badges */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
+            <span className="text-xs text-gray-500">A avg</span>
+            <span className="text-xs font-extrabold text-indigo-300">{avgA}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <span className="text-xs text-gray-500">B avg</span>
+            <span className="text-xs font-extrabold text-emerald-300">{avgB}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div style={{ height: 400 }} className="px-4 py-4">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={data} margin={{ top: 28, right: 72, bottom: 28, left: 72 }}>
+            <defs>
+              <radialGradient id="gradA2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#818cf8" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity={0.08} />
+              </radialGradient>
+              <radialGradient id="gradB2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#34d399" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0.08} />
+              </radialGradient>
+            </defs>
+            <PolarGrid stroke="rgba(255,255,255,0.06)" gridType="polygon" />
+            <PolarAngleAxis
+              dataKey="subject"
+              tick={(tickProps) => <DualAxisTick {...tickProps} data={data} />}
+              tickLine={false}
+            />
+            <PolarRadiusAxis
+              domain={[0, 100]}
+              tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9 }}
+              axisLine={false}
+              tickCount={4}
+              angle={30}
+            />
+            <Radar name="Idea A" dataKey="A"
+              stroke="#818cf8" strokeWidth={2.5}
+              fill="url(#gradA2)" fillOpacity={1}
+              isAnimationActive={true}
+              animationBegin={100}
+              animationDuration={900}
+              animationEasing="ease-out"
+              dot={{ fill: "#818cf8", r: 4, stroke: "#0c1228", strokeWidth: 1.5 }}
+            />
+            <Radar name="Idea B" dataKey="B"
+              stroke="#34d399" strokeWidth={2.5}
+              fill="url(#gradB2)" fillOpacity={1}
+              isAnimationActive={true}
+              animationBegin={300}
+              animationDuration={900}
+              animationEasing="ease-out"
+              dot={{ fill: "#34d399", r: 4, stroke: "#0c1228", strokeWidth: 1.5 }}
+            />
+            <Legend
+              iconType="circle"
+              iconSize={8}
+              wrapperStyle={{ fontSize: 12, color: "rgba(255,255,255,0.5)", paddingTop: 12 }}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 }
 
 interface Idea {
@@ -71,6 +232,108 @@ function ScoreCircle({ score }: { score: number }) {
   );
 }
 
+function octPoints(cx: number, cy: number, r: number) {
+  return Array.from({ length: 8 }, (_, i) => {
+    const a = ((i * 45 + 22.5) * Math.PI) / 180;
+    return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
+  }).join(" ");
+}
+
+function OctagonCompare({
+  scoreA, scoreB, labelA, labelB, categoryA, categoryB, winner,
+}: {
+  scoreA: number; scoreB: number;
+  labelA: string; labelB: string;
+  categoryA: string; categoryB: string;
+  winner: "a" | "b" | null;
+}) {
+  const W = 480, H = 220, R = 90, OVERLAP = 70;
+  const cxA = W / 2 - R + OVERLAP / 2;
+  const cxB = W / 2 + R - OVERLAP / 2;
+  const cy  = H / 2;
+
+  const colorA = "#6366f1";
+  const colorB = "#10b981";
+  const scoreColorA = scoreA >= 70 ? "#10b981" : scoreA >= 50 ? "#f59e0b" : "#ef4444";
+  const scoreColorB = scoreB >= 70 ? "#10b981" : scoreB >= 50 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <div className="flex flex-col items-center gap-2 py-6">
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible">
+        <defs>
+          <clipPath id="octA"><polygon points={octPoints(cxA, cy, R)} /></clipPath>
+          <clipPath id="octB"><polygon points={octPoints(cxB, cy, R)} /></clipPath>
+        </defs>
+
+        {/* Octagon A fill */}
+        <polygon points={octPoints(cxA, cy, R)}
+          fill={colorA} fillOpacity={winner === "b" ? 0.08 : 0.13}
+          stroke={colorA} strokeWidth={winner === "a" ? 2 : 1} strokeOpacity={0.6} />
+
+        {/* Octagon B fill */}
+        <polygon points={octPoints(cxB, cy, R)}
+          fill={colorB} fillOpacity={winner === "a" ? 0.08 : 0.13}
+          stroke={colorB} strokeWidth={winner === "b" ? 2 : 1} strokeOpacity={0.6} />
+
+        {/* Overlap: B clipped to A's region */}
+        <g clipPath="url(#octA)">
+          <polygon points={octPoints(cxB, cy, R)}
+            fill="rgba(255,255,255,0.06)" />
+        </g>
+
+        {/* Score A */}
+        <text x={cxA - 18} y={cy - 8} textAnchor="middle" fill={scoreColorA}
+          fontSize={32} fontWeight={800} fontFamily="monospace">{scoreA}</text>
+        <text x={cxA - 18} y={cy + 12} textAnchor="middle" fill="rgba(255,255,255,0.25)"
+          fontSize={10}>/100</text>
+        <text x={cxA - 18} y={cy + 30} textAnchor="middle" fill={colorA}
+          fontSize={9} fontWeight={700} letterSpacing={1}>{categoryA.toUpperCase().slice(0, 12)}</text>
+
+        {/* Label A badge */}
+        <circle cx={cxA - 18} cy={cy - 52} r={12} fill={colorA} fillOpacity={0.9} />
+        <text x={cxA - 18} y={cy - 47} textAnchor="middle" fill="white"
+          fontSize={11} fontWeight={800}>A</text>
+
+        {/* Score B */}
+        <text x={cxB + 18} y={cy - 8} textAnchor="middle" fill={scoreColorB}
+          fontSize={32} fontWeight={800} fontFamily="monospace">{scoreB}</text>
+        <text x={cxB + 18} y={cy + 12} textAnchor="middle" fill="rgba(255,255,255,0.25)"
+          fontSize={10}>/100</text>
+        <text x={cxB + 18} y={cy + 30} textAnchor="middle" fill={colorB}
+          fontSize={9} fontWeight={700} letterSpacing={1}>{categoryB.toUpperCase().slice(0, 12)}</text>
+
+        {/* Label B badge */}
+        <circle cx={cxB + 18} cy={cy - 52} r={12} fill={colorB} fillOpacity={0.9} />
+        <text x={cxB + 18} y={cy - 47} textAnchor="middle" fill="white"
+          fontSize={11} fontWeight={800}>B</text>
+
+        {/* Overlap label */}
+        {winner && (
+          <>
+            <text x={W / 2} y={cy - 6} textAnchor="middle"
+              fill="rgba(255,255,255,0.5)" fontSize={9} fontWeight={700} letterSpacing={1}>
+              VS
+            </text>
+            <text x={W / 2} y={cy + 10} textAnchor="middle"
+              fill="rgba(255,255,255,0.3)" fontSize={8}>
+              {Math.abs(scoreA - scoreB)}pts
+            </text>
+          </>
+        )}
+      </svg>
+
+      {/* Winner label */}
+      {winner && (
+        <div className="flex items-center gap-1.5 text-xs font-bold"
+          style={{ color: winner === "a" ? colorA : colorB }}>
+          <Trophy className="w-3.5 h-3.5" />
+          Idea {winner === "a" ? "A" : "B"} leads
+        </div>
+      )}
+    </div>
+  );
+}
+
 function truncate(text: string, max: number) {
   return text.length > max ? text.slice(0, max) + "…" : text;
 }
@@ -113,6 +376,8 @@ export default function ComparePage() {
   const [comparing, setComparing] = useState(false);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [analysisA, setAnalysisA] = useState<Analysis | null>(null);
+  const [analysisB, setAnalysisB] = useState<Analysis | null>(null);
 
   useEffect(() => {
     fetch("/api/ideas/all")
@@ -121,6 +386,18 @@ export default function ComparePage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  async function startCompare() {
+    setComparing(true);
+    setAnalysisA(null);
+    setAnalysisB(null);
+    const [resA, resB] = await Promise.all([
+      fetch(`/api/analysis?submissionId=${selected[0]}`).then((r) => r.json()).catch(() => null),
+      fetch(`/api/analysis?submissionId=${selected[1]}`).then((r) => r.json()).catch(() => null),
+    ]);
+    setAnalysisA(resA?.report?.analysis ?? null);
+    setAnalysisB(resB?.report?.analysis ?? null);
+  }
 
   const filtered = useMemo(() => {
     return ideas.filter((idea) => {
@@ -269,6 +546,9 @@ export default function ComparePage() {
           </div>
         </div>
 
+        {/* Dual radar — two ideas overlaid on same chart */}
+        <DualRadar analysisA={analysisA} analysisB={analysisB} />
+
         {winner && (
           <div className="mt-6 p-5 border"
             style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.07))", borderColor: "rgba(129,140,248,0.2)" }}>
@@ -300,12 +580,6 @@ export default function ComparePage() {
             {ideas.length} ideas available · Select 2 to compare
           </p>
         </div>
-        {selected.length === 2 && (
-          <button onClick={() => setComparing(true)}
-            className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-5 py-2.5 text-sm hover:bg-indigo-400 transition-colors">
-            <GitCompare className="w-4 h-4" /> Compare now
-          </button>
-        )}
       </div>
 
       {/* Selection bar */}
@@ -328,7 +602,7 @@ export default function ComparePage() {
           );
         })}
         {selected.length === 2 ? (
-          <button onClick={() => setComparing(true)}
+          <button onClick={startCompare}
             className="shrink-0 inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2 text-sm hover:bg-indigo-400 transition-colors">
             <GitCompare className="w-4 h-4" /> Compare
           </button>
@@ -340,8 +614,8 @@ export default function ComparePage() {
       </div>
 
       {/* Search + category filter */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1 relative">
+      <div className="flex flex-col gap-2 mb-4">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
           <input
             type="text"

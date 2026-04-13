@@ -5,14 +5,30 @@ export async function GET() {
   try {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    // Try with analysis field; fall back without it if the column doesn't exist
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let data: any[] | null = null;
+    let error: unknown = null;
+
+    ({ data, error } = await supabase
       .from("idea_submissions")
       .select(`
         id, category, target_user, description, created_at,
-        insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
+        insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary, analysis)
       `)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(200) as any);
+
+    if (error) {
+      ({ data, error } = await supabase
+        .from("idea_submissions")
+        .select(`
+          id, category, target_user, description, created_at,
+          insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(200) as any);
+    }
 
     if (error) throw error;
 
