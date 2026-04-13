@@ -10,13 +10,10 @@ interface Props {
   initialAllowContact: boolean;
 }
 
-export function ContactInfoForm({
-  initialEmail,
-  initialPhone,
-  initialLinkedin,
-  initialOther,
-  initialAllowContact,
-}: Props) {
+const inputClass = "w-full border px-3 py-2.5 text-sm text-gray-300 placeholder-gray-600 outline-none focus:border-indigo-500/50 transition-colors";
+const inputStyle = { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" };
+
+export function ContactInfoForm({ initialEmail, initialPhone, initialLinkedin, initialOther, initialAllowContact }: Props) {
   const [contactEmail, setContactEmail] = useState(initialEmail);
   const [contactPhone, setContactPhone] = useState(initialPhone);
   const [contactLinkedin, setContactLinkedin] = useState(initialLinkedin);
@@ -27,26 +24,18 @@ export function ContactInfoForm({
   const [error, setError] = useState("");
 
   async function handleSave() {
-    setSaving(true);
-    setSaved(false);
-    setError("");
+    setSaving(true); setSaved(false); setError("");
     try {
       const res = await fetch("/api/profile/contact", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contact_email: contactEmail,
-          contact_phone: contactPhone,
-          contact_linkedin: contactLinkedin,
-          contact_other: contactOther,
-          allow_contact: allowContact,
-        }),
+        body: JSON.stringify({ contact_email: contactEmail, contact_phone: contactPhone, contact_linkedin: contactLinkedin, contact_other: contactOther, allow_contact: allowContact }),
       });
       if (!res.ok) throw new Error("Failed");
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch {
-      setError("저장에 실패했습니다. 다시 시도해주세요.");
+      setError("Failed to save. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -55,82 +44,40 @@ export function ContactInfoForm({
   return (
     <div className="space-y-4">
       {/* Allow contact toggle */}
-      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+      <div className="flex items-center justify-between py-3 border-b" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
         <div>
-          <p className="text-sm font-medium text-gray-800">연락 허용</p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            구독자(VC/기업)가 내 아이디어에 관심을 보일 때 연락할 수 있도록 허용합니다.
-          </p>
+          <p className="text-sm font-medium text-gray-300">Allow Contact</p>
+          <p className="text-xs text-gray-600 mt-0.5">Let subscribers (VCs/companies) contact you when interested in your idea.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setAllowContact((v) => !v)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-            allowContact ? "bg-indigo-500" : "bg-gray-200"
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-              allowContact ? "translate-x-6" : "translate-x-1"
-            }`}
-          />
+        <button type="button" onClick={() => setAllowContact((v) => !v)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0 ml-4 ${allowContact ? "bg-indigo-500" : "bg-gray-700"}`}>
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${allowContact ? "translate-x-6" : "translate-x-1"}`} />
         </button>
       </div>
 
-      {/* Contact fields */}
+      {/* Fields */}
       <div className="space-y-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">연락 이메일</label>
-          <input
-            type="email"
-            value={contactEmail}
-            onChange={(e) => setContactEmail(e.target.value)}
-            placeholder="contact@example.com"
-            className="w-full text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">전화번호 (선택)</label>
-          <input
-            type="tel"
-            value={contactPhone}
-            onChange={(e) => setContactPhone(e.target.value)}
-            placeholder="+82 10-0000-0000"
-            className="w-full text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">LinkedIn URL (선택)</label>
-          <input
-            type="url"
-            value={contactLinkedin}
-            onChange={(e) => setContactLinkedin(e.target.value)}
-            placeholder="https://linkedin.com/in/yourname"
-            className="w-full text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">기타 연락처 (선택)</label>
-          <input
-            type="text"
-            value={contactOther}
-            onChange={(e) => setContactOther(e.target.value)}
-            placeholder="카카오톡 ID, Discord 등"
-            className="w-full text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-          />
-        </div>
+        {[
+          { label: "Contact Email", value: contactEmail, set: setContactEmail, type: "email", placeholder: "contact@example.com" },
+          { label: "Phone (optional)", value: contactPhone, set: setContactPhone, type: "tel", placeholder: "+82 10-0000-0000" },
+          { label: "LinkedIn URL (optional)", value: contactLinkedin, set: setContactLinkedin, type: "url", placeholder: "https://linkedin.com/in/yourname" },
+          { label: "Other (optional)", value: contactOther, set: setContactOther, type: "text", placeholder: "KakaoTalk ID, Discord, etc." },
+        ].map(({ label, value, set, type, placeholder }) => (
+          <div key={label}>
+            <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
+            <input type={type} value={value} onChange={(e) => set(e.target.value)}
+              placeholder={placeholder} className={inputClass} style={inputStyle} />
+          </div>
+        ))}
       </div>
 
       <div className="flex items-center gap-3 pt-1">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="text-xs font-semibold bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors disabled:opacity-50"
-        >
-          {saving ? "저장 중..." : "저장"}
+        <button onClick={handleSave} disabled={saving}
+          className="text-sm font-bold bg-indigo-500 text-white px-5 py-2.5 hover:bg-indigo-400 transition-colors disabled:opacity-50">
+          {saving ? "Saving..." : "Save"}
         </button>
-        {saved && <span className="text-xs text-green-600">저장되었습니다.</span>}
-        {error && <span className="text-xs text-red-500">{error}</span>}
+        {saved && <span className="text-xs text-emerald-400 font-medium">Saved!</span>}
+        {error && <span className="text-xs text-red-400">{error}</span>}
       </div>
     </div>
   );
