@@ -5,41 +5,67 @@ import { PricingCard } from "@/components/pricing/PricingCard";
 
 const PLANS = [
   {
-    id: "free",
-    name: "Free",
-    price: "$0",
-    period: "",
-    description: "Submit your ideas and get AI-powered insights.",
+    id: "submitter",
+    name: "Submitter Pro",
+    price: "$15",
+    period: "/month",
+    description:
+      "For founders: unlock the full multi-agent analysis of your own ideas and upload privately.",
     features: [
-      "Anonymous idea submission",
-      "AI insights on your submission",
+      "Full 8-agent deep analysis on your ideas",
+      "Detailed per-agent assessments, risks & next steps",
+      "Private idea uploads (excluded from public trends)",
+      "7-day free trial",
     ],
     locked: [
-      "Trends dashboard access",
-      "In-depth category trend analysis",
-      "Contact from investors & companies",
+      "Browse other founders' ideas",
+      "Contact other submitters",
     ],
     highlighted: false,
-    ctaLabel: "Get Started",
-    ctaHref: "/submit",
-    plan: null,
+    ctaLabel: "Subscribe to Submitter",
+    ctaHref: null,
+    plan: "submitter",
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: "$20",
+    id: "bundle",
+    name: "Bundle Pro",
+    price: "$25",
     period: "/month",
-    description: "Browse other founders' ideas and contact submitters you're interested in directly.",
+    description:
+      "Everything in Submitter + Viewer. The best value if you both build and scout.",
     features: [
-      "Browse all submitted ideas",
-      "Contact idea submitters via email (up to 10/day)",
+      "Everything in Submitter Pro",
+      "Everything in Viewer Pro",
+      "Save ~17% vs buying both separately",
       "7-day free trial",
     ],
     locked: [],
     highlighted: true,
-    ctaLabel: "Subscribe to Pro",
+    ctaLabel: "Subscribe to Bundle",
     ctaHref: null,
-    plan: "pro",
+    plan: "bundle",
+  },
+  {
+    id: "viewer",
+    name: "Viewer Pro",
+    price: "$20",
+    period: "/month",
+    description:
+      "For investors & scouts: browse every public idea and reach out to submitters directly.",
+    features: [
+      "Browse all public submitted ideas",
+      "Real-time trends dashboard across 9 categories",
+      "Contact idea submitters via email (up to 10/day)",
+      "7-day free trial",
+    ],
+    locked: [
+      "Deep analysis on your own ideas",
+      "Private idea uploads",
+    ],
+    highlighted: false,
+    ctaLabel: "Subscribe to Viewer",
+    ctaHref: null,
+    plan: "viewer",
   },
 ];
 
@@ -92,7 +118,7 @@ export default async function PricingPage() {
         </div>
 
         {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 max-w-3xl mx-auto w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 w-full">
           {PLANS.map((plan) => (
             <PricingCard
               key={plan.id}

@@ -28,24 +28,27 @@ async function generateInsight(
   const d7  = new Date(now); d7.setDate(now.getDate() - 7);
   const d14 = new Date(now); d14.setDate(now.getDate() - 14);
 
-  // Count ideas in this category last 30 days (saturation)
+  // Count ideas in this category last 30 days (saturation) — public only
   const { count: totalMonth } = await supabase
     .from("idea_submissions")
     .select("*", { count: "exact", head: true })
     .eq("category", category)
+    .eq("is_private", false)
     .gte("created_at", d30.toISOString());
 
-  // Trend: last 7 days vs prior 7 days
+  // Trend: last 7 days vs prior 7 days — public only
   const { count: last7 } = await supabase
     .from("idea_submissions")
     .select("*", { count: "exact", head: true })
     .eq("category", category)
+    .eq("is_private", false)
     .gte("created_at", d7.toISOString());
 
   const { count: prev7 } = await supabase
     .from("idea_submissions")
     .select("*", { count: "exact", head: true })
     .eq("category", category)
+    .eq("is_private", false)
     .gte("created_at", d14.toISOString())
     .lt("created_at", d7.toISOString());
 
@@ -133,7 +136,7 @@ async function generateAiDescription(
 
 export async function POST(req: NextRequest) {
   try {
-    const { category, target_user, description } = await req.json();
+    const { category, target_user, description, is_private } = await req.json();
 
     if (!category || !target_user || !description) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -148,6 +151,17 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    // private 업로드는 Submitter Pro만 허용
+    let allowPrivate = false;
+    if (is_private && user) {
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("submitter_plan")
+        .eq("id", user.id)
+        .maybeSingle();
+      allowPrivate = profile?.submitter_plan === "pro";
+    }
+
     // Insert submission
     const submissionId = crypto.randomUUID();
     const { error: subErr } = await supabase.from("idea_submissions").insert({
@@ -156,6 +170,7 @@ export async function POST(req: NextRequest) {
       category,
       target_user,
       description,
+      is_private: allowPrivate,
     });
     if (subErr) throw subErr;
 

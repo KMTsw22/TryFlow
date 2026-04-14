@@ -61,13 +61,12 @@ export default async function IdeaReportPage({
   const idea = data as unknown as Idea;
   const report = getReport(idea);
 
-  // 구독 여부 확인
-  const { data: subscription } = user
+  // 현재 유저 plan 캐시
+  const { data: viewerProfile } = user
     ? await supabase
-        .from("subscriptions")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("status", "active")
+        .from("user_profiles")
+        .select("viewer_plan, submitter_plan")
+        .eq("id", user.id)
         .maybeSingle()
     : { data: null };
 
@@ -80,8 +79,16 @@ export default async function IdeaReportPage({
         .maybeSingle()
     : { data: null };
 
-  const isSubscriber = !!subscription;
-  const canContact = isSubscriber && !!submitterProfile?.allow_contact;
+  const isViewer = viewerProfile?.viewer_plan === "pro";
+  const isSubmitterPro = viewerProfile?.submitter_plan === "pro";
+  const isOwnIdea = !!user && user.id === idea.user_id;
+
+  // Detailed 분석 공개 기준:
+  //  - 자기 아이디어: Submitter Pro만
+  //  - 남의 아이디어: Viewer Pro만 (보통 /explore 게이트를 통과한 사용자)
+  const detailed = isOwnIdea ? isSubmitterPro : isViewer;
+
+  const canContact = isViewer && !!submitterProfile?.allow_contact;
   const date = new Date(idea.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
   const hasAiScore = !!aiData?.viability_score;
@@ -178,6 +185,7 @@ export default async function IdeaReportPage({
           trendDirection={report.trend_direction}
           saturationLevel={report.saturation_level}
           similarCount={report.similar_count}
+          detailed={detailed}
         />
 
         {/* Contact Section */}
@@ -185,7 +193,7 @@ export default async function IdeaReportPage({
           ideaId={idea.id}
           category={idea.category}
           canContact={canContact}
-          isSubscriber={isSubscriber}
+          isSubscriber={isViewer}
         />
 
         {/* CTAs */}

@@ -49,14 +49,13 @@ export default async function ExplorePage() {
   // Guard: require active subscription (middleware handles redirect, this is a safety net)
   if (!user) redirect("/login?next=/explore");
 
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("status")
-    .eq("user_id", user.id)
-    .eq("status", "active")
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("viewer_plan")
+    .eq("id", user.id)
     .maybeSingle();
 
-  if (!subscription) redirect("/pricing");
+  if (profile?.viewer_plan !== "pro") redirect("/pricing");
 
   const now = new Date();
   const d7  = new Date(now); d7.setDate(now.getDate() - 7);
@@ -65,7 +64,8 @@ export default async function ExplorePage() {
 
   const { data: allRows } = await supabase
     .from("idea_submissions")
-    .select("category, created_at");
+    .select("category, created_at")
+    .eq("is_private", false);
 
   const rows = allRows ?? [];
 

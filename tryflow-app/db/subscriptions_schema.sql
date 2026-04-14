@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   stripe_customer_id TEXT NOT NULL,
   stripe_subscription_id TEXT NOT NULL UNIQUE,
-  plan TEXT NOT NULL DEFAULT 'pro',                 -- 'pro' | 'enterprise'
+  subscription_type TEXT NOT NULL DEFAULT 'viewer'  -- 'viewer' | 'submitter' | 'bundle'
+    CHECK (subscription_type IN ('viewer', 'submitter', 'bundle')),
+  plan TEXT NOT NULL DEFAULT 'pro',                 -- legacy tier label (kept for history)
   status TEXT NOT NULL DEFAULT 'active',            -- 'active' | 'canceled' | 'past_due' | 'trialing'
   current_period_start TIMESTAMPTZ NOT NULL,
   current_period_end TIMESTAMPTZ NOT NULL,
@@ -18,6 +20,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe ON subscriptions(stripe_subscription_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_type ON subscriptions(user_id, subscription_type);
 
 -- RLS: 본인 것만 읽기 (webhook은 service-role key로 우회)
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;

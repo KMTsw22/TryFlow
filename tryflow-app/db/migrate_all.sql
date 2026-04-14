@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS idea_submissions (
   category    text NOT NULL,
   target_user text NOT NULL,
   description text NOT NULL,
+  is_private  boolean NOT NULL DEFAULT false,
   created_at  timestamptz DEFAULT now()
 );
 
@@ -47,6 +48,7 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_idea_submissions_category   ON idea_submissions (category);
 CREATE INDEX IF NOT EXISTS idx_idea_submissions_user_id    ON idea_submissions (user_id);
 CREATE INDEX IF NOT EXISTS idx_idea_submissions_created_at ON idea_submissions (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_idea_submissions_is_private ON idea_submissions (is_private);
 
 
 -- ┌─────────────────────────────────────────────────────────┐

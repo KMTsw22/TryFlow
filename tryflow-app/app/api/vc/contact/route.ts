@@ -9,16 +9,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 구독 확인
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("status, plan")
-    .eq("user_id", user.id)
-    .eq("status", "active")
+  // Viewer plan 확인 (남의 아이디어 연락은 Viewer 구독 필요)
+  const { data: viewerProfile } = await supabase
+    .from("user_profiles")
+    .select("viewer_plan")
+    .eq("id", user.id)
     .maybeSingle();
 
-  if (!subscription) {
-    return NextResponse.json({ error: "Active subscription required" }, { status: 403 });
+  if (viewerProfile?.viewer_plan !== "pro") {
+    return NextResponse.json({ error: "Viewer subscription required" }, { status: 403 });
   }
 
   const { ideaId, subject, message } = await request.json();

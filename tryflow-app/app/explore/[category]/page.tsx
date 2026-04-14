@@ -48,14 +48,13 @@ export default async function CategoryIdeasPage({
   // Guard: require active subscription
   if (!user) redirect("/login?next=/explore");
 
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("status")
-    .eq("user_id", user.id)
-    .eq("status", "active")
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("viewer_plan")
+    .eq("id", user.id)
     .maybeSingle();
 
-  if (!subscription) redirect("/pricing");
+  if (profile?.viewer_plan !== "pro") redirect("/pricing");
 
   const { data } = await supabase
     .from("idea_submissions")
@@ -65,6 +64,7 @@ export default async function CategoryIdeasPage({
       analysis_reports (viability_score)
     `)
     .eq("category", category)
+    .eq("is_private", false)
     .order("created_at", { ascending: false });
 
   const rawIdeas = (data ?? []) as Omit<IdeaRow, "allow_contact">[];

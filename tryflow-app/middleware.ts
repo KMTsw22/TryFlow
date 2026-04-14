@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect /explore routes — require active subscription
+  // Protect /explore routes — require Viewer plan (own idea browsing is on dashboard)
   if (pathname.startsWith("/explore")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -58,15 +58,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Check for active subscription in subscriptions table
-    const { data: subscription } = await supabase
-      .from("subscriptions")
-      .select("status")
-      .eq("user_id", user.id)
-      .eq("status", "active")
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("viewer_plan")
+      .eq("id", user.id)
       .maybeSingle();
 
-    if (!subscription) {
+    if (profile?.viewer_plan !== "pro") {
       const url = request.nextUrl.clone();
       url.pathname = "/pricing";
       return NextResponse.redirect(url);

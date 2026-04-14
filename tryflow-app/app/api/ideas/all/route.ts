@@ -16,6 +16,7 @@ export async function GET() {
         id, category, target_user, description, created_at,
         insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary, analysis)
       `)
+      .eq("is_private", false)
       .order("created_at", { ascending: false })
       .limit(200) as any);
 
@@ -26,6 +27,7 @@ export async function GET() {
           id, category, target_user, description, created_at,
           insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
         `)
+        .eq("is_private", false)
         .order("created_at", { ascending: false })
         .limit(200) as any);
     }

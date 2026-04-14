@@ -64,6 +64,9 @@ interface DeepAnalysisProps {
   trendDirection: string;
   saturationLevel: string;
   similarCount: number;
+  // false면 free Submitter 뷰: radar + 요약만, 세부 섹션(detailed_assessment,
+  // cross_agent_insights, opportunities, risks, next_steps)은 가려짐
+  detailed?: boolean;
 }
 
 // ── Weights & scoring ─────────────────────────────────────────────────────────
@@ -364,6 +367,7 @@ export default function DeepAnalysis({
   trendDirection,
   saturationLevel,
   similarCount,
+  detailed = true,
 }: DeepAnalysisProps) {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -601,14 +605,14 @@ export default function DeepAnalysis({
                     {agentData.assessment.slice(SHORT_LIMIT)}
                   </p>
                 )}
-                {/* Detailed assessment — if available */}
-                {isFull && agentData.detailed_assessment && (
+                {/* Detailed assessment — if available, Submitter Pro only */}
+                {detailed && isFull && agentData.detailed_assessment && (
                   <div className="mt-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
                     <p className="text-[10px] text-indigo-400 font-bold mb-1">Detailed Analysis</p>
                     <p className="text-xs text-gray-400 leading-relaxed">{agentData.detailed_assessment}</p>
                   </div>
                 )}
-                {(isLong || agentData.detailed_assessment) && (
+                {detailed && (isLong || agentData.detailed_assessment) && (
                   <button
                     onClick={() => setFullAgent(isFull ? null : expandedAgent)}
                     className="mt-2 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
@@ -621,8 +625,35 @@ export default function DeepAnalysis({
           })()}
         </div>
 
-        {/* Cross-agent insights */}
-        {report.cross_agent_insights?.length > 0 && (
+        {/* Submitter Pro upsell — shown instead of detail sections for free users */}
+        {!detailed && (
+          <div className="border p-6"
+            style={{
+              background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))",
+              borderColor: "rgba(99,102,241,0.25)",
+            }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest">Summary view</p>
+            </div>
+            <p className="text-sm text-gray-300 leading-relaxed mb-4">
+              You&apos;re seeing the summarized score and radar. Upgrade to{" "}
+              <span className="font-bold text-white">Submitter Pro</span> to unlock
+              detailed per-agent assessments, cross-agent insights, opportunities,
+              risks, and recommended next steps.
+            </p>
+            <a
+              href="/pricing"
+              className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2 text-xs hover:bg-indigo-400 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Upgrade to Submitter Pro
+            </a>
+          </div>
+        )}
+
+        {/* Cross-agent insights — Submitter Pro only */}
+        {detailed && report.cross_agent_insights?.length > 0 && (
           <div className="border p-6"
             style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
             <div className="flex items-center gap-2 mb-4">
@@ -643,46 +674,48 @@ export default function DeepAnalysis({
           </div>
         )}
 
-        {/* Opportunities & Risks */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {report.opportunities?.length > 0 && (
-            <div className="border p-6"
-              style={{ background: "rgba(16,185,129,0.04)", borderColor: "rgba(16,185,129,0.2)" }}>
-              <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="w-4 h-4 text-emerald-400" />
-                <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Opportunities</p>
+        {/* Opportunities & Risks — Submitter Pro only */}
+        {detailed && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {report.opportunities?.length > 0 && (
+              <div className="border p-6"
+                style={{ background: "rgba(16,185,129,0.04)", borderColor: "rgba(16,185,129,0.2)" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Lightbulb className="w-4 h-4 text-emerald-400" />
+                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Opportunities</p>
+                </div>
+                <ul className="space-y-3">
+                  {report.opportunities.map((opp, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5 shrink-0 font-bold">+</span>
+                      <p className="text-xs text-gray-400 leading-relaxed">{opp}</p>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-3">
-                {report.opportunities.map((opp, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-emerald-500 mt-0.5 shrink-0 font-bold">+</span>
-                    <p className="text-xs text-gray-400 leading-relaxed">{opp}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {report.risks?.length > 0 && (
-            <div className="border p-6"
-              style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.2)" }}>
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="w-4 h-4 text-red-400" />
-                <p className="text-xs font-bold text-red-500 uppercase tracking-widest">Risks</p>
+            )}
+            {report.risks?.length > 0 && (
+              <div className="border p-6"
+                style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.2)" }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <p className="text-xs font-bold text-red-500 uppercase tracking-widest">Risks</p>
+                </div>
+                <ul className="space-y-3">
+                  {report.risks.map((risk, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-red-500 mt-0.5 shrink-0 font-bold">!</span>
+                      <p className="text-xs text-gray-400 leading-relaxed">{risk}</p>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-3">
-                {report.risks.map((risk, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-red-500 mt-0.5 shrink-0 font-bold">!</span>
-                    <p className="text-xs text-gray-400 leading-relaxed">{risk}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        {/* Next Steps */}
-        {report.next_steps?.length > 0 && (
+        {/* Next Steps — Submitter Pro only */}
+        {detailed && report.next_steps?.length > 0 && (
           <div className="border p-6"
             style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
             <div className="flex items-center gap-2 mb-4">

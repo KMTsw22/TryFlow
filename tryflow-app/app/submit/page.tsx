@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Lock, EyeOff, Sparkles } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const CATEGORIES = [
   "SaaS / B2B",
@@ -22,9 +23,29 @@ const STEPS = ["Category", "Target User", "Description"];
 export default function SubmitPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ category: "", target_user: "", description: "" });
+  const [form, setForm] = useState({
+    category: "",
+    target_user: "",
+    description: "",
+    is_private: false,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [submitterPro, setSubmitterPro] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("submitter_plan")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profile?.submitter_plan === "pro") setSubmitterPro(true);
+    })();
+  }, []);
 
   const canNext = () => {
     if (step === 0) return form.category !== "";
@@ -174,6 +195,42 @@ export default function SubmitPage() {
                     {form.description.length} chars
                   </span>
                 </div>
+                {/* Private toggle — Submitter Pro only */}
+                {submitterPro ? (
+                  <label className="mt-5 flex items-start gap-3 p-3 border-2 border-indigo-100 bg-indigo-50/40 cursor-pointer hover:border-indigo-200 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={form.is_private}
+                      onChange={(e) => setForm({ ...form, is_private: e.target.checked })}
+                      className="mt-0.5 w-4 h-4 accent-indigo-500 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <EyeOff className="w-3.5 h-3.5 text-indigo-500" />
+                        <span className="text-sm font-bold text-gray-900">Private upload</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                        Hide this idea from the public Explore feed and aggregate trends. Only you can see it.
+                      </p>
+                    </div>
+                  </label>
+                ) : (
+                  <div className="mt-5 flex items-start gap-3 p-3 border-2 border-gray-100 bg-gray-50/50">
+                    <Sparkles className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <span className="text-xs font-bold text-gray-500">
+                        Want to upload privately?
+                      </span>
+                      <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
+                        <Link href="/pricing" className="text-indigo-500 font-medium hover:underline">
+                          Upgrade to Submitter Pro
+                        </Link>{" "}
+                        to keep your ideas hidden from the public feed.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {error && <p className="mt-3 text-xs text-red-500 font-medium">{error}</p>}
               </div>
             )}

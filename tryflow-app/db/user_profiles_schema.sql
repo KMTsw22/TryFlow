@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   contact_linkedin TEXT,    -- LinkedIn URL (선택)
   contact_other TEXT,       -- 기타 연락처 (선택)
   allow_contact BOOLEAN NOT NULL DEFAULT false,  -- 연락 허용 여부
+  -- 구독 캐시 (webhook이 subscriptions 테이블과 동기화)
+  viewer_plan TEXT NOT NULL DEFAULT 'free'
+    CHECK (viewer_plan IN ('free', 'pro')),    -- 남의 아이디어 /explore 열람
+  submitter_plan TEXT NOT NULL DEFAULT 'free'
+    CHECK (submitter_plan IN ('free', 'pro')), -- 내 아이디어 정밀 분석 + private 업로드
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
