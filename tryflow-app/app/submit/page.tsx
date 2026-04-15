@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Lock, EyeOff, Sparkles } from "lucide-react";
+import { ArrowRight, Lock, EyeOff, Globe, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const CATEGORIES = [
@@ -195,25 +195,69 @@ export default function SubmitPage() {
                     {form.description.length} chars
                   </span>
                 </div>
-                {/* Private toggle — Submitter Pro only */}
+                {/* Visibility selection — Submitter Pro only */}
                 {submitterPro ? (
-                  <label className="mt-5 flex items-start gap-3 p-3 border-2 border-indigo-100 bg-indigo-50/40 cursor-pointer hover:border-indigo-200 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={form.is_private}
-                      onChange={(e) => setForm({ ...form, is_private: e.target.checked })}
-                      className="mt-0.5 w-4 h-4 accent-indigo-500 cursor-pointer"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <EyeOff className="w-3.5 h-3.5 text-indigo-500" />
-                        <span className="text-sm font-bold text-gray-900">Private upload</span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
-                        Hide this idea from the public Explore feed and aggregate trends. Only you can see it.
-                      </p>
+                  <div className="mt-5">
+                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                      Visibility
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, is_private: false })}
+                        className={`text-left p-3 border-2 transition-all duration-150 ${
+                          !form.is_private
+                            ? "border-indigo-500 bg-indigo-50"
+                            : "border-gray-100 bg-white hover:border-gray-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Globe
+                            className={`w-3.5 h-3.5 ${
+                              !form.is_private ? "text-indigo-500" : "text-gray-400"
+                            }`}
+                          />
+                          <span
+                            className={`text-sm font-bold ${
+                              !form.is_private ? "text-indigo-700" : "text-gray-600"
+                            }`}
+                          >
+                            Public
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-snug">
+                          Appears in the Explore feed and contributes to category trends.
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, is_private: true })}
+                        className={`text-left p-3 border-2 transition-all duration-150 ${
+                          form.is_private
+                            ? "border-indigo-500 bg-indigo-50"
+                            : "border-gray-100 bg-white hover:border-gray-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <EyeOff
+                            className={`w-3.5 h-3.5 ${
+                              form.is_private ? "text-indigo-500" : "text-gray-400"
+                            }`}
+                          />
+                          <span
+                            className={`text-sm font-bold ${
+                              form.is_private ? "text-indigo-700" : "text-gray-600"
+                            }`}
+                          >
+                            Private
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-snug">
+                          Only you can see it. Hidden from feed and trends.
+                        </p>
+                      </button>
                     </div>
-                  </label>
+                  </div>
                 ) : (
                   <div className="mt-5 flex items-start gap-3 p-3 border-2 border-gray-100 bg-gray-50/50">
                     <Sparkles className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
