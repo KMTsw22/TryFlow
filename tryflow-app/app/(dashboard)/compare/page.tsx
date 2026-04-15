@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 import Link from "next/link";
 import {
   TrendingUp, TrendingDown, Minus, ArrowRight,
@@ -52,18 +53,21 @@ function DualAxisTick(props: {
   x?: number; y?: number; payload?: { value: string };
   textAnchor?: "inherit" | "end" | "start" | "middle";
   data: { subject: string; A: number; B: number }[];
+  isDark?: boolean;
 }) {
-  const { x = 0, y = 0, payload, textAnchor = "middle", data } = props;
+  const { x = 0, y = 0, payload, textAnchor = "middle", data, isDark = true } = props;
   const entry = data.find((d) => d.subject === payload?.value);
+  const labelFill = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)";
+  const sepFill = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)";
   return (
     <g>
       <text x={x} y={y} textAnchor={textAnchor}
-        fill="rgba(255,255,255,0.55)" fontSize={11} fontWeight={700}>
+        fill={labelFill} fontSize={11} fontWeight={700}>
         {payload?.value}
       </text>
       <text x={x} y={y + 16} textAnchor={textAnchor} fontSize={11} fontWeight={800}>
         <tspan fill="#818cf8">{entry?.A ?? 0}</tspan>
-        <tspan fill="rgba(255,255,255,0.25)"> · </tspan>
+        <tspan fill={sepFill}> · </tspan>
         <tspan fill="#34d399">{entry?.B ?? 0}</tspan>
       </text>
     </g>
@@ -72,6 +76,7 @@ function DualAxisTick(props: {
 
 function DualRadar({ analysisA, analysisB }: { analysisA: Analysis | null; analysisB: Analysis | null }) {
   const [visible, setVisible] = useState(false);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 80);
@@ -93,33 +98,33 @@ function DualRadar({ analysisA, analysisB }: { analysisA: Analysis | null; analy
   return (
     <div className="border mb-6 overflow-hidden"
       style={{
-        background: "rgba(255,255,255,0.02)",
-        borderColor: "rgba(255,255,255,0.08)",
+        background: "var(--card-bg)",
+        borderColor: "var(--t-border-bright)",
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(12px)",
         transition: "opacity 0.5s ease, transform 0.5s ease",
       }}>
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-3"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+        style={{ borderBottom: "1px solid var(--t-border-subtle)" }}>
+        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
           8-Agent Radar Comparison
         </p>
         {/* Avg score badges */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
-            <span className="text-xs text-gray-500">A avg</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">A avg</span>
             {analysisA
-              ? <span className="text-xs font-extrabold text-indigo-300">{avgA}</span>
-              : <span className="text-xs text-gray-600 italic">no analysis</span>}
+              ? <span className="text-xs font-extrabold text-indigo-500 dark:text-indigo-300">{avgA}</span>
+              : <span className="text-xs text-gray-400 dark:text-gray-600 italic">no analysis</span>}
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-            <span className="text-xs text-gray-500">B avg</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">B avg</span>
             {analysisB
-              ? <span className="text-xs font-extrabold text-emerald-300">{avgB}</span>
-              : <span className="text-xs text-gray-600 italic">no analysis</span>}
+              ? <span className="text-xs font-extrabold text-emerald-500 dark:text-emerald-300">{avgB}</span>
+              : <span className="text-xs text-gray-400 dark:text-gray-600 italic">no analysis</span>}
           </div>
         </div>
       </div>
@@ -138,15 +143,15 @@ function DualRadar({ analysisA, analysisB }: { analysisA: Analysis | null; analy
                 <stop offset="100%" stopColor="#10b981" stopOpacity={0.08} />
               </radialGradient>
             </defs>
-            <PolarGrid stroke="rgba(255,255,255,0.06)" gridType="polygon" />
+            <PolarGrid stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)"} gridType="polygon" />
             <PolarAngleAxis
               dataKey="subject"
-              tick={(tickProps) => <DualAxisTick {...tickProps} data={data} />}
+              tick={(tickProps) => <DualAxisTick {...tickProps} data={data} isDark={isDark} />}
               tickLine={false}
             />
             <PolarRadiusAxis
               domain={[0, 100]}
-              tick={{ fill: "rgba(255,255,255,0.2)", fontSize: 9 }}
+              tick={{ fill: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)", fontSize: 9 }}
               axisLine={false}
               tickCount={4}
               angle={30}
@@ -172,7 +177,7 @@ function DualRadar({ analysisA, analysisB }: { analysisA: Analysis | null; analy
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: 12, color: "rgba(255,255,255,0.5)", paddingTop: 12 }}
+              wrapperStyle={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)", paddingTop: 12 }}
             />
           </RadarChart>
         </ResponsiveContainer>
@@ -225,7 +230,7 @@ function ScoreCircle({ score }: { score: number }) {
   return (
     <div className="relative w-24 h-24 mx-auto">
       <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(127,127,127,0.15)" strokeWidth="8" />
         <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="8"
           strokeDasharray={circ} strokeDashoffset={circ * (1 - score / 100)} strokeLinecap="round" />
       </svg>
@@ -289,7 +294,7 @@ function OctagonCompare({
         {/* Score A */}
         <text x={cxA - 18} y={cy - 8} textAnchor="middle" fill={scoreColorA}
           fontSize={32} fontWeight={800} fontFamily="monospace">{scoreA}</text>
-        <text x={cxA - 18} y={cy + 12} textAnchor="middle" fill="rgba(255,255,255,0.25)"
+        <text x={cxA - 18} y={cy + 12} textAnchor="middle" fill="rgba(127,127,127,0.5)"
           fontSize={10}>/100</text>
         <text x={cxA - 18} y={cy + 30} textAnchor="middle" fill={colorA}
           fontSize={9} fontWeight={700} letterSpacing={1}>{categoryA.toUpperCase().slice(0, 12)}</text>
@@ -302,7 +307,7 @@ function OctagonCompare({
         {/* Score B */}
         <text x={cxB + 18} y={cy - 8} textAnchor="middle" fill={scoreColorB}
           fontSize={32} fontWeight={800} fontFamily="monospace">{scoreB}</text>
-        <text x={cxB + 18} y={cy + 12} textAnchor="middle" fill="rgba(255,255,255,0.25)"
+        <text x={cxB + 18} y={cy + 12} textAnchor="middle" fill="rgba(127,127,127,0.5)"
           fontSize={10}>/100</text>
         <text x={cxB + 18} y={cy + 30} textAnchor="middle" fill={colorB}
           fontSize={9} fontWeight={700} letterSpacing={1}>{categoryB.toUpperCase().slice(0, 12)}</text>
@@ -316,11 +321,11 @@ function OctagonCompare({
         {winner && (
           <>
             <text x={W / 2} y={cy - 6} textAnchor="middle"
-              fill="rgba(255,255,255,0.5)" fontSize={9} fontWeight={700} letterSpacing={1}>
+              fill="rgba(127,127,127,0.7)" fontSize={9} fontWeight={700} letterSpacing={1}>
               VS
             </text>
             <text x={W / 2} y={cy + 10} textAnchor="middle"
-              fill="rgba(255,255,255,0.3)" fontSize={8}>
+              fill="rgba(127,127,127,0.5)" fontSize={8}>
               {Math.abs(scoreA - scoreB)}pts
             </text>
           </>
@@ -352,19 +357,19 @@ function CompareRow({
   winner?: "a" | "b" | null;
 }) {
   return (
-    <div className="grid grid-cols-[140px_1fr_1fr] border-b" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+    <div className="grid grid-cols-[140px_1fr_1fr] border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
       <div className="px-4 py-3.5 flex items-center">
-        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{label}</span>
+        <span className="text-xs font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider">{label}</span>
       </div>
       <div className={`px-4 py-3.5 flex items-center border-l min-w-0 overflow-hidden ${winner === "a" ? "bg-emerald-500/5" : ""}`}
-        style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+        style={{ borderColor: "var(--t-border-subtle)" }}>
         <div className="flex items-center gap-2 w-full min-w-0">
           {a}
           {winner === "a" && <Trophy className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />}
         </div>
       </div>
       <div className={`px-4 py-3.5 flex items-center border-l min-w-0 overflow-hidden ${winner === "b" ? "bg-emerald-500/5" : ""}`}
-        style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+        style={{ borderColor: "var(--t-border-subtle)" }}>
         <div className="flex items-center gap-2 w-full min-w-0">
           {b}
           {winner === "b" && <Trophy className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />}
@@ -383,6 +388,7 @@ export default function ComparePage() {
   const [category, setCategory] = useState("All");
   const [analysisA, setAnalysisA] = useState<Analysis | null>(null);
   const [analysisB, setAnalysisB] = useState<Analysis | null>(null);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     fetch("/api/ideas/all")
@@ -457,8 +463,8 @@ export default function ComparePage() {
               className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-3">
               <ArrowLeft className="w-3.5 h-3.5" /> Back to selection
             </button>
-            <h1 className="text-2xl font-extrabold text-white">Idea Comparison</h1>
-            <p className="text-sm text-gray-500 mt-1">Side-by-side analysis of two ideas</p>
+            <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Idea Comparison</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Side-by-side analysis of two ideas</p>
           </div>
           {winner && (
             <div className="flex items-center gap-2 px-4 py-2 border"
@@ -472,20 +478,20 @@ export default function ComparePage() {
         </div>
 
         <div className="border overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
           {/* Column headers */}
           <div className="grid grid-cols-[140px_1fr_1fr] border-b"
-            style={{ borderColor: "rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}>
+            style={{ borderColor: "var(--t-border-card)", background: "var(--card-bg)" }}>
             <div className="px-4 py-3" />
             {([["A", ideaA], ["B", ideaB]] as [string, Idea][]).map(([label, idea]) => (
-              <div key={label} className="px-4 py-3 border-l min-w-0 overflow-hidden" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+              <div key={label} className="px-4 py-3 border-l min-w-0 overflow-hidden" style={{ borderColor: "var(--t-border-subtle)" }}>
                 <div className="flex items-center gap-2 mb-0.5 min-w-0">
                   <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-extrabold flex items-center justify-center shrink-0">
                     {label}
                   </span>
                   <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider truncate">{idea.category}</span>
                 </div>
-                <p className="text-xs text-gray-400 truncate">{idea.target_user}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{idea.target_user}</p>
               </div>
             ))}
           </div>
@@ -530,8 +536,8 @@ export default function ComparePage() {
             }
           />
           <CompareRow label="Similar Ideas"
-            a={<span className="text-lg font-extrabold text-white">{reportA?.similar_count ?? "—"}<span className="text-xs text-gray-600 font-normal ml-1">/ 30d</span></span>}
-            b={<span className="text-lg font-extrabold text-white">{reportB?.similar_count ?? "—"}<span className="text-xs text-gray-600 font-normal ml-1">/ 30d</span></span>}
+            a={<span className="text-lg font-extrabold text-gray-900 dark:text-white">{reportA?.similar_count ?? "—"}<span className="text-xs text-gray-400 dark:text-gray-600 font-normal ml-1">/ 30d</span></span>}
+            b={<span className="text-lg font-extrabold text-gray-900 dark:text-white">{reportB?.similar_count ?? "—"}<span className="text-xs text-gray-400 dark:text-gray-600 font-normal ml-1">/ 30d</span></span>}
             winner={
               (reportA?.similar_count ?? 0) < (reportB?.similar_count ?? 0) ? "a"
               : (reportB?.similar_count ?? 0) < (reportA?.similar_count ?? 0) ? "b"
@@ -541,7 +547,7 @@ export default function ComparePage() {
           <div className="grid grid-cols-[140px_1fr_1fr]">
             <div className="px-4 py-4" />
             {([ideaA, ideaB] as Idea[]).map((idea, idx) => (
-              <div key={idea.id} className="px-4 py-4 border-l" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+              <div key={idea.id} className="px-4 py-4 border-l" style={{ borderColor: "var(--t-border-subtle)" }}>
                 <Link href={`/ideas/${idea.id}`}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
                   View full report {idx === 0 ? "A" : "B"} <ArrowRight className="w-3.5 h-3.5" />
@@ -560,10 +566,10 @@ export default function ComparePage() {
             <div className="flex items-start gap-3">
               <Trophy className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-white mb-1">
+                <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">
                   Idea {winner === "a" ? "A" : "B"} shows stronger potential
                 </p>
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                   {winner === "a" ? reportA?.summary : reportB?.summary}
                 </p>
               </div>
@@ -580,8 +586,8 @@ export default function ComparePage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Compare Ideas</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Compare Ideas</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {ideas.length} ideas available · Select 2 to compare
           </p>
         </div>
@@ -593,15 +599,15 @@ export default function ComparePage() {
           const selIdea = ideas.find((x) => x.id === selected[i]);
           return (
             <div key={i} className="flex items-center gap-2 px-3 py-2 border flex-1"
-              style={{ borderColor: selIdea ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.07)", background: selIdea ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)" }}>
+              style={{ borderColor: selIdea ? "rgba(99,102,241,0.4)" : "var(--t-border-card)", background: selIdea ? "rgba(99,102,241,0.08)" : "var(--card-bg)" }}>
               <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shrink-0"
-                style={{ background: selIdea ? "#6366f1" : "rgba(255,255,255,0.1)" }}>
+                style={{ background: selIdea ? "#6366f1" : "rgba(99,102,241,0.2)" }}>
                 {String.fromCharCode(65 + i)}
               </span>
               {selIdea ? (
-                <span className="text-xs font-medium text-gray-300 truncate">{truncate(selIdea.description, 45)}</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">{truncate(selIdea.description, 45)}</span>
               ) : (
-                <span className="text-xs text-gray-600">Pick idea {String.fromCharCode(65 + i)}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-400">Pick idea {String.fromCharCode(65 + i)}</span>
               )}
             </div>
           );
@@ -612,7 +618,7 @@ export default function ComparePage() {
             <GitCompare className="w-4 h-4" /> Compare
           </button>
         ) : (
-          <div className="shrink-0 px-4 py-2 text-xs text-gray-600 border" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+          <div className="shrink-0 px-4 py-2 text-xs text-gray-400 dark:text-gray-400 border" style={{ borderColor: "var(--t-border)" }}>
             {selected.length}/2 selected
           </div>
         )}
@@ -621,14 +627,14 @@ export default function ComparePage() {
       {/* Search + category filter */}
       <div className="flex flex-col gap-2 mb-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-600" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input
             type="text"
             placeholder="Search ideas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm text-gray-300 placeholder-gray-600 border outline-none focus:border-indigo-500/50 transition-colors"
-            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}
+            className="w-full pl-9 pr-4 py-2 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 border outline-none focus:border-indigo-500/50 transition-colors"
+            style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
           />
         </div>
         <div className="flex items-center gap-1 flex-wrap">
@@ -636,8 +642,8 @@ export default function ComparePage() {
             <button key={cat} onClick={() => setCategory(cat)}
               className={`px-2.5 py-1 text-[11px] font-bold border transition-colors ${
                 category === cat
-                  ? "text-indigo-300 border-indigo-500/40 bg-indigo-500/10"
-                  : "text-gray-600 border-transparent hover:text-gray-400"
+                  ? "text-indigo-500 dark:text-indigo-300 border-indigo-500/40 bg-indigo-500/10"
+                  : "text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-800 dark:hover:text-gray-200"
               }`}>
               {cat}
             </button>
@@ -648,8 +654,8 @@ export default function ComparePage() {
       {/* Ideas list */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 border"
-          style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-          <p className="text-gray-600 text-sm">No ideas match your filter.</p>
+          style={{ borderColor: "var(--t-border)", background: "var(--card-bg)" }}>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No ideas match your filter.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -671,8 +677,8 @@ export default function ComparePage() {
               <button key={idea.id} onClick={() => toggleSelect(idea.id)}
                 className="w-full text-left border p-4 transition-all duration-150 hover:bg-white/[0.04]"
                 style={{
-                  background: isSelected ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.03)",
-                  borderColor: isSelected ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.07)",
+                  background: isSelected ? "rgba(99,102,241,0.06)" : "var(--card-bg)",
+                  borderColor: isSelected ? "rgba(99,102,241,0.4)" : "var(--t-border-card)",
                 }}>
                 <div className="flex items-center gap-4">
                   {/* Select indicator */}
@@ -685,7 +691,7 @@ export default function ComparePage() {
                         </span>
                       </div>
                     ) : (
-                      <Circle className="w-5 h-5 text-gray-700" />
+                      <Circle className="w-5 h-5 text-gray-500" />
                     )}
                   </div>
 
@@ -694,10 +700,10 @@ export default function ComparePage() {
                     {vScore !== null ? (
                       <>
                         <span className={`text-sm font-extrabold leading-none ${vColor}`}>{vScore}</span>
-                        <span className="text-[8px] text-gray-600 leading-none mt-0.5">/100</span>
+                        <span className="text-[8px] text-gray-400 leading-none mt-0.5">/100</span>
                       </>
                     ) : (
-                      <span className="text-gray-600 text-xs">—</span>
+                      <span className="text-gray-400 text-xs">—</span>
                     )}
                   </div>
 
@@ -705,22 +711,21 @@ export default function ComparePage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{idea.category}</span>
-                      <span className="text-[10px] text-gray-600">{date}</span>
+                      <span className="text-xs text-gray-400">{date}</span>
                       {report && (
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${TREND_PILL[report.trend_direction] ?? TREND_PILL.Stable}`}>
                           {report.trend_direction}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs font-semibold text-gray-300 mb-0.5">For: {idea.target_user}</p>
-                    {/* 1-line differentiation */}
-                    <p className="text-xs text-gray-600 truncate">{idea.description}</p>
+                    <p className="text-xs font-semibold text-gray-200 mb-0.5">For: {idea.target_user}</p>
+                    <p className="text-xs text-gray-400 truncate">{idea.description}</p>
                   </div>
 
                   {/* AI summary 1-liner (md+) */}
                   {report?.summary && (
                     <div className="hidden lg:block w-56 shrink-0">
-                      <p className="text-[11px] text-gray-500 leading-relaxed line-clamp-2">{report.summary}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{report.summary}</p>
                     </div>
                   )}
                 </div>

@@ -3,6 +3,7 @@ import "./globals.css";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -21,8 +22,14 @@ export default async function RootLayout({
   const isLoggedIn = !!user;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Prevent FOUC: apply saved theme before first paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('trywepp_theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -31,9 +38,11 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <NavigationProgress />
-        <SidebarWrapper isLoggedIn={isLoggedIn} />
-        <ContentWrapper>{children}</ContentWrapper>
+        <ThemeProvider>
+          <NavigationProgress />
+          <SidebarWrapper isLoggedIn={isLoggedIn} />
+          <ContentWrapper>{children}</ContentWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

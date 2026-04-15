@@ -16,8 +16,16 @@ interface Idea {
   target_user: string;
   description: string;
   created_at: string;
+  stage: string | null;
   insight_reports: Report | Report[] | null;
 }
+
+const STAGE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  idea:           { label: "Just an Idea",     color: "#60a5fa", bg: "rgba(96,165,250,0.10)",  border: "rgba(96,165,250,0.25)" },
+  prototype:      { label: "Prototype / Demo", color: "#a78bfa", bg: "rgba(167,139,250,0.10)", border: "rgba(167,139,250,0.25)" },
+  early_traction: { label: "Early Traction",   color: "#fb923c", bg: "rgba(251,146,60,0.10)",  border: "rgba(251,146,60,0.25)" },
+  launched:       { label: "Launched",          color: "#ef4444", bg: "rgba(239,68,68,0.10)",   border: "rgba(239,68,68,0.25)" },
+};
 
 function getReport(idea: Idea): Report | null {
   if (!idea.insight_reports) return null;
@@ -41,7 +49,7 @@ export default async function DashboardPage() {
   const { data: rawIdeas } = await supabase
     .from("idea_submissions")
     .select(`
-      id, category, target_user, description, created_at,
+      id, category, target_user, description, created_at, stage,
       insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
     `)
     .eq("user_id", user!.id)
@@ -64,8 +72,8 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">My Ideas</h1>
-          <p className="text-sm text-gray-500 mt-1">Your anonymous submissions and insight reports</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">My Ideas</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your anonymous submissions and insight reports</p>
         </div>
         <Link href="/submit"
           className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2.5 text-sm hover:bg-indigo-400 transition-colors">
@@ -82,9 +90,9 @@ export default async function DashboardPage() {
             { label: "Latest Category",    value: ideas[0]?.category ?? "—" },
           ].map((s) => (
             <div key={s.label} className="border p-4 text-center"
-              style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }}>
-              <div className="text-2xl font-extrabold text-white">{s.value}</div>
-              <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+              style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
+              <div className="text-2xl font-extrabold text-gray-900 dark:text-white">{s.value}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{s.label}</div>
             </div>
           ))}
         </div>
@@ -93,13 +101,13 @@ export default async function DashboardPage() {
       {/* Empty state */}
       {!hasIdeas && (
         <div className="border p-12 text-center"
-          style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
           <div className="w-16 h-16 flex items-center justify-center mx-auto mb-5"
             style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}>
             <FileText className="w-7 h-7 text-indigo-400" />
           </div>
-          <h2 className="text-lg font-bold text-white mb-2">No ideas yet</h2>
-          <p className="text-sm text-gray-500 max-w-sm mx-auto mb-6 leading-relaxed">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">No ideas yet</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-6 leading-relaxed">
             Submit your first startup idea anonymously. Get an instant insight report showing viability, market saturation, and trend direction.
           </p>
           <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-8 text-center">
@@ -109,10 +117,10 @@ export default async function DashboardPage() {
               { step: "03", label: "Get your report",         desc: "Viability score, saturation, trend direction" },
             ].map((s) => (
               <div key={s.step} className="p-4 border"
-                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.06)" }}>
-                <div className="text-2xl font-black text-gray-700 mb-2">{s.step}</div>
-                <div className="text-xs font-bold text-gray-400 mb-1">{s.label}</div>
-                <div className="text-xs text-gray-600">{s.desc}</div>
+                style={{ background: "var(--card-bg)", borderColor: "var(--t-border)" }}>
+                <div className="text-2xl font-black text-gray-400 dark:text-gray-500 mb-2">{s.step}</div>
+                <div className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{s.label}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{s.desc}</div>
               </div>
             ))}
           </div>
@@ -141,19 +149,30 @@ export default async function DashboardPage() {
                 key={idea.id}
                 href={`/ideas/${idea.id}`}
                 className="block border p-5 hover:border-indigo-500/30 transition-all duration-200 group"
-                style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}
+                style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider px-2 py-0.5 rounded-full"
                         style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)" }}>
                         {idea.category}
                       </span>
-                      <span className="text-xs text-gray-600">{date}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{date}</span>
+                      {idea.stage && STAGE_META[idea.stage] && (() => {
+                        const s = STAGE_META[idea.stage!]!;
+                        return (
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5"
+                            style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}
+                          >
+                            {s.label}
+                          </span>
+                        );
+                      })()}
                     </div>
-                    <p className="text-sm font-medium text-gray-300 mb-1">For: {idea.target_user}</p>
-                    <p className="text-sm text-gray-500 leading-relaxed line-clamp-2">{idea.description}</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">For: {idea.target_user}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2">{idea.description}</p>
                   </div>
 
                   {report && (
@@ -162,12 +181,12 @@ export default async function DashboardPage() {
                         <p className={`text-2xl font-extrabold ${SCORE_COLOR(report.viability_score)}`}>
                           {report.viability_score}
                         </p>
-                        <p className="text-xs text-gray-600">score</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">score</p>
                       </div>
                       <div className={`w-9 h-9 ${trend?.bg} flex items-center justify-center`}>
                         <TIcon className={`w-4 h-4 ${trend?.color}`} />
                       </div>
-                      <div className="text-gray-700 group-hover:text-indigo-400 transition-colors">
+                      <div className="text-gray-400 dark:text-gray-500 group-hover:text-indigo-400 transition-colors">
                         <ArrowRight className="w-4 h-4" />
                       </div>
                     </div>
@@ -183,13 +202,13 @@ export default async function DashboardPage() {
       {hasIdeas && (
         <div className="mt-6 grid grid-cols-2 gap-4">
           <div className="border p-5 flex items-center justify-between"
-            style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.06)" }}>
+            style={{ background: "var(--card-bg)", borderColor: "var(--t-border)" }}>
             <div>
-              <p className="text-sm font-bold text-white mb-0.5">Explore market trends</p>
-              <p className="text-xs text-gray-600">Live data from all anonymous submissions</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">Explore market trends</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Live data from all anonymous submissions</p>
             </div>
             <Link href="/explore"
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-colors shrink-0">
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-500 dark:text-indigo-400 hover:text-indigo-400 dark:hover:text-indigo-300 transition-colors shrink-0">
               <BarChart3 className="w-4 h-4" /> View
             </Link>
           </div>
@@ -197,11 +216,11 @@ export default async function DashboardPage() {
             <div className="border p-5 flex items-center justify-between"
               style={{ background: "rgba(99,102,241,0.05)", borderColor: "rgba(99,102,241,0.2)" }}>
               <div>
-                <p className="text-sm font-bold text-white mb-0.5">Compare your ideas</p>
-                <p className="text-xs text-gray-600">Pick 2 and see which to pursue</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white mb-0.5">Compare your ideas</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Pick 2 and see which to pursue</p>
               </div>
               <Link href="/compare"
-                className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-400 hover:text-indigo-300 transition-colors shrink-0">
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-indigo-500 dark:text-indigo-400 hover:text-indigo-400 dark:hover:text-indigo-300 transition-colors shrink-0">
                 <GitCompare className="w-4 h-4" /> Compare
               </Link>
             </div>

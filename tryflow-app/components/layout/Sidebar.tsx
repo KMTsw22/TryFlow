@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const GUEST_NAV = [
   { label: "Home",   icon: Home,     href: "/" },
@@ -53,17 +54,17 @@ export function Sidebar({ isLoggedIn }: Props) {
         expanded ? "w-[200px]" : "w-[64px]"
       )}
       style={{
-        background: "#080d1e",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        background: "var(--sidebar-bg)",
+        borderRight: "1px solid var(--t-border)",
       }}
     >
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-3.5 py-4 shrink-0 h-[60px]"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        style={{ borderBottom: "1px solid var(--t-border)" }}>
         <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-2.5">
           <img src="/logo.png" className="w-8 h-8 shrink-0" alt="Try.Wepp" />
           <span className={cn(
-            "font-bold text-white text-sm whitespace-nowrap transition-all duration-150",
+            "font-bold text-gray-900 dark:text-white text-sm whitespace-nowrap transition-all duration-150",
             expanded ? "opacity-100 delay-75" : "opacity-0"
           )}>
             Try.Wepp
@@ -83,12 +84,12 @@ export function Sidebar({ isLoggedIn }: Props) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all duration-150 whitespace-nowrap rounded-sm",
                 active
-                  ? "text-indigo-300"
-                  : "text-gray-500 hover:text-gray-300"
+                  ? "text-indigo-600 dark:text-indigo-300"
+                  : "text-gray-500 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300"
               )}
               style={active ? { background: "rgba(99,102,241,0.12)" } : undefined}
             >
-              <Icon className={cn("w-4 h-4 shrink-0", active ? "text-indigo-400" : "text-gray-600")} />
+              <Icon className={cn("w-4 h-4 shrink-0", active ? "text-indigo-500 dark:text-indigo-400" : "text-gray-400 dark:text-gray-600")} />
               <span className={cn(
                 "transition-all duration-150",
                 expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
@@ -102,13 +103,16 @@ export function Sidebar({ isLoggedIn }: Props) {
 
       {/* Bottom */}
       <div className="px-2 pb-4 pt-3 space-y-1 shrink-0"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        style={{ borderTop: "1px solid var(--t-border)" }}>
         {isLoggedIn ? (
           <>
             <Link
               href="/submit"
               title={!expanded ? "Submit Idea" : undefined}
-              className="flex items-center justify-center gap-2 w-full bg-indigo-500 text-white text-sm font-bold py-2.5 hover:bg-indigo-400 transition-colors overflow-hidden"
+              className={cn(
+                "flex items-center w-full bg-indigo-500 text-white text-sm font-bold py-2.5 hover:bg-indigo-400 transition-colors overflow-hidden",
+                expanded ? "justify-start gap-2 px-3" : "justify-center"
+              )}
             >
               <Plus className="w-4 h-4 shrink-0" />
               <span className={cn(
@@ -119,10 +123,12 @@ export function Sidebar({ isLoggedIn }: Props) {
               </span>
             </Link>
 
+            <ThemeToggle expanded={expanded} />
+
             <button
               onClick={handleLogout}
               title={!expanded ? "Logout" : undefined}
-              className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-red-400 transition-colors w-full whitespace-nowrap rounded-sm"
+              className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-500 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors w-full whitespace-nowrap rounded-sm"
             >
               <LogOut className="w-4 h-4 shrink-0" />
               <span className={cn(
@@ -134,20 +140,23 @@ export function Sidebar({ isLoggedIn }: Props) {
             </button>
           </>
         ) : (
-          <Link
-            href="/login"
-            title={!expanded ? "Log in" : undefined}
-            className="flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-indigo-400 transition-colors whitespace-nowrap rounded-sm"
-            style={{ background: "rgba(99,102,241,0.1)" }}
-          >
-            <LogIn className="w-4 h-4 shrink-0" />
-            <span className={cn(
-              "transition-all duration-150",
-              expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
-            )}>
-              Log in
-            </span>
-          </Link>
+          <>
+            <ThemeToggle expanded={expanded} />
+            <Link
+              href="/login"
+              title={!expanded ? "Log in" : undefined}
+              className="flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-indigo-500 dark:text-indigo-400 transition-colors whitespace-nowrap rounded-sm"
+              style={{ background: "rgba(99,102,241,0.1)" }}
+            >
+              <LogIn className="w-4 h-4 shrink-0" />
+              <span className={cn(
+                "transition-all duration-150",
+                expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
+              )}>
+                Log in
+              </span>
+            </Link>
+          </>
         )}
       </div>
     </aside>

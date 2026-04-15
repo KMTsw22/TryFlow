@@ -5,6 +5,29 @@ import { PricingCard } from "@/components/pricing/PricingCard";
 
 const PLANS = [
   {
+    id: "free",
+    name: "Free",
+    price: "$0",
+    period: "",
+    description:
+      "Get started with no commitment. Submit ideas publicly and see the basic viability score.",
+    features: [
+      "Submit up to 3 ideas (public only)",
+      "Basic AI viability score",
+      "Access your own submission history",
+    ],
+    locked: [
+      "8-agent deep analysis",
+      "Private idea uploads",
+      "Browse other founders' ideas",
+      "Contact submitters",
+    ],
+    highlighted: false,
+    ctaLabel: "Get started free",
+    ctaHref: "/dashboard",
+    plan: null,
+  },
+  {
     id: "submitter",
     name: "Submitter Pro",
     price: "$15",
@@ -25,25 +48,6 @@ const PLANS = [
     ctaLabel: "Subscribe to Submitter",
     ctaHref: null,
     plan: "submitter",
-  },
-  {
-    id: "bundle",
-    name: "Bundle Pro",
-    price: "$25",
-    period: "/month",
-    description:
-      "Everything in Submitter + Viewer. The best value if you both build and scout.",
-    features: [
-      "Everything in Submitter Pro",
-      "Everything in Viewer Pro",
-      "Save ~17% vs buying both separately",
-      "7-day free trial",
-    ],
-    locked: [],
-    highlighted: true,
-    ctaLabel: "Subscribe to Bundle",
-    ctaHref: null,
-    plan: "bundle",
   },
   {
     id: "viewer",
@@ -67,6 +71,25 @@ const PLANS = [
     ctaHref: null,
     plan: "viewer",
   },
+  {
+    id: "bundle",
+    name: "Bundle Pro",
+    price: "$25",
+    period: "/month",
+    description:
+      "Everything in Submitter + Viewer. The best value if you both build and scout.",
+    features: [
+      "Everything in Submitter Pro",
+      "Everything in Viewer Pro",
+      "Save ~17% vs buying both separately",
+      "7-day free trial",
+    ],
+    locked: [],
+    highlighted: true,
+    ctaLabel: "Subscribe to Bundle",
+    ctaHref: null,
+    plan: "bundle",
+  },
 ];
 
 export default async function PricingPage() {
@@ -75,50 +98,50 @@ export default async function PricingPage() {
   const isLoggedIn = !!user;
 
   return (
-    <div className="min-h-screen" style={{ background: "#050816" }}>
+    <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
       {/* Navbar */}
       <nav
         className="border-b px-6 h-[60px] flex items-center justify-between"
         style={{
-          background: "rgba(5,8,22,0.95)",
-          borderColor: "rgba(255,255,255,0.06)",
+          background: "var(--nav-bg)",
+          borderColor: "var(--t-border)",
           backdropFilter: "blur(12px)",
         }}
       >
         <Link href="/" className="flex items-center gap-2">
           <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-white text-sm">Try.Wepp</span>
+          <span className="font-bold text-gray-900 dark:text-white text-sm">Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
-            <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="/dashboard" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
               Dashboard
             </Link>
           ) : (
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">
+            <Link href="/login" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
               Sign in
             </Link>
           )}
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-16">
+      <div className="max-w-6xl mx-auto px-6 py-16">
         {/* Header */}
         <div className="text-center mb-14">
           <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">
             Subscription Plans
           </p>
-          <h1 className="text-4xl font-extrabold text-white tracking-tight mb-4">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">
             Subscribe to Market Intelligence
           </h1>
-          <p className="text-gray-400 text-base max-w-lg mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 text-base max-w-lg mx-auto">
             Analyze idea trends submitted anonymously by aspiring founders in real time.
             Available exclusively to VC and corporate subscribers.
           </p>
         </div>
 
         {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16 w-full">
           {PLANS.map((plan) => (
             <PricingCard
               key={plan.id}
@@ -130,13 +153,13 @@ export default async function PricingPage() {
 
         {/* Features breakdown */}
         <div
-          className="border p-8 mb-10"
+          className="border p-8 mb-10 max-w-6xl"
           style={{
-            background: "rgba(255,255,255,0.02)",
-            borderColor: "rgba(255,255,255,0.06)",
+            background: "var(--card-bg)",
+            borderColor: "var(--t-border)",
           }}
         >
-          <h2 className="text-lg font-bold text-white mb-6 text-center">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 text-center">
             What you get with Pro
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -160,9 +183,9 @@ export default async function PricingPage() {
               <div key={title} className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-                  <h3 className="text-sm font-bold text-white">{title}</h3>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
                 </div>
-                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500 leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>

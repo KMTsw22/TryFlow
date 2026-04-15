@@ -20,21 +20,22 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Link href="/" className="flex items-center gap-2.5 mb-4">
-            <img src="/logo.png" className="w-11 h-11 " alt="Try.Wepp" />
+            <img src="/logo.png" className="w-11 h-11" alt="Try.Wepp" />
           </Link>
-          <h1 className="text-2xl font-extrabold text-white">Try.Wepp</h1>
-          <p className="text-sm text-gray-400 mt-1">Anonymous Founder Idea Signals</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Try.Wepp</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Anonymous Founder Idea Signals</p>
         </div>
 
-        <div className="bg-[#0E1630] border border-white/10  p-8">
-          <h2 className="text-lg font-bold text-white text-center">Sign in to continue</h2>
-          <p className="text-sm text-gray-400 text-center mt-1 mb-8">
+        <div className="border p-8" style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white text-center">Sign in to continue</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-1 mb-8">
             New or returning — just click below
           </p>
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border border-white/10 bg-white/5 hover:bg-white/10 text-white font-semibold px-6 py-3  transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-3 border text-gray-700 dark:text-white font-semibold px-6 py-3 transition-colors text-sm hover:opacity-80"
+            style={{ borderColor: "var(--t-border-card)", background: "var(--input-bg)" }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -45,7 +46,7 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
-          <p className="text-xs text-center text-gray-500 mt-6 leading-relaxed">
+          <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-6 leading-relaxed">
             By signing in, you agree to our{" "}
             <a href="#" className="text-indigo-400 hover:text-indigo-300">Terms of Service</a>
             {" "}and{" "}
@@ -53,8 +54,8 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <p className="text-center text-xs text-gray-600 mt-6">
-          <Link href="/" className="hover:text-gray-400 transition-colors">← Back to home</Link>
+        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">
+          <Link href="/" className="hover:text-gray-600 dark:hover:text-gray-400 transition-colors">← Back to home</Link>
         </p>
       </div>
     </div>

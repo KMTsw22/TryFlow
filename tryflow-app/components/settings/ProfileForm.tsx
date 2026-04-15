@@ -11,8 +11,8 @@ interface Props {
   avatarUrl?: string;
 }
 
-const inputClass = "w-full border px-3 py-2.5 text-sm text-gray-300 placeholder-gray-600 outline-none focus:border-indigo-500/50 transition-colors";
-const inputStyle = { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" };
+const inputClass = "w-full border px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-indigo-500/50 transition-colors";
+const inputStyle = { background: "var(--input-bg)", borderColor: "var(--t-border-bright)" };
 
 export function ProfileForm({ initialName, email, avatarUrl }: Props) {
   const router = useRouter();
@@ -57,9 +57,9 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
           </div>
         )}
         <div>
-          <p className="font-semibold text-white">{name || "—"}</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{name || "—"}</p>
           <p className="text-sm text-gray-500">{email}</p>
-          <p className="text-xs text-gray-600 mt-0.5">Signed in with Google</p>
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">Signed in with Google</p>
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
           <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>
           <input type="email" value={email} disabled
             className={inputClass + " cursor-not-allowed opacity-50"} style={inputStyle} />
-          <p className="text-xs text-gray-600 mt-1">Email cannot be changed for Google accounts.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">Email cannot be changed for Google accounts.</p>
         </div>
 
         <div className="flex items-center gap-3 pt-1">
@@ -89,7 +89,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
       </form>
 
       {/* Logout */}
-      <div className="pt-3 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+      <div className="pt-3 border-t" style={{ borderColor: "var(--t-border)" }}>
         <button onClick={handleLogout} disabled={loggingOut}
           className="inline-flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors">
           {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}

@@ -10,8 +10,8 @@ interface Props {
   initialAllowContact: boolean;
 }
 
-const inputClass = "w-full border px-3 py-2.5 text-sm text-gray-300 placeholder-gray-600 outline-none focus:border-indigo-500/50 transition-colors";
-const inputStyle = { background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" };
+const inputClass = "w-full border px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-indigo-500/50 transition-colors";
+const inputStyle = { background: "var(--input-bg)", borderColor: "var(--t-border-bright)" };
 
 export function ContactInfoForm({ initialEmail, initialPhone, initialLinkedin, initialOther, initialAllowContact }: Props) {
   const [contactEmail, setContactEmail] = useState(initialEmail);
@@ -44,10 +44,10 @@ export function ContactInfoForm({ initialEmail, initialPhone, initialLinkedin, i
   return (
     <div className="space-y-4">
       {/* Allow contact toggle */}
-      <div className="flex items-center justify-between py-3 border-b" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+      <div className="flex items-center justify-between py-3 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
         <div>
-          <p className="text-sm font-medium text-gray-300">Allow Contact</p>
-          <p className="text-xs text-gray-600 mt-0.5">Let subscribers (VCs/companies) contact you when interested in your idea.</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Allow Contact</p>
+          <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">Let subscribers (VCs/companies) contact you when interested in your idea.</p>
         </div>
         <button type="button" onClick={() => setAllowContact((v) => !v)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0 ml-4 ${allowContact ? "bg-indigo-500" : "bg-gray-700"}`}>

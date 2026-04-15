@@ -21,9 +21,17 @@ interface IdeaRow {
   description: string;
   created_at: string;
   allow_contact: boolean;
+  stage: string | null;
   insight_reports: InsightReport | InsightReport[] | null;
   analysis_reports: AnalysisReport | AnalysisReport[] | null;
 }
+
+const STAGE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  idea:           { label: "Just an Idea",     color: "text-sky-400",     bg: "rgba(14,165,233,0.10)",  border: "rgba(14,165,233,0.25)" },
+  prototype:      { label: "Prototype / Demo", color: "text-violet-400",  bg: "rgba(139,92,246,0.10)", border: "rgba(139,92,246,0.25)" },
+  early_traction: { label: "Early Traction",   color: "text-amber-400",   bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.25)" },
+  launched:       { label: "Launched",          color: "text-emerald-400", bg: "rgba(52,211,153,0.10)", border: "rgba(52,211,153,0.25)" },
+};
 
 interface Props {
   idea: IdeaRow;
@@ -85,10 +93,10 @@ export function IdeaCardWithContact({ idea }: Props) {
   return (
     <Link
       href={`/ideas/${idea.id}`}
-      className="flex flex-col border p-5 transition-all duration-200 hover:bg-white/[0.04] hover:border-indigo-500/30 cursor-pointer"
+      className="flex flex-col border p-5 transition-all duration-200 hover:border-indigo-500/30 cursor-pointer"
       style={{
-        background: "rgba(255,255,255,0.03)",
-        borderColor: idea.allow_contact ? "rgba(129,140,248,0.2)" : "rgba(255,255,255,0.07)",
+        background: "var(--card-bg)",
+        borderColor: idea.allow_contact ? "rgba(129,140,248,0.2)" : "var(--t-border-card)",
       }}
     >
       {/* Top row: score + anonymous badge */}
@@ -98,17 +106,17 @@ export function IdeaCardWithContact({ idea }: Props) {
             {vScore !== null ? (
               <>
                 <span className={`text-base font-extrabold leading-none ${vColor}`}>{vScore}</span>
-                <span className="text-[9px] text-gray-600 leading-none mt-0.5">/100</span>
+                <span className="text-[9px] text-gray-500 leading-none mt-0.5">/100</span>
               </>
             ) : (
-              <span className="text-gray-600 text-xs">—</span>
+              <span className="text-gray-500 text-xs">—</span>
             )}
           </div>
           {hasAiScore && (
             <span className="text-[9px] font-bold text-indigo-400">✦ AI</span>
           )}
         </div>
-        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wider pt-1">Anonymous</span>
+        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider pt-1">Anonymous</span>
       </div>
 
       {/* Target user */}
@@ -117,12 +125,23 @@ export function IdeaCardWithContact({ idea }: Props) {
       </p>
 
       {/* Description */}
-      <p className="text-sm text-gray-300 leading-relaxed flex-1 mb-4">
+      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed flex-1 mb-4">
         {truncate(idea.description, 130)}
       </p>
 
       {/* Bottom row */}
       <div className="flex items-center gap-1.5 flex-wrap">
+        {idea.stage && STAGE_META[idea.stage] && (() => {
+          const s = STAGE_META[idea.stage!]!;
+          return (
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 ${s.color}`}
+              style={{ background: s.bg, border: `1px solid ${s.border}` }}
+            >
+              {s.label}
+            </span>
+          );
+        })()}
         {trendPill && (
           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${trendPill}`}>
             {report!.trend_direction}
@@ -134,7 +153,7 @@ export function IdeaCardWithContact({ idea }: Props) {
           </span>
         )}
         <span className="ml-auto text-[11px] text-gray-500 flex items-center gap-0.5">
-          자세히 보기 <ArrowRight className="w-3 h-3" />
+          View details <ArrowRight className="w-3 h-3" />
         </span>
       </div>
     </Link>

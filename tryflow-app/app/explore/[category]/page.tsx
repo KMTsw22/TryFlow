@@ -28,6 +28,7 @@ interface IdeaRow {
   created_at: string;
   user_id: string | null;
   allow_contact: boolean;
+  stage: string | null;
   insight_reports: InsightReport | InsightReport[] | null;
   analysis_reports: AnalysisReport | AnalysisReport[] | null;
 }
@@ -59,7 +60,7 @@ export default async function CategoryIdeasPage({
   const { data } = await supabase
     .from("idea_submissions")
     .select(`
-      id, category, target_user, description, created_at, user_id,
+      id, category, target_user, description, created_at, user_id, stage,
       insight_reports (viability_score, saturation_level, trend_direction, summary),
       analysis_reports (viability_score)
     `)
@@ -86,21 +87,21 @@ export default async function CategoryIdeasPage({
   }));
 
   return (
-    <div className="min-h-screen" style={{ background: "#050816" }}>
+    <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
       {/* Navbar */}
       <nav
         className="border-b px-6 h-[60px] flex items-center justify-between"
-        style={{ background: "rgba(5,8,22,0.95)", borderColor: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}
+        style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}
       >
         <Link href="/" className="flex items-center gap-2">
           <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-white text-sm">Try.Wepp</span>
+          <span className="font-bold text-gray-900 dark:text-white text-sm">Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
           {user ? (
-            <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</Link>
+            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors">Dashboard</Link>
           ) : (
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
+            <Link href="/login" className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors">Sign in</Link>
           )}
           <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 hover:bg-indigo-400 transition-colors">
             Submit idea →
@@ -118,8 +119,8 @@ export default async function CategoryIdeasPage({
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Trends
           </Link>
           <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-2">Anonymous Ideas</p>
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">{category}</h1>
-          <p className="mt-3 text-gray-400 text-base">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{category}</h1>
+          <p className="mt-3 text-gray-500 dark:text-gray-400 text-base">
             {ideas.length} idea{ideas.length !== 1 ? "s" : ""} submitted · All anonymous · Newest first
           </p>
         </div>
@@ -128,7 +129,7 @@ export default async function CategoryIdeasPage({
         {ideas.length === 0 ? (
           <div
             className="text-center py-20 border"
-            style={{ borderColor: "rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}
+            style={{ borderColor: "var(--t-border-card)", background: "var(--card-bg)" }}
           >
             <p className="text-gray-500 text-sm mb-5">No ideas in this category yet.</p>
             <Link
@@ -156,10 +157,10 @@ export default async function CategoryIdeasPage({
           style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))", borderColor: "rgba(129,140,248,0.2)" }}
         >
           <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">Add your signal</p>
-          <h3 className="text-xl font-extrabold text-white mb-2">
+          <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
             The more ideas submitted, the sharper the trends.
           </h3>
-          <p className="text-sm text-gray-400 mb-5 max-w-sm mx-auto">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 max-w-sm mx-auto">
             Your anonymous submission helps every founder see where the market is heading.
           </p>
           <Link

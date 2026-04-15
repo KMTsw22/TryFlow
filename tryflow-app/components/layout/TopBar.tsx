@@ -20,7 +20,7 @@ export function TopBar({ userName = "User", userImage }: TopBarProps) {
   return (
     <header
       className="h-14 border-b flex items-center px-6 gap-4 sticky top-0 z-20"
-      style={{ background: "rgba(5,8,22,0.95)", borderColor: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}
+      style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}
     >
 
       {/* Right side */}
@@ -32,7 +32,7 @@ export function TopBar({ userName = "User", userImage }: TopBarProps) {
           <Plus className="w-3.5 h-3.5" /> Submit idea
         </Link>
 
-        <div className="flex items-center gap-2.5 pl-3 ml-1 border-l" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <div className="flex items-center gap-2.5 pl-3 ml-1 border-l" style={{ borderColor: "var(--t-border-bright)" }}>
           {userImage ? (
             <Image src={userImage} alt={userName} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
           ) : (
@@ -40,7 +40,7 @@ export function TopBar({ userName = "User", userImage }: TopBarProps) {
               {initials}
             </div>
           )}
-          <p className="text-sm font-semibold text-gray-300 max-w-[120px] truncate">{userName}</p>
+          <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 max-w-[120px] truncate">{userName}</p>
         </div>
       </div>
     </header>

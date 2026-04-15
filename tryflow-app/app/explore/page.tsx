@@ -102,21 +102,21 @@ export default async function ExplorePage() {
   const maxLast30 = Math.max(...trends.map((t) => t.last30), 1);
 
   return (
-    <div className="min-h-screen" style={{ background: "#050816" }}>
+    <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
       {/* Navbar */}
       <nav className="border-b px-6 h-[60px] flex items-center justify-between"
-        style={{ background: "rgba(5,8,22,0.95)", borderColor: "rgba(255,255,255,0.06)", backdropFilter: "blur(12px)" }}>
+        style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}>
         <Link href="/" className="flex items-center gap-2">
           <img src="/logo.png" className="w-7 h-7 " alt="Try.Wepp" />
-          <span className="font-bold text-white text-sm">Try.Wepp</span>
+          <span className="font-bold text-gray-900 dark:text-white text-sm">Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
           {user ? (
-            <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white transition-colors">Dashboard</Link>
+            <Link href="/dashboard" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Dashboard</Link>
           ) : (
-            <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">Sign in</Link>
+            <Link href="/login" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Sign in</Link>
           )}
-          <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2  hover:bg-indigo-400 transition-colors">
+          <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 hover:bg-indigo-400 transition-colors">
             Submit idea →
           </Link>
         </div>
@@ -126,8 +126,8 @@ export default async function ExplorePage() {
         {/* Header */}
         <div className="mb-10">
           <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-2">Live Market Intelligence</p>
-          <h1 className="text-4xl font-extrabold text-white tracking-tight">Idea Trend Dashboard</h1>
-          <p className="mt-3 text-gray-400 text-base max-w-xl">
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Idea Trend Dashboard</h1>
+          <p className="mt-3 text-gray-500 dark:text-gray-400 text-base max-w-xl">
             Aggregate data from anonymous founder submissions. Updated in real time as new ideas come in.
           </p>
         </div>
@@ -140,23 +140,23 @@ export default async function ExplorePage() {
             { label: "Categories Tracked",    value: CATEGORIES.length },
           ].map((s) => (
             <div key={s.label} className=" border p-5 text-center"
-              style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)" }}>
-              <div className="text-3xl font-extrabold text-white">{s.value}</div>
-              <div className="text-xs text-gray-500 mt-1">{s.label}</div>
+              style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
+              <div className="text-3xl font-extrabold text-gray-900 dark:text-white">{s.value}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{s.label}</div>
             </div>
           ))}
         </div>
 
         {/* Category list */}
         <div className=" border overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
           <div className="px-6 py-4 border-b flex items-center justify-between"
-            style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-            <h2 className="font-bold text-white text-sm">By Category — Last 30 Days</h2>
-            <p className="text-xs text-gray-500">Sorted by submission volume</p>
+            style={{ borderColor: "var(--t-border)" }}>
+            <h2 className="font-bold text-gray-900 dark:text-white text-sm">By Category — Last 30 Days</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Sorted by submission volume</p>
           </div>
 
-          <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
+          <div className="divide-y" style={{ borderColor: "var(--t-border-subtle)" }}>
             {trends.map((t) => {
               const tConf = TREND_ICON[t.direction];
               const TIcon = tConf.icon;
@@ -168,7 +168,7 @@ export default async function ExplorePage() {
                   key={t.category}
                   href={`/explore/${encodeURIComponent(t.category)}`}
                   className="px-6 py-5 flex items-center gap-5 transition-colors hover:bg-white/[0.03] group"
-                  style={{ borderColor: "rgba(255,255,255,0.04)" }}
+                  style={{ borderColor: "var(--t-border-subtle)" }}
                 >
                   {/* Trend icon */}
                   <div className={`w-9 h-9 ${tConf.bg} flex items-center justify-center shrink-0`}>
@@ -177,15 +177,15 @@ export default async function ExplorePage() {
 
                   {/* Category name + submission count */}
                   <div className="w-36 shrink-0">
-                    <p className="text-sm font-semibold text-gray-200 group-hover:text-white transition-colors leading-tight">{t.category}</p>
-                    <p className="text-[11px] text-gray-600 mt-0.5">
-                      <span className="text-gray-400 font-semibold">{t.last30}</span> in 30d · {t.total} total
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white transition-colors leading-tight">{t.category}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <span className="text-gray-300 font-semibold">{t.last30}</span> in 30d · {t.total} total
                     </p>
                   </div>
 
                   {/* Volume bar */}
                   <div className="flex-1">
-                    <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--chart-grid)" }}>
                       <div
                         className="h-full rounded-full transition-all duration-700"
                         style={{ width: `${barPct}%`, background: opp.dot }}
@@ -202,10 +202,10 @@ export default async function ExplorePage() {
                       <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: opp.dot }} />
                       <span className={`text-[11px] font-bold ${opp.color}`}>{opp.label}</span>
                     </div>
-                    <span className="text-[10px] text-gray-600 leading-tight">{opp.sub}</span>
+                    <span className="text-[10px] text-gray-400 leading-tight">{opp.sub}</span>
                   </div>
 
-                  <ChevronRight className="w-4 h-4 text-gray-700 group-hover:text-gray-400 transition-colors shrink-0" />
+                  <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-gray-300 transition-colors shrink-0" />
                 </Link>
               );
             })}

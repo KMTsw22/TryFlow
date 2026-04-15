@@ -136,7 +136,7 @@ async function generateAiDescription(
 
 export async function POST(req: NextRequest) {
   try {
-    const { category, target_user, description, is_private } = await req.json();
+    const { category, target_user, description, is_private, stage } = await req.json();
 
     if (!category || !target_user || !description) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -164,6 +164,7 @@ export async function POST(req: NextRequest) {
 
     // Insert submission
     const submissionId = crypto.randomUUID();
+    const VALID_STAGES = ["idea", "prototype", "early_traction", "launched"];
     const { error: subErr } = await supabase.from("idea_submissions").insert({
       id: submissionId,
       user_id: user?.id ?? null,
@@ -171,6 +172,7 @@ export async function POST(req: NextRequest) {
       target_user,
       description,
       is_private: allowPrivate,
+      stage: VALID_STAGES.includes(stage) ? stage : null,
     });
     if (subErr) throw subErr;
 

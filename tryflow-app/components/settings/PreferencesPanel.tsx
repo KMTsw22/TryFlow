@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Globe, Shield } from "lucide-react";
+import { Bell, Globe, Shield, Sun } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 
 const PREFS_KEY = "trywepp_prefs";
 const DEFAULTS = { emailNotifications: true, publicProfile: true, twoFactor: false };
@@ -10,6 +11,7 @@ type Prefs = typeof DEFAULTS;
 export function PreferencesPanel() {
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
   const [saved, setSaved] = useState(false);
+  const { isDark, toggle } = useTheme();
 
   useEffect(() => {
     try {
@@ -18,7 +20,7 @@ export function PreferencesPanel() {
     } catch {}
   }, []);
 
-  function toggle(key: keyof Prefs) {
+  function togglePref(key: keyof Prefs) {
     const next = { ...prefs, [key]: !prefs[key] };
     setPrefs(next);
     localStorage.setItem(PREFS_KEY, JSON.stringify(next));
@@ -34,20 +36,42 @@ export function PreferencesPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Theme toggle row */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 w-8 h-8 flex items-center justify-center shrink-0"
+            style={{ background: "var(--input-bg)" }}>
+            <Sun className="w-4 h-4 text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Appearance</p>
+            <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+              {isDark ? "Currently using dark mode" : "Currently using light mode"}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={toggle}
+          className={`shrink-0 mt-0.5 w-10 h-5 rounded-full transition-colors relative ${!isDark ? "bg-indigo-500" : "bg-gray-600 dark:bg-gray-700"}`}
+        >
+          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${!isDark ? "left-5" : "left-0.5"}`} />
+        </button>
+      </div>
+
       {items.map((pref) => (
         <div key={pref.key} className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 w-8 h-8 flex items-center justify-center shrink-0"
-              style={{ background: "rgba(255,255,255,0.05)" }}>
+              style={{ background: "var(--input-bg)" }}>
               {pref.icon}
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-300">{pref.label}</p>
-              <p className="text-xs text-gray-600 mt-0.5">{pref.desc}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{pref.label}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">{pref.desc}</p>
             </div>
           </div>
-          <button onClick={() => toggle(pref.key)}
-            className={`shrink-0 mt-0.5 w-10 h-5 rounded-full transition-colors relative ${prefs[pref.key] ? "bg-indigo-500" : "bg-gray-700"}`}>
+          <button onClick={() => togglePref(pref.key)}
+            className={`shrink-0 mt-0.5 w-10 h-5 rounded-full transition-colors relative ${prefs[pref.key] ? "bg-indigo-500" : "bg-gray-300 dark:bg-gray-700"}`}>
             <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${prefs[pref.key] ? "left-5" : "left-0.5"}`} />
           </button>
         </div>

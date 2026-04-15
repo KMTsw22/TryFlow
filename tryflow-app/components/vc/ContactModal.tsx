@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function ContactModal({ ideaId, category, onClose }: Props) {
-  const [subject, setSubject] = useState(`[TryWepp] ${category} 아이디어에 관심이 있습니다`);
+  const [subject, setSubject] = useState(`[TryWepp] Interested in your ${category} idea`);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,13 +35,13 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "오류가 발생했습니다. 다시 시도해주세요.");
+        setError(data.error ?? "An error occurred. Please try again.");
         return;
       }
       setContactInfo(data.contactInfo);
       window.open(data.gmailUrl, "_blank");
     } catch {
-      setError("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
+      setError("A network error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -55,35 +55,34 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
     >
       <div
         className="w-full max-w-lg"
-        style={{ background: "#0d1225", border: "1px solid rgba(255,255,255,0.1)" }}
+        style={{ background: "var(--sidebar-bg)", border: "1px solid var(--t-border-bright)" }}
       >
         {/* Header */}
         <div
           className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+          style={{ borderBottom: "1px solid var(--t-border)" }}
         >
           <div>
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-0.5">연락하기</p>
-            <h2 className="text-sm font-bold text-white">{category}</h2>
+            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-0.5">Contact</p>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">{category}</h2>
           </div>
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-300 transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="px-6 py-6 space-y-4">
           {contactInfo ? (
-            /* 연락처 확인 단계 */
             <div className="space-y-4">
-              <p className="text-xs text-gray-400 leading-relaxed">
-                Gmail이 열렸습니다. 아래의 추가 연락수단도 확인할 수 있습니다.
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Gmail has been opened. You can also reach out through the additional channels below.
               </p>
               <div className="space-y-2">
                 {contactInfo.email && (
                   <a
                     href={`mailto:${contactInfo.email}`}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white transition-colors"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
                   >
                     <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
                     <span className="truncate">{contactInfo.email}</span>
@@ -92,8 +91,8 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
                 {contactInfo.phone && (
                   <a
                     href={`tel:${contactInfo.phone}`}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white transition-colors"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
                   >
                     <Phone className="w-4 h-4 text-green-400 shrink-0" />
                     <span>{contactInfo.phone}</span>
@@ -104,8 +103,8 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
                     href={contactInfo.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white transition-colors"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
                   >
                     <Linkedin className="w-4 h-4 text-blue-400 shrink-0" />
                     <span className="truncate">{contactInfo.linkedin}</span>
@@ -113,8 +112,8 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
                 )}
                 {contactInfo.other && (
                   <div
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300"
+                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
                   >
                     <Link className="w-4 h-4 text-pink-400 shrink-0" />
                     <span>{contactInfo.other}</span>
@@ -124,42 +123,40 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
               <div className="flex justify-end pt-1">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                  className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
-                  닫기
+                  Close
                 </button>
               </div>
             </div>
           ) : (
-            /* 메시지 작성 단계 */
             <>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                제목과 내용을 작성 후 <strong className="text-gray-400">Gmail로 열기</strong>를 누르면
-                Gmail 작성 창이 열립니다. 받는 사람·제목·내용이 자동으로 채워집니다.
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Write your message and click <strong className="text-gray-600 dark:text-gray-300">Open in Gmail</strong> to open the Gmail compose window with everything pre-filled.
               </p>
 
               {/* Subject */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">제목</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Subject</label>
                 <input
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  className="w-full px-4 py-2.5 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                  style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
                 />
               </div>
 
               {/* Message */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-1.5">내용</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Message</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={5}
-                  placeholder="안녕하세요. 저는 [회사명]의 [이름]입니다. 귀하의 아이디어에 관심이 있어 연락드립니다..."
-                  className="w-full px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  placeholder="Hi, I'm [name] from [company]. I came across your idea and would love to connect..."
+                  className="w-full px-4 py-2.5 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                  style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
                 />
               </div>
 
@@ -169,9 +166,9 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                  className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
-                  취소
+                  Cancel
                 </button>
                 <button
                   onClick={handleOpenGmail}
@@ -184,7 +181,7 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
                   ) : (
                     <>
                       <Mail className="w-4 h-4" />
-                      Gmail로 열기
+                      Open in Gmail
                     </>
                   )}
                 </button>

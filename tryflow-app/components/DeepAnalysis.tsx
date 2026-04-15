@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 import {
   RadarChart,
   Radar,
@@ -140,9 +141,9 @@ const SAT_CONFIG: Record<string, { color: string; bg: string; bar: string }> = {
 function SignalBadge({ label, value }: { label: string; value: string }) {
   return (
     <div className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px]"
-      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+      style={{ background: "var(--input-bg)", border: "1px solid var(--t-border-bright)" }}>
       <span className="text-gray-500">{label}</span>
-      <span className="font-semibold text-gray-300">{value}</span>
+      <span className="font-semibold text-gray-600 dark:text-gray-300">{value}</span>
     </div>
   );
 }
@@ -243,8 +244,8 @@ function MetricsGrid({ trendDirection, saturationLevel, similarCount }: { trendD
   return (
     <div className="grid grid-cols-3 gap-3 mb-4">
       <div className={`border p-5 text-center ${trend.border}`}
-        style={{ background: "rgba(255,255,255,0.03)" }}>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Market Trend</p>
+        style={{ background: "var(--card-bg)" }}>
+        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Market Trend</p>
         <div className={`w-10 h-10 ${trend.bg} flex items-center justify-center mx-auto mb-2`}>
           <TrendIcon className={`w-5 h-5 ${trend.color}`} />
         </div>
@@ -252,8 +253,8 @@ function MetricsGrid({ trendDirection, saturationLevel, similarCount }: { trendD
       </div>
 
       <div className="border p-5 text-center"
-        style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Saturation</p>
+        style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
+        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Saturation</p>
         <div className={`w-10 h-10 ${sat.bg} flex items-center justify-center mx-auto mb-2`}>
           <span className={`text-sm font-black ${sat.color}`}>{saturationLevel[0]}</span>
         </div>
@@ -261,10 +262,10 @@ function MetricsGrid({ trendDirection, saturationLevel, similarCount }: { trendD
       </div>
 
       <div className="border p-5 text-center"
-        style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Similar Ideas</p>
-        <p className="text-3xl font-extrabold text-white mb-1">{similarCount}</p>
-        <p className="text-xs text-gray-600">last 30 days</p>
+        style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
+        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Similar Ideas</p>
+        <p className="text-3xl font-extrabold text-gray-900 dark:text-white mb-1">{similarCount}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">last 30 days</p>
       </div>
     </div>
   );
@@ -300,11 +301,11 @@ function OverallSignal({ score, summary, trend, saturation }: { score: number; s
 
   return (
     <div className="border p-8 mb-4 text-center"
-      style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Overall Signal</p>
+      style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Overall Signal</p>
       <div className="relative w-32 h-32 mx-auto mb-4">
         <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="12" />
+          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--t-border-card)" strokeWidth="12" />
           <circle
             cx="60" cy="60" r="52" fill="none"
             stroke={vBg} strokeWidth="12"
@@ -316,14 +317,14 @@ function OverallSignal({ score, summary, trend, saturation }: { score: number; s
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className={`text-3xl font-extrabold ${vColor}`}>{score}</span>
-          <span className="text-xs text-gray-600">/100</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">/100</span>
         </div>
       </div>
       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-3"
         style={{ background: verdict.bg }}>
         <span className={`text-xs font-bold ${verdict.color}`}>{verdict.label}</span>
       </div>
-      <p className="text-sm text-gray-400 leading-relaxed max-w-sm mx-auto">{summary}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm mx-auto">{summary}</p>
     </div>
   );
 }
@@ -331,15 +332,17 @@ function OverallSignal({ score, summary, trend, saturation }: { score: number; s
 // ── Radar custom tick ─────────────────────────────────────────────────────────
 
 function RadarTick({
-  x, y, cx, cy, payload, scoreMap,
+  x, y, cx, cy, payload, scoreMap, isDark = true,
 }: {
   x: number; y: number; cx: number; cy: number;
   payload: { value: string };
   scoreMap: Record<string, number>;
+  isDark?: boolean;
   [k: string]: unknown;
 }) {
   const score = scoreMap[payload.value] ?? 0;
   const scoreColor = score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171";
+  const labelColor = isDark ? "#9ca3af" : "#6b7280";
   const dx = x - cx;
   const anchor: "start" | "middle" | "end" = dx > 8 ? "start" : dx < -8 ? "end" : "middle";
   const dy = y - cy;
@@ -348,10 +351,10 @@ function RadarTick({
 
   return (
     <g>
-      <text x={x} y={nameY} textAnchor={anchor} fill="#6b7280" fontSize={10} fontWeight="600">
+      <text x={x} y={nameY} textAnchor={anchor} fill={labelColor} fontSize={11} fontWeight="600">
         {payload.value}
       </text>
-      <text x={x} y={scoreY} textAnchor={anchor} fill={scoreColor} fontSize={15} fontWeight="800">
+      <text x={x} y={scoreY} textAnchor={anchor} fill={scoreColor} fontSize={16} fontWeight="800">
         {score}
       </text>
     </g>
@@ -376,6 +379,7 @@ export default function DeepAnalysis({
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [fullAgent, setFullAgent] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
+  const { isDark } = useTheme();
 
   useEffect(() => {
     async function check() {
@@ -447,12 +451,12 @@ export default function DeepAnalysis({
             <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
           </div>
           <h3 className="text-lg font-extrabold text-white mb-2">AI Deep Analysis in Progress</h3>
-          <p className="text-sm text-gray-500 mb-6">8 specialist agents analyzing in parallel</p>
+          <p className="text-sm text-gray-400 mb-6">8 specialist agents analyzing in parallel</p>
           <div className="max-w-sm mx-auto space-y-2">
             {ANALYSIS_STEPS.map((step, i) => (
               <div key={step}
                 className={`flex items-center gap-2 text-xs transition-all duration-300 ${
-                  i < stepIndex ? "text-emerald-500" : i === stepIndex ? "text-indigo-400 font-bold" : "text-gray-700"
+                  i < stepIndex ? "text-emerald-400" : i === stepIndex ? "text-indigo-300 font-bold" : "text-gray-500"
                 }`}>
                 {i < stepIndex ? <span className="w-4 text-center">✓</span>
                   : i === stepIndex ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
@@ -487,20 +491,20 @@ export default function DeepAnalysis({
 
         {/* Radar + agent cards */}
         <div className="border p-6"
-          style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
           <div className="flex items-center gap-2 mb-5">
             <Brain className="w-4 h-4 text-indigo-400" />
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">8-Agent Analysis Breakdown</p>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">8-Agent Analysis Breakdown</p>
           </div>
 
           {/* Radar */}
           <div style={{ height: 340 }}>
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData} margin={{ top: 28, right: 48, bottom: 28, left: 48 }}>
-                <PolarGrid stroke="rgba(255,255,255,0.07)" gridType="polygon" />
+                <PolarGrid stroke={isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"} gridType="polygon" />
                 <PolarAngleAxis
                   dataKey="subject"
-                  tick={(props) => <RadarTick {...props} scoreMap={scoreMap} />}
+                  tick={(props) => <RadarTick {...props} scoreMap={scoreMap} isDark={isDark} />}
                   tickLine={false}
                 />
                 <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} tickCount={5} />
@@ -538,34 +542,34 @@ export default function DeepAnalysis({
                     onClick={() => { setExpandedAgent(isExpanded ? null : key); setFullAgent(null); }}
                     className="w-full border p-3 text-left transition-all duration-150 hover:bg-white/[0.04] flex flex-col gap-2"
                     style={{
-                      background: isExpanded ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
-                      borderColor: isExpanded ? "rgba(99,102,241,0.35)" : "rgba(255,255,255,0.06)",
+                      background: isExpanded ? "rgba(99,102,241,0.08)" : "var(--card-bg)",
+                      borderColor: isExpanded ? "rgba(99,102,241,0.35)" : "var(--t-border)",
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className={`w-6 h-6 ${meta.bg} flex items-center justify-center`}>
                         <Icon className={`w-3 h-3 ${meta.color}`} />
                       </div>
-                      <span className="text-[9px] font-bold text-gray-700">{meta.weight}</span>
+                      <span className="text-[10px] font-bold text-gray-400">{meta.weight}</span>
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold text-gray-600 uppercase tracking-wider leading-none mb-1">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">
                         {meta.label}
                       </p>
                       <div className="flex items-end gap-1">
                         <span className={`text-xl font-extrabold leading-none ${scoreColor}`}>{score}</span>
-                        <span className="text-[9px] text-gray-700 mb-0.5">/100</span>
+                        <span className="text-[10px] text-gray-400 mb-0.5">/100</span>
                       </div>
                     </div>
-                    <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                    <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: "var(--t-border-bright)" }}>
                       <div
                         className="h-full rounded-full transition-all duration-700"
                         style={{ width: `${score}%`, background: score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171" }}
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] text-gray-600">Details</span>
-                      {isExpanded ? <ChevronUp className="w-3 h-3 text-gray-600" /> : <ChevronDown className="w-3 h-3 text-gray-600" />}
+                      <span className="text-[10px] text-gray-400">Details</span>
+                      {isExpanded ? <ChevronUp className="w-3 h-3 text-gray-400" /> : <ChevronDown className="w-3 h-3 text-gray-400" />}
                     </div>
                   </button>
                 </div>
@@ -607,7 +611,7 @@ export default function DeepAnalysis({
                 )}
                 {/* Detailed assessment — if available, Submitter Pro only */}
                 {detailed && isFull && agentData.detailed_assessment && (
-                  <div className="mt-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                  <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--t-border-bright)" }}>
                     <p className="text-[10px] text-indigo-400 font-bold mb-1">Detailed Analysis</p>
                     <p className="text-xs text-gray-400 leading-relaxed">{agentData.detailed_assessment}</p>
                   </div>
@@ -655,10 +659,10 @@ export default function DeepAnalysis({
         {/* Cross-agent insights — Submitter Pro only */}
         {detailed && report.cross_agent_insights?.length > 0 && (
           <div className="border p-6"
-            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+            style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
               <Brain className="w-4 h-4 text-indigo-400" />
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Cross-Agent Insights</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cross-Agent Insights</p>
             </div>
             <ul className="space-y-2">
               {report.cross_agent_insights.map((insight, i) => (
@@ -667,7 +671,7 @@ export default function DeepAnalysis({
                     style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)" }}>
                     {i + 1}
                   </span>
-                  <p className="text-xs text-gray-400 leading-relaxed">{insight}</p>
+                  <p className="text-sm text-gray-300 leading-relaxed">{insight}</p>
                 </li>
               ))}
             </ul>
@@ -687,8 +691,8 @@ export default function DeepAnalysis({
                 <ul className="space-y-3">
                   {report.opportunities.map((opp, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-emerald-500 mt-0.5 shrink-0 font-bold">+</span>
-                      <p className="text-xs text-gray-400 leading-relaxed">{opp}</p>
+                      <span className="text-emerald-400 mt-0.5 shrink-0 font-bold">+</span>
+                      <p className="text-sm text-gray-300 leading-relaxed">{opp}</p>
                     </li>
                   ))}
                 </ul>
@@ -704,8 +708,8 @@ export default function DeepAnalysis({
                 <ul className="space-y-3">
                   {report.risks.map((risk, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-red-500 mt-0.5 shrink-0 font-bold">!</span>
-                      <p className="text-xs text-gray-400 leading-relaxed">{risk}</p>
+                      <span className="text-red-400 mt-0.5 shrink-0 font-bold">!</span>
+                      <p className="text-sm text-gray-300 leading-relaxed">{risk}</p>
                     </li>
                   ))}
                 </ul>
@@ -717,10 +721,10 @@ export default function DeepAnalysis({
         {/* Next Steps — Submitter Pro only */}
         {detailed && report.next_steps?.length > 0 && (
           <div className="border p-6"
-            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.07)" }}>
+            style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
               <ArrowRight className="w-4 h-4 text-indigo-400" />
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Next Steps This Week</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Next Steps This Week</p>
             </div>
             <ul className="space-y-2">
               {report.next_steps.map((step, i) => (
@@ -729,7 +733,7 @@ export default function DeepAnalysis({
                   <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                     {i + 1}
                   </span>
-                  <p className="text-xs text-gray-400 leading-relaxed">{step}</p>
+                  <p className="text-sm text-gray-300 leading-relaxed">{step}</p>
                 </li>
               ))}
             </ul>
@@ -755,7 +759,7 @@ export default function DeepAnalysis({
           <Sparkles className="w-7 h-7 text-indigo-400" />
         </div>
         <h3 className="text-lg font-extrabold text-white mb-2">Want a deeper analysis?</h3>
-        <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+        <p className="text-sm text-gray-400 mb-6 max-w-sm mx-auto">
           Our AI system runs 8 specialist agents in parallel to analyze market size,
           competition, timing, monetization, technical complexity, regulation,
           defensibility, and user acquisition.

@@ -58,10 +58,10 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
       style={{
         background: plan.highlighted
           ? "linear-gradient(160deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12))"
-          : "rgba(255,255,255,0.03)",
+          : "var(--card-bg)",
         border: plan.highlighted
           ? "1px solid rgba(129,140,248,0.4)"
-          : "1px solid rgba(255,255,255,0.07)",
+          : "1px solid var(--t-border-card)",
         position: "relative",
       }}
     >
@@ -84,12 +84,12 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
             {plan.name}
           </p>
           <div className="flex items-end gap-1 mb-3">
-            <span className="text-4xl font-extrabold text-white">{plan.price}</span>
+            <span className="text-4xl font-extrabold text-gray-900 dark:text-white">{plan.price}</span>
             {plan.period && (
               <span className="text-gray-500 text-sm mb-1">{plan.period}</span>
             )}
           </div>
-          <p className="text-sm text-gray-500 leading-relaxed">{plan.description}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-500 leading-relaxed">{plan.description}</p>
         </div>
 
         {/* Features */}
@@ -100,7 +100,7 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
                 className="w-4 h-4 shrink-0 mt-0.5"
                 style={{ color: plan.highlighted ? "#818cf8" : "#34d399" }}
               />
-              <span className="text-sm text-gray-300">{f}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">{f}</span>
             </li>
           ))}
           {plan.locked.map((f) => (
@@ -140,11 +140,20 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
             {plan.ctaLabel}
             <ArrowRight className="w-4 h-4" />
           </a>
+        ) : plan.id === "free" ? (
+          <Link
+            href={plan.ctaHref ?? "/"}
+            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-indigo-600 dark:text-indigo-400 border transition-colors hover:text-indigo-500 dark:hover:text-indigo-300"
+            style={{ borderColor: "rgba(99,102,241,0.35)" }}
+          >
+            {plan.ctaLabel}
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         ) : (
           <Link
             href={plan.ctaHref ?? "/"}
             className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold text-gray-400 border transition-colors hover:text-gray-200 hover:border-gray-500"
-            style={{ borderColor: "rgba(255,255,255,0.1)" }}
+            style={{ borderColor: "var(--t-input-border)" }}
           >
             {plan.ctaLabel}
           </Link>
