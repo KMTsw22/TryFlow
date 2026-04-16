@@ -151,15 +151,15 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // private 업로드는 Submitter Pro만 허용
+    // private 업로드는 Plus/Pro만 허용 (Free는 무조건 public)
     let allowPrivate = false;
     if (is_private && user) {
       const { data: profile } = await supabase
         .from("user_profiles")
-        .select("submitter_plan")
+        .select("plan")
         .eq("id", user.id)
         .maybeSingle();
-      allowPrivate = profile?.submitter_plan === "pro";
+      allowPrivate = profile?.plan === "plus" || profile?.plan === "pro";
     }
 
     // Insert submission

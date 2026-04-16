@@ -39,7 +39,7 @@ export default function SubmitPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [submitterPro, setSubmitterPro] = useState(false);
+  const [canPrivate, setCanPrivate] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [contactOpen, setContactOpen] = useState(false);
   const [contact, setContact] = useState({
@@ -58,10 +58,10 @@ export default function SubmitPage() {
       setUserId(user.id);
       const { data: profile } = await supabase
         .from("user_profiles")
-        .select("submitter_plan, allow_contact, contact_email, contact_phone, contact_linkedin, contact_other")
+        .select("plan, allow_contact, contact_email, contact_phone, contact_linkedin, contact_other")
         .eq("id", user.id)
         .maybeSingle();
-      if (profile?.submitter_plan === "pro") setSubmitterPro(true);
+      if (profile?.plan === "plus" || profile?.plan === "pro") setCanPrivate(true);
       if (profile) {
         setContact({
           allow_contact: profile.allow_contact ?? false,
@@ -349,8 +349,8 @@ export default function SubmitPage() {
                   );
                 })()}
 
-                {/* Visibility selection — Submitter Pro only */}
-                {submitterPro ? (
+                {/* Visibility selection — Plus/Pro only */}
+                {canPrivate ? (
                   <div className="mt-5">
                     <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
                       Visibility
@@ -421,7 +421,7 @@ export default function SubmitPage() {
                       </span>
                       <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
                         <Link href="/pricing" className="text-indigo-500 font-medium hover:underline">
-                          Upgrade to Submitter Pro
+                          Upgrade to Plus
                         </Link>{" "}
                         to keep your ideas hidden from the public feed.
                       </p>

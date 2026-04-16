@@ -3,7 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 
-type SubscriptionType = "viewer" | "submitter" | "bundle";
+type SubscriptionType = "plus" | "pro";
 
 function getServiceClient() {
   return createClient(
@@ -18,18 +18,14 @@ function toISO(val: number | string | null | undefined): string {
   return new Date(val).toISOString();
 }
 
-// price.id → subscription_type 매핑. 환경변수에서 읽어서 런타임에 구성.
+// price.id → subscription_type 매핑. Stripe에서 옛 Tryweppexplorer/Trypweppbundle을
+// Plus/Pro로 이름만 바꾸고 price id는 그대로 유지하므로 legacy fallback 불필요.
 function getPriceTypeMap(): Record<string, SubscriptionType> {
   const map: Record<string, SubscriptionType> = {};
-  const viewer = process.env.STRIPE_VIEWER_PRICE_ID;
-  const submitter = process.env.STRIPE_SUBMITTER_PRICE_ID;
-  const bundle = process.env.STRIPE_BUNDLE_PRICE_ID;
-  if (viewer) map[viewer] = "viewer";
-  if (submitter) map[submitter] = "submitter";
-  if (bundle) map[bundle] = "bundle";
-  // Legacy: 기존 pro_price는 Viewer(원래 /explore 접근용)로 매핑
-  const legacyPro = process.env.STRIPE_PRO_PRICE_ID;
-  if (legacyPro && !map[legacyPro]) map[legacyPro] = "viewer";
+  const plus = process.env.STRIPE_PLUS_PRICE_ID;
+  const pro = process.env.STRIPE_PRO_PRICE_ID;
+  if (plus) map[plus] = "plus";
+  if (pro) map[pro] = "pro";
   return map;
 }
 
@@ -39,8 +35,9 @@ function resolveSubscriptionType(sub: Stripe.Subscription): SubscriptionType | n
   return getPriceTypeMap()[priceId] ?? null;
 }
 
-// user_profiles.viewer_plan / submitter_plan 캐시를 현재 active 구독 기준으로 재계산
-async function syncUserProfilePlans(
+// user_profiles.plan 캐시를 현재 active 구독 기준으로 재계산
+// pro가 있으면 pro, 없고 plus만 있으면 plus, 아무 것도 없으면 free
+async function syncUserProfilePlan(
   supabase: ReturnType<typeof getServiceClient>,
   userId: string
 ) {
@@ -60,16 +57,15 @@ async function syncUserProfilePlans(
       .map((r) => r.subscription_type as SubscriptionType)
   );
 
-  const viewerPro = activeTypes.has("viewer") || activeTypes.has("bundle");
-  const submitterPro = activeTypes.has("submitter") || activeTypes.has("bundle");
+  const plan: "free" | "plus" | "pro" = activeTypes.has("pro")
+    ? "pro"
+    : activeTypes.has("plus")
+      ? "plus"
+      : "free";
 
   const { error: updErr } = await supabase
     .from("user_profiles")
-    .update({
-      viewer_plan: viewerPro ? "pro" : "free",
-      submitter_plan: submitterPro ? "pro" : "free",
-      updated_at: new Date().toISOString(),
-    })
+    .update({ plan, updated_at: new Date().toISOString() })
     .eq("id", userId);
 
   if (updErr) console.error("[webhook] user_profiles sync error:", updErr);
@@ -145,7 +141,7 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        await syncUserProfilePlans(supabase, userId);
+        await syncUserProfilePlan(supabase, userId);
         break;
       }
 
@@ -176,7 +172,7 @@ export async function POST(request: NextRequest) {
           .select("user_id")
           .eq("stripe_subscription_id", subscriptionId)
           .maybeSingle();
-        if (row?.user_id) await syncUserProfilePlans(supabase, row.user_id);
+        if (row?.user_id) await syncUserProfilePlan(supabase, row.user_id);
         break;
       }
 
@@ -195,7 +191,7 @@ export async function POST(request: NextRequest) {
           .select("user_id")
           .eq("stripe_subscription_id", subscriptionId)
           .maybeSingle();
-        if (row?.user_id) await syncUserProfilePlans(supabase, row.user_id);
+        if (row?.user_id) await syncUserProfilePlan(supabase, row.user_id);
         break;
       }
 
@@ -229,7 +225,7 @@ export async function POST(request: NextRequest) {
           .select("user_id")
           .eq("stripe_subscription_id", sub.id)
           .maybeSingle();
-        if (row?.user_id) await syncUserProfilePlans(supabase, row.user_id);
+        if (row?.user_id) await syncUserProfilePlan(supabase, row.user_id);
         break;
       }
 
@@ -245,7 +241,7 @@ export async function POST(request: NextRequest) {
           .select("user_id")
           .eq("stripe_subscription_id", sub.id)
           .maybeSingle();
-        if (row?.user_id) await syncUserProfilePlans(supabase, row.user_id);
+        if (row?.user_id) await syncUserProfilePlan(supabase, row.user_id);
         break;
       }
     }

@@ -642,16 +642,16 @@ export default function DeepAnalysis({
             </div>
             <p className="text-sm text-gray-300 leading-relaxed mb-4">
               You&apos;re seeing the summarized score and radar. Upgrade to{" "}
-              <span className="font-bold text-white">Submitter Pro</span> to unlock
+              <span className="font-bold text-white">Plus</span> to unlock
               detailed per-agent assessments, cross-agent insights, opportunities,
-              risks, and recommended next steps.
+              risks, and recommended next steps on your own ideas.
             </p>
             <a
               href="/pricing"
               className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2 text-xs hover:bg-indigo-400 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Upgrade to Submitter Pro
+              Upgrade to Plus
             </a>
           </div>
         )}

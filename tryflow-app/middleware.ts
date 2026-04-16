@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect /explore routes — require Viewer plan (own idea browsing is on dashboard)
+  // Protect /explore routes — Pro plan only (browse others' public ideas)
   if (pathname.startsWith("/explore")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -60,11 +60,11 @@ export async function middleware(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from("user_profiles")
-      .select("viewer_plan")
+      .select("plan")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profile?.viewer_plan !== "pro") {
+    if (profile?.plan !== "pro") {
       const url = request.nextUrl.clone();
       url.pathname = "/pricing";
       return NextResponse.redirect(url);

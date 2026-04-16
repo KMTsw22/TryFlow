@@ -10,17 +10,17 @@ const PLANS = [
     price: "$0",
     period: "",
     description:
-      "Get started with no commitment. Submit ideas publicly and see the basic viability score.",
+      "Submit your ideas and get a basic viability score. All submissions are public.",
     features: [
-      "Submit up to 3 ideas (public only)",
-      "Basic AI viability score",
-      "Access your own submission history",
+      "Submit your own ideas (public only)",
+      "Basic AI viability score & summary",
+      "Access your submission history",
     ],
     locked: [
-      "8-agent deep analysis",
+      "Detailed 8-agent analysis",
       "Private idea uploads",
-      "Browse other founders' ideas",
-      "Contact submitters",
+      "Compare your ideas side-by-side",
+      "Browse other founders' public ideas",
     ],
     highlighted: false,
     ctaLabel: "Get started free",
@@ -28,67 +28,50 @@ const PLANS = [
     plan: null,
   },
   {
-    id: "submitter",
-    name: "Submitter Pro",
-    price: "$15",
+    id: "plus",
+    name: "Plus",
+    price: "$10",
     period: "/month",
     description:
-      "For founders: unlock the full multi-agent analysis of your own ideas and upload privately.",
+      "For founders shipping multiple ideas: deep analysis, private uploads, and own-vs-own compare.",
     features: [
+      "Everything in Free",
       "Full 8-agent deep analysis on your ideas",
       "Detailed per-agent assessments, risks & next steps",
       "Private idea uploads (excluded from public trends)",
+      "Compare your own ideas side-by-side",
       "7-day free trial",
     ],
     locked: [
-      "Browse other founders' ideas",
+      "Browse other founders' public ideas",
+      "Compare against other founders' ideas",
       "Contact other submitters",
     ],
     highlighted: false,
-    ctaLabel: "Subscribe to Submitter",
+    ctaLabel: "Subscribe to Plus",
     ctaHref: null,
-    plan: "submitter",
+    plan: "plus",
   },
   {
-    id: "viewer",
-    name: "Viewer Pro",
+    id: "pro",
+    name: "Pro",
     price: "$20",
     period: "/month",
     description:
-      "For investors & scouts: browse every public idea and reach out to submitters directly.",
+      "Everything in Plus, plus full access to every public idea — compare, analyze, and reach out.",
     features: [
+      "Everything in Plus",
       "Browse all public submitted ideas",
       "Real-time trends dashboard across 9 categories",
-      "Contact idea submitters via email (up to 10/day)",
-      "7-day free trial",
-    ],
-    locked: [
-      "Deep analysis on your own ideas",
-      "Private idea uploads",
-    ],
-    highlighted: false,
-    ctaLabel: "Subscribe to Viewer",
-    ctaHref: null,
-    plan: "viewer",
-  },
-  {
-    id: "bundle",
-    name: "Bundle Pro",
-    price: "$25",
-    period: "/month",
-    description:
-      "Everything in Submitter + Viewer. The best value if you both build and scout.",
-    features: [
-      "Everything in Submitter Pro",
-      "Everything in Viewer Pro",
-      "Save ~17% vs buying both separately",
+      "Compare any ideas — yours, theirs, or mixed",
+      "Contact idea submitters via email",
       "7-day free trial",
     ],
     locked: [],
     highlighted: true,
-    ctaLabel: "Subscribe to Bundle",
+    ctaLabel: "Subscribe to Pro",
     ctaHref: null,
-    plan: "bundle",
+    plan: "pro",
   },
 ];
 
@@ -141,7 +124,7 @@ export default async function PricingPage() {
         </div>
 
         {/* Plans */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16 w-full max-w-4xl mx-auto">
           {PLANS.map((plan) => (
             <PricingCard
               key={plan.id}

@@ -51,11 +51,11 @@ export default async function ExplorePage() {
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("viewer_plan")
+    .select("plan")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profile?.viewer_plan !== "pro") redirect("/pricing");
+  if (profile?.plan !== "pro") redirect("/pricing");
 
   const now = new Date();
   const d7  = new Date(now); d7.setDate(now.getDate() - 7);

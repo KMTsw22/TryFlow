@@ -15,10 +15,11 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   contact_other TEXT,       -- 기타 연락처 (선택)
   allow_contact BOOLEAN NOT NULL DEFAULT false,  -- 연락 허용 여부
   -- 구독 캐시 (webhook이 subscriptions 테이블과 동기화)
-  viewer_plan TEXT NOT NULL DEFAULT 'free'
-    CHECK (viewer_plan IN ('free', 'pro')),    -- 남의 아이디어 /explore 열람
-  submitter_plan TEXT NOT NULL DEFAULT 'free'
-    CHECK (submitter_plan IN ('free', 'pro')), -- 내 아이디어 정밀 분석 + private 업로드
+  --   free : 아이디어 제출만 (public 강제, 분석/비교 없음)
+  --   plus : 자기 아이디어 private 업로드 + 정밀 분석 + 자기 아이디어끼리 비교
+  --   pro  : plus + 남의 public 아이디어 열람/연락/비교 (전체)
+  plan TEXT NOT NULL DEFAULT 'free'
+    CHECK (plan IN ('free', 'plus', 'pro')),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

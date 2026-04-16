@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   stripe_customer_id TEXT NOT NULL,
   stripe_subscription_id TEXT NOT NULL UNIQUE,
-  subscription_type TEXT NOT NULL DEFAULT 'viewer'  -- 'viewer' | 'submitter' | 'bundle'
-    CHECK (subscription_type IN ('viewer', 'submitter', 'bundle')),
-  plan TEXT NOT NULL DEFAULT 'pro',                 -- legacy tier label (kept for history)
+  subscription_type TEXT NOT NULL DEFAULT 'plus'    -- 'plus' | 'pro'
+    CHECK (subscription_type IN ('plus', 'pro')),
+  plan TEXT NOT NULL DEFAULT 'plus',                -- mirror of subscription_type
   status TEXT NOT NULL DEFAULT 'active',            -- 'active' | 'canceled' | 'past_due' | 'trialing'
   current_period_start TIMESTAMPTZ NOT NULL,
   current_period_end TIMESTAMPTZ NOT NULL,

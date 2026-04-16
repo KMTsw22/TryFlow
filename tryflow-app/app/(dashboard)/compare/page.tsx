@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import {
   TrendingUp, TrendingDown, Minus, ArrowRight,
-  CheckCircle2, Circle, GitCompare, Trophy, ArrowLeft, Search,
+  CheckCircle2, Circle, GitCompare, Trophy, ArrowLeft, Search, Lock,
 } from "lucide-react";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
@@ -379,23 +380,62 @@ function CompareRow({
   );
 }
 
+type Plan = "free" | "plus" | "pro";
+
 export default function ComparePage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [comparing, setComparing] = useState(false);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [analysisA, setAnalysisA] = useState<Analysis | null>(null);
   const [analysisB, setAnalysisB] = useState<Analysis | null>(null);
-  const { isDark } = useTheme();
 
   useEffect(() => {
-    fetch("/api/ideas/all")
-      .then((r) => r.json())
-      .then((d) => setIdeas(d.ideas ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setPlan("free");
+        setLoading(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("plan")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const userPlan = ((profile?.plan as Plan | undefined) ?? "free");
+      setPlan(userPlan);
+
+      if (userPlan === "free") {
+        setLoading(false);
+        return;
+      }
+
+      // Plus: only own ideas. Pro: own + all public ideas.
+      try {
+        const ownRes = await fetch("/api/ideas").then((r) => r.json()).catch(() => ({ ideas: [] }));
+        const ownIdeas: Idea[] = ownRes.ideas ?? [];
+
+        if (userPlan === "pro") {
+          const allRes = await fetch("/api/ideas/all").then((r) => r.json()).catch(() => ({ ideas: [] }));
+          const allIdeas: Idea[] = allRes.ideas ?? [];
+          // Merge own first (so own privates appear), then fill with public ones we don't already have
+          const seen = new Set(ownIdeas.map((i) => i.id));
+          const merged = [...ownIdeas, ...allIdeas.filter((i) => !seen.has(i.id))];
+          setIdeas(merged);
+        } else {
+          setIdeas(ownIdeas);
+        }
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   async function startCompare() {
@@ -446,6 +486,40 @@ export default function ComparePage() {
     return (
       <div className="flex items-center justify-center py-32">
         <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Free users can't compare at all
+  if (plan === "free") {
+    return (
+      <div className="max-w-xl mx-auto py-20">
+        <div
+          className="border p-10 text-center"
+          style={{ background: "var(--card-bg)", borderColor: "rgba(99,102,241,0.25)" }}
+        >
+          <div
+            className="w-14 h-14 mx-auto mb-5 flex items-center justify-center rounded-full"
+            style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)" }}
+          >
+            <Lock className="w-6 h-6 text-indigo-400" />
+          </div>
+          <h1 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
+            Compare is a paid feature
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+            Upgrade to <span className="font-bold text-indigo-400">Plus</span> to compare
+            your own ideas side-by-side, or <span className="font-bold text-indigo-400">Pro</span>{" "}
+            to also compare against every public idea on the platform.
+          </p>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white"
+            style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+          >
+            See plans <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     );
   }
@@ -589,8 +663,21 @@ export default function ComparePage() {
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Compare Ideas</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {ideas.length} ideas available · Select 2 to compare
+            {plan === "plus" && (
+              <span className="ml-2 text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
+                Plus · your ideas only
+              </span>
+            )}
           </p>
         </div>
+        {plan === "plus" && (
+          <Link
+            href="/pricing"
+            className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+          >
+            Upgrade to Pro to compare against all public ideas →
+          </Link>
+        )}
       </div>
 
       {/* Selection bar */}

@@ -51,11 +51,11 @@ export default async function CategoryIdeasPage({
 
   const { data: profile } = await supabase
     .from("user_profiles")
-    .select("viewer_plan")
+    .select("plan")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profile?.viewer_plan !== "pro") redirect("/pricing");
+  if (profile?.plan !== "pro") redirect("/pricing");
 
   const { data } = await supabase
     .from("idea_submissions")

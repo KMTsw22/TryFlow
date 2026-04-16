@@ -75,7 +75,7 @@ export default async function IdeaReportPage({
   const { data: viewerProfile } = user
     ? await supabase
         .from("user_profiles")
-        .select("viewer_plan, submitter_plan")
+        .select("plan")
         .eq("id", user.id)
         .maybeSingle()
     : { data: null };
@@ -89,16 +89,17 @@ export default async function IdeaReportPage({
         .maybeSingle()
     : { data: null };
 
-  const isViewer = viewerProfile?.viewer_plan === "pro";
-  const isSubmitterPro = viewerProfile?.submitter_plan === "pro";
+  const plan = (viewerProfile?.plan ?? "free") as "free" | "plus" | "pro";
+  const isPro = plan === "pro";
+  const isPlusOrPro = plan === "plus" || plan === "pro";
   const isOwnIdea = !!user && user.id === idea.user_id;
 
   // Detailed 분석 공개 기준:
-  //  - 자기 아이디어: Submitter Pro만
-  //  - 남의 아이디어: Viewer Pro만 (보통 /explore 게이트를 통과한 사용자)
-  const detailed = isOwnIdea ? isSubmitterPro : isViewer;
+  //  - 자기 아이디어: Plus 또는 Pro
+  //  - 남의 아이디어: Pro 전용 (Free/Plus는 요약만)
+  const detailed = isOwnIdea ? isPlusOrPro : isPro;
 
-  const canContact = isViewer && !!submitterProfile?.allow_contact;
+  const canContact = isPro && !!submitterProfile?.allow_contact;
   const date = new Date(idea.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
   const hasAiScore = !!aiData?.viability_score;
@@ -275,7 +276,7 @@ export default async function IdeaReportPage({
           ideaId={idea.id}
           category={idea.category}
           canContact={canContact}
-          isSubscriber={isViewer}
+          isSubscriber={isPro}
         />
 
         {/* CTAs */}
