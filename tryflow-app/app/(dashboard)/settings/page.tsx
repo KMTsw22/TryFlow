@@ -50,7 +50,7 @@ export default async function SettingsPage() {
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between py-3 border-b last:border-0"
               style={{ borderColor: "var(--t-border-subtle)" }}>
-              <span className="text-gray-500 dark:text-gray-500">{label}</span>
+              <span className="text-gray-600 dark:text-gray-400">{label}</span>
               <span className="font-mono text-xs text-gray-600 dark:text-gray-300">{value}</span>
             </div>
           ))}
@@ -85,7 +85,7 @@ export default async function SettingsPage() {
         <div className="flex items-center justify-between p-4 border" style={{ borderColor: "rgba(239,68,68,0.15)", background: "rgba(239,68,68,0.04)" }}>
           <div>
             <p className="text-sm font-medium text-gray-900 dark:text-white">Delete Account</p>
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-0.5">Permanently delete your account and all project data.</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Permanently delete your account and all project data.</p>
           </div>
           <button disabled
             className="shrink-0 text-xs font-semibold text-red-400 border border-red-500/30 px-4 py-2 hover:bg-red-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import DeepAnalysis from "@/components/DeepAnalysis";
 import { ContactSection } from "@/components/vc/ContactSection";
+import { PendingReportView } from "@/components/ideas/PendingReportView";
 
 interface Report {
   viability_score: number;
@@ -128,17 +129,7 @@ export default async function IdeaReportPage({
     return (
       <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
         {Navbar}
-        <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-6"
-            style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}>
-            <span className="text-2xl animate-spin inline-block text-indigo-400">⟳</span>
-          </div>
-          <h1 className="text-xl font-extrabold text-white mb-2">Report is being generated</h1>
-          <p className="text-sm text-gray-400 mb-8">Your idea was submitted on {date}. The insight report is being processed — check back shortly.</p>
-          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 text-sm hover:bg-indigo-400 transition-colors">
-            Submit another idea →
-          </Link>
-        </div>
+        <PendingReportView submittedDate={date} />
       </div>
     );
   }

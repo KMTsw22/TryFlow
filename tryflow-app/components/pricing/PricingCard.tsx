@@ -89,7 +89,7 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
               <span className="text-gray-500 text-sm mb-1">{plan.period}</span>
             )}
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-500 leading-relaxed">{plan.description}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{plan.description}</p>
         </div>
 
         {/* Features */}

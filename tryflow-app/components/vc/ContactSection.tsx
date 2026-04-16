@@ -91,7 +91,7 @@ export function ContactSection({ ideaId, category, canContact, isSubscriber }: P
         {sent ? (
           <div className="text-center py-4">
             <p className="text-sm font-bold text-emerald-400 mb-1">Gmail opened.</p>
-            <p className="text-xs text-gray-500 dark:text-gray-500">The recipient, subject, and message have been pre-filled.</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">The recipient, subject, and message have been pre-filled.</p>
             <button
               onClick={() => setSent(false)}
               className="mt-4 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
@@ -101,7 +101,7 @@ export function ContactSection({ ideaId, category, canContact, isSubscriber }: P
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-500 dark:text-gray-500">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               Click <strong className="text-gray-600 dark:text-gray-400">Open in Gmail</strong> after writing to open the Gmail compose window.
             </p>
             <div>

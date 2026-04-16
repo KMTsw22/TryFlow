@@ -18,8 +18,22 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const isLoggedIn = !!user;
+  let isLoggedIn = false;
+  let plan: string | null = null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    isLoggedIn = !!user;
+    if (user) {
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("plan")
+        .eq("id", user.id)
+        .maybeSingle();
+      plan = profile?.plan ?? null;
+    }
+  } catch {
+    // Auth or profile query failed — render as logged-out rather than crash the whole app.
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -40,7 +54,7 @@ export default async function RootLayout({
       <body>
         <ThemeProvider>
           <NavigationProgress />
-          <SidebarWrapper isLoggedIn={isLoggedIn} />
+          <SidebarWrapper isLoggedIn={isLoggedIn} plan={plan} />
           <ContentWrapper>{children}</ContentWrapper>
         </ThemeProvider>
       </body>

@@ -538,7 +538,7 @@ export default function ComparePage() {
               <ArrowLeft className="w-3.5 h-3.5" /> Back to selection
             </button>
             <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Idea Comparison</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Side-by-side analysis of two ideas</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Side-by-side analysis of two ideas</p>
           </div>
           {winner && (
             <div className="flex items-center gap-2 px-4 py-2 border"
@@ -694,7 +694,7 @@ export default function ComparePage() {
               {selIdea ? (
                 <span className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">{truncate(selIdea.description, 45)}</span>
               ) : (
-                <span className="text-xs text-gray-400 dark:text-gray-400">Pick idea {String.fromCharCode(65 + i)}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-300">Pick idea {String.fromCharCode(65 + i)}</span>
               )}
             </div>
           );
@@ -705,7 +705,7 @@ export default function ComparePage() {
             <GitCompare className="w-4 h-4" /> Compare
           </button>
         ) : (
-          <div className="shrink-0 px-4 py-2 text-xs text-gray-400 dark:text-gray-400 border" style={{ borderColor: "var(--t-border)" }}>
+          <div className="shrink-0 px-4 py-2 text-xs text-gray-500 dark:text-gray-300 border" style={{ borderColor: "var(--t-border)" }}>
             {selected.length}/2 selected
           </div>
         )}

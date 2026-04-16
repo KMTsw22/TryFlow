@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Lock, EyeOff, Globe, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, Lock, EyeOff, Globe, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const IDEA_STAGES = [
@@ -41,7 +41,6 @@ export default function SubmitPage() {
   const [error, setError] = useState("");
   const [canPrivate, setCanPrivate] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [contactOpen, setContactOpen] = useState(false);
   const [contact, setContact] = useState({
     allow_contact: false,
     contact_email: "",
@@ -216,6 +215,11 @@ export default function SubmitPage() {
                       className="w-full border-2 border-gray-200  px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-400 transition-colors"
                     />
                   </div>
+                  {form.target_user.length > 0 && form.target_user.trim().length < 5 && (
+                    <p className="text-xs text-amber-600 font-medium">
+                      Need at least 5 characters — you have {form.target_user.trim().length}.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -233,121 +237,59 @@ export default function SubmitPage() {
                   className="w-full border-2 border-gray-200  px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-indigo-400 transition-colors resize-none leading-relaxed"
                 />
                 <div className="flex justify-between mt-2">
-                  <span className="text-xs text-gray-400">Min 30 characters</span>
-                  <span className={`text-xs font-medium ${form.description.length >= 30 ? "text-green-500" : "text-gray-400"}`}>
+                  <span className={`text-xs font-medium ${
+                    form.description.length === 0
+                      ? "text-gray-400"
+                      : form.description.length >= 30
+                        ? "text-green-500"
+                        : "text-amber-600"
+                  }`}>
+                    {form.description.length === 0
+                      ? "Min 30 characters"
+                      : form.description.length >= 30
+                        ? "Looks good"
+                        : `Need ${30 - form.description.length} more characters`}
+                  </span>
+                  <span className="text-xs text-gray-400">
                     {form.description.length} chars
                   </span>
                 </div>
-                {/* Stage of development — vertical thermometer */}
-                {(() => {
-                  const idx = IDEA_STAGES.findIndex(s => s.value === form.stage);
-                  // fill heights per stage (% from bottom of tube)
-                  const fillHeights = [-1, 0, 33, 67, 100];
-                  const fillH = fillHeights[idx + 1]; // -1→0%, 0→0%, ...
-                  const tubeH = 132; // px — tube only, not bulb
-                  const bulbD = 28;  // bulb diameter px
-                  return (
-                    <div className="mt-5">
-                      <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4">
-                        Stage of development <span className="font-normal text-gray-400 normal-case">(optional)</span>
-                      </p>
-
-                      <div className="flex gap-5" style={{ height: tubeH + bulbD }}>
-
-                        {/* ── Thermometer ── */}
-                        <div className="flex flex-col items-center shrink-0" style={{ width: bulbD }}>
-                          {/* Tube */}
-                          <div
-                            className="relative overflow-hidden"
-                            style={{
-                              width: 14,
-                              height: tubeH,
-                              background: "#f1f5f9",
-                              borderRadius: "999px 999px 0 0",
-                              border: "2px solid #e2e8f0",
-                              borderBottom: "none",
-                            }}
-                          >
-                            {/* Mercury fill — rises from bottom */}
-                            <div
-                              className="absolute bottom-0 left-0 right-0"
-                              style={{
-                                height: `${fillH}%`,
-                                background: "linear-gradient(to top, #ef4444 0%, #fb923c 40%, #a78bfa 75%, #60a5fa 100%)",
-                                transition: "height 0.5s cubic-bezier(0.34,1.56,0.64,1)",
-                              }}
+                {/* Stage of development — chip selector */}
+                <div className="mt-5">
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                    Stage of development <span className="font-normal text-gray-400 normal-case">(optional)</span>
+                  </p>
+                  <p className="text-[11px] text-gray-400 mb-3">
+                    Helps us benchmark your idea against similar-stage submissions.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {IDEA_STAGES.map((s) => {
+                      const active = form.stage === s.value;
+                      return (
+                        <button
+                          key={s.value}
+                          type="button"
+                          onClick={() => setForm({ ...form, stage: active ? "" : s.value })}
+                          className={`text-left px-3 py-2.5 border-2 text-sm transition-all duration-150 ${
+                            active
+                              ? "bg-indigo-50 text-indigo-700"
+                              : "border-gray-100 text-gray-600 hover:border-gray-200"
+                          }`}
+                          style={active ? { borderColor: s.color } : undefined}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ background: active ? s.color : "#cbd5e1" }}
                             />
-                            {/* Tick lines */}
-                            {[33, 67, 100].map(p => (
-                              <div
-                                key={p}
-                                className="absolute left-0 right-0"
-                                style={{
-                                  bottom: `${p}%`,
-                                  height: 1,
-                                  background: "rgba(0,0,0,0.08)",
-                                }}
-                              />
-                            ))}
+                            <span className="font-bold text-xs">{s.label}</span>
                           </div>
-
-                          {/* Bulb */}
-                          <div
-                            style={{
-                              width: bulbD,
-                              height: bulbD,
-                              borderRadius: "50%",
-                              marginTop: -2,
-                              background: idx >= 0 ? "#ef4444" : "#e2e8f0",
-                              border: "2px solid",
-                              borderColor: idx >= 0 ? "#dc2626" : "#cbd5e1",
-                              boxShadow: idx >= 0 ? "0 0 0 4px #ef444425, 0 2px 8px #ef444440" : "none",
-                              transition: "all 0.4s ease",
-                            }}
-                          />
-                        </div>
-
-                        {/* ── Stage labels (top = Launched, bottom = Idea) ── */}
-                        <div className="flex flex-col justify-between flex-1 py-px">
-                          {[...IDEA_STAGES].reverse().map((s, ri) => {
-                            const i = IDEA_STAGES.length - 1 - ri;
-                            const isActive = idx === i;
-                            const isPast   = idx > i;
-                            return (
-                              <button
-                                key={s.value}
-                                type="button"
-                                onClick={() => setForm({ ...form, stage: form.stage === s.value ? "" : s.value })}
-                                className="flex items-center gap-2.5 text-left group"
-                              >
-                                {/* Tick connector */}
-                                <div
-                                  className="h-px w-3 shrink-0 transition-all duration-300"
-                                  style={{ background: isActive || isPast ? s.color : "#e2e8f0" }}
-                                />
-                                <div>
-                                  <p
-                                    className="text-sm font-bold leading-tight transition-colors duration-200"
-                                    style={{ color: isActive ? s.color : isPast ? "#94a3b8" : "#cbd5e1" }}
-                                  >
-                                    {s.label}
-                                  </p>
-                                  <p
-                                    className="text-[10px] mt-0.5 transition-colors duration-200"
-                                    style={{ color: isActive ? "#94a3b8" : "#cbd5e1" }}
-                                  >
-                                    {s.sub}
-                                  </p>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                      </div>
-                    </div>
-                  );
-                })()}
+                          <p className="text-[10px] text-gray-400 mt-0.5 ml-4 leading-snug">{s.sub}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Visibility selection — Plus/Pro only */}
                 {canPrivate ? (
@@ -429,80 +371,74 @@ export default function SubmitPage() {
                   </div>
                 )}
 
-                {/* Contact info — logged-in users only */}
+                {/* Contact info — logged-in users only (default open so users don't miss it) */}
                 {userId && (
                   <div className="mt-5">
-                    <button
-                      type="button"
-                      onClick={() => setContactOpen(!contactOpen)}
-                      className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-100 bg-gray-50/50 text-left transition-colors hover:border-gray-200"
-                    >
-                      <div>
-                        <span className="text-xs font-bold text-gray-600">Contact info <span className="font-normal text-gray-400">(optional)</span></span>
-                        <p className="text-[11px] text-gray-400 mt-0.5">Let interested investors or collaborators reach out to you.</p>
-                      </div>
-                      {contactOpen ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
-                    </button>
+                    <div className="mb-2">
+                      <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Contact info <span className="font-normal text-gray-400 normal-case">(optional)</span>
+                      </span>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        Let Pro investors and collaborators reach out about this idea.
+                      </p>
+                    </div>
 
-                    {contactOpen && (
-                      <div className="border-2 border-t-0 border-gray-100 px-4 py-4 space-y-3">
-                        {/* Allow contact toggle */}
-                        <label className="flex items-center gap-3 cursor-pointer select-none">
-                          <div
-                            onClick={() => setContact({ ...contact, allow_contact: !contact.allow_contact })}
-                            className={`w-9 h-5 rounded-full transition-colors shrink-0 relative ${contact.allow_contact ? "bg-indigo-500" : "bg-gray-200"}`}
-                          >
-                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${contact.allow_contact ? "left-4" : "left-0.5"}`} />
-                          </div>
-                          <span className="text-xs font-medium text-gray-600">Allow others to contact me about this idea</span>
-                        </label>
+                    <div className="border-2 border-gray-100 px-4 py-3 space-y-3">
+                      <label className="flex items-center gap-3 cursor-pointer select-none">
+                        <div
+                          onClick={() => setContact({ ...contact, allow_contact: !contact.allow_contact })}
+                          className={`w-9 h-5 rounded-full transition-colors shrink-0 relative ${contact.allow_contact ? "bg-indigo-500" : "bg-gray-200"}`}
+                        >
+                          <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${contact.allow_contact ? "left-4" : "left-0.5"}`} />
+                        </div>
+                        <span className="text-xs font-medium text-gray-600">Allow others to contact me about this idea</span>
+                      </label>
 
-                        {contact.allow_contact && (
-                          <div className="space-y-2.5 pt-1">
-                            <div>
-                              <label className="block text-[11px] font-semibold text-gray-500 mb-1">Email</label>
-                              <input
-                                type="email"
-                                value={contact.contact_email}
-                                onChange={(e) => setContact({ ...contact, contact_email: e.target.value })}
-                                placeholder="you@example.com"
-                                className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] font-semibold text-gray-500 mb-1">Phone <span className="font-normal text-gray-400">(optional)</span></label>
-                              <input
-                                type="tel"
-                                value={contact.contact_phone}
-                                onChange={(e) => setContact({ ...contact, contact_phone: e.target.value })}
-                                placeholder="+1 (555) 000-0000"
-                                className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] font-semibold text-gray-500 mb-1">LinkedIn <span className="font-normal text-gray-400">(optional)</span></label>
-                              <input
-                                type="url"
-                                value={contact.contact_linkedin}
-                                onChange={(e) => setContact({ ...contact, contact_linkedin: e.target.value })}
-                                placeholder="https://linkedin.com/in/yourname"
-                                className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] font-semibold text-gray-500 mb-1">Other <span className="font-normal text-gray-400">(optional)</span></label>
-                              <input
-                                type="text"
-                                value={contact.contact_other}
-                                onChange={(e) => setContact({ ...contact, contact_other: e.target.value })}
-                                placeholder="Twitter, Telegram, website..."
-                                className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
-                              />
-                            </div>
+                      {contact.allow_contact && (
+                        <div className="space-y-2.5 pt-1">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Email</label>
+                            <input
+                              type="email"
+                              value={contact.contact_email}
+                              onChange={(e) => setContact({ ...contact, contact_email: e.target.value })}
+                              placeholder="you@example.com"
+                              className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
+                            />
                           </div>
-                        )}
-                      </div>
-                    )}
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Phone <span className="font-normal text-gray-400">(optional)</span></label>
+                            <input
+                              type="tel"
+                              value={contact.contact_phone}
+                              onChange={(e) => setContact({ ...contact, contact_phone: e.target.value })}
+                              placeholder="+1 (555) 000-0000"
+                              className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">LinkedIn <span className="font-normal text-gray-400">(optional)</span></label>
+                            <input
+                              type="url"
+                              value={contact.contact_linkedin}
+                              onChange={(e) => setContact({ ...contact, contact_linkedin: e.target.value })}
+                              placeholder="https://linkedin.com/in/yourname"
+                              className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">Other <span className="font-normal text-gray-400">(optional)</span></label>
+                            <input
+                              type="text"
+                              value={contact.contact_other}
+                              onChange={(e) => setContact({ ...contact, contact_other: e.target.value })}
+                              placeholder="Twitter, Telegram, website..."
+                              className="w-full border border-gray-200 px-3 py-2 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:border-indigo-400 transition-colors"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 

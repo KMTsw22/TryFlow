@@ -324,7 +324,7 @@ function OverallSignal({ score, summary, trend, saturation }: { score: number; s
         style={{ background: verdict.bg }}>
         <span className={`text-xs font-bold ${verdict.color}`}>{verdict.label}</span>
       </div>
-      <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm mx-auto">{summary}</p>
+      <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed max-w-md mx-auto">{summary}</p>
     </div>
   );
 }
@@ -451,7 +451,7 @@ export default function DeepAnalysis({
             <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
           </div>
           <h3 className="text-lg font-extrabold text-white mb-2">AI Deep Analysis in Progress</h3>
-          <p className="text-sm text-gray-400 mb-6">8 specialist agents analyzing in parallel</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">8 specialist agents analyzing in parallel</p>
           <div className="max-w-sm mx-auto space-y-2">
             {ANALYSIS_STEPS.map((step, i) => (
               <div key={step}
@@ -494,7 +494,7 @@ export default function DeepAnalysis({
           style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
           <div className="flex items-center gap-2 mb-5">
             <Brain className="w-4 h-4 text-indigo-400" />
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">8-Agent Analysis Breakdown</p>
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">8-Agent Analysis Breakdown</p>
           </div>
 
           {/* Radar */}
@@ -602,18 +602,18 @@ export default function DeepAnalysis({
                 {/* Signal badges */}
                 <AgentSignals agentKey={expandedAgent} data={agentData} />
                 {/* Short summary — always visible */}
-                <p className="text-xs text-gray-400 leading-relaxed">{shortText}</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{shortText}</p>
                 {/* Full text — shown when expanded */}
                 {isFull && isLong && (
-                  <p className="text-xs text-gray-400 leading-relaxed mt-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mt-2">
                     {agentData.assessment.slice(SHORT_LIMIT)}
                   </p>
                 )}
                 {/* Detailed assessment — if available, Submitter Pro only */}
                 {detailed && isFull && agentData.detailed_assessment && (
                   <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--t-border-bright)" }}>
-                    <p className="text-[10px] text-indigo-400 font-bold mb-1">Detailed Analysis</p>
-                    <p className="text-xs text-gray-400 leading-relaxed">{agentData.detailed_assessment}</p>
+                    <p className="text-[11px] text-indigo-500 dark:text-indigo-400 font-bold mb-1 tracking-wider uppercase">Detailed Analysis</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{agentData.detailed_assessment}</p>
                   </div>
                 )}
                 {detailed && (isLong || agentData.detailed_assessment) && (
@@ -640,7 +640,7 @@ export default function DeepAnalysis({
               <Sparkles className="w-4 h-4 text-indigo-400" />
               <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest">Summary view</p>
             </div>
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">
+            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed mb-4">
               You&apos;re seeing the summarized score and radar. Upgrade to{" "}
               <span className="font-bold text-white">Plus</span> to unlock
               detailed per-agent assessments, cross-agent insights, opportunities,
@@ -662,7 +662,7 @@ export default function DeepAnalysis({
             style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
               <Brain className="w-4 h-4 text-indigo-400" />
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cross-Agent Insights</p>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Cross-Agent Insights</p>
             </div>
             <ul className="space-y-2">
               {report.cross_agent_insights.map((insight, i) => (
@@ -671,7 +671,7 @@ export default function DeepAnalysis({
                     style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)" }}>
                     {i + 1}
                   </span>
-                  <p className="text-sm text-gray-300 leading-relaxed">{insight}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{insight}</p>
                 </li>
               ))}
             </ul>
@@ -692,7 +692,7 @@ export default function DeepAnalysis({
                   {report.opportunities.map((opp, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-emerald-400 mt-0.5 shrink-0 font-bold">+</span>
-                      <p className="text-sm text-gray-300 leading-relaxed">{opp}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{opp}</p>
                     </li>
                   ))}
                 </ul>
@@ -709,7 +709,7 @@ export default function DeepAnalysis({
                   {report.risks.map((risk, i) => (
                     <li key={i} className="flex items-start gap-2">
                       <span className="text-red-400 mt-0.5 shrink-0 font-bold">!</span>
-                      <p className="text-sm text-gray-300 leading-relaxed">{risk}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{risk}</p>
                     </li>
                   ))}
                 </ul>
@@ -724,7 +724,7 @@ export default function DeepAnalysis({
             style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
               <ArrowRight className="w-4 h-4 text-indigo-400" />
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Next Steps This Week</p>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Next Steps This Week</p>
             </div>
             <ul className="space-y-2">
               {report.next_steps.map((step, i) => (
@@ -733,7 +733,7 @@ export default function DeepAnalysis({
                   <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                     {i + 1}
                   </span>
-                  <p className="text-sm text-gray-300 leading-relaxed">{step}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{step}</p>
                 </li>
               ))}
             </ul>
@@ -759,7 +759,7 @@ export default function DeepAnalysis({
           <Sparkles className="w-7 h-7 text-indigo-400" />
         </div>
         <h3 className="text-lg font-extrabold text-white mb-2">Want a deeper analysis?</h3>
-        <p className="text-sm text-gray-400 mb-6 max-w-sm mx-auto">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
           Our AI system runs 8 specialist agents in parallel to analyze market size,
           competition, timing, monetization, technical complexity, regulation,
           defensibility, and user acquisition.

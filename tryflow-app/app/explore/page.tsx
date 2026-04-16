@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Minus, ArrowRight, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ArrowRight, ChevronRight, Lock, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CategoryTrend {
   category: string;
@@ -46,7 +47,7 @@ export default async function ExplorePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Guard: require active subscription (middleware handles redirect, this is a safety net)
+  // Guests still need to log in, but Plus/Free users see a blurred teaser instead of a redirect
   if (!user) redirect("/login?next=/explore");
 
   const { data: profile } = await supabase
@@ -55,7 +56,7 @@ export default async function ExplorePage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profile?.plan !== "pro") redirect("/pricing");
+  const isLocked = profile?.plan !== "pro";
 
   const now = new Date();
   const d7  = new Date(now); d7.setDate(now.getDate() - 7);
@@ -148,15 +149,24 @@ export default async function ExplorePage() {
         </div>
 
         {/* Category list */}
-        <div className=" border overflow-hidden"
+        <div className="relative border overflow-hidden"
           style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
           <div className="px-6 py-4 border-b flex items-center justify-between"
             style={{ borderColor: "var(--t-border)" }}>
             <h2 className="font-bold text-gray-900 dark:text-white text-sm">By Category — Last 30 Days</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Sorted by submission volume</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {isLocked ? "Pro members only" : "Sorted by submission volume"}
+            </p>
           </div>
 
-          <div className="divide-y" style={{ borderColor: "var(--t-border-subtle)" }}>
+          <div
+            className={cn(
+              "divide-y transition-all",
+              isLocked && "blur-md pointer-events-none select-none"
+            )}
+            style={{ borderColor: "var(--t-border-subtle)" }}
+            aria-hidden={isLocked ? "true" : undefined}
+          >
             {trends.map((t) => {
               const tConf = TREND_ICON[t.direction];
               const TIcon = tConf.icon;
@@ -210,6 +220,46 @@ export default async function ExplorePage() {
               );
             })}
           </div>
+
+          {/* Paywall overlay — only when locked */}
+          {isLocked && (
+            <div
+              className="absolute inset-0 flex items-center justify-center p-6"
+              style={{
+                background: "linear-gradient(180deg, rgba(10,10,15,0.25) 0%, rgba(10,10,15,0.75) 60%)",
+              }}
+            >
+              <div
+                className="max-w-md w-full text-center border p-8 shadow-2xl"
+                style={{
+                  background: "var(--card-bg)",
+                  borderColor: "rgba(129,140,248,0.35)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-full"
+                  style={{ background: "rgba(99,102,241,0.15)" }}>
+                  <Lock className="w-5 h-5 text-indigo-400" />
+                </div>
+                <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-2">Pro feature</p>
+                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
+                  Unlock the full market dashboard
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  See every category's trend direction, saturation, and opportunity signal — refreshed in real time.
+                </p>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 text-sm hover:bg-indigo-400 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Upgrade to Pro
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <p className="mt-4 text-[11px] text-gray-500">7-day free trial · Cancel anytime</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* CTA */}

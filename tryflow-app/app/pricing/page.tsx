@@ -168,7 +168,7 @@ export default async function PricingPage() {
                   <span className="w-2 h-2 rounded-full" style={{ background: color }} />
                   <h3 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-500 leading-relaxed">{desc}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>

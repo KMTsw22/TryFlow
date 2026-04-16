@@ -12,32 +12,62 @@ import {
   LogIn,
   Home,
   GitCompare,
+  Sparkles,
+  Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-const GUEST_NAV = [
-  { label: "Home",   icon: Home,     href: "/" },
-  { label: "Plans", icon: BarChart3, href: "/explore" },
+type NavItem = { label: string; icon: typeof Home; href: string };
+type NavSection = { id: string; title: string; items: NavItem[] };
+
+const GUEST_SECTIONS: NavSection[] = [
+  {
+    id: "main",
+    title: "",
+    items: [
+      { label: "Home",    icon: Home, href: "/" },
+      { label: "Pricing", icon: Tag,  href: "/pricing" },
+    ],
+  },
 ];
 
-const AUTH_NAV = [
-  { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Plans",    icon: BarChart3,        href: "/explore" },
-  { label: "Compare",  icon: GitCompare,       href: "/compare" },
-  { label: "Settings", icon: Settings,         href: "/settings" },
+const AUTH_SECTIONS: NavSection[] = [
+  {
+    id: "create",
+    title: "Create",
+    items: [
+      { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
+    ],
+  },
+  {
+    id: "explore",
+    title: "Explore",
+    items: [
+      { label: "Market",  icon: BarChart3,  href: "/explore" },
+      { label: "Compare", icon: GitCompare, href: "/compare" },
+    ],
+  },
+  {
+    id: "account",
+    title: "Account",
+    items: [
+      { label: "Settings", icon: Settings, href: "/settings" },
+    ],
+  },
 ];
 
 interface Props {
   isLoggedIn: boolean;
+  plan?: string | null;
 }
 
-export function Sidebar({ isLoggedIn }: Props) {
+export function Sidebar({ isLoggedIn, plan }: Props) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
 
-  const NAV = isLoggedIn ? AUTH_NAV : GUEST_NAV;
+  const SECTIONS = isLoggedIn ? AUTH_SECTIONS : GUEST_SECTIONS;
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -73,32 +103,48 @@ export function Sidebar({ isLoggedIn }: Props) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-hidden">
-        {NAV.map(({ label, icon: Icon, href }) => {
-          const active = pathname === href || (href !== "/" && pathname.startsWith(href));
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={!expanded ? label : undefined}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all duration-150 whitespace-nowrap rounded-sm",
-                active
-                  ? "text-indigo-600 dark:text-indigo-300"
-                  : "text-gray-500 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300"
-              )}
-              style={active ? { background: "rgba(99,102,241,0.12)" } : undefined}
-            >
-              <Icon className={cn("w-4 h-4 shrink-0", active ? "text-indigo-500 dark:text-indigo-400" : "text-gray-400 dark:text-gray-600")} />
-              <span className={cn(
-                "transition-all duration-150",
-                expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
-              )}>
-                {label}
-              </span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-2 py-3 overflow-hidden">
+        {SECTIONS.map((section, sectionIdx) => (
+          <div key={section.id} className={cn(sectionIdx > 0 && "mt-4")}>
+            {section.title && (
+              <div
+                className={cn(
+                  "px-3 mb-1 text-[10px] font-bold tracking-widest uppercase text-gray-400 dark:text-gray-600 transition-all duration-150 overflow-hidden whitespace-nowrap",
+                  expanded ? "opacity-100 h-4 delay-75" : "opacity-0 h-0"
+                )}
+              >
+                {section.title}
+              </div>
+            )}
+            <div className="space-y-0.5">
+              {section.items.map(({ label, icon: Icon, href }) => {
+                const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    title={!expanded ? label : undefined}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all duration-150 whitespace-nowrap rounded-sm",
+                      active
+                        ? "text-indigo-600 dark:text-indigo-300"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                    )}
+                    style={active ? { background: "rgba(99,102,241,0.12)" } : undefined}
+                  >
+                    <Icon className={cn("w-4 h-4 shrink-0", active ? "text-indigo-500 dark:text-indigo-400" : "text-gray-400 dark:text-gray-600")} />
+                    <span className={cn(
+                      "transition-all duration-150",
+                      expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
+                    )}>
+                      {label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Bottom */}
@@ -122,6 +168,26 @@ export function Sidebar({ isLoggedIn }: Props) {
                 Submit Idea
               </span>
             </Link>
+
+            {plan !== "pro" && (
+              <Link
+                href="/pricing"
+                title={!expanded ? "Upgrade to Pro" : undefined}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-sm transition-colors whitespace-nowrap",
+                  "text-amber-600 dark:text-amber-300 hover:text-amber-700 dark:hover:text-amber-200"
+                )}
+                style={{ background: "rgba(245,158,11,0.1)" }}
+              >
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <span className={cn(
+                  "transition-all duration-150",
+                  expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
+                )}>
+                  Upgrade to Pro
+                </span>
+              </Link>
+            )}
 
             <ThemeToggle expanded={expanded} />
 

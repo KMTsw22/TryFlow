@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Plus, TrendingUp, TrendingDown, Minus, ArrowRight, BarChart3, FileText, GitCompare } from "lucide-react";
+import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
 
 interface Report {
   viability_score: number;
@@ -67,6 +68,11 @@ export default async function DashboardPage() {
       )
     : null;
 
+  const hasReport = ideas.some((i) => !!getReport(i));
+  const firstReportIdeaId = ideas.find((i) => !!getReport(i))?.id
+    ?? ideas[0]?.id
+    ?? null;
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       {/* Header */}
@@ -80,6 +86,13 @@ export default async function DashboardPage() {
           <Plus className="w-4 h-4" /> New idea
         </Link>
       </div>
+
+      {/* Onboarding checklist (self-hides once all steps done or dismissed) */}
+      <OnboardingChecklist
+        hasIdeas={hasIdeas}
+        hasReport={hasReport}
+        firstIdeaId={firstReportIdeaId}
+      />
 
       {/* Stats */}
       {hasIdeas && (
@@ -172,7 +185,7 @@ export default async function DashboardPage() {
                       })()}
                     </div>
                     <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">For: {idea.target_user}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2">{idea.description}</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-2">{idea.description}</p>
                   </div>
 
                   {report && (
