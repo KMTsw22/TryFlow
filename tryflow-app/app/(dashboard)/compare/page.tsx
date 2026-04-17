@@ -6,8 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import {
   TrendingUp, TrendingDown, Minus, ArrowRight,
-  CheckCircle2, Circle, GitCompare, Trophy, ArrowLeft, Search, Lock,
+  GitCompare, Trophy, ArrowLeft, Search, Lock,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { ScoreBadge } from "@/components/ui/ScoreBadge";
+import { TrendLabel, type TrendDirection } from "@/components/ui/TrendLabel";
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
   PolarRadiusAxis, ResponsiveContainer, Legend,
@@ -222,6 +225,23 @@ const CATEGORIES = [
   "All", "SaaS / B2B", "Consumer App", "Marketplace", "Dev Tools",
   "Health & Wellness", "Education", "Fintech", "E-commerce", "Hardware",
 ];
+
+function timeAgo(iso: string): string {
+  const d = new Date(iso).getTime();
+  const diff = Date.now() - d;
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const days = Math.floor(h / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks}w ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
 
 function ScoreCircle({ score }: { score: number }) {
   const color = score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
@@ -655,167 +675,248 @@ export default function ComparePage() {
   }
 
   // ── Selection view ───────────────────────────────────────────────────────────
-  return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Compare Ideas</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {ideas.length} ideas available · Select 2 to compare
-            {plan === "plus" && (
-              <span className="ml-2 text-[11px] font-bold text-indigo-400 uppercase tracking-wider">
-                Plus · your ideas only
-              </span>
-            )}
-          </p>
-        </div>
-        {plan === "plus" && (
-          <Link
-            href="/pricing"
-            className="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
-          >
-            Upgrade to Pro to compare against all public ideas →
-          </Link>
-        )}
-      </div>
+  const bothSelected = selected.length === 2;
 
-      {/* Selection bar */}
-      <div className="flex items-center gap-3 mb-5">
+  return (
+    <div className="max-w-5xl mx-auto p-8">
+      <PageHeader
+        title="Compare ideas"
+        meta={`${ideas.length} available`}
+        description={
+          plan === "plus"
+            ? "Pick two of your own ideas to place side-by-side. Upgrade to Pro to compare against any public idea."
+            : "Pick two ideas to place side-by-side. We'll analyze signals across 8 agents."
+        }
+        action={
+          plan === "plus" ? (
+            <Link
+              href="/pricing"
+              className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-semibold border transition-colors"
+              style={{
+                color: "var(--accent)",
+                borderColor: "var(--accent-ring)",
+                background: "var(--accent-soft)",
+              }}
+            >
+              Upgrade to Pro →
+            </Link>
+          ) : undefined
+        }
+      />
+
+      {/* Static A/B dock — always visible at the top of the page */}
+      <section
+        aria-label="Comparison slots"
+        className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mb-6"
+      >
         {[0, 1].map((i) => {
           const selIdea = ideas.find((x) => x.id === selected[i]);
+          const letter = String.fromCharCode(65 + i);
+          const filled = !!selIdea;
           return (
-            <div key={i} className="flex items-center gap-2 px-3 py-2 border flex-1"
-              style={{ borderColor: selIdea ? "rgba(99,102,241,0.4)" : "var(--t-border-card)", background: selIdea ? "rgba(99,102,241,0.08)" : "var(--card-bg)" }}>
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shrink-0"
-                style={{ background: selIdea ? "#6366f1" : "rgba(99,102,241,0.2)" }}>
-                {String.fromCharCode(65 + i)}
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3.5 border min-h-[68px] transition-all duration-150"
+              style={{
+                borderColor: filled ? "var(--accent-ring)" : "var(--t-border-card)",
+                background: filled ? "var(--accent-soft)" : "var(--card-bg)",
+              }}
+            >
+              <span
+                className="w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0 border"
+                style={{
+                  color: filled ? "#fff" : "var(--text-tertiary)",
+                  background: filled ? "var(--accent)" : "transparent",
+                  borderColor: filled ? "var(--accent)" : "var(--t-border-card)",
+                }}
+              >
+                {letter}
               </span>
-              {selIdea ? (
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">{truncate(selIdea.description, 45)}</span>
+              {filled ? (
+                <div className="flex-1 min-w-0 flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-[11px] font-semibold uppercase tracking-widest truncate"
+                      style={{ color: "var(--text-tertiary)" }}
+                    >
+                      {selIdea!.category} · {timeAgo(selIdea!.created_at)}
+                    </p>
+                    <p
+                      className="text-sm font-semibold truncate"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {selIdea!.target_user}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleSelect(selIdea!.id)}
+                    aria-label={`Remove idea ${letter}`}
+                    className="shrink-0 text-xs font-medium px-2 h-7 border transition-colors hover:bg-[color:var(--t-border-subtle)]"
+                    style={{
+                      color: "var(--text-tertiary)",
+                      borderColor: "var(--t-border-card)",
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
               ) : (
-                <span className="text-xs text-gray-500 dark:text-gray-300">Pick idea {String.fromCharCode(65 + i)}</span>
+                <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>
+                  Pick an idea below as {letter}
+                </span>
               )}
             </div>
           );
         })}
-        {selected.length === 2 ? (
-          <button onClick={startCompare}
-            className="shrink-0 inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2 text-sm hover:bg-indigo-400 transition-colors">
-            <GitCompare className="w-4 h-4" /> Compare
-          </button>
-        ) : (
-          <div className="shrink-0 px-4 py-2 text-xs text-gray-500 dark:text-gray-300 border" style={{ borderColor: "var(--t-border)" }}>
-            {selected.length}/2 selected
-          </div>
-        )}
-      </div>
+
+        {/* Compare action */}
+        <button
+          onClick={startCompare}
+          disabled={!bothSelected}
+          className="inline-flex items-center justify-center gap-1.5 h-[68px] md:h-auto px-6 text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{
+            background: bothSelected ? "var(--accent)" : "var(--card-bg)",
+            color: bothSelected ? "#fff" : "var(--text-tertiary)",
+            border: bothSelected ? "none" : "1px solid var(--t-border-card)",
+          }}
+        >
+          <GitCompare className="w-4 h-4" />
+          {bothSelected ? "Compare" : `${selected.length}/2`}
+          {bothSelected && <ArrowRight className="w-4 h-4" />}
+        </button>
+      </section>
 
       {/* Search + category filter */}
-      <div className="flex flex-col gap-2 mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
+            style={{ color: "var(--text-tertiary)" }}
+          />
           <input
             type="text"
-            placeholder="Search ideas..."
+            placeholder="Search ideas by description, target, or category…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 border outline-none focus:border-indigo-500/50 transition-colors"
-            style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
+            className="w-full pl-9 pr-3 h-9 text-sm border outline-none transition-colors focus:border-[color:var(--accent)]"
+            style={{
+              background: "var(--card-bg)",
+              borderColor: "var(--t-border-card)",
+              color: "var(--text-primary)",
+            }}
           />
         </div>
-        <div className="flex items-center gap-1 flex-wrap">
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="h-9 px-3 text-sm font-medium border outline-none transition-colors focus:border-[color:var(--accent)] cursor-pointer"
+          style={{
+            background: "var(--card-bg)",
+            borderColor: "var(--t-border-card)",
+            color: "var(--text-primary)",
+            minWidth: 160,
+          }}
+          aria-label="Filter by category"
+        >
           {CATEGORIES.map((cat) => (
-            <button key={cat} onClick={() => setCategory(cat)}
-              className={`px-2.5 py-1 text-[11px] font-bold border transition-colors ${
-                category === cat
-                  ? "text-indigo-500 dark:text-indigo-300 border-indigo-500/40 bg-indigo-500/10"
-                  : "text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-800 dark:hover:text-gray-200"
-              }`}>
-              {cat}
-            </button>
+            <option key={cat} value={cat}>
+              {cat === "All" ? "All categories" : cat}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
-      {/* Ideas list */}
+      {/* Result count */}
+      <p
+        className="text-xs mb-3"
+        style={{ color: "var(--text-tertiary)" }}
+      >
+        {filtered.length} {filtered.length === 1 ? "idea" : "ideas"}
+        {(search || category !== "All") && ` match your filter`}
+      </p>
+
+      {/* Ideas grid — compact, 2-col on md+, click to select */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 border"
           style={{ borderColor: "var(--t-border)", background: "var(--card-bg)" }}>
           <p className="text-gray-500 dark:text-gray-400 text-sm">No ideas match your filter.</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map((idea) => {
             const report = getReport(idea);
             const isSelected = selected.includes(idea.id);
             const selIdx = selected.indexOf(idea.id);
+            const selLetter = isSelected ? String.fromCharCode(65 + selIdx) : null;
             const vScore = report?.viability_score ?? null;
-            const vColor = !vScore ? "text-gray-500"
-              : vScore >= 70 ? "text-emerald-400"
-              : vScore >= 50 ? "text-amber-400" : "text-red-400";
-            const vRing = !vScore ? "border-gray-700/40 bg-gray-700/10"
-              : vScore >= 70 ? "border-emerald-500/30 bg-emerald-500/10"
-              : vScore >= 50 ? "border-amber-500/30 bg-amber-500/10"
-              : "border-red-500/30 bg-red-500/10";
-            const date = new Date(idea.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            const trendLabel = report?.trend_direction as TrendDirection | null;
+            const satLabel = report?.saturation_level ?? null;
 
             return (
-              <button key={idea.id} onClick={() => toggleSelect(idea.id)}
-                className="w-full text-left border p-4 transition-all duration-150 hover:bg-white/[0.04]"
+              <button
+                key={idea.id}
+                onClick={() => toggleSelect(idea.id)}
+                aria-pressed={isSelected}
+                className="relative text-left border p-4 transition-all duration-150 hover:-translate-y-0.5 overflow-hidden group"
                 style={{
-                  background: isSelected ? "rgba(99,102,241,0.06)" : "var(--card-bg)",
-                  borderColor: isSelected ? "rgba(99,102,241,0.4)" : "var(--t-border-card)",
-                }}>
-                <div className="flex items-center gap-4">
-                  {/* Select indicator */}
-                  <div className="shrink-0">
-                    {isSelected ? (
-                      <div className="relative">
-                        <CheckCircle2 className="w-5 h-5 text-indigo-400" />
-                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-indigo-500 text-white text-[9px] font-extrabold flex items-center justify-center">
-                          {String.fromCharCode(65 + selIdx)}
-                        </span>
-                      </div>
-                    ) : (
-                      <Circle className="w-5 h-5 text-gray-500" />
-                    )}
-                  </div>
+                  background: isSelected ? "var(--accent-soft)" : "var(--card-bg)",
+                  borderColor: isSelected ? "var(--accent-ring)" : "var(--t-border-card)",
+                }}
+              >
+                {/* A/B floating badge when selected */}
+                {selLetter && (
+                  <span
+                    className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center text-xs font-bold z-10"
+                    style={{ background: "var(--accent)", color: "#fff" }}
+                  >
+                    {selLetter}
+                  </span>
+                )}
 
-                  {/* Score badge */}
-                  <div className={`flex flex-col items-center justify-center w-11 h-11 rounded-full border shrink-0 ${vRing}`}>
-                    {vScore !== null ? (
-                      <>
-                        <span className={`text-sm font-extrabold leading-none ${vColor}`}>{vScore}</span>
-                        <span className="text-[8px] text-gray-400 leading-none mt-0.5">/100</span>
-                      </>
-                    ) : (
-                      <span className="text-gray-400 text-xs">—</span>
-                    )}
+                {/* Header row: score + category + time */}
+                <div className="flex items-center gap-3 mb-3">
+                  <ScoreBadge score={vScore} size="hero" />
+                  <div className="flex-1 min-w-0 pr-8">
+                    <p
+                      className="text-[10px] font-semibold uppercase tracking-widest truncate"
+                      style={{ color: "var(--text-tertiary)" }}
+                    >
+                      {idea.category}
+                    </p>
+                    <p
+                      className="text-[11px] font-medium mt-0.5"
+                      style={{ color: "var(--text-tertiary)" }}
+                    >
+                      {timeAgo(idea.created_at)}
+                    </p>
                   </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{idea.category}</span>
-                      <span className="text-xs text-gray-400">{date}</span>
-                      {report && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${TREND_PILL[report.trend_direction] ?? TREND_PILL.Stable}`}>
-                          {report.trend_direction}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs font-semibold text-gray-200 mb-0.5">For: {idea.target_user}</p>
-                    <p className="text-xs text-gray-400 truncate">{idea.description}</p>
-                  </div>
-
-                  {/* AI summary 1-liner (md+) */}
-                  {report?.summary && (
-                    <div className="hidden lg:block w-56 shrink-0">
-                      <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{report.summary}</p>
-                    </div>
-                  )}
                 </div>
+
+                {/* Target + description */}
+                <p
+                  className="text-sm font-semibold mb-1 line-clamp-1"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  For {idea.target_user}
+                </p>
+                <p
+                  className="text-sm leading-relaxed line-clamp-2 mb-3 min-h-[40px]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {idea.description}
+                </p>
+
+                {/* Meta row: trend + saturation (plain text, no pills) */}
+                {(trendLabel || satLabel) && (
+                  <div className="flex items-center gap-3 text-xs">
+                    {trendLabel && <TrendLabel direction={trendLabel} />}
+                    {satLabel && (
+                      <span className="font-medium" style={{ color: "var(--text-tertiary)" }}>
+                        {satLabel} sat
+                      </span>
+                    )}
+                  </div>
+                )}
               </button>
             );
           })}

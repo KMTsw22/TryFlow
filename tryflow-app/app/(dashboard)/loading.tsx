@@ -1,38 +1,63 @@
+import { Skeleton } from "@/components/ui/Skeleton";
+
 export default function DashboardLoading() {
   return (
-    <div className="max-w-[1100px] mx-auto space-y-6 animate-pulse">
-      {/* Header skeleton */}
-      <div className="space-y-2">
-        <div className="h-8 w-48 bg-gray-200 " />
-        <div className="h-4 w-80 bg-gray-100 " />
-      </div>
-
-      {/* Cards skeleton */}
-      <div className="grid grid-cols-3 gap-5">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="bg-white  border border-gray-100 p-5 h-28 space-y-3">
-            <div className="h-10 w-10 bg-gray-100 " />
-            <div className="h-4 w-24 bg-gray-100 " />
-            <div className="h-7 w-16 bg-gray-200 " />
+    <div className="p-8 max-w-5xl mx-auto">
+      {/* PageHeader skeleton */}
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-baseline gap-3">
+            <Skeleton className="h-7 w-36" />
+            <Skeleton className="h-4 w-16" muted />
           </div>
-        ))}
+          <Skeleton className="h-4 w-96 max-w-full" muted />
+        </div>
+        <Skeleton className="h-9 w-32 shrink-0" />
       </div>
 
-      {/* Table skeleton */}
-      <div className="bg-white  border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <div className="h-4 w-40 bg-gray-200 " />
+      {/* Ideas — hero + 2-col rest */}
+      <div className="space-y-4">
+        {/* Hero card */}
+        <IdeaCardSkeleton hero />
+
+        {/* 2-col grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <IdeaCardSkeleton />
+          <IdeaCardSkeleton />
         </div>
-        <div className="divide-y divide-gray-50">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-4 px-6 py-4">
-              <div className="w-7 h-7  bg-gray-100 shrink-0" />
-              <div className="h-4 flex-1 bg-gray-100 " />
-              <div className="h-4 w-16 bg-gray-100 rounded-full" />
-              <div className="h-4 w-12 bg-gray-100 " />
-            </div>
-          ))}
+      </div>
+    </div>
+  );
+}
+
+function IdeaCardSkeleton({ hero = false }: { hero?: boolean }) {
+  return (
+    <div
+      className="border p-6"
+      style={{
+        background: "var(--card-bg)",
+        borderColor: "var(--t-border-card)",
+        minHeight: hero ? 240 : 200,
+      }}
+    >
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-24" muted />
+          <Skeleton className="h-4 w-14" muted />
         </div>
+        <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+      </div>
+      {/* Body */}
+      <Skeleton className="h-5 w-3/4 mb-2" />
+      <Skeleton className="h-4 w-full mb-1" muted />
+      <Skeleton className="h-4 w-5/6 mb-4" muted />
+      {hero && <Skeleton className="h-10 w-full mb-4" muted />}
+      {/* Footer meta */}
+      <div className="flex items-center gap-3 mt-4">
+        <Skeleton className="h-4 w-20" muted />
+        <Skeleton className="h-4 w-16" muted />
+        <Skeleton className="h-4 w-16" muted />
       </div>
     </div>
   );

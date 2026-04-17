@@ -28,3 +28,101 @@ export async function GET(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Confirm ownership
+    const { data: idea, error: fetchErr } = await supabase
+      .from("idea_submissions")
+      .select("id, user_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchErr || !idea) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    if (idea.user_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await req.json();
+
+    // Whitelist — only a handful of fields are editable post-submission.
+    const update: Record<string, unknown> = {};
+    if (body.is_private !== undefined) update.is_private = !!body.is_private;
+
+    if (Object.keys(update).length === 0) {
+      return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+    }
+
+    const { error: updErr } = await supabase
+      .from("idea_submissions")
+      .update(update)
+      .eq("id", id);
+
+    if (updErr) {
+      console.error("PATCH /api/ideas/[id]", updErr);
+      return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("PATCH /api/ideas/[id]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Confirm the caller owns the idea before deleting.
+    const { data: idea, error: fetchErr } = await supabase
+      .from("idea_submissions")
+      .select("id, user_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchErr || !idea) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    if (idea.user_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { error: delErr } = await supabase
+      .from("idea_submissions")
+      .delete()
+      .eq("id", id);
+
+    if (delErr) {
+      console.error("DELETE /api/ideas/[id]", delErr);
+      return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("DELETE /api/ideas/[id]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

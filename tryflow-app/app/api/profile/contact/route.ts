@@ -9,19 +9,30 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { contact_email, contact_phone, contact_linkedin, contact_other, allow_contact } =
-    await request.json();
+  const body = await request.json();
+
+  // Partial update — only apply fields explicitly present in the body so a
+  // single-toggle request (e.g. {allow_contact: false}) doesn't wipe the
+  // stored contact details.
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+  const strField = (key: string, value: unknown) => {
+    if (value === undefined) return;
+    update[key] = typeof value === "string" && value.trim() ? value.trim() : null;
+  };
+
+  strField("contact_email", body.contact_email);
+  strField("contact_phone", body.contact_phone);
+  strField("contact_linkedin", body.contact_linkedin);
+  strField("contact_other", body.contact_other);
+
+  if (body.allow_contact !== undefined) {
+    update.allow_contact = !!body.allow_contact;
+  }
 
   const { error } = await supabase
     .from("user_profiles")
-    .update({
-      contact_email: contact_email?.trim() || null,
-      contact_phone: contact_phone?.trim() || null,
-      contact_linkedin: contact_linkedin?.trim() || null,
-      contact_other: contact_other?.trim() || null,
-      allow_contact: !!allow_contact,
-      updated_at: new Date().toISOString(),
-    })
+    .update(update)
     .eq("id", user.id);
 
   if (error) {

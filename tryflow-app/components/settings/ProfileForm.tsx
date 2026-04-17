@@ -11,8 +11,14 @@ interface Props {
   avatarUrl?: string;
 }
 
-const inputClass = "w-full border px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-indigo-500/50 transition-colors";
-const inputStyle = { background: "var(--input-bg)", borderColor: "var(--t-border-bright)" };
+const inputClass =
+  "w-full border h-9 px-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]";
+
+const inputStyle = {
+  background: "var(--input-bg)",
+  borderColor: "var(--t-input-border)",
+  color: "var(--text-primary)",
+};
 
 export function ProfileForm({ initialName, email, avatarUrl }: Props) {
   const router = useRouter();
@@ -46,54 +52,107 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
   const initials = (name || email).slice(0, 2).toUpperCase();
 
   return (
-    <div className="space-y-6">
-      {/* Avatar + info */}
+    <div className="space-y-5">
+      {/* Avatar + identity */}
       <div className="flex items-center gap-4">
         {avatarUrl ? (
-          <img src={avatarUrl} alt="avatar" className="w-14 h-14 rounded-full object-cover ring-2 ring-indigo-500/30" />
+          <img
+            src={avatarUrl}
+            alt="avatar"
+            className="w-12 h-12 rounded-full object-cover"
+            style={{ outline: "1px solid var(--t-border-bright)" }}
+          />
         ) : (
-          <div className="w-14 h-14 rounded-full bg-indigo-500 flex items-center justify-center text-white text-lg font-bold shrink-0">
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+            style={{ background: "var(--accent)" }}
+          >
             {initials}
           </div>
         )}
-        <div>
-          <p className="font-semibold text-gray-900 dark:text-white">{name || "—"}</p>
-          <p className="text-sm text-gray-500">{email}</p>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">Signed in with Google</p>
+        <div className="min-w-0">
+          <p
+            className="text-sm font-semibold truncate"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {name || "—"}
+          </p>
+          <p className="text-xs truncate" style={{ color: "var(--text-secondary)" }}>
+            {email}
+          </p>
         </div>
       </div>
 
       {/* Edit form */}
       <form onSubmit={handleSave} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Display Name</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-            maxLength={50} className={inputClass} style={inputStyle} />
+          <label
+            className="block text-xs font-semibold mb-1.5"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Display name
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={50}
+            className={inputClass}
+            style={inputStyle}
+          />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>
-          <input type="email" value={email} disabled
-            className={inputClass + " cursor-not-allowed opacity-50"} style={inputStyle} />
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">Email cannot be changed for Google accounts.</p>
+          <label
+            className="block text-xs font-semibold mb-1.5"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            Email
+          </label>
+          <input
+            type="email"
+            value={email}
+            disabled
+            className={inputClass + " cursor-not-allowed opacity-60"}
+            style={inputStyle}
+          />
+          <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
+            Email is tied to your auth provider and cannot be edited here.
+          </p>
         </div>
 
         <div className="flex items-center gap-3 pt-1">
-          <button type="submit" disabled={saving}
-            className="inline-flex items-center gap-2 bg-indigo-500 text-white text-sm font-bold px-5 py-2.5 hover:bg-indigo-400 disabled:opacity-50 transition-colors">
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 h-9 px-4 text-sm font-semibold text-white transition-all disabled:opacity-50 hover:brightness-110"
+            style={{ background: "var(--accent)" }}
+          >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving…" : "Save changes"}
           </button>
-          {saved && <span className="text-xs text-emerald-400 font-medium">Saved!</span>}
-          {error && <span className="text-xs text-red-400">{error}</span>}
+          {saved && (
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              Saved
+            </span>
+          )}
+          {error && (
+            <span className="text-xs" style={{ color: "var(--signal-danger, #ef4444)" }}>
+              {error}
+            </span>
+          )}
         </div>
       </form>
 
       {/* Logout */}
-      <div className="pt-3 border-t" style={{ borderColor: "var(--t-border)" }}>
-        <button onClick={handleLogout} disabled={loggingOut}
-          className="inline-flex items-center gap-2 text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors">
-          {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-          {loggingOut ? "Signing out..." : "Sign Out"}
+      <div className="pt-4 border-t" style={{ borderColor: "var(--t-border-subtle)" }}>
+        <button
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 hover:text-[color:var(--signal-danger,#ef4444)]"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          {loggingOut ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
+          {loggingOut ? "Signing out…" : "Sign out"}
         </button>
       </div>
     </div>

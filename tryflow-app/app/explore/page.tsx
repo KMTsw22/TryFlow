@@ -1,41 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Minus, ArrowRight, ChevronRight, Lock, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-interface CategoryTrend {
-  category: string;
-  total: number;
-  last30: number;
-  direction: "Rising" | "Stable" | "Declining";
-  saturation: "Low" | "Medium" | "High";
-}
-
-const TREND_ICON = {
-  Rising:    { icon: TrendingUp,   color: "text-emerald-400", bg: "bg-emerald-500/10", pill: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" },
-  Stable:    { icon: Minus,        color: "text-amber-400",   bg: "bg-amber-500/10",   pill: "bg-amber-500/15 text-amber-400 border border-amber-500/20" },
-  Declining: { icon: TrendingDown, color: "text-red-400",     bg: "bg-red-500/10",     pill: "bg-red-500/15 text-red-400 border border-red-500/20" },
-};
-
-// Combined trend + saturation → opportunity signal
-const OPPORTUNITY: Record<string, Record<string, { label: string; sub: string; color: string; bg: string; border: string; dot: string }>> = {
-  Rising: {
-    Low:    { label: "Hot Gap",      sub: "Growing · space wide open",  color: "text-emerald-300", bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.25)", dot: "#34d399" },
-    Medium: { label: "Heating Up",   sub: "Growing · moderate crowd",   color: "text-emerald-400", bg: "rgba(16,185,129,0.08)",  border: "rgba(16,185,129,0.18)", dot: "#6ee7b7" },
-    High:   { label: "Competitive",  sub: "Growing · very crowded",     color: "text-amber-300",   bg: "rgba(245,158,11,0.10)",  border: "rgba(245,158,11,0.22)", dot: "#fbbf24" },
-  },
-  Stable: {
-    Low:    { label: "Open Space",   sub: "Stable · low competition",   color: "text-indigo-300",  bg: "rgba(99,102,241,0.10)",  border: "rgba(99,102,241,0.22)", dot: "#818cf8" },
-    Medium: { label: "Balanced",     sub: "Stable · average crowd",     color: "text-gray-400",    bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", dot: "#6b7280" },
-    High:   { label: "Crowded",      sub: "Stable · high saturation",   color: "text-orange-400",  bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.2)",  dot: "#fb923c" },
-  },
-  Declining: {
-    Low:    { label: "Fading Niche", sub: "Declining · few players",    color: "text-amber-400",   bg: "rgba(245,158,11,0.08)",  border: "rgba(245,158,11,0.18)", dot: "#fbbf24" },
-    Medium: { label: "Slowing",      sub: "Declining · losing interest",color: "text-orange-400",  bg: "rgba(249,115,22,0.08)",  border: "rgba(249,115,22,0.18)", dot: "#fb923c" },
-    High:   { label: "Avoid",        sub: "Declining · very crowded",   color: "text-red-400",     bg: "rgba(239,68,68,0.08)",   border: "rgba(239,68,68,0.2)",   dot: "#f87171" },
-  },
-};
+import { ArrowRight, Lock, Sparkles } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { MarketBoard, type CategoryRawData } from "@/components/market/MarketBoard";
+import { LiveFeed } from "@/components/market/LiveFeed";
 
 const CATEGORIES = [
   "SaaS / B2B", "Consumer App", "Marketplace", "Dev Tools",
@@ -47,7 +16,6 @@ export default async function ExplorePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Guests still need to log in, but Plus/Free users see a blurred teaser instead of a redirect
   if (!user) redirect("/login?next=/explore");
 
   const { data: profile } = await supabase
@@ -58,168 +26,102 @@ export default async function ExplorePage() {
 
   const isLocked = profile?.plan !== "pro";
 
-  const now = new Date();
-  const d7  = new Date(now); d7.setDate(now.getDate() - 7);
-  const d14 = new Date(now); d14.setDate(now.getDate() - 14);
-  const d30 = new Date(now); d30.setDate(now.getDate() - 30);
-
+  // Fetch all non-private submissions with score so we can surface quality, not just volume.
   const { data: allRows } = await supabase
     .from("idea_submissions")
-    .select("category, created_at")
+    .select("category, created_at, insight_reports (viability_score)")
     .eq("is_private", false);
 
-  const rows = allRows ?? [];
+  type Row = {
+    category: string;
+    created_at: string;
+    insight_reports:
+      | { viability_score: number | null }
+      | { viability_score: number | null }[]
+      | null;
+  };
+  const rows = (allRows ?? []) as unknown as Row[];
 
-  const count = (cat: string, from?: Date, to?: Date) =>
-    rows.filter((r) => {
-      if (r.category !== cat) return false;
-      const d = new Date(r.created_at);
-      if (from && d < from) return false;
-      if (to && d >= to) return false;
-      return true;
-    }).length;
+  function pickScore(r: Row): number | null {
+    const ir = r.insight_reports;
+    if (!ir) return null;
+    if (Array.isArray(ir)) return ir[0]?.viability_score ?? null;
+    return ir.viability_score ?? null;
+  }
 
-  const trends: CategoryTrend[] = CATEGORIES.map((cat) => {
-    const total  = count(cat);
-    const last30 = count(cat, d30);
-    const last7  = count(cat, d7);
-    const prev7  = count(cat, d14, d7);
+  // ── Build per-category daily60 timeseries + score aggregates ──────────────
+  const now = new Date();
+  const msInDay = 24 * 60 * 60 * 1000;
 
-    let direction: "Rising" | "Stable" | "Declining";
-    if (last7 > (prev7 || 0) * 1.25 || (prev7 === 0 && last7 >= 1)) direction = "Rising";
-    else if (last7 < (prev7 || 1) * 0.75) direction = "Declining";
-    else direction = "Stable";
+  const rawData: CategoryRawData[] = CATEGORIES.map((cat) => {
+    const daily60 = Array(60).fill(0) as number[];
+    let allTime = 0;
+    let scoreSum = 0;
+    let scoreSample = 0;
+    for (const r of rows) {
+      if (r.category !== cat) continue;
+      allTime++;
+      const age = Math.floor((now.getTime() - new Date(r.created_at).getTime()) / msInDay);
+      if (age >= 0 && age < 60) {
+        daily60[59 - age]++;
+      }
+      const score = pickScore(r);
+      if (score !== null && score !== undefined) {
+        scoreSum += score;
+        scoreSample++;
+      }
+    }
+    const avgScore = scoreSample > 0 ? Math.round(scoreSum / scoreSample) : null;
+    return { category: cat, daily60, allTime, avgScore, scoreSample };
+  });
 
-    let saturation: "Low" | "Medium" | "High";
-    if (last30 <= 4) saturation = "Low";
-    else if (last30 <= 12) saturation = "Medium";
-    else saturation = "High";
+  // Fetch latest submissions for live feed (lightweight — 10 most recent)
+  const { data: latestData } = await supabase
+    .from("idea_submissions")
+    .select("id, category, target_user, description, created_at")
+    .eq("is_private", false)
+    .order("created_at", { ascending: false })
+    .limit(10);
 
-    return { category: cat, total, last30, direction, saturation };
-  }).sort((a, b) => b.last30 - a.last30);
-
-  const totalIdeas = rows.length;
-  const risingCount = trends.filter((t) => t.direction === "Rising").length;
-  const maxLast30 = Math.max(...trends.map((t) => t.last30), 1);
+  const latest = latestData ?? [];
 
   return (
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
       {/* Navbar */}
-      <nav className="border-b px-6 h-[60px] flex items-center justify-between"
-        style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}>
+      <nav
+        className="border-b px-6 h-[60px] flex items-center justify-between"
+        style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}
+      >
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7 " alt="Try.Wepp" />
-          <span className="font-bold text-gray-900 dark:text-white text-sm">Try.Wepp</span>
+          <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
+          <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
-          {user ? (
-            <Link href="/dashboard" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Dashboard</Link>
-          ) : (
-            <Link href="/login" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Sign in</Link>
-          )}
-          <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 hover:bg-indigo-400 transition-colors">
-            Submit idea →
+          <Link
+            href="/dashboard"
+            className="text-sm transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/submit"
+            className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white text-sm font-semibold px-3 h-8 hover:brightness-110 transition-all"
+          >
+            Submit idea
           </Link>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="mb-10">
-          <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-2">Live Market Intelligence</p>
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Idea Trend Dashboard</h1>
-          <p className="mt-3 text-gray-500 dark:text-gray-400 text-base max-w-xl">
-            Aggregate data from anonymous founder submissions. Updated in real time as new ideas come in.
-          </p>
-        </div>
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <PageHeader
+          title="Market"
+          description="Where founders on TryWepp are placing bets — volume, momentum, and average viability across 9 categories. Reflects submissions on this platform, not real-world market data."
+        />
 
-        {/* Stats strip */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {[
-            { label: "Total Ideas Submitted", value: totalIdeas.toLocaleString() },
-            { label: "Rising Categories",     value: risingCount },
-            { label: "Categories Tracked",    value: CATEGORIES.length },
-          ].map((s) => (
-            <div key={s.label} className=" border p-5 text-center"
-              style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-              <div className="text-3xl font-extrabold text-gray-900 dark:text-white">{s.value}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Category list */}
-        <div className="relative border overflow-hidden"
-          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-          <div className="px-6 py-4 border-b flex items-center justify-between"
-            style={{ borderColor: "var(--t-border)" }}>
-            <h2 className="font-bold text-gray-900 dark:text-white text-sm">By Category — Last 30 Days</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isLocked ? "Pro members only" : "Sorted by submission volume"}
-            </p>
-          </div>
-
-          <div
-            className={cn(
-              "divide-y transition-all",
-              isLocked && "blur-md pointer-events-none select-none"
-            )}
-            style={{ borderColor: "var(--t-border-subtle)" }}
-            aria-hidden={isLocked ? "true" : undefined}
-          >
-            {trends.map((t) => {
-              const tConf = TREND_ICON[t.direction];
-              const TIcon = tConf.icon;
-              const barPct = maxLast30 > 0 ? (t.last30 / maxLast30) * 100 : 0;
-              const opp = OPPORTUNITY[t.direction]?.[t.saturation] ?? OPPORTUNITY.Stable.Medium;
-
-              return (
-                <Link
-                  key={t.category}
-                  href={`/explore/${encodeURIComponent(t.category)}`}
-                  className="px-6 py-5 flex items-center gap-5 transition-colors hover:bg-white/[0.03] group"
-                  style={{ borderColor: "var(--t-border-subtle)" }}
-                >
-                  {/* Trend icon */}
-                  <div className={`w-9 h-9 ${tConf.bg} flex items-center justify-center shrink-0`}>
-                    <TIcon className={`w-4 h-4 ${tConf.color}`} />
-                  </div>
-
-                  {/* Category name + submission count */}
-                  <div className="w-36 shrink-0">
-                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white transition-colors leading-tight">{t.category}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      <span className="text-gray-300 font-semibold">{t.last30}</span> in 30d · {t.total} total
-                    </p>
-                  </div>
-
-                  {/* Volume bar */}
-                  <div className="flex-1">
-                    <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--chart-grid)" }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${barPct}%`, background: opp.dot }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Opportunity signal (combined trend + saturation) */}
-                  <div
-                    className="shrink-0 px-3 py-2 flex flex-col items-start"
-                    style={{ background: opp.bg, border: `1px solid ${opp.border}`, minWidth: 140 }}
-                  >
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: opp.dot }} />
-                      <span className={`text-[11px] font-bold ${opp.color}`}>{opp.label}</span>
-                    </div>
-                    <span className="text-[10px] text-gray-400 leading-tight">{opp.sub}</span>
-                  </div>
-
-                  <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-gray-300 transition-colors shrink-0" />
-                </Link>
-              );
-            })}
-          </div>
+        {/* Relative container so the paywall overlay can cover signal strip + table together */}
+        <div className="relative">
+          <MarketBoard rawData={rawData} isLocked={isLocked} />
 
           {/* Paywall overlay — only when locked */}
           {isLocked && (
@@ -230,52 +132,56 @@ export default async function ExplorePage() {
               }}
             >
               <div
-                className="max-w-md w-full text-center border p-8 shadow-2xl"
+                className="max-w-md w-full text-center border p-8"
                 style={{
                   background: "var(--card-bg)",
-                  borderColor: "rgba(129,140,248,0.35)",
+                  borderColor: "var(--accent-ring)",
                   backdropFilter: "blur(8px)",
                 }}
               >
-                <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-full"
-                  style={{ background: "rgba(99,102,241,0.15)" }}>
-                  <Lock className="w-5 h-5 text-indigo-400" />
+                <div
+                  className="inline-flex items-center justify-center w-12 h-12 mb-4"
+                  style={{ background: "var(--accent-soft)" }}
+                >
+                  <Lock className="w-5 h-5" style={{ color: "var(--accent)" }} />
                 </div>
-                <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-2">Pro feature</p>
-                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
+                <p
+                  className="text-xs font-semibold tracking-widest uppercase mb-2"
+                  style={{ color: "var(--accent)" }}
+                >
+                  Pro feature
+                </p>
+                <h3
+                  className="text-xl font-bold mb-2"
+                  style={{ color: "var(--text-primary)" }}
+                >
                   Unlock the full market dashboard
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  See every category's trend direction, saturation, and opportunity signal — refreshed in real time.
+                <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+                  See every category&apos;s trend direction, saturation, and opportunity signal — refreshed in real time.
                 </p>
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 text-sm hover:bg-indigo-400 transition-colors"
+                  className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white font-semibold px-5 h-10 text-sm hover:brightness-110 transition-all"
                 >
                   <Sparkles className="w-4 h-4" />
                   Upgrade to Pro
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <p className="mt-4 text-[11px] text-gray-500">7-day free trial · Cancel anytime</p>
+                <p className="mt-4 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+                  7-day free trial · Cancel anytime
+                </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* CTA */}
-        <div className="mt-8  p-8 text-center border"
-          style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))", borderColor: "rgba(129,140,248,0.2)" }}>
-          <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">Add your signal</p>
-          <h3 className="text-2xl font-extrabold text-white mb-3">
-            The more ideas submitted, the sharper the trends.
-          </h3>
-          <p className="text-sm text-gray-400 mb-6 max-w-sm mx-auto">
-            Your anonymous submission helps every founder see where the market is heading.
-          </p>
-          <Link href="/submit" className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3  text-sm hover:bg-indigo-400 transition-colors">
-            Submit your idea <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+        {/* Live submissions feed — the living pulse of the market */}
+        {!isLocked && latest.length > 0 && (
+          <div className="mt-10">
+            <LiveFeed items={latest} />
+          </div>
+        )}
       </div>
     </div>
   );

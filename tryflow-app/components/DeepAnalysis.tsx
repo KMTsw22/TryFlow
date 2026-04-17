@@ -1,15 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTheme } from "@/components/ThemeProvider";
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from "recharts";
 import {
   Sparkles,
   Loader2,
@@ -68,6 +59,12 @@ interface DeepAnalysisProps {
   // false면 free Submitter 뷰: radar + 요약만, 세부 섹션(detailed_assessment,
   // cross_agent_insights, opportunities, risks, next_steps)은 가려짐
   detailed?: boolean;
+  /** When a parent already renders a verdict/score hero, hide the internal OverallSignal block. */
+  hideOverallSignal?: boolean;
+  /** Hide internal Next Steps block (parent renders a hoisted NextStepsCard). */
+  hideNextSteps?: boolean;
+  /** Hide Cross-insight + Opportunities + Risks (parent renders WorkingBreakingBoard). */
+  hideInsightsBlock?: boolean;
 }
 
 // ── Weights & scoring ─────────────────────────────────────────────────────────
@@ -329,35 +326,221 @@ function OverallSignal({ score, summary, trend, saturation }: { score: number; s
   );
 }
 
-// ── Radar custom tick ─────────────────────────────────────────────────────────
+// ── Weighted breakdown (ranked bars + inline drill-down) ──────────────────────
 
-function RadarTick({
-  x, y, cx, cy, payload, scoreMap, isDark = true,
-}: {
-  x: number; y: number; cx: number; cy: number;
-  payload: { value: string };
-  scoreMap: Record<string, number>;
-  isDark?: boolean;
-  [k: string]: unknown;
-}) {
-  const score = scoreMap[payload.value] ?? 0;
-  const scoreColor = score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171";
-  const labelColor = isDark ? "#9ca3af" : "#6b7280";
-  const dx = x - cx;
-  const anchor: "start" | "middle" | "end" = dx > 8 ? "start" : dx < -8 ? "end" : "middle";
-  const dy = y - cy;
-  const nameY = dy <= 0 ? y - 10 : y + 2;
-  const scoreY = dy <= 0 ? y + 6 : y + 18;
+interface WeightedEntry {
+  key: string;
+  meta: typeof AGENT_META[string];
+  score: number;
+  weight: number;
+}
+
+interface WeightedBreakdownProps {
+  entries: WeightedEntry[];
+  analysis: AnalysisReport["analysis"];
+  expandedKey: string | null;
+  onToggle: (key: string | null) => void;
+  fullKey: string | null;
+  onToggleFull: (key: string | null) => void;
+  detailed?: boolean;
+}
+
+function WeightedBreakdown({
+  entries,
+  analysis,
+  expandedKey,
+  onToggle,
+  fullKey,
+  onToggleFull,
+  detailed,
+}: WeightedBreakdownProps) {
+  if (entries.length === 0) return null;
 
   return (
-    <g>
-      <text x={x} y={nameY} textAnchor={anchor} fill={labelColor} fontSize={11} fontWeight="600">
-        {payload.value}
-      </text>
-      <text x={x} y={scoreY} textAnchor={anchor} fill={scoreColor} fontSize={16} fontWeight="800">
-        {score}
-      </text>
-    </g>
+    <ul className="divide-y" style={{ borderColor: "var(--t-border-subtle)" }}>
+      {entries.map((entry) => {
+        const isExpanded = expandedKey === entry.key;
+        return (
+          <BreakdownRow
+            key={entry.key}
+            entry={entry}
+            isExpanded={isExpanded}
+            onToggle={() => onToggle(isExpanded ? null : entry.key)}
+            analysis={analysis}
+            fullKey={fullKey}
+            onToggleFull={onToggleFull}
+            detailed={detailed}
+          />
+        );
+      })}
+    </ul>
+  );
+}
+
+function BreakdownRow({
+  entry,
+  isExpanded,
+  onToggle,
+  analysis,
+  fullKey,
+  onToggleFull,
+  detailed,
+}: {
+  entry: WeightedEntry;
+  isExpanded: boolean;
+  onToggle: () => void;
+  analysis: AnalysisReport["analysis"];
+  fullKey: string | null;
+  onToggleFull: (key: string | null) => void;
+  detailed?: boolean;
+}) {
+  const { key, meta, score, weight } = entry;
+  const Icon = meta.icon;
+  const scoreColor = score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
+  const barColor = score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171";
+  const weightPct = Math.round(weight * 100);
+
+  return (
+    <li
+      className="transition-colors"
+      style={{
+        background: isExpanded ? "rgba(99,102,241,0.05)" : "transparent",
+        boxShadow: isExpanded ? "inset 2px 0 0 0 rgba(129,140,248,0.9)" : undefined,
+      }}
+    >
+      {/* Clickable row */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/[0.03] focus:outline-none focus-visible:bg-white/[0.05] transition-colors"
+      >
+        {/* Icon */}
+        <span className={`w-7 h-7 ${meta.bg} flex items-center justify-center shrink-0`}>
+          <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
+        </span>
+
+        {/* Label */}
+        <span
+          className="text-sm font-semibold shrink-0"
+          style={{ color: "var(--text-primary)", minWidth: 112 }}
+        >
+          {meta.label}
+        </span>
+
+        {/* Weight */}
+        <span
+          className="text-[10px] font-mono tabular-nums font-bold shrink-0 text-right"
+          style={{ color: "var(--text-tertiary)", minWidth: 34 }}
+          title={`Weight ${weightPct}% of overall viability score`}
+        >
+          {weightPct}%
+        </span>
+
+        {/* Score bar */}
+        <div
+          className="flex-1 h-1.5 rounded-full overflow-hidden"
+          style={{ background: "var(--t-border-bright)" }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${score}%`, background: barColor }}
+          />
+        </div>
+
+        {/* Score */}
+        <span
+          className={`font-mono tabular-nums font-bold text-sm shrink-0 text-right ${scoreColor}`}
+          style={{ minWidth: 56 }}
+        >
+          {score}
+          <span className="text-[10px] ml-0.5" style={{ color: "var(--text-tertiary)" }}>/100</span>
+        </span>
+
+        {/* Chevron affordance */}
+        <span className="shrink-0 ml-1" style={{ color: "var(--text-tertiary)" }}>
+          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </span>
+      </button>
+
+      {/* Inline detail panel */}
+      {isExpanded && (
+        <RowDetail
+          agentKey={key}
+          analysis={analysis}
+          fullKey={fullKey}
+          onToggleFull={onToggleFull}
+          detailed={detailed}
+        />
+      )}
+    </li>
+  );
+}
+
+function RowDetail({
+  agentKey,
+  analysis,
+  fullKey,
+  onToggleFull,
+  detailed,
+}: {
+  agentKey: string;
+  analysis: AnalysisReport["analysis"];
+  fullKey: string | null;
+  onToggleFull: (key: string | null) => void;
+  detailed?: boolean;
+}) {
+  const agentData = analysis?.[agentKey as keyof typeof analysis];
+  if (!agentData) return null;
+
+  const isFull = fullKey === agentKey;
+  const SHORT_LIMIT = 180;
+  const isLong = agentData.assessment.length > SHORT_LIMIT;
+  const shortText = isLong
+    ? agentData.assessment.slice(0, SHORT_LIMIT).trimEnd() + "…"
+    : agentData.assessment;
+
+  return (
+    <div className="px-3 pb-4" style={{ paddingLeft: 52 /* icon width + gap */ }}>
+      {/* Signals */}
+      <AgentSignals agentKey={agentKey} data={agentData} />
+
+      {/* Assessment */}
+      <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+        {shortText}
+      </p>
+      {isFull && isLong && (
+        <p className="text-sm leading-relaxed mt-2" style={{ color: "var(--text-secondary)" }}>
+          {agentData.assessment.slice(SHORT_LIMIT)}
+        </p>
+      )}
+
+      {/* Detailed (Pro only) */}
+      {detailed && isFull && agentData.detailed_assessment && (
+        <div
+          className="mt-3 pt-3 border-t"
+          style={{ borderColor: "var(--t-border-bright)" }}
+        >
+          <p className="text-[11px] font-bold mb-1 tracking-wider uppercase text-indigo-400">
+            Detailed Analysis
+          </p>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+            {agentData.detailed_assessment}
+          </p>
+        </div>
+      )}
+
+      {/* Read full toggle */}
+      {detailed && (isLong || agentData.detailed_assessment) && (
+        <button
+          type="button"
+          onClick={() => onToggleFull(isFull ? null : agentKey)}
+          className="mt-3 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1"
+        >
+          {isFull ? "Show less ↑" : "Read full analysis ↓"}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -371,6 +554,9 @@ export default function DeepAnalysis({
   saturationLevel,
   similarCount,
   detailed = true,
+  hideOverallSignal = false,
+  hideNextSteps = false,
+  hideInsightsBlock = false,
 }: DeepAnalysisProps) {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -379,7 +565,6 @@ export default function DeepAnalysis({
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [fullAgent, setFullAgent] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
-  const { isDark } = useTheme();
 
   useEffect(() => {
     async function check() {
@@ -473,23 +658,39 @@ export default function DeepAnalysis({
   // ── Results ───────────────────────────────────────────────────────────────────
   if (report) {
     const weightedScore = calcWeightedScore(report.analysis);
-    const radarData = Object.entries(AGENT_META).map(([key, meta]) => ({
-      subject: meta.label,
-      key,
-      score: report.analysis?.[key as keyof typeof report.analysis]?.score ?? 0,
-    }));
-    const scoreMap = Object.fromEntries(radarData.map((d) => [d.subject, d.score]));
+
+    // Unified entry list — used both by the weighted-bar ranking above and the
+    // agent cards grid below. Keep AGENT_META order for deterministic keys.
+    const allAgentEntries = (Object.entries(AGENT_META) as [keyof typeof AGENT_META, typeof AGENT_META[keyof typeof AGENT_META]][])
+      .map(([key, meta]) => {
+        const agentData = report.analysis?.[key as keyof typeof report.analysis];
+        if (!agentData) return null;
+        return {
+          key,
+          meta,
+          score: agentData.score,
+          weight: AGENT_WEIGHTS[key as string] ?? 0,
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
+    // Ranking — heaviest-weighted first, score desc as tie-breaker.
+    const rankedEntries = [...allAgentEntries].sort(
+      (a, b) => b.weight - a.weight || b.score - a.score,
+    );
 
     return (
       <div className="space-y-4">
 
-        {/* Overall Signal — weighted score from 8 agents */}
-        <OverallSignal score={weightedScore} summary={report.summary} trend={trendDirection} saturation={saturationLevel} />
+        {/* Overall Signal — weighted score from 8 agents. Skipped when a parent hero shows it. */}
+        {!hideOverallSignal && (
+          <OverallSignal score={weightedScore} summary={report.summary} trend={trendDirection} saturation={saturationLevel} />
+        )}
 
         {/* Metrics — trend / saturation / similar count */}
         <MetricsGrid trendDirection={trendDirection} saturationLevel={saturationLevel} similarCount={similarCount} />
 
-        {/* Radar + agent cards */}
+        {/* 8-agent breakdown — ranked bars with inline drill-down */}
         <div className="border p-6"
           style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
           <div className="flex items-center gap-2 mb-5">
@@ -497,136 +698,20 @@ export default function DeepAnalysis({
             <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">8-Agent Analysis Breakdown</p>
           </div>
 
-          {/* Radar */}
-          <div style={{ height: 340 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} margin={{ top: 28, right: 48, bottom: 28, left: 48 }}>
-                <PolarGrid stroke={isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"} gridType="polygon" />
-                <PolarAngleAxis
-                  dataKey="subject"
-                  tick={(props) => <RadarTick {...props} scoreMap={scoreMap} isDark={isDark} />}
-                  tickLine={false}
-                />
-                <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} tickCount={5} />
-                <Radar
-                  dataKey="score"
-                  stroke="#818cf8"
-                  strokeWidth={2}
-                  fill="url(#radarGrad)"
-                  fillOpacity={1}
-                  dot={{ fill: "#818cf8", r: 3, strokeWidth: 0 }}
-                />
-                <defs>
-                  <radialGradient id="radarGrad" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.1} />
-                  </radialGradient>
-                </defs>
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Agent cards 4×2 */}
-          <div className="grid grid-cols-4 gap-2 mt-5">
-            {Object.entries(AGENT_META).map(([key, meta]) => {
-              const agentData = report.analysis?.[key as keyof typeof report.analysis];
-              if (!agentData) return null;
-              const Icon = meta.icon;
-              const score = agentData.score;
-              const isExpanded = expandedAgent === key;
-              const scoreColor = score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
-
-              return (
-                <div key={key}>
-                  <button
-                    onClick={() => { setExpandedAgent(isExpanded ? null : key); setFullAgent(null); }}
-                    className="w-full border p-3 text-left transition-all duration-150 hover:bg-white/[0.04] flex flex-col gap-2"
-                    style={{
-                      background: isExpanded ? "rgba(99,102,241,0.08)" : "var(--card-bg)",
-                      borderColor: isExpanded ? "rgba(99,102,241,0.35)" : "var(--t-border)",
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className={`w-6 h-6 ${meta.bg} flex items-center justify-center`}>
-                        <Icon className={`w-3 h-3 ${meta.color}`} />
-                      </div>
-                      <span className="text-[10px] font-bold text-gray-400">{meta.weight}</span>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none mb-1">
-                        {meta.label}
-                      </p>
-                      <div className="flex items-end gap-1">
-                        <span className={`text-xl font-extrabold leading-none ${scoreColor}`}>{score}</span>
-                        <span className="text-[10px] text-gray-400 mb-0.5">/100</span>
-                      </div>
-                    </div>
-                    <div className="h-0.5 w-full rounded-full overflow-hidden" style={{ background: "var(--t-border-bright)" }}>
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${score}%`, background: score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171" }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-gray-400">Details</span>
-                      {isExpanded ? <ChevronUp className="w-3 h-3 text-gray-400" /> : <ChevronDown className="w-3 h-3 text-gray-400" />}
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Expanded assessment panel */}
-          {expandedAgent && (() => {
-            const agentData = report.analysis?.[expandedAgent as keyof typeof report.analysis];
-            const meta = AGENT_META[expandedAgent];
-            if (!agentData || !meta) return null;
-            const Icon = meta.icon;
-            const isFull = fullAgent === expandedAgent;
-            const SHORT_LIMIT = 110;
-            const isLong = agentData.assessment.length > SHORT_LIMIT;
-            const shortText = isLong
-              ? agentData.assessment.slice(0, SHORT_LIMIT).trimEnd() + "…"
-              : agentData.assessment;
-
-            return (
-              <div className="mt-3 p-4 border"
-                style={{ background: "rgba(99,102,241,0.05)", borderColor: "rgba(99,102,241,0.2)" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-6 h-6 ${meta.bg} flex items-center justify-center`}>
-                    <Icon className={`w-3 h-3 ${meta.color}`} />
-                  </div>
-                  <span className="text-xs font-bold text-gray-300">{meta.label} — Agent Assessment</span>
-                </div>
-                {/* Signal badges */}
-                <AgentSignals agentKey={expandedAgent} data={agentData} />
-                {/* Short summary — always visible */}
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{shortText}</p>
-                {/* Full text — shown when expanded */}
-                {isFull && isLong && (
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mt-2">
-                    {agentData.assessment.slice(SHORT_LIMIT)}
-                  </p>
-                )}
-                {/* Detailed assessment — if available, Submitter Pro only */}
-                {detailed && isFull && agentData.detailed_assessment && (
-                  <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--t-border-bright)" }}>
-                    <p className="text-[11px] text-indigo-500 dark:text-indigo-400 font-bold mb-1 tracking-wider uppercase">Detailed Analysis</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{agentData.detailed_assessment}</p>
-                  </div>
-                )}
-                {detailed && (isLong || agentData.detailed_assessment) && (
-                  <button
-                    onClick={() => setFullAgent(isFull ? null : expandedAgent)}
-                    className="mt-2 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
-                  >
-                    {isFull ? "Show less ↑" : "Read full analysis ↓"}
-                  </button>
-                )}
-              </div>
-            );
-          })()}
+          {/* Weighted breakdown — ranked bars with inline drill-down.
+              Click any row to expand the agent's assessment below it. */}
+          <WeightedBreakdown
+            entries={rankedEntries}
+            analysis={report.analysis}
+            expandedKey={expandedAgent}
+            onToggle={(key) => {
+              setExpandedAgent(key);
+              setFullAgent(null);
+            }}
+            fullKey={fullAgent}
+            onToggleFull={setFullAgent}
+            detailed={detailed}
+          />
         </div>
 
         {/* Submitter Pro upsell — shown instead of detail sections for free users */}
@@ -657,7 +742,7 @@ export default function DeepAnalysis({
         )}
 
         {/* Cross-agent insights — Submitter Pro only */}
-        {detailed && report.cross_agent_insights?.length > 0 && (
+        {!hideInsightsBlock && detailed && report.cross_agent_insights?.length > 0 && (
           <div className="border p-6"
             style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
@@ -679,7 +764,7 @@ export default function DeepAnalysis({
         )}
 
         {/* Opportunities & Risks — Submitter Pro only */}
-        {detailed && (
+        {!hideInsightsBlock && detailed && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {report.opportunities?.length > 0 && (
               <div className="border p-6"
@@ -719,7 +804,7 @@ export default function DeepAnalysis({
         )}
 
         {/* Next Steps — Submitter Pro only */}
-        {detailed && report.next_steps?.length > 0 && (
+        {!hideNextSteps && detailed && report.next_steps?.length > 0 && (
           <div className="border p-6"
             style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
@@ -746,8 +831,10 @@ export default function DeepAnalysis({
   // ── CTA (no analysis yet) ─────────────────────────────────────────────────────
   return (
     <>
-      {/* Show fallback score while no AI analysis */}
-      <OverallSignal score={fallbackScore} summary={fallbackSummary} trend={trendDirection} saturation={saturationLevel} />
+      {/* Show fallback score while no AI analysis — skipped when parent hero handles it */}
+      {!hideOverallSignal && (
+        <OverallSignal score={fallbackScore} summary={fallbackSummary} trend={trendDirection} saturation={saturationLevel} />
+      )}
 
       {/* Metrics */}
       <MetricsGrid trendDirection={trendDirection} saturationLevel={saturationLevel} similarCount={similarCount} />

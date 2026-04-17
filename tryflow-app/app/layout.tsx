@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
@@ -11,6 +12,10 @@ export const metadata: Metadata = {
   description:
     "Test your product before you build it. Measure real user reactions with a landing page before you launch.",
 };
+
+// Runs before React hydrates. Applies saved theme early to prevent a flash
+// of the wrong theme (FOUC). Kept tiny and never throws.
+const FOUC_SCRIPT = `(function(){try{var t=localStorage.getItem('trywepp_theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
 export default async function RootLayout({
   children,
@@ -38,12 +43,6 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Prevent FOUC: apply saved theme before first paint */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('trywepp_theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`,
-          }}
-        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -52,6 +51,12 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        {/* FOUC prevention — rendered via next/script beforeInteractive so Next
+            emits it into the <head> early and React never tries to hydrate it. */}
+        <Script id="trywepp-theme-fouc" strategy="beforeInteractive">
+          {FOUC_SCRIPT}
+        </Script>
+
         <ThemeProvider>
           <NavigationProgress />
           <SidebarWrapper isLoggedIn={isLoggedIn} plan={plan} />

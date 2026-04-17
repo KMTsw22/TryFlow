@@ -36,6 +36,27 @@
     --chart-grid: rgba(0,0,0,0.08);
     --chart-tick: rgba(0,0,0,0.45);
     --gradient-navy: linear-gradient(180deg, #eef2ff 0%, #f0f4ff 100%);
+
+    /* ── Surface hierarchy (new, layered depth) ──────── */
+    --surface-0: #fafafa;   /* page background */
+    --surface-1: #ffffff;   /* cards, primary containers */
+    --surface-2: #f4f4f5;   /* elevated surfaces, hover */
+    --surface-3: #ffffff;   /* modals, popovers (with shadow) */
+
+    /* ── Text hierarchy (new) ────────────────────────── */
+    --text-primary:   #09090b;
+    --text-secondary: #52525b;
+    --text-tertiary:  #a1a1aa;
+
+    /* ── Accent (single source of truth) ─────────────── */
+    --accent:       #6366f1;
+    --accent-soft:  rgba(99, 102, 241, 0.08);
+    --accent-ring:  rgba(99, 102, 241, 0.25);
+
+    /* ── Semantic (score / trend only) ───────────────── */
+    --signal-success: #10b981;
+    --signal-warning: #f59e0b;
+    --signal-danger:  #ef4444;
   }
 
   html.dark {
@@ -53,6 +74,22 @@
     --chart-grid: rgba(255,255,255,0.06);
     --chart-tick: rgba(255,255,255,0.55);
     --gradient-navy: linear-gradient(180deg, #0B1026 0%, #111938 100%);
+
+    /* Surface hierarchy — dark */
+    --surface-0: #0a0c12;
+    --surface-1: #11141c;
+    --surface-2: #171b26;
+    --surface-3: #1f2431;
+
+    /* Text hierarchy — dark */
+    --text-primary:   #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-tertiary:  #71717a;
+
+    /* Accent stays same hex, tweak soft tint for dark */
+    --accent:       #818cf8;
+    --accent-soft:  rgba(129, 140, 248, 0.10);
+    --accent-ring:  rgba(129, 140, 248, 0.28);
   }
 
   * {

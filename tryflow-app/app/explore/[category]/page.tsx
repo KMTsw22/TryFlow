@@ -2,12 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { IdeaCardWithContact } from "@/components/vc/IdeaCardWithContact";
-
-const CATEGORIES = [
-  "SaaS / B2B", "Consumer App", "Marketplace", "Dev Tools",
-  "Health & Wellness", "Education", "Fintech", "E-commerce", "Hardware",
-];
+import { IdeaCard } from "@/components/ideas/IdeaCard";
+import { CATEGORIES } from "@/lib/categories";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { CategoryInsightPanel } from "@/components/market/CategoryInsightPanel";
 
 interface InsightReport {
   viability_score: number;
@@ -20,6 +18,10 @@ interface AnalysisReport {
   viability_score: number;
 }
 
+interface SubmitterProfile {
+  allow_contact: boolean | null;
+}
+
 interface IdeaRow {
   id: string;
   category: string;
@@ -27,10 +29,86 @@ interface IdeaRow {
   description: string;
   created_at: string;
   user_id: string | null;
-  allow_contact: boolean;
   stage: string | null;
   insight_reports: InsightReport | InsightReport[] | null;
   analysis_reports: AnalysisReport | AnalysisReport[] | null;
+  user_profiles: SubmitterProfile | SubmitterProfile[] | null;
+}
+
+function getInsight(idea: IdeaRow): InsightReport | null {
+  if (!idea.insight_reports) return null;
+  if (Array.isArray(idea.insight_reports)) return idea.insight_reports[0] ?? null;
+  return idea.insight_reports;
+}
+
+function getAiScore(idea: IdeaRow): number | null {
+  if (!idea.analysis_reports) return null;
+  const r = Array.isArray(idea.analysis_reports) ? idea.analysis_reports[0] : idea.analysis_reports;
+  return r?.viability_score ?? null;
+}
+
+function getContactOpen(idea: IdeaRow): boolean | null {
+  if (!idea.user_id) return null; // anonymous submission
+  if (!idea.user_profiles) return null;
+  const p = Array.isArray(idea.user_profiles) ? idea.user_profiles[0] : idea.user_profiles;
+  if (!p || p.allow_contact === null || p.allow_contact === undefined) return null;
+  return !!p.allow_contact;
+}
+
+function toCardData(idea: IdeaRow) {
+  const insight = getInsight(idea);
+  const aiScore = getAiScore(idea);
+  return {
+    id: idea.id,
+    category: idea.category,
+    target_user: idea.target_user,
+    description: idea.description,
+    created_at: idea.created_at,
+    stage: idea.stage,
+    viability_score: aiScore ?? insight?.viability_score ?? null,
+    trend_direction: insight?.trend_direction ?? null,
+    saturation_level: insight?.saturation_level ?? null,
+    summary: insight?.summary ?? null,
+    contactOpen: getContactOpen(idea),
+  };
+}
+
+// ── Keyword extraction ──────────────────────────────────────────────────────
+const STOPWORDS = new Set([
+  "the", "and", "for", "that", "this", "with", "from", "have", "has", "had",
+  "are", "was", "were", "been", "being", "will", "would", "could", "should",
+  "can", "our", "your", "their", "they", "them", "its", "you", "all", "any",
+  "but", "not", "who", "how", "why", "what", "when", "where", "which",
+  "about", "into", "over", "than", "then", "some", "such", "also", "just",
+  "like", "want", "need", "use", "using", "make", "makes", "made", "get",
+  "users", "user", "people", "someone", "anyone", "everyone", "thing",
+  "things", "way", "ways", "service", "services", "product", "products",
+  "tool", "tools", "app", "apps", "platform", "solution", "solutions",
+  "help", "helps", "helping", "lets", "let", "allows", "allow", "provides",
+  "provide", "provides", "based", "new", "one", "two", "three", "more",
+  "most", "very", "really", "quick", "quickly", "easy", "easily",
+  "through", "across", "without", "within",
+]);
+
+function extractKeywords(texts: string[], topN = 6): { word: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const text of texts) {
+    const matches = text.toLowerCase().match(/\b[a-z][a-z-]{2,}\b/g) ?? [];
+    const seenInDoc = new Set<string>();
+    for (const raw of matches) {
+      const word = raw.replace(/-+$/, "");
+      if (word.length < 3) continue;
+      if (STOPWORDS.has(word)) continue;
+      // Count each word once per idea (document frequency) to reduce boilerplate repetition
+      if (seenInDoc.has(word)) continue;
+      seenInDoc.add(word);
+      counts.set(word, (counts.get(word) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([word, count]) => ({ word, count }));
 }
 
 export default async function CategoryIdeasPage({
@@ -46,7 +124,6 @@ export default async function CategoryIdeasPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Guard: require active subscription
   if (!user) redirect("/login?next=/explore");
 
   const { data: profile } = await supabase
@@ -62,29 +139,56 @@ export default async function CategoryIdeasPage({
     .select(`
       id, category, target_user, description, created_at, user_id, stage,
       insight_reports (viability_score, saturation_level, trend_direction, summary),
-      analysis_reports (viability_score)
+      analysis_reports (viability_score),
+      user_profiles (allow_contact)
     `)
     .eq("category", category)
     .eq("is_private", false)
     .order("created_at", { ascending: false });
 
-  const rawIdeas = (data ?? []) as Omit<IdeaRow, "allow_contact">[];
+  const ideas = (data ?? []) as unknown as IdeaRow[];
 
-  // Fetch allow_contact from user_profiles for each submitter
-  const userIds = [...new Set(rawIdeas.map((i) => i.user_id).filter(Boolean))] as string[];
-  const { data: profiles } = userIds.length > 0
-    ? await supabase
-        .from("user_profiles")
-        .select("id, allow_contact")
-        .in("id", userIds)
-    : { data: [] };
+  // ── Compute insight panel data ────────────────────────────────────────────
+  const now = new Date();
+  const msInDay = 24 * 60 * 60 * 1000;
 
-  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.allow_contact]));
+  // Weekly rollup: 4 buckets × 7 days, oldest → newest
+  const WEEKS = 4;
+  const DAYS_PER_WEEK = 7;
+  const periodDays = WEEKS * DAYS_PER_WEEK;
 
-  const ideas: IdeaRow[] = rawIdeas.map((idea) => ({
-    ...idea,
-    allow_contact: idea.user_id ? (profileMap.get(idea.user_id) ?? false) : false,
-  }));
+  const weeklyCounts: number[] = Array(WEEKS).fill(0);
+  let totalThis = 0;
+  let totalPrev = 0;
+
+  for (const idea of ideas) {
+    const submitted = new Date(idea.created_at).getTime();
+    const ageDays = Math.floor((now.getTime() - submitted) / msInDay);
+    if (ageDays < periodDays) {
+      const weekFromNow = Math.floor(ageDays / DAYS_PER_WEEK); // 0 = this week, WEEKS-1 = oldest
+      const bucket = WEEKS - 1 - weekFromNow;
+      if (bucket >= 0 && bucket < WEEKS) weeklyCounts[bucket]++;
+      totalThis++;
+    } else if (ageDays < periodDays * 2) {
+      totalPrev++;
+    }
+  }
+
+  // For each bucket, compute the start date (oldest day of the 7-day window)
+  const weeklyBuckets = weeklyCounts.map((count, i) => {
+    const startAgeDays = (WEEKS - i) * DAYS_PER_WEEK - 1;
+    const start = new Date(now.getTime() - startAgeDays * msInDay);
+    return { startISO: start.toISOString(), count };
+  });
+
+  // Extract top keywords from descriptions
+  const topKeywords = extractKeywords(
+    ideas.map((i) => i.description ?? ""),
+    6,
+  );
+
+  // Most recent activity — ideas are ordered created_at desc, so [0] is latest
+  const lastActivityAt = ideas[0]?.created_at ?? null;
 
   return (
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
@@ -95,81 +199,102 @@ export default async function CategoryIdeasPage({
       >
         <Link href="/" className="flex items-center gap-2">
           <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-gray-900 dark:text-white text-sm">Try.Wepp</span>
+          <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
-          {user ? (
-            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors">Dashboard</Link>
-          ) : (
-            <Link href="/login" className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors">Sign in</Link>
-          )}
-          <Link href="/submit" className="bg-indigo-500 text-white text-sm font-bold px-4 py-2 hover:bg-indigo-400 transition-colors">
-            Submit idea →
+          <Link
+            href="/dashboard"
+            className="text-sm transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/submit"
+            className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white text-sm font-semibold px-3 h-8 hover:brightness-110 transition-all"
+          >
+            Submit idea
           </Link>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        {/* Back + header */}
-        <div className="mb-10">
-          <Link
-            href="/explore"
-            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-6"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Trends
-          </Link>
-          <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-2">Anonymous Ideas</p>
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">{category}</h1>
-          <p className="mt-3 text-gray-500 dark:text-gray-400 text-base">
-            {ideas.length} idea{ideas.length !== 1 ? "s" : ""} submitted · All anonymous · Newest first
-          </p>
-        </div>
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        {/* Back link */}
+        <Link
+          href="/explore"
+          className="inline-flex items-center gap-1.5 text-xs font-medium mb-6 transition-colors hover:text-[color:var(--text-primary)]"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to Market
+        </Link>
 
-        {/* Grid */}
+        <PageHeader
+          title={category}
+          meta={`${ideas.length} ${ideas.length === 1 ? "idea" : "ideas"}`}
+          description="Anonymous submissions in this category. Below, the past 4 weeks of activity and recurring themes from founder descriptions."
+        />
+
+        {/* Insight panel */}
+        {ideas.length > 0 && (
+          <div className="mb-10">
+            <CategoryInsightPanel
+              data={{
+                weeklyBuckets,
+                totalThis,
+                totalPrev,
+                lastActivityAt,
+                topKeywords,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Ideas list */}
         {ideas.length === 0 ? (
           <div
             className="text-center py-20 border"
             style={{ borderColor: "var(--t-border-card)", background: "var(--card-bg)" }}
           >
-            <p className="text-gray-500 text-sm mb-5">No ideas in this category yet.</p>
+            <p
+              className="text-base font-semibold mb-1"
+              style={{ color: "var(--text-primary)" }}
+            >
+              No {category} ideas yet.
+            </p>
+            <p
+              className="text-sm mb-6 max-w-sm mx-auto"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Be the first founder to stake a claim in this category.
+            </p>
             <Link
               href="/submit"
-              className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-5 py-2.5 text-sm hover:bg-indigo-400 transition-colors"
+              className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white font-semibold px-5 h-10 text-sm hover:brightness-110 transition-all"
             >
-              Be the first <ArrowRight className="w-4 h-4" />
+              Submit the first idea <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ideas.map((idea) => (
-              <IdeaCardWithContact
-                key={idea.id}
-                idea={idea}
-                isSubscriber={true}
-              />
-            ))}
-          </div>
-        )}
+          <>
+            <div className="flex items-baseline justify-between mb-4">
+              <h2
+                className="text-sm font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                All submissions
+              </h2>
+              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                Newest first
+              </p>
+            </div>
 
-        {/* CTA */}
-        <div
-          className="mt-10 p-8 text-center border"
-          style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))", borderColor: "rgba(129,140,248,0.2)" }}
-        >
-          <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">Add your signal</p>
-          <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
-            The more ideas submitted, the sharper the trends.
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 max-w-sm mx-auto">
-            Your anonymous submission helps every founder see where the market is heading.
-          </p>
-          <Link
-            href="/submit"
-            className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 text-sm hover:bg-indigo-400 transition-colors"
-          >
-            Submit your idea <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ideas.map((idea) => (
+                <IdeaCard key={idea.id} idea={toCardData(idea)} showCategory={false} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

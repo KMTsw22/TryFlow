@@ -10,10 +10,22 @@ interface Props {
   initialAllowContact: boolean;
 }
 
-const inputClass = "w-full border px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 outline-none focus:border-indigo-500/50 transition-colors";
-const inputStyle = { background: "var(--input-bg)", borderColor: "var(--t-border-bright)" };
+const inputClass =
+  "w-full border h-9 px-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]";
 
-export function ContactInfoForm({ initialEmail, initialPhone, initialLinkedin, initialOther, initialAllowContact }: Props) {
+const inputStyle = {
+  background: "var(--input-bg)",
+  borderColor: "var(--t-input-border)",
+  color: "var(--text-primary)",
+};
+
+export function ContactInfoForm({
+  initialEmail,
+  initialPhone,
+  initialLinkedin,
+  initialOther,
+  initialAllowContact,
+}: Props) {
   const [contactEmail, setContactEmail] = useState(initialEmail);
   const [contactPhone, setContactPhone] = useState(initialPhone);
   const [contactLinkedin, setContactLinkedin] = useState(initialLinkedin);
@@ -24,12 +36,20 @@ export function ContactInfoForm({ initialEmail, initialPhone, initialLinkedin, i
   const [error, setError] = useState("");
 
   async function handleSave() {
-    setSaving(true); setSaved(false); setError("");
+    setSaving(true);
+    setSaved(false);
+    setError("");
     try {
       const res = await fetch("/api/profile/contact", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact_email: contactEmail, contact_phone: contactPhone, contact_linkedin: contactLinkedin, contact_other: contactOther, allow_contact: allowContact }),
+        body: JSON.stringify({
+          contact_email: contactEmail,
+          contact_phone: contactPhone,
+          contact_linkedin: contactLinkedin,
+          contact_other: contactOther,
+          allow_contact: allowContact,
+        }),
       });
       if (!res.ok) throw new Error("Failed");
       setSaved(true);
@@ -42,42 +62,98 @@ export function ContactInfoForm({ initialEmail, initialPhone, initialLinkedin, i
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Allow contact toggle */}
-      <div className="flex items-center justify-between py-3 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
+      <div
+        className="flex items-center justify-between gap-4 pb-4 border-b"
+        style={{ borderColor: "var(--t-border-subtle)" }}
+      >
         <div>
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Allow Contact</p>
-          <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">Let subscribers (VCs/companies) contact you when interested in your idea.</p>
+          <p
+            className="text-sm font-semibold"
+            style={{ color: "var(--text-primary)" }}
+          >
+            Allow contact
+          </p>
+          <p
+            className="text-xs mt-0.5 leading-relaxed"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            Let Pro investors reach out when they&apos;re interested in your idea.
+          </p>
         </div>
-        <button type="button" onClick={() => setAllowContact((v) => !v)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0 ml-4 ${allowContact ? "bg-indigo-500" : "bg-gray-700"}`}>
-          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${allowContact ? "translate-x-6" : "translate-x-1"}`} />
+        <button
+          type="button"
+          role="switch"
+          aria-checked={allowContact}
+          onClick={() => setAllowContact((v) => !v)}
+          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none shrink-0"
+          style={{
+            background: allowContact ? "var(--accent)" : "var(--t-border-bright)",
+          }}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              allowContact ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
         </button>
       </div>
 
       {/* Fields */}
       <div className="space-y-3">
         {[
-          { label: "Contact Email", value: contactEmail, set: setContactEmail, type: "email", placeholder: "contact@example.com" },
-          { label: "Phone (optional)", value: contactPhone, set: setContactPhone, type: "tel", placeholder: "+82 10-0000-0000" },
-          { label: "LinkedIn URL (optional)", value: contactLinkedin, set: setContactLinkedin, type: "url", placeholder: "https://linkedin.com/in/yourname" },
-          { label: "Other (optional)", value: contactOther, set: setContactOther, type: "text", placeholder: "KakaoTalk ID, Discord, etc." },
-        ].map(({ label, value, set, type, placeholder }) => (
+          { label: "Contact email", value: contactEmail, set: setContactEmail, type: "email", placeholder: "contact@example.com" },
+          { label: "Phone",         value: contactPhone, set: setContactPhone, type: "tel",   placeholder: "+82 10-0000-0000", optional: true },
+          { label: "LinkedIn URL",  value: contactLinkedin, set: setContactLinkedin, type: "url", placeholder: "https://linkedin.com/in/yourname", optional: true },
+          { label: "Other",         value: contactOther, set: setContactOther, type: "text",  placeholder: "KakaoTalk ID, Discord, website…", optional: true },
+        ].map(({ label, value, set, type, placeholder, optional }) => (
           <div key={label}>
-            <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
-            <input type={type} value={value} onChange={(e) => set(e.target.value)}
-              placeholder={placeholder} className={inputClass} style={inputStyle} />
+            <label
+              className="block text-xs font-semibold mb-1.5"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              {label}
+              {optional && (
+                <span
+                  className="ml-1.5 font-normal"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  (optional)
+                </span>
+              )}
+            </label>
+            <input
+              type={type}
+              value={value}
+              onChange={(e) => set(e.target.value)}
+              placeholder={placeholder}
+              className={inputClass}
+              style={inputStyle}
+            />
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-3 pt-1">
-        <button onClick={handleSave} disabled={saving}
-          className="text-sm font-bold bg-indigo-500 text-white px-5 py-2.5 hover:bg-indigo-400 transition-colors disabled:opacity-50">
-          {saving ? "Saving..." : "Save"}
+      <div className="flex items-center gap-3 pt-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="h-9 px-4 text-sm font-semibold text-white transition-all disabled:opacity-50 hover:brightness-110"
+          style={{ background: "var(--accent)" }}
+        >
+          {saving ? "Saving…" : "Save"}
         </button>
-        {saved && <span className="text-xs text-emerald-400 font-medium">Saved!</span>}
-        {error && <span className="text-xs text-red-400">{error}</span>}
+        {saved && (
+          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            Saved
+          </span>
+        )}
+        {error && (
+          <span className="text-xs" style={{ color: "var(--signal-danger, #ef4444)" }}>
+            {error}
+          </span>
+        )}
       </div>
     </div>
   );

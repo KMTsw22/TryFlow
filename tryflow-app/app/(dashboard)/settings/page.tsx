@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { PreferencesPanel } from "@/components/settings/PreferencesPanel";
 import { ContactInfoForm } from "@/components/settings/ContactInfoForm";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -23,76 +24,163 @@ export default async function SettingsPage() {
         .maybeSingle()
     : { data: null };
 
-  const card = "border p-6" as const;
-  const cardStyle = { background: "var(--card-bg)", borderColor: "var(--t-border-card)" };
-
   return (
-    <div className="max-w-[720px] mx-auto space-y-5">
-      <div>
-        <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Settings</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account and preferences.</p>
-      </div>
+    <div className="p-8 max-w-4xl mx-auto">
+      <PageHeader
+        title="Settings"
+        description="Manage your profile, contact preferences, and account."
+      />
 
-      {/* Profile */}
-      <div className={card} style={cardStyle}>
-        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-5">Profile</h2>
-        <ProfileForm initialName={name} email={email} avatarUrl={avatar} />
-      </div>
+      <div className="space-y-8">
+        <Section
+          title="Profile"
+          description="Your public display name and email."
+        >
+          <ProfileForm initialName={name} email={email} avatarUrl={avatar} />
+        </Section>
 
-      {/* Account Info */}
-      <div className={card} style={cardStyle}>
-        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Account Info</h2>
-        <div className="space-y-0 text-sm">
-          {[
-            { label: "User ID",       value: user?.id ?? "—" },
-            { label: "Joined",        value: joined },
-            { label: "Auth Provider", value: provider.charAt(0).toUpperCase() + provider.slice(1) },
-          ].map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between py-3 border-b last:border-0"
-              style={{ borderColor: "var(--t-border-subtle)" }}>
-              <span className="text-gray-600 dark:text-gray-400">{label}</span>
-              <span className="font-mono text-xs text-gray-600 dark:text-gray-300">{value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+        <Section
+          title="Account info"
+          description="Read-only details tied to your authentication."
+        >
+          <dl className="text-sm">
+            {[
+              { label: "User ID",       value: user?.id ?? "—", mono: true },
+              { label: "Joined",        value: joined, mono: false },
+              { label: "Auth provider", value: provider.charAt(0).toUpperCase() + provider.slice(1), mono: false },
+            ].map(({ label, value, mono }, i, arr) => (
+              <div
+                key={label}
+                className="flex items-center justify-between py-3 border-b"
+                style={{
+                  borderColor: i === arr.length - 1 ? "transparent" : "var(--t-border-subtle)",
+                }}
+              >
+                <dt style={{ color: "var(--text-tertiary)" }}>{label}</dt>
+                <dd
+                  className={mono ? "font-mono text-xs" : "text-sm"}
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Section>
 
-      {/* Contact Info */}
-      <div className={card} style={cardStyle}>
-        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Contact Settings</h2>
-        <p className="text-xs text-gray-400 dark:text-gray-600 mb-5">
-          Set the contact info subscribers (VCs/companies) can use when they&apos;re interested in your idea.
-        </p>
-        <ContactInfoForm
-          initialEmail={profile?.contact_email ?? email}
-          initialPhone={profile?.contact_phone ?? ""}
-          initialLinkedin={profile?.contact_linkedin ?? ""}
-          initialOther={profile?.contact_other ?? ""}
-          initialAllowContact={profile?.allow_contact ?? false}
-        />
-      </div>
+        <Section
+          title="Contact preferences"
+          description="Set how Pro investors and collaborators can reach you about ideas you've submitted."
+        >
+          <ContactInfoForm
+            initialEmail={profile?.contact_email ?? email}
+            initialPhone={profile?.contact_phone ?? ""}
+            initialLinkedin={profile?.contact_linkedin ?? ""}
+            initialOther={profile?.contact_other ?? ""}
+            initialAllowContact={profile?.allow_contact ?? false}
+          />
+        </Section>
 
-      {/* Preferences */}
-      <div className={card} style={cardStyle}>
-        <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Preferences</h2>
-        <PreferencesPanel />
-      </div>
+        <Section
+          title="Preferences"
+          description="Interface and notification settings."
+        >
+          <PreferencesPanel />
+        </Section>
 
-      {/* Danger Zone */}
-      <div className="border p-6" style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.15)" }}>
-        <h2 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2">Danger Zone</h2>
-        <p className="text-xs text-gray-400 dark:text-gray-600 mb-4">These actions are permanent and cannot be undone.</p>
-        <div className="flex items-center justify-between p-4 border" style={{ borderColor: "rgba(239,68,68,0.15)", background: "rgba(239,68,68,0.04)" }}>
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Delete Account</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">Permanently delete your account and all project data.</p>
+        {/* Danger zone — visually distinct but restrained */}
+        <div
+          className="border p-6"
+          style={{
+            background: "var(--card-bg)",
+            borderColor: "rgba(239, 68, 68, 0.25)",
+          }}
+        >
+          <div className="mb-4">
+            <h2
+              className="text-sm font-semibold"
+              style={{ color: "var(--signal-danger, #ef4444)" }}
+            >
+              Danger zone
+            </h2>
+            <p className="text-xs mt-1" style={{ color: "var(--text-tertiary)" }}>
+              These actions are permanent and cannot be undone.
+            </p>
           </div>
-          <button disabled
-            className="shrink-0 text-xs font-semibold text-red-400 border border-red-500/30 px-4 py-2 hover:bg-red-500/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            Delete Account
-          </button>
+
+          <div
+            className="flex items-center justify-between gap-4 p-4 border"
+            style={{
+              borderColor: "rgba(239, 68, 68, 0.18)",
+              background: "rgba(239, 68, 68, 0.04)",
+            }}
+          >
+            <div>
+              <p
+                className="text-sm font-semibold mb-0.5"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Delete account
+              </p>
+              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                Permanently delete your account and all submitted ideas.
+              </p>
+            </div>
+            <button
+              disabled
+              title="Contact support to delete your account"
+              className="shrink-0 h-9 px-4 text-xs font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-500/10"
+              style={{
+                color: "var(--signal-danger, #ef4444)",
+                borderColor: "rgba(239, 68, 68, 0.3)",
+              }}
+            >
+              Delete account
+            </button>
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Section wrapper ──────────────────────────────────────────────────────────
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">
+      <div className="md:pt-1">
+        <h2
+          className="text-sm font-semibold"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {title}
+        </h2>
+        {description && (
+          <p
+            className="text-xs mt-1 leading-relaxed"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            {description}
+          </p>
+        )}
+      </div>
+      <div
+        className="border p-5"
+        style={{
+          background: "var(--card-bg)",
+          borderColor: "var(--t-border-card)",
+        }}
+      >
+        {children}
+      </div>
+    </section>
   );
 }
