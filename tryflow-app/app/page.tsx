@@ -173,7 +173,7 @@ function SparkCard({ card, delay }: { card: typeof TREND_CARDS[0]; delay: number
         <div className="relative">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+            <span className="text-[13px] font-bold px-2.5 py-1 rounded-full"
               style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)" }}>
               {card.category}
             </span>
@@ -190,7 +190,7 @@ function SparkCard({ card, delay }: { card: typeof TREND_CARDS[0]; delay: number
           {/* Score */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Viability</p>
+              <p className="text-[12px] text-gray-500 uppercase tracking-wider mb-1">Viability</p>
               <div className="flex items-center gap-2">
                 <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
                   <div className="h-full rounded-full transition-all duration-700"
@@ -310,7 +310,7 @@ function InteractiveDemo() {
             <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
             <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
           </div>
-          <div className="flex-1 bg-white border border-gray-200  px-3 py-1 text-[11px] text-gray-400 text-center font-mono truncate">
+          <div className="flex-1 bg-white border border-gray-200  px-3 py-1 text-[13px] text-gray-400 text-center font-mono truncate">
             {STEP_URLS[step]}
           </div>
         </div>
@@ -348,7 +348,7 @@ function InteractiveDemo() {
                 : "bg-white/10 text-white/40 cursor-not-allowed"}`}>
               {charCount >= DEMO_DESC.length ? "✓ Get my insight report →" : "Get my insight report →"}
             </button>
-            <p className="text-center text-[11px] text-gray-600 mt-3">100% anonymous · Never made public</p>
+            <p className="text-center text-[13px] text-gray-600 mt-3">100% anonymous · Never made public</p>
           </div>
         )}
 
@@ -383,7 +383,7 @@ function InteractiveDemo() {
                   <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0
                     ${i < analysisLine - 1 ? "bg-emerald-100" : "bg-indigo-100"}`}>
                     {i < analysisLine - 1
-                      ? <span className="text-emerald-600 text-[9px]">✓</span>
+                      ? <span className="text-emerald-600 text-[11px]">✓</span>
                       : <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse block" />}
                   </div>
                   <span className={i < analysisLine - 1 ? "text-gray-400 line-through" : "text-gray-700 font-medium"}>{item}</span>
@@ -400,7 +400,7 @@ function InteractiveDemo() {
             <div className="bg-gradient-navy p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 pointer-events-none"
                 style={{ background: "radial-gradient(circle, #818cf8, transparent)", transform: "translate(30%,-30%)" }} />
-              <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-widest mb-2">Personal Insight Report</p>
+              <p className="text-indigo-300 text-[12px] font-bold uppercase tracking-widest mb-2">Personal Insight Report</p>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white font-bold text-sm">AI / ML · For: Solo developers</p>
@@ -408,7 +408,7 @@ function InteractiveDemo() {
                 </div>
                 <div className="text-center">
                   <div className={`text-4xl font-extrabold transition-colors duration-300 ${score >= 70 ? "text-emerald-400" : "text-amber-400"}`}>{score}</div>
-                  <div className="text-[10px] text-gray-400">viability</div>
+                  <div className="text-[12px] text-gray-400">viability</div>
                 </div>
               </div>
             </div>
@@ -421,7 +421,7 @@ function InteractiveDemo() {
                 { label: "Similar Ideas",value: "3",        icon: Sparkles,   color: "text-violet-500",  bg: "bg-violet-50" },
               ].map((m) => (
                 <div key={m.label} className="p-4 text-center">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{m.label}</p>
+                  <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-2">{m.label}</p>
                   <div className={`w-8 h-8  ${m.bg} flex items-center justify-center mx-auto mb-1`}>
                     <m.icon className={`w-3.5 h-3.5 ${m.color}`} />
                   </div>
@@ -432,7 +432,7 @@ function InteractiveDemo() {
 
             {/* Summary */}
             <div className="p-5 bg-white">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">AI Insight</p>
+              <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-2">AI Insight</p>
               <p className="text-xs text-gray-600 leading-relaxed">
                 High-signal opportunity. The AI/ML space is gaining momentum with very few similar ideas —
                 you may be <span className="font-semibold text-indigo-600">early to a genuine market gap</span>.
@@ -474,7 +474,7 @@ const CLOUDS = [
 
 // ─────────────────────────────────────────────────────────────────────────
 const STYLE_CYCLE = [
-  { fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
+  { fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
   { fontFamily: "'Playfair Display', serif",       fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "0.01em",   fontSize: "1.05em", textTransform: "none"      as const },
   { fontFamily: "'Bebas Neue', sans-serif",        fontWeight: 400, fontStyle: "normal"  as const, letterSpacing: "0.12em",   fontSize: "1.15em", textTransform: "uppercase" as const },
   { fontFamily: "'Space Mono', monospace",         fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "-0.04em",  fontSize: "0.72em", textTransform: "none"      as const },
@@ -507,7 +507,7 @@ export default function HomePage() {
   }, [revealed]);
 
   return (
-    <div className="min-h-screen font-['Plus_Jakarta_Sans'] overflow-x-hidden" style={{ background: "linear-gradient(to bottom, #050816 0%, #050816 10%, #060d1f 18%, #0a1a3a 26%, #0d2550 34%, #123470 42%, #1a4a90 50%, #2a68b0 58%, #4a90c8 65%, #6ab8c0 71%, #6ab8a0 77%, #4a9878 83%, #2e7058 90%, #1e5040 100%)" }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif", background: "linear-gradient(to bottom, #050816 0%, #050816 10%, #060d1f 18%, #0a1a3a 26%, #0d2550 34%, #123470 42%, #1a4a90 50%, #2a68b0 58%, #4a90c8 65%, #6ab8c0 71%, #6ab8a0 77%, #4a9878 83%, #2e7058 90%, #1e5040 100%)" }}>
       <ScrollSeeds />
 
       {/* ── Navbar ── */}
@@ -785,7 +785,7 @@ export default function HomePage() {
           {/* Scroll cue */}
           <div className="mt-10 flex flex-col items-center gap-2 opacity-40"
             style={{ animation: "fadeIn 1s ease 1.2s both" }}>
-            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">See live ideas</span>
+            <span className="text-[12px] text-gray-400 uppercase tracking-widest font-semibold">See live ideas</span>
             <ChevronDown className="w-4 h-4 text-gray-400 animate-bounce" />
           </div>
         </div>

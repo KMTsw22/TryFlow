@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Eye, EyeOff, Mail, MailX } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -10,6 +10,9 @@ interface Props {
   initialAllowContact: boolean;
   hasContactEmail: boolean;
 }
+
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
 
 export function OwnerVisibilityCard({
   ideaId,
@@ -37,7 +40,7 @@ export function OwnerVisibilityCard({
       });
       if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
     } catch (e) {
-      setIsPrivate(!next); // revert
+      setIsPrivate(!next);
       setError(e instanceof Error ? e.message : "Failed to update privacy");
     } finally {
       setSavingPrivacy(false);
@@ -65,143 +68,202 @@ export function OwnerVisibilityCard({
     }
   }
 
+  const contactDisabled = !hasContactEmail && !allowContact;
+
   return (
-    <div
-      className="mb-6 border"
-      style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
-    >
-      <div
-        className="px-5 py-3 border-b"
-        style={{ borderColor: "var(--t-border-subtle)" }}
-      >
-        <p
-          className="text-[11px] font-semibold tracking-wider uppercase"
-          style={{ color: "var(--text-tertiary)" }}
+    <section aria-label="Idea settings" className="mb-14">
+      <div className="flex items-center gap-4 mb-8">
+        <span
+          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
-          Idea settings
-        </p>
+          Settings
+        </span>
+        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+        <span
+          className="text-[14px] font-medium tracking-[0.25em] uppercase shrink-0"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          Owner only
+        </span>
       </div>
 
-      <div className="divide-y" style={{ borderColor: "var(--t-border-subtle)" }}>
-        {/* Visibility */}
-        <Row
-          icon={isPrivate ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      <div className="max-w-3xl">
+        <SettingRow
+          label="Visibility"
           title={isPrivate ? "Private" : "Public"}
-          subtitle={
+          desc={
             isPrivate
-              ? "Only you can see this idea. It won't appear in the market."
-              : "Anyone can discover this idea in the market."
+              ? "Only you can open this report."
+              : "Anyone with this link can open it. Won't be indexed on the market."
           }
           on={!isPrivate}
           saving={savingPrivacy}
           onToggle={togglePrivacy}
-          toggleLabel={isPrivate ? "Make public" : "Make private"}
         />
 
-        {/* Contact */}
-        <Row
-          icon={allowContact ? <Mail className="w-4 h-4" /> : <MailX className="w-4 h-4" />}
-          title={allowContact ? "Contact on" : "Contact off"}
-          subtitle={
+        <SettingRow
+          label="Contact"
+          title={allowContact ? "Open to contact" : "Contact off"}
+          desc={
             allowContact
-              ? "Pro investors can reach out to you via email about your ideas."
-              : "Investors can see your ideas but cannot contact you."
+              ? "Pro investors can email you about your ideas."
+              : "Investors can see your ideas but cannot reach out."
           }
           meta="Applies to all your ideas"
           on={allowContact}
           saving={savingContact}
           onToggle={toggleContact}
-          toggleLabel={allowContact ? "Disable contact" : "Enable contact"}
+          disabled={contactDisabled}
           warning={
-            !hasContactEmail && !allowContact
-              ? (
-                <span>
-                  You don&apos;t have a contact email on file —{" "}
-                  <Link href="/settings" className="underline text-indigo-400 hover:text-indigo-300">
-                    add one in settings
-                  </Link>{" "}
-                  before enabling contact.
-                </span>
-              )
-              : null
+            contactDisabled ? (
+              <>
+                Add a{" "}
+                <Link
+                  href="/settings"
+                  className="underline transition-opacity hover:opacity-70"
+                  style={{ color: "var(--accent)" }}
+                >
+                  contact email
+                </Link>{" "}
+                in settings before enabling.
+              </>
+            ) : null
           }
-          disabled={!hasContactEmail && !allowContact}
         />
-      </div>
 
-      {error && (
-        <p className="px-5 py-2 text-xs text-red-400 border-t" style={{ borderColor: "var(--t-border-subtle)" }}>
-          {error}
-        </p>
-      )}
-    </div>
+        {error && (
+          <p
+            className="mt-5 text-[13px] font-medium tracking-[0.2em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
+          >
+            {error}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 
-function Row({
-  icon,
+function SettingRow({
+  label,
   title,
-  subtitle,
+  desc,
   meta,
   on,
   saving,
   onToggle,
-  toggleLabel,
-  warning,
   disabled,
+  warning,
 }: {
-  icon: React.ReactNode;
+  label: string;
   title: string;
-  subtitle: string;
+  desc: string;
   meta?: string;
   on: boolean;
   saving: boolean;
   onToggle: () => void;
-  toggleLabel: string;
-  warning?: React.ReactNode;
   disabled?: boolean;
+  warning?: React.ReactNode;
 }) {
   return (
-    <div className="px-5 py-4 flex items-start gap-4">
-      <div
-        className="w-8 h-8 flex items-center justify-center shrink-0"
-        style={{ background: "var(--t-border-subtle)", color: on ? "var(--accent)" : "var(--text-tertiary)" }}
+    <div
+      className="grid grid-cols-[120px_1fr_auto] gap-x-6 items-start py-6 border-b"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      {/* Column 1 — Label */}
+      <span
+        className="pt-1 text-[14px] font-medium tracking-[0.3em] uppercase"
+        style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
       >
-        {icon}
-      </div>
+        {label}
+      </span>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+      {/* Column 2 — State title + description */}
+      <div className="min-w-0">
+        <h3
+          className="leading-tight"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 700,
+            fontSize: "1.35rem",
+            letterSpacing: "-0.015em",
+            color: on ? "var(--text-primary)" : "var(--text-secondary)",
+          }}
+        >
           {title}
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>
-          {subtitle}
+        </h3>
+        <p
+          className="mt-1.5 text-[14px] leading-[1.6]"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          {desc}
         </p>
         {meta && (
-          <p className="text-[11px] mt-1" style={{ color: "var(--text-tertiary)" }}>
+          <p
+            className="mt-2 text-[12px] font-medium tracking-[0.25em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
             {meta}
           </p>
         )}
         {warning && (
-          <p className="text-[11px] mt-2 text-amber-500 dark:text-amber-400">{warning}</p>
+          <p
+            className="mt-3 text-[13px] leading-[1.5]"
+            style={{ color: "var(--signal-warning)" }}
+          >
+            {warning}
+          </p>
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={onToggle}
-        disabled={saving || disabled}
-        aria-pressed={on}
-        className="shrink-0 inline-flex items-center gap-1.5 h-7 px-3 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{
-          background: on ? "var(--accent-soft)" : "transparent",
-          border: "1px solid var(--t-border)",
-          color: on ? "var(--accent)" : "var(--text-secondary)",
-        }}
-      >
-        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-        {toggleLabel}
-      </button>
+      {/* Column 3 — Toggle switch */}
+      <ToggleSwitch on={on} saving={saving} onClick={onToggle} disabled={disabled} />
     </div>
+  );
+}
+
+function ToggleSwitch({
+  on,
+  saving,
+  onClick,
+  disabled,
+}: {
+  on: boolean;
+  saving: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onClick}
+      disabled={saving || disabled}
+      className="relative inline-flex items-center w-11 h-6 shrink-0 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-80 mt-1"
+      style={{
+        background: on ? "var(--accent)" : "var(--t-border-card)",
+        borderRadius: "9999px",
+      }}
+    >
+      <span
+        className="absolute transition-transform duration-200"
+        style={{
+          left: 3,
+          width: 18,
+          height: 18,
+          borderRadius: "9999px",
+          background: "#fff",
+          transform: on ? "translateX(20px)" : "translateX(0)",
+        }}
+      />
+      {saving && (
+        <Loader2
+          className="absolute left-1/2 -translate-x-1/2 w-3 h-3 animate-spin"
+          style={{ color: "var(--text-primary)" }}
+        />
+      )}
+    </button>
   );
 }

@@ -15,9 +15,7 @@ export interface CategoryRow {
   direction: TrendDirection;
   saturation: "Low" | "Medium" | "High";
   sparkline: number[];
-  /** Average viability score across scored submissions in this category (null when unscored). */
   avgScore: number | null;
-  /** How many submissions contributed to avgScore (used for small-sample treatment). */
   scoreSample: number;
 }
 
@@ -26,9 +24,11 @@ type SortDir = "asc" | "desc";
 
 interface Props {
   rows: CategoryRow[];
-  /** Controls column header labels and whether delta column shows values */
   rangeLabel?: "7d" | "30d" | "all";
 }
+
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
 
 const HEADER_LABELS: Record<NonNullable<Props["rangeLabel"]>, {
   primary: string;
@@ -42,7 +42,7 @@ const HEADER_LABELS: Record<NonNullable<Props["rangeLabel"]>, {
     primary: "Last 7d",
     primaryTitle: "Submissions in the last 7 days",
     secondary: "Prev 7d",
-    secondaryTitle: "Submissions in the 7 days before that (days 8–14 ago) — Δ% baseline",
+    secondaryTitle: "Submissions 8–14 days ago — Δ% baseline",
     sparkline: "7-day activity",
     primarySortKey: "volume30d",
   },
@@ -50,7 +50,7 @@ const HEADER_LABELS: Record<NonNullable<Props["rangeLabel"]>, {
     primary: "Last 30d",
     primaryTitle: "Submissions in the last 30 days",
     secondary: "Prev 30d",
-    secondaryTitle: "Submissions in the 30 days before that (days 31–60 ago) — Δ% baseline",
+    secondaryTitle: "Submissions 31–60 days ago — Δ% baseline",
     sparkline: "30-day activity",
     primarySortKey: "volume30d",
   },
@@ -58,7 +58,7 @@ const HEADER_LABELS: Record<NonNullable<Props["rangeLabel"]>, {
     primary: "Total",
     primaryTitle: "All-time submissions in this category",
     secondary: "Last 30d",
-    secondaryTitle: "Submissions in the last 30 days (recency indicator; no Δ% comparison for all-time)",
+    secondaryTitle: "Last-30-day recency",
     sparkline: "Recent activity",
     primarySortKey: "volume30d",
   },
@@ -70,10 +70,10 @@ const SATURATION_ORDER: Record<CategoryRow["saturation"], number> = {
   High: 2,
 };
 
-const SAT_LABEL: Record<CategoryRow["saturation"], { text: string; color: string }> = {
-  Low:    { text: "Low",    color: "text-emerald-600 dark:text-emerald-400" },
-  Medium: { text: "Medium", color: "text-amber-600 dark:text-amber-400" },
-  High:   { text: "High",   color: "text-orange-600 dark:text-orange-400" },
+const SAT_COLOR: Record<CategoryRow["saturation"], string> = {
+  Low: "var(--signal-success)",
+  Medium: "var(--signal-warning)",
+  High: "var(--signal-danger)",
 };
 
 export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
@@ -95,7 +95,6 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
     if (sortKey === "saturation") {
       diff = SATURATION_ORDER[a.saturation] - SATURATION_ORDER[b.saturation];
     } else if (sortKey === "avgScore") {
-      // Push nulls to the end regardless of sort direction.
       const aScore = a.avgScore ?? -1;
       const bScore = b.avgScore ?? -1;
       diff = aScore - bScore;
@@ -105,27 +104,45 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
     return sortDir === "asc" ? diff : -diff;
   });
 
-  // Column grid template — reused between header and rows.
   const gridTemplate =
-    "minmax(0, 1.2fr) 70px 70px 75px 105px minmax(0, 1fr) 85px 24px";
+    "minmax(0, 1.2fr) 72px 72px 80px 110px minmax(0, 1fr) 90px 20px";
+
+  const noisyAvgPresent = sorted.some(
+    (r) => r.avgScore !== null && r.scoreSample < 2,
+  );
 
   return (
-    <div
-      className="border overflow-hidden"
-      style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
-    >
+    <div>
       {/* Table header */}
       <div
-        className="grid items-center gap-4 px-5 py-3 border-b text-[11px] font-semibold tracking-wider uppercase"
+        className="grid items-baseline gap-4 py-3 border-t border-b"
         style={{
-          borderColor: "var(--t-border)",
+          borderColor: "var(--t-border-subtle)",
           gridTemplateColumns: gridTemplate,
-          color: "var(--text-tertiary)",
         }}
       >
-        <div>Category</div>
-        <SortHeader label={labels.primary}   active={sortKey === "volume30d"} dir={sortDir} onClick={() => handleSort("volume30d")} align="right" title={labels.primaryTitle} />
-        <SortHeader label={labels.secondary} active={sortKey === "volume7d"}  dir={sortDir} onClick={() => handleSort("volume7d")}  align="right" title={labels.secondaryTitle} />
+        <div
+          className="text-[14px] font-medium tracking-[0.3em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          Category
+        </div>
+        <SortHeader
+          label={labels.primary}
+          active={sortKey === "volume30d"}
+          dir={sortDir}
+          onClick={() => handleSort("volume30d")}
+          align="right"
+          title={labels.primaryTitle}
+        />
+        <SortHeader
+          label={labels.secondary}
+          active={sortKey === "volume7d"}
+          dir={sortDir}
+          onClick={() => handleSort("volume7d")}
+          align="right"
+          title={labels.secondaryTitle}
+        />
         <SortHeader
           label="Avg"
           active={sortKey === "avgScore"}
@@ -134,15 +151,25 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
           align="right"
           title="Average viability score across scored submissions"
         />
-        <div>Trend</div>
-        <div>{labels.sparkline}</div>
+        <div
+          className="text-[14px] font-medium tracking-[0.3em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          Trend
+        </div>
+        <div
+          className="text-[14px] font-medium tracking-[0.3em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          Activity
+        </div>
         <SortHeader
           label="Density"
           active={sortKey === "saturation"}
           dir={sortDir}
           onClick={() => handleSort("saturation")}
           align="left"
-          title="Submission density on TryWepp — not real-world market saturation"
+          title="Submission density on TryWepp — not real-world saturation"
         />
         <div />
       </div>
@@ -150,99 +177,121 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
       {/* Rows */}
       {sorted.length === 0 ? (
         <div
-          className="px-5 py-12 text-center text-sm"
-          style={{ color: "var(--text-tertiary)" }}
+          className="py-16 text-center text-[15px] italic"
+          style={{ fontFamily: SERIF, color: "var(--text-tertiary)" }}
         >
           No category data yet.
         </div>
       ) : (
-        <ul className="divide-y" style={{ borderColor: "var(--t-border-subtle)" }}>
+        <ul>
           {sorted.map((r) => {
-            const sat = SAT_LABEL[r.saturation];
             const sparkTone: "positive" | "danger" | "muted" =
-              r.direction === "Rising" ? "positive"
-                : r.direction === "Declining" ? "danger"
+              r.direction === "Rising"
+                ? "positive"
+                : r.direction === "Declining"
+                ? "danger"
                 : "muted";
 
-            // Quality — needs ≥2 samples to be trustworthy
             const avgAvailable = r.avgScore !== null && r.scoreSample > 0;
             const avgNoisy = avgAvailable && r.scoreSample < 2;
             const avgHex = !avgAvailable
               ? null
-              : r.avgScore! >= 70 ? "#10b981"
-                : r.avgScore! >= 50 ? "#f59e0b"
-                : "#ef4444";
-            const avgText = !avgAvailable
-              ? null
-              : r.avgScore! >= 70 ? "text-emerald-600 dark:text-emerald-400"
-                : r.avgScore! >= 50 ? "text-amber-600 dark:text-amber-400"
-                : "text-red-600 dark:text-red-400";
+              : r.avgScore! >= 70
+              ? "var(--signal-success)"
+              : r.avgScore! >= 50
+              ? "var(--signal-warning)"
+              : "var(--signal-danger)";
 
             return (
-              <li key={r.category}>
+              <li
+                key={r.category}
+                className="border-b"
+                style={{ borderColor: "var(--t-border-subtle)" }}
+              >
                 <Link
                   href={`/explore/${encodeURIComponent(r.category)}`}
-                  className="grid items-center gap-4 px-5 py-4 text-sm transition-colors group hover:bg-[color:var(--t-border-subtle)]"
+                  className="grid items-center gap-4 py-2 transition-opacity group hover:opacity-80"
                   style={{ gridTemplateColumns: gridTemplate }}
                 >
-                  {/* Category name */}
+                  {/* Category */}
                   <div className="min-w-0">
                     <p
-                      className="font-semibold truncate"
-                      style={{ color: "var(--text-primary)" }}
+                      className="truncate"
+                      style={{
+                        fontFamily: SERIF,
+                        fontWeight: 700,
+                        fontSize: "1.1rem",
+                        letterSpacing: "-0.01em",
+                        color: "var(--text-primary)",
+                      }}
                     >
                       {r.category}
                     </p>
                   </div>
 
-                  {/* 30d */}
+                  {/* Primary volume */}
                   <div
-                    className="text-right font-mono tabular-nums font-semibold"
-                    style={{ color: "var(--text-primary)" }}
+                    className="text-right tabular-nums"
+                    style={{
+                      fontFamily: SERIF,
+                      fontWeight: 700,
+                      fontSize: "1.15rem",
+                      letterSpacing: "-0.01em",
+                      color: "var(--text-primary)",
+                    }}
                   >
                     {r.volume30d}
                   </div>
 
-                  {/* 7d */}
+                  {/* Secondary volume */}
                   <div
-                    className="text-right font-mono tabular-nums"
-                    style={{ color: "var(--text-secondary)" }}
+                    className="text-right tabular-nums"
+                    style={{
+                      fontFamily: SERIF,
+                      fontWeight: 500,
+                      fontSize: "1rem",
+                      color: "var(--text-tertiary)",
+                    }}
                   >
                     {r.volume7d}
                   </div>
 
                   {/* Avg score */}
                   <div
-                    className="flex items-center justify-end gap-1.5"
+                    className="flex items-baseline justify-end gap-1.5"
                     title={
                       !avgAvailable
                         ? "No scored submissions yet"
                         : avgNoisy
-                          ? `Based on only ${r.scoreSample} submission — may be noisy`
-                          : `Avg of ${r.scoreSample} scored submission${r.scoreSample === 1 ? "" : "s"}`
+                        ? `Based on only ${r.scoreSample} submission — may be noisy`
+                        : `Avg of ${r.scoreSample} scored submission${r.scoreSample === 1 ? "" : "s"}`
                     }
                   >
                     {avgAvailable ? (
                       <>
                         <span
-                          className={cn(
-                            "font-mono tabular-nums font-semibold text-[13px]",
-                            avgText,
-                            avgNoisy && "opacity-60"
-                          )}
+                          className={cn("tabular-nums", avgNoisy && "opacity-60")}
+                          style={{
+                            fontFamily: SERIF,
+                            fontWeight: 900,
+                            fontSize: "1.15rem",
+                            letterSpacing: "-0.02em",
+                            color: avgHex!,
+                          }}
                         >
                           {r.avgScore}
-                          {avgNoisy && <span className="ml-0.5">*</span>}
+                          {avgNoisy && (
+                            <span className="ml-0.5 text-[0.6em]">*</span>
+                          )}
                         </span>
-                        <span
-                          className="w-1.5 h-1.5 rounded-full shrink-0"
-                          style={{ background: avgHex!, opacity: avgNoisy ? 0.6 : 1 }}
-                        />
                       </>
                     ) : (
                       <span
-                        className="font-mono text-[13px]"
-                        style={{ color: "var(--text-tertiary)" }}
+                        className="text-[13px]"
+                        style={{
+                          fontFamily: DISPLAY,
+                          color: "var(--text-tertiary)",
+                        }}
                       >
                         —
                       </span>
@@ -259,21 +308,35 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
                     <Sparkline
                       points={r.sparkline}
                       tone={sparkTone}
-                      width={95}
+                      width={100}
                       height={22}
                       ariaLabel={`Submission trend for ${r.category}`}
                     />
                   </div>
 
-                  {/* Density (formerly Saturation) */}
-                  <div className={cn("font-medium text-[13px]", sat.color)}>
-                    {sat.text}
+                  {/* Density */}
+                  <div className="inline-flex items-center gap-2">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ background: SAT_COLOR[r.saturation] }}
+                      aria-hidden
+                    />
+                    <span
+                      className="text-[15px] font-medium tracking-[0.2em] uppercase"
+                      style={{
+                        fontFamily: DISPLAY,
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      {r.saturation}
+                    </span>
                   </div>
 
                   {/* Chevron */}
                   <ChevronRight
-                    className="w-4 h-4 justify-self-end transition-all group-hover:translate-x-0.5"
+                    className="w-3.5 h-3.5 justify-self-end transition-transform group-hover:translate-x-0.5"
                     style={{ color: "var(--text-tertiary)" }}
+                    strokeWidth={1.75}
                   />
                 </Link>
               </li>
@@ -282,17 +345,13 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
         </ul>
       )}
 
-      {/* Footnote for the small-sample asterisk in the Avg column */}
-      {sorted.some((r) => r.avgScore !== null && r.scoreSample < 2) && (
-        <div
-          className="px-5 py-2 text-[11px] border-t"
-          style={{
-            borderColor: "var(--t-border-subtle)",
-            color: "var(--text-tertiary)",
-          }}
+      {noisyAvgPresent && (
+        <p
+          className="mt-3 text-[14px] font-medium tracking-[0.25em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
-          * Based on fewer than 2 scored submissions — may be noisy.
-        </div>
+          * Fewer than 2 scored submissions — may be noisy
+        </p>
       )}
     </div>
   );
@@ -320,15 +379,16 @@ function SortHeader({
       onClick={onClick}
       title={title}
       className={cn(
-        "inline-flex items-center gap-1 transition-colors select-none",
+        "inline-flex items-center gap-1.5 text-[14px] font-medium tracking-[0.3em] uppercase transition-colors select-none",
         align === "right" ? "justify-end" : "justify-start",
-        active
-          ? "text-[color:var(--text-primary)]"
-          : "text-[color:var(--text-tertiary)] hover:text-[color:var(--text-secondary)]"
       )}
+      style={{
+        fontFamily: DISPLAY,
+        color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+      }}
     >
       {label}
-      <Icon className="w-3 h-3 opacity-70" />
+      <Icon className="w-3 h-3 opacity-70" strokeWidth={2} />
     </button>
   );
 }

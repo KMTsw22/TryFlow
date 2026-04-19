@@ -3,16 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  GitCompare,
-  RefreshCw,
-  LayoutDashboard,
-  Share2,
-  Mail,
-  Trash2,
-  Loader2,
-  AlertTriangle,
-} from "lucide-react";
+import { ArrowRight, Loader2, Trash2 } from "lucide-react";
 
 interface Props {
   ideaId: string;
@@ -24,10 +15,21 @@ interface Props {
   id?: string;
 }
 
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
+
+type SecondaryAction = {
+  href?: string;
+  label: string;
+  onClick?: () => void;
+  copyLink?: boolean;
+  destructive?: boolean;
+};
+
 /**
- * The primary decision layer of the report page. Renders 3-4 concrete actions
- * a user can take after reading the verdict. No generic "Explore market" — only
- * actions that move this specific idea forward.
+ * Editorial "What now" panel — centered pull-quote primary action + inline
+ * secondary text links. Breaks the vertical rhythm of the stacked sections
+ * above.
  */
 export function IdeaActionDock({
   ideaId,
@@ -38,80 +40,107 @@ export function IdeaActionDock({
 }: Props) {
   const [confirming, setConfirming] = useState(false);
 
+  const primary = isOwner
+    ? {
+        href: `/submit?from=${ideaId}`,
+        headline: "Iterate on this idea.",
+        desc: "Submit a new version with what you've learned. Markets reward the second-time builder.",
+        cta: "Start a new draft",
+      }
+    : canContact
+    ? {
+        href: "#contact",
+        headline: "Reach out to the builder.",
+        desc: "You have a direct line. Use it before someone else does.",
+        cta: "Contact submitter",
+      }
+    : {
+        href: `/compare?pick=${ideaId}`,
+        headline: "See how it stacks up.",
+        desc: "Place this against another idea to find the sharpest angle.",
+        cta: "Compare ideas",
+      };
+
+  const secondary: SecondaryAction[] = isOwner
+    ? [
+        { href: `/compare?pick=${ideaId}`, label: "Compare with another" },
+        { href: `/explore/${encodeURIComponent(category)}`, label: `See ${category} market` },
+        { label: "Archive", onClick: () => setConfirming(true), destructive: true },
+      ]
+    : [
+        ...(canContact
+          ? [{
+              href: `/compare?pick=${ideaId}`,
+              label: "Compare with yours",
+            }]
+          : []),
+        { href: `/explore/${encodeURIComponent(category)}`, label: `See ${category} market` },
+        { label: "Share report", copyLink: true },
+      ];
+
   return (
-    <section
-      id={id}
-      aria-label="Next actions for this idea"
-      className="mb-6"
-    >
-      <div className="flex items-baseline justify-between mb-3">
-        <h2
-          className="text-sm font-semibold"
-          style={{ color: "var(--text-primary)" }}
+    <section id={id} aria-label="Next actions for this idea" className="mb-14">
+      {/* Centered pull-quote primary action */}
+      <div
+        className="py-16 text-center border-t border-b"
+        style={{ borderColor: "var(--t-border-subtle)" }}
+      >
+        <p
+          className="text-[15px] font-medium tracking-[0.45em] uppercase mb-6"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
-          Next actions
-        </h2>
-        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-          Decide what to do with this idea
+          What now
         </p>
+
+        <h2
+          className="mb-5 max-w-2xl mx-auto leading-[1.1]"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
+            letterSpacing: "-0.025em",
+            color: "var(--text-primary)",
+          }}
+        >
+          {primary.headline}
+        </h2>
+
+        <p
+          className="mb-8 max-w-xl mx-auto text-[15px] leading-[1.7]"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          {primary.desc}
+        </p>
+
+        <Link
+          href={primary.href}
+          className="group inline-flex items-center gap-3 text-[14px] font-medium tracking-[0.35em] uppercase transition-opacity hover:opacity-70"
+          style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
+        >
+          {primary.cta}
+          <ArrowRight
+            className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"
+            strokeWidth={1.75}
+          />
+        </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {isOwner ? (
-          <>
-            <ActionButton
-              href={`/submit?from=${ideaId}`}
-              icon={<RefreshCw className="w-4 h-4" />}
-              label="Iterate"
-              desc="Submit a new version"
-              primary
-            />
-            <ActionButton
-              href={`/compare?pick=${ideaId}`}
-              icon={<GitCompare className="w-4 h-4" />}
-              label="Compare"
-              desc="Against another idea"
-            />
-            <ActionButton
-              href={`/explore/${encodeURIComponent(category)}`}
-              icon={<LayoutDashboard className="w-4 h-4" />}
-              label="See market"
-              desc={`In ${category}`}
-            />
-            <ArchiveButton onClick={() => setConfirming(true)} />
-          </>
-        ) : (
-          <>
-            {canContact && (
-              <ActionButton
-                href="#contact"
-                icon={<Mail className="w-4 h-4" />}
-                label="Contact submitter"
-                desc="Reach out directly"
-                primary
-              />
-            )}
-            <ActionButton
-              href={`/compare?pick=${ideaId}`}
-              icon={<GitCompare className="w-4 h-4" />}
-              label="Compare"
-              desc="With your own ideas"
-            />
-            <ActionButton
-              href={`/explore/${encodeURIComponent(category)}`}
-              icon={<LayoutDashboard className="w-4 h-4" />}
-              label="See market"
-              desc={`In ${category}`}
-            />
-            <ActionButton
-              href={`/ideas/${ideaId}`}
-              icon={<Share2 className="w-4 h-4" />}
-              label="Share report"
-              desc="Copy link"
-              shareLink
-            />
-          </>
-        )}
+      {/* Secondary actions — navigation left, destructive right */}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          {secondary
+            .filter((a) => !a.destructive)
+            .map((action, i) => (
+              <SecondaryLink key={i} action={action} />
+            ))}
+        </div>
+        <div className="flex items-center gap-x-6">
+          {secondary
+            .filter((a) => a.destructive)
+            .map((action, i) => (
+              <SecondaryLink key={i} action={action} />
+            ))}
+        </div>
       </div>
 
       {confirming && (
@@ -124,33 +153,59 @@ export function IdeaActionDock({
   );
 }
 
-function ArchiveButton({ onClick }: { onClick: () => void }) {
+function SecondaryLink({ action }: { action: SecondaryAction }) {
+  const [copied, setCopied] = useState(false);
+
+  const label = copied ? "Link copied" : action.label;
+  const style: React.CSSProperties = {
+    fontFamily: DISPLAY,
+    color: action.destructive ? "var(--signal-danger)" : "var(--text-secondary)",
+  };
+  const cls =
+    "group inline-flex items-center gap-2 text-[14px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70";
+
+  const suffix = action.destructive ? null : (
+    <ArrowRight
+      className="w-3 h-3 transition-transform group-hover:translate-x-0.5"
+      strokeWidth={2}
+    />
+  );
+
+  if (action.copyLink) {
+    return (
+      <button
+        type="button"
+        onClick={async () => {
+          if (typeof window === "undefined") return;
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {
+            /* ignore */
+          }
+        }}
+        className={cls}
+        style={style}
+      >
+        {label}
+        {suffix}
+      </button>
+    );
+  }
+  if (action.onClick) {
+    return (
+      <button type="button" onClick={action.onClick} className={cls} style={style}>
+        {label}
+        {suffix}
+      </button>
+    );
+  }
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex flex-col items-start text-left p-3.5 border transition-all hover:-translate-y-0.5"
-      style={{
-        background: "var(--card-bg)",
-        borderColor: "var(--t-border-card)",
-      }}
-    >
-      <span style={{ color: "var(--text-tertiary)" }}>
-        <Trash2 className="w-4 h-4" />
-      </span>
-      <span
-        className="mt-2 text-sm font-semibold transition-colors group-hover:text-[color:var(--signal-danger,#ef4444)]"
-        style={{ color: "var(--text-primary)" }}
-      >
-        Archive
-      </span>
-      <span
-        className="text-[11px] mt-0.5"
-        style={{ color: "var(--text-tertiary)" }}
-      >
-        Delete permanently
-      </span>
-    </button>
+    <Link href={action.href ?? "#"} className={cls} style={style}>
+      {label}
+      {suffix}
+    </Link>
   );
 }
 
@@ -190,63 +245,61 @@ function DeleteConfirmModal({
       aria-modal="true"
       aria-labelledby="archive-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      style={{ background: "rgba(0,0,0,0.65)" }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md border p-6"
+        className="w-full max-w-md p-8 border"
         style={{
           background: "var(--surface-1, var(--card-bg))",
-          borderColor: "rgba(239, 68, 68, 0.3)",
+          borderColor: "var(--t-border-subtle)",
         }}
       >
-        <div className="flex items-start gap-3 mb-4">
-          <div
-            className="w-9 h-9 flex items-center justify-center shrink-0"
-            style={{ background: "rgba(239, 68, 68, 0.1)" }}
-          >
-            <AlertTriangle
-              className="w-4 h-4"
-              style={{ color: "var(--signal-danger, #ef4444)" }}
-            />
-          </div>
-          <div className="min-w-0">
-            <h3
-              id="archive-dialog-title"
-              className="text-base font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Archive this idea?
-            </h3>
-            <p
-              className="text-sm mt-1 leading-relaxed"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              This will permanently delete the submission and its insight report. This action cannot be undone.
-            </p>
-          </div>
-        </div>
+        <p
+          className="text-[15px] font-medium tracking-[0.35em] uppercase mb-4"
+          style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
+        >
+          Destructive
+        </p>
+
+        <h3
+          id="archive-dialog-title"
+          className="mb-3"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "1.75rem",
+            letterSpacing: "-0.02em",
+            color: "var(--text-primary)",
+          }}
+        >
+          Archive this idea?
+        </h3>
+
+        <p
+          className="text-[14.5px] leading-[1.7] mb-8"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          This will permanently delete the submission and its insight report. This action cannot be undone.
+        </p>
 
         {error && (
           <p
-            className="text-xs mb-4 font-medium"
-            style={{ color: "var(--signal-danger, #ef4444)" }}
+            className="text-[14px] font-medium tracking-[0.15em] uppercase mb-5"
+            style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
           >
             {error}
           </p>
         )}
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-6">
           <button
             type="button"
             onClick={onClose}
             disabled={deleting}
-            className="h-9 px-4 text-sm font-medium border transition-colors disabled:opacity-50 hover:bg-[color:var(--t-border-subtle)]"
-            style={{
-              color: "var(--text-secondary)",
-              borderColor: "var(--t-border-card)",
-            }}
+            className="text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity disabled:opacity-50 hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             Cancel
           </button>
@@ -254,126 +307,14 @@ function DeleteConfirmModal({
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            className="inline-flex items-center gap-1.5 h-9 px-4 text-sm font-semibold text-white transition-all disabled:opacity-50 hover:brightness-110"
-            style={{ background: "var(--signal-danger, #ef4444)" }}
+            className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity disabled:opacity-50 hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
           >
-            {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            {deleting ? "Deleting…" : "Delete permanently"}
+            {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+            {deleting ? "Deleting" : "Delete permanently"}
           </button>
         </div>
       </div>
     </div>
-  );
-}
-
-function ActionButton({
-  href,
-  icon,
-  label,
-  desc,
-  primary = false,
-  shareLink = false,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  desc: string;
-  primary?: boolean;
-  shareLink?: boolean;
-}) {
-  const baseClass =
-    "group flex flex-col items-start text-left p-3.5 border transition-all hover:-translate-y-0.5";
-
-  const style: React.CSSProperties = primary
-    ? {
-        background: "var(--accent-soft)",
-        borderColor: "var(--accent-ring)",
-      }
-    : {
-        background: "var(--card-bg)",
-        borderColor: "var(--t-border-card)",
-      };
-
-  if (shareLink) {
-    return (
-      <ShareLinkButton
-        baseClass={baseClass}
-        style={style}
-        icon={icon}
-        label={label}
-        desc={desc}
-      />
-    );
-  }
-
-  return (
-    <Link href={href} className={baseClass} style={style}>
-      <span
-        style={{
-          color: primary ? "var(--accent)" : "var(--text-tertiary)",
-        }}
-      >
-        {icon}
-      </span>
-      <span
-        className="mt-2 text-sm font-semibold"
-        style={{
-          color: primary ? "var(--accent)" : "var(--text-primary)",
-        }}
-      >
-        {label}
-      </span>
-      <span
-        className="text-[11px] mt-0.5"
-        style={{ color: "var(--text-tertiary)" }}
-      >
-        {desc}
-      </span>
-    </Link>
-  );
-}
-
-function ShareLinkButton({
-  baseClass,
-  style,
-  icon,
-  label,
-  desc,
-}: {
-  baseClass: string;
-  style: React.CSSProperties;
-  icon: React.ReactNode;
-  label: string;
-  desc: string;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    if (typeof window === "undefined") return;
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  return (
-    <button type="button" className={baseClass} style={style} onClick={handleCopy}>
-      <span style={{ color: "var(--text-tertiary)" }}>{icon}</span>
-      <span
-        className="mt-2 text-sm font-semibold"
-        style={{ color: "var(--text-primary)" }}
-      >
-        {copied ? "Link copied!" : label}
-      </span>
-      <span
-        className="text-[11px] mt-0.5"
-        style={{ color: "var(--text-tertiary)" }}
-      >
-        {desc}
-      </span>
-    </button>
   );
 }

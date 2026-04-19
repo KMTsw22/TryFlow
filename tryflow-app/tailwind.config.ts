@@ -10,7 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+      },
+      // Slightly larger default type scale for readability, especially in dark mode.
+      // xs: 13px (was 12), sm: 15px (was 14), base: 16px (unchanged).
+      fontSize: {
+        xs:   ["0.8125rem", { lineHeight: "1.15rem" }],  // 13px
+        sm:   ["0.9375rem", { lineHeight: "1.35rem" }],  // 15px
       },
       colors: {
         border: "hsl(var(--border))",

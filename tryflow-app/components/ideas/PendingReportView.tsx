@@ -38,17 +38,17 @@ export function PendingReportView({ submittedDate }: Props) {
     <div className="max-w-2xl mx-auto px-4 py-20 text-center">
       <div
         className="w-16 h-16 flex items-center justify-center mx-auto mb-6"
-        style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}
+        style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}
       >
-        <span className="text-2xl animate-spin inline-block text-indigo-400">⟳</span>
+        <span className="text-2xl animate-spin inline-block" style={{ color: "var(--accent)" }}>⟳</span>
       </div>
-      <h1 className="text-xl font-extrabold text-white mb-2">
+      <h1 className="text-xl font-extrabold mb-2" style={{ color: "var(--text-primary)" }}>
         {gaveUp ? "Still working on it…" : "Report is being generated"}
       </h1>
-      <p className="text-sm text-gray-400 mb-2">
+      <p className="text-sm mb-2" style={{ color: "var(--text-secondary)" }}>
         Your idea was submitted on {submittedDate}.
       </p>
-      <p className="text-xs text-gray-500 mb-8">
+      <p className="text-xs mb-8" style={{ color: "var(--text-tertiary)" }}>
         {gaveUp
           ? "This is taking longer than usual. You can come back later — the report will be waiting on your dashboard."
           : `Auto-refreshing every ${POLL_INTERVAL_MS / 1000}s · ${seconds}s elapsed`}
@@ -57,13 +57,18 @@ export function PendingReportView({ submittedDate }: Props) {
       <div className="flex items-center justify-center gap-3">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 border border-gray-600 text-gray-300 font-bold px-6 py-3 text-sm hover:border-gray-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 border font-bold px-6 py-3 text-sm transition-colors"
+          style={{
+            borderColor: "var(--t-border-bright)",
+            color: "var(--text-secondary)",
+          }}
         >
           Back to dashboard
         </Link>
         <Link
           href="/submit"
-          className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 text-sm hover:bg-indigo-400 transition-colors"
+          className="inline-flex items-center gap-2 text-white font-bold px-6 py-3 text-sm transition-[filter] hover:brightness-110"
+          style={{ background: "var(--accent)" }}
         >
           Submit another idea →
         </Link>

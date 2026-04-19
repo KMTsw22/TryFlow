@@ -9,14 +9,12 @@ interface Props {
   fallbackVisible?: boolean;
 }
 
-interface ApiReport {
-  next_steps: string[];
-}
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
 
 /**
- * Hoisted "This week's next 3 actions" card.
- * Rendered above the Analysis section so decision-makers see action before deep dive.
- * Fetches the same /api/analysis endpoint as DeepAnalysis (cheap, cached on the server).
+ * Editorial "This week's actions" — numbered rows separated by hairline rules.
+ * Pulls next_steps from /api/analysis (cached on the server).
  */
 export function NextStepsCard({ submissionId }: Props) {
   const [steps, setSteps] = useState<string[] | null>(null);
@@ -39,93 +37,67 @@ export function NextStepsCard({ submissionId }: Props) {
     return () => { cancelled = true; };
   }, [submissionId]);
 
-  // Hide the block entirely until we know there's something to show.
   if (steps === null) {
     return (
-      <div
-        className="border p-5 mb-6"
-        style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <div className="h-3 w-40 animate-pulse" style={{ background: "var(--t-border-subtle)" }} />
-          <div className="h-3 w-16 animate-pulse" style={{ background: "var(--t-border-subtle)" }} />
-        </div>
-        <div className="space-y-2">
+      <section className="mb-14" aria-label="Loading next actions">
+        <KickerRule title="This Week" right="Loading…" />
+        <div className="space-y-0">
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="h-11 animate-pulse"
-              style={{ background: "var(--t-border-subtle)" }}
+              className="h-16 animate-pulse border-b"
+              style={{
+                background: "var(--t-border-subtle)",
+                borderColor: "var(--t-border-subtle)",
+              }}
             />
           ))}
         </div>
-      </div>
+      </section>
     );
   }
 
   if (steps.length === 0) return null;
 
-  // Heuristic effort labels based on index — simple surface, no backend change.
-  const EFFORT_BY_INDEX = ["2h", "1d", "1w", "2w", "—"];
+  const EFFORT_BY_INDEX = ["2 hours", "1 day", "1 week", "2 weeks", "—"];
   const topSteps = steps.slice(0, 3);
 
   return (
-    <section
-      className="border p-5 mb-6"
-      style={{
-        background: "linear-gradient(135deg, var(--accent-soft) 0%, var(--card-bg) 100%)",
-        borderColor: "var(--accent-ring)",
-      }}
-      aria-label="Recommended next actions"
-    >
-      <div className="flex items-baseline justify-between mb-4">
-        <h2
-          className="text-sm font-semibold inline-flex items-center gap-1.5"
-          style={{ color: "var(--text-primary)" }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "var(--accent)" }}
-            aria-hidden="true"
-          />
-          This week&apos;s next actions
-        </h2>
-        <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-          Top {topSteps.length}
-        </p>
-      </div>
+    <section className="mb-14" aria-label="Recommended next actions">
+      <KickerRule
+        title="This Week"
+        right={`${topSteps.length} ${topSteps.length === 1 ? "action" : "actions"}`}
+      />
 
-      <ol className="space-y-2">
+      <ol>
         {topSteps.map((step, i) => (
           <li
             key={i}
-            className="flex items-start gap-3 p-3 border"
-            style={{
-              background: "var(--card-bg)",
-              borderColor: "var(--t-border-card)",
-            }}
+            className="flex items-baseline gap-6 py-6 border-b"
+            style={{ borderColor: "var(--t-border-subtle)" }}
           >
             <span
-              className="w-6 h-6 flex items-center justify-center text-[11px] font-bold font-mono shrink-0"
+              className="shrink-0 tabular-nums leading-none"
               style={{
-                background: "var(--accent)",
-                color: "#fff",
+                fontFamily: SERIF,
+                fontWeight: 900,
+                fontSize: "2.5rem",
+                letterSpacing: "-0.03em",
+                color: "var(--text-tertiary)",
+                width: "3.5rem",
               }}
             >
-              {i + 1}
+              {String(i + 1).padStart(2, "0")}
             </span>
             <p
-              className="flex-1 text-sm leading-relaxed"
+              className="flex-1 text-[15.5px] leading-[1.7]"
               style={{ color: "var(--text-primary)" }}
             >
               {step}
             </p>
             <span
-              className="shrink-0 text-[10px] font-mono tabular-nums font-semibold px-2 py-0.5 border"
-              style={{
-                color: "var(--text-tertiary)",
-                borderColor: "var(--t-border-card)",
-              }}
+              className="shrink-0 text-[15px] font-medium tracking-[0.3em] uppercase"
+              style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
               title="Rough effort estimate"
             >
               {EFFORT_BY_INDEX[i] ?? "—"}
@@ -136,13 +108,35 @@ export function NextStepsCard({ submissionId }: Props) {
 
       {steps.length > 3 && (
         <p
-          className="text-[11px] mt-3 inline-flex items-center gap-1"
-          style={{ color: "var(--text-tertiary)" }}
+          className="mt-5 inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
-          {steps.length - 3} more steps in the full analysis below
+          {steps.length - 3} more in the full analysis
           <ArrowRight className="w-3 h-3" />
         </p>
       )}
     </section>
+  );
+}
+
+function KickerRule({ title, right }: { title: string; right?: string }) {
+  return (
+    <div className="flex items-center gap-4 mb-8">
+      <span
+        className="text-[15px] font-medium tracking-[0.35em] uppercase"
+        style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+      >
+        {title}
+      </span>
+      <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+      {right && (
+        <span
+          className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          {right}
+        </span>
+      )}
+    </div>
   );
 }

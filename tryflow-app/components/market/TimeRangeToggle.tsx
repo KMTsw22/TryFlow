@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 export type TimeRange = "7d" | "30d" | "all";
 
 const OPTIONS: { value: TimeRange; label: string }[] = [
-  { value: "7d",  label: "This week" },
-  { value: "30d", label: "This month" },
+  { value: "7d", label: "Week" },
+  { value: "30d", label: "Month" },
   { value: "all", label: "All time" },
 ];
 
@@ -21,14 +21,7 @@ export function TimeRangeToggle({ value, onChange, className }: Props) {
     <div
       role="tablist"
       aria-label="Time range"
-      className={cn(
-        "inline-flex p-0.5 border",
-        className
-      )}
-      style={{
-        background: "var(--card-bg)",
-        borderColor: "var(--t-border-card)",
-      }}
+      className={cn("inline-flex items-center gap-5", className)}
     >
       {OPTIONS.map((opt) => {
         const active = opt.value === value;
@@ -39,12 +32,14 @@ export function TimeRangeToggle({ value, onChange, className }: Props) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
-            className={cn(
-              "px-3 h-7 text-xs font-semibold transition-all"
-            )}
+            className="text-[15px] font-medium tracking-[0.25em] uppercase transition-opacity hover:opacity-70"
             style={{
-              background: active ? "var(--accent)" : "transparent",
-              color: active ? "#ffffff" : "var(--text-tertiary)",
+              fontFamily: "'Oswald', sans-serif",
+              color: active ? "var(--accent)" : "var(--text-tertiary)",
+              borderBottom: active
+                ? "1px solid var(--accent-ring)"
+                : "1px solid transparent",
+              paddingBottom: "4px",
             }}
           >
             {opt.label}

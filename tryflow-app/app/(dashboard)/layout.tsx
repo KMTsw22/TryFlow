@@ -18,7 +18,7 @@ export default async function DashboardLayout({
         userName={user.user_metadata?.full_name ?? user.email ?? "User"}
         userImage={user.user_metadata?.avatar_url}
       />
-      <main className="flex-1 p-8">{children}</main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

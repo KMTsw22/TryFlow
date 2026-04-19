@@ -19,8 +19,8 @@ export function ThemeToggle({ expanded }: Props) {
       style={{ color: "var(--text-tertiary)" }}
     >
       {isDark
-        ? <Sun className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
-        : <Moon className="w-4 h-4 shrink-0 text-indigo-500 dark:text-indigo-400" />
+        ? <Sun className="w-4 h-4 shrink-0" />
+        : <Moon className="w-4 h-4 shrink-0" />
       }
       <span className={cn(
         "transition-all duration-150",

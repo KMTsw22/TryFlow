@@ -1,21 +1,25 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useTheme } from "@/components/ThemeProvider";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { ArrowRight, ArrowLeft, Search, Lock } from "lucide-react";
+import { getCategoryTheme } from "@/lib/categories";
 import {
-  TrendingUp, TrendingDown, Minus, ArrowRight,
-  GitCompare, Trophy, ArrowLeft, Search, Lock,
-} from "lucide-react";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { ScoreBadge } from "@/components/ui/ScoreBadge";
-import { TrendLabel, type TrendDirection } from "@/components/ui/TrendLabel";
-import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  PolarRadiusAxis, ResponsiveContainer, Legend,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  ResponsiveContainer,
 } from "recharts";
 
+// ── Typography tokens ───────────────────────────────────────────────────
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
+const ACCENT_A = "#818cf8"; // indigo for Idea A
+const ACCENT_B = "#34d399"; // emerald for Idea B
+
+// ── Types ───────────────────────────────────────────────────────────────
 interface AgentScore {
   score: number;
   reasoning?: string;
@@ -41,155 +45,6 @@ interface Report {
   analysis?: Analysis;
 }
 
-const AGENT_LABELS: Record<string, string> = {
-  market_size:          "Market",
-  competition:          "Competition",
-  timing:               "Timing",
-  monetization:         "Monetization",
-  technical_difficulty: "Technical",
-  regulation:           "Regulation",
-  defensibility:        "Defensibility",
-  user_acquisition:     "Acquisition",
-};
-
-// Custom axis tick: label + A score (indigo) · B score (emerald)
-function DualAxisTick(props: {
-  x?: number; y?: number; payload?: { value: string };
-  textAnchor?: "inherit" | "end" | "start" | "middle";
-  data: { subject: string; A: number; B: number }[];
-  isDark?: boolean;
-}) {
-  const { x = 0, y = 0, payload, textAnchor = "middle", data, isDark = true } = props;
-  const entry = data.find((d) => d.subject === payload?.value);
-  const labelFill = isDark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)";
-  const sepFill = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.25)";
-  return (
-    <g>
-      <text x={x} y={y} textAnchor={textAnchor}
-        fill={labelFill} fontSize={11} fontWeight={700}>
-        {payload?.value}
-      </text>
-      <text x={x} y={y + 16} textAnchor={textAnchor} fontSize={11} fontWeight={800}>
-        <tspan fill="#818cf8">{entry?.A ?? 0}</tspan>
-        <tspan fill={sepFill}> · </tspan>
-        <tspan fill="#34d399">{entry?.B ?? 0}</tspan>
-      </text>
-    </g>
-  );
-}
-
-function DualRadar({ analysisA, analysisB }: { analysisA: Analysis | null; analysisB: Analysis | null }) {
-  const [visible, setVisible] = useState(false);
-  const { isDark } = useTheme();
-
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 80);
-    return () => clearTimeout(t);
-  }, []);
-
-  const data = Object.keys(AGENT_LABELS).map((key) => ({
-    subject: AGENT_LABELS[key],
-    A: analysisA?.[key as keyof Analysis]?.score ?? 0,
-    B: analysisB?.[key as keyof Analysis]?.score ?? 0,
-  }));
-
-  const hasData = data.some((d) => d.A > 0 || d.B > 0);
-  if (!hasData) return null;
-
-  const avgA = Math.round(data.reduce((s, d) => s + d.A, 0) / data.length);
-  const avgB = Math.round(data.reduce((s, d) => s + d.B, 0) / data.length);
-
-  return (
-    <div className="border mb-6 overflow-hidden"
-      style={{
-        background: "var(--card-bg)",
-        borderColor: "var(--t-border-bright)",
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(12px)",
-        transition: "opacity 0.5s ease, transform 0.5s ease",
-      }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-5 pb-3"
-        style={{ borderBottom: "1px solid var(--t-border-subtle)" }}>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-          8-Agent Radar Comparison
-        </p>
-        {/* Avg score badges */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-400" />
-            <span className="text-xs text-gray-400 dark:text-gray-500">A avg</span>
-            {analysisA
-              ? <span className="text-xs font-extrabold text-indigo-500 dark:text-indigo-300">{avgA}</span>
-              : <span className="text-xs text-gray-400 dark:text-gray-600 italic">no analysis</span>}
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-            <span className="text-xs text-gray-400 dark:text-gray-500">B avg</span>
-            {analysisB
-              ? <span className="text-xs font-extrabold text-emerald-500 dark:text-emerald-300">{avgB}</span>
-              : <span className="text-xs text-gray-400 dark:text-gray-600 italic">no analysis</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div style={{ height: 400 }} className="px-4 py-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={data} margin={{ top: 28, right: 72, bottom: 28, left: 72 }}>
-            <defs>
-              <radialGradient id="gradA2" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#818cf8" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#6366f1" stopOpacity={0.08} />
-              </radialGradient>
-              <radialGradient id="gradB2" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#34d399" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0.08} />
-              </radialGradient>
-            </defs>
-            <PolarGrid stroke={isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)"} gridType="polygon" />
-            <PolarAngleAxis
-              dataKey="subject"
-              tick={(tickProps) => <DualAxisTick {...tickProps} data={data} isDark={isDark} />}
-              tickLine={false}
-            />
-            <PolarRadiusAxis
-              domain={[0, 100]}
-              tick={{ fill: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)", fontSize: 9 }}
-              axisLine={false}
-              tickCount={4}
-              angle={30}
-            />
-            <Radar name="Idea A" dataKey="A"
-              stroke="#818cf8" strokeWidth={2.5}
-              fill="url(#gradA2)" fillOpacity={1}
-              isAnimationActive={true}
-              animationBegin={100}
-              animationDuration={900}
-              animationEasing="ease-out"
-              dot={{ fill: "#818cf8", r: 4, stroke: "#0c1228", strokeWidth: 1.5 }}
-            />
-            <Radar name="Idea B" dataKey="B"
-              stroke="#34d399" strokeWidth={2.5}
-              fill="url(#gradB2)" fillOpacity={1}
-              isAnimationActive={true}
-              animationBegin={300}
-              animationDuration={900}
-              animationEasing="ease-out"
-              dot={{ fill: "#34d399", r: 4, stroke: "#0c1228", strokeWidth: 1.5 }}
-            />
-            <Legend
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)", paddingTop: 12 }}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
 interface Idea {
   id: string;
   category: string;
@@ -199,32 +54,38 @@ interface Idea {
   insight_reports: Report | Report[] | null;
 }
 
+type Plan = "free" | "plus" | "pro";
+
+const AGENT_LABELS: Record<string, string> = {
+  market_size: "Market",
+  competition: "Competition",
+  timing: "Timing",
+  monetization: "Revenue",
+  technical_difficulty: "Technical",
+  regulation: "Regulation",
+  defensibility: "Moat",
+  user_acquisition: "Acquisition",
+};
+
+const CATEGORIES = [
+  "All",
+  "SaaS / B2B",
+  "Consumer App",
+  "Marketplace",
+  "Dev Tools",
+  "Health & Wellness",
+  "Education",
+  "Fintech",
+  "E-commerce",
+  "Hardware",
+];
+
+// ── Helpers ─────────────────────────────────────────────────────────────
 function getReport(idea: Idea): Report | null {
   if (!idea.insight_reports) return null;
   if (Array.isArray(idea.insight_reports)) return idea.insight_reports[0] ?? null;
   return idea.insight_reports;
 }
-
-const TREND_PILL: Record<string, string> = {
-  Rising:    "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
-  Stable:    "bg-amber-500/15 text-amber-400 border border-amber-500/20",
-  Declining: "bg-red-500/15 text-red-400 border border-red-500/20",
-};
-
-const SAT_PILL: Record<string, string> = {
-  Low:    "bg-indigo-500/15 text-indigo-300 border border-indigo-500/20",
-  Medium: "bg-violet-500/15 text-violet-300 border border-violet-500/20",
-  High:   "bg-orange-500/15 text-orange-300 border border-orange-500/20",
-};
-
-const TREND_ICON: Record<string, typeof TrendingUp> = {
-  Rising: TrendingUp, Stable: Minus, Declining: TrendingDown,
-};
-
-const CATEGORIES = [
-  "All", "SaaS / B2B", "Consumer App", "Marketplace", "Dev Tools",
-  "Health & Wellness", "Education", "Fintech", "E-commerce", "Hardware",
-];
 
 function timeAgo(iso: string): string {
   const d = new Date(iso).getTime();
@@ -243,165 +104,392 @@ function timeAgo(iso: string): string {
   return `${Math.floor(days / 365)}y ago`;
 }
 
-function ScoreCircle({ score }: { score: number }) {
-  const color = score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
-  const textColor = score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
-  const r = 38;
-  const circ = 2 * Math.PI * r;
-  return (
-    <div className="relative w-24 h-24 mx-auto">
-      <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(127,127,127,0.15)" strokeWidth="8" />
-        <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="8"
-          strokeDasharray={circ} strokeDashoffset={circ * (1 - score / 100)} strokeLinecap="round" />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-2xl font-extrabold leading-none ${textColor}`}>{score}</span>
-        <span className="text-[10px] text-gray-600">/100</span>
-      </div>
-    </div>
-  );
+function truncate(text: string, max: number) {
+  return text.length > max ? text.slice(0, max) + "…" : text;
 }
 
-function octPoints(cx: number, cy: number, r: number) {
-  return Array.from({ length: 8 }, (_, i) => {
-    const a = ((i * 45 + 22.5) * Math.PI) / 180;
-    return `${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`;
-  }).join(" ");
+function scoreHex(score: number): string {
+  if (score >= 70) return "#10b981";
+  if (score >= 50) return "#f59e0b";
+  return "#ef4444";
 }
 
-function OctagonCompare({
-  scoreA, scoreB, labelA, labelB, categoryA, categoryB, winner,
-}: {
-  scoreA: number; scoreB: number;
-  labelA: string; labelB: string;
-  categoryA: string; categoryB: string;
-  winner: "a" | "b" | null;
-}) {
-  const W = 480, H = 220, R = 90, OVERLAP = 70;
-  const cxA = W / 2 - R + OVERLAP / 2;
-  const cxB = W / 2 + R - OVERLAP / 2;
-  const cy  = H / 2;
-
-  const colorA = "#6366f1";
-  const colorB = "#10b981";
-  const scoreColorA = scoreA >= 70 ? "#10b981" : scoreA >= 50 ? "#f59e0b" : "#ef4444";
-  const scoreColorB = scoreB >= 70 ? "#10b981" : scoreB >= 50 ? "#f59e0b" : "#ef4444";
-
+// ── Shared editorial KickerRule ────────────────────────────────────────
+function KickerRule({ title, right }: { title: string; right?: string }) {
   return (
-    <div className="flex flex-col items-center gap-2 py-6">
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="overflow-visible">
-        <defs>
-          <clipPath id="octA"><polygon points={octPoints(cxA, cy, R)} /></clipPath>
-          <clipPath id="octB"><polygon points={octPoints(cxB, cy, R)} /></clipPath>
-        </defs>
-
-        {/* Octagon A fill */}
-        <polygon points={octPoints(cxA, cy, R)}
-          fill={colorA} fillOpacity={winner === "b" ? 0.08 : 0.13}
-          stroke={colorA} strokeWidth={winner === "a" ? 2 : 1} strokeOpacity={0.6} />
-
-        {/* Octagon B fill */}
-        <polygon points={octPoints(cxB, cy, R)}
-          fill={colorB} fillOpacity={winner === "a" ? 0.08 : 0.13}
-          stroke={colorB} strokeWidth={winner === "b" ? 2 : 1} strokeOpacity={0.6} />
-
-        {/* Overlap: B clipped to A's region */}
-        <g clipPath="url(#octA)">
-          <polygon points={octPoints(cxB, cy, R)}
-            fill="rgba(255,255,255,0.06)" />
-        </g>
-
-        {/* Score A */}
-        <text x={cxA - 18} y={cy - 8} textAnchor="middle" fill={scoreColorA}
-          fontSize={32} fontWeight={800} fontFamily="monospace">{scoreA}</text>
-        <text x={cxA - 18} y={cy + 12} textAnchor="middle" fill="rgba(127,127,127,0.5)"
-          fontSize={10}>/100</text>
-        <text x={cxA - 18} y={cy + 30} textAnchor="middle" fill={colorA}
-          fontSize={9} fontWeight={700} letterSpacing={1}>{categoryA.toUpperCase().slice(0, 12)}</text>
-
-        {/* Label A badge */}
-        <circle cx={cxA - 18} cy={cy - 52} r={12} fill={colorA} fillOpacity={0.9} />
-        <text x={cxA - 18} y={cy - 47} textAnchor="middle" fill="white"
-          fontSize={11} fontWeight={800}>A</text>
-
-        {/* Score B */}
-        <text x={cxB + 18} y={cy - 8} textAnchor="middle" fill={scoreColorB}
-          fontSize={32} fontWeight={800} fontFamily="monospace">{scoreB}</text>
-        <text x={cxB + 18} y={cy + 12} textAnchor="middle" fill="rgba(127,127,127,0.5)"
-          fontSize={10}>/100</text>
-        <text x={cxB + 18} y={cy + 30} textAnchor="middle" fill={colorB}
-          fontSize={9} fontWeight={700} letterSpacing={1}>{categoryB.toUpperCase().slice(0, 12)}</text>
-
-        {/* Label B badge */}
-        <circle cx={cxB + 18} cy={cy - 52} r={12} fill={colorB} fillOpacity={0.9} />
-        <text x={cxB + 18} y={cy - 47} textAnchor="middle" fill="white"
-          fontSize={11} fontWeight={800}>B</text>
-
-        {/* Overlap label */}
-        {winner && (
-          <>
-            <text x={W / 2} y={cy - 6} textAnchor="middle"
-              fill="rgba(127,127,127,0.7)" fontSize={9} fontWeight={700} letterSpacing={1}>
-              VS
-            </text>
-            <text x={W / 2} y={cy + 10} textAnchor="middle"
-              fill="rgba(127,127,127,0.5)" fontSize={8}>
-              {Math.abs(scoreA - scoreB)}pts
-            </text>
-          </>
-        )}
-      </svg>
-
-      {/* Winner label */}
-      {winner && (
-        <div className="flex items-center gap-1.5 text-xs font-bold"
-          style={{ color: winner === "a" ? colorA : colorB }}>
-          <Trophy className="w-3.5 h-3.5" />
-          Idea {winner === "a" ? "A" : "B"} leads
-        </div>
+    <div className="flex items-center gap-4 mb-8">
+      <span
+        className="text-[15px] font-medium tracking-[0.35em] uppercase"
+        style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+      >
+        {title}
+      </span>
+      <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+      {right && (
+        <span
+          className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          {right}
+        </span>
       )}
     </div>
   );
 }
 
-function truncate(text: string, max: number) {
-  return text.length > max ? text.slice(0, max) + "…" : text;
+// ── Dual Radar — editorial octagon ──────────────────────────────────────
+function DualRadar({
+  analysisA,
+  analysisB,
+}: {
+  analysisA: Analysis | null;
+  analysisB: Analysis | null;
+}) {
+  const data = Object.keys(AGENT_LABELS).map((key) => ({
+    subject: AGENT_LABELS[key],
+    A: analysisA?.[key as keyof Analysis]?.score ?? 0,
+    B: analysisB?.[key as keyof Analysis]?.score ?? 0,
+  }));
+
+  const hasData = data.some((d) => d.A > 0 || d.B > 0);
+  if (!hasData) return null;
+
+  const avgA = Math.round(data.reduce((s, d) => s + d.A, 0) / data.length);
+  const avgB = Math.round(data.reduce((s, d) => s + d.B, 0) / data.length);
+
+  return (
+    <section className="mb-14" aria-label="Balance across 8 analysis dimensions">
+      <KickerRule title="8-Dimension Balance" right="Where each idea wins" />
+
+      {/* Avg indicators */}
+      <div className="flex items-center gap-10 mb-6">
+        <div className="flex items-baseline gap-3">
+          <span className="w-2 h-2 rounded-full" style={{ background: ACCENT_A }} />
+          <span
+            className="text-[14px] font-medium tracking-[0.3em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            Idea A
+          </span>
+          <span
+            className="tabular-nums"
+            style={{
+              fontFamily: SERIF,
+              fontWeight: 900,
+              fontSize: "1.75rem",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            {avgA}
+          </span>
+          <span
+            className="text-[10px] font-medium tracking-[0.2em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            avg
+          </span>
+        </div>
+        <div className="flex items-baseline gap-3">
+          <span className="w-2 h-2 rounded-full" style={{ background: ACCENT_B }} />
+          <span
+            className="text-[14px] font-medium tracking-[0.3em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            Idea B
+          </span>
+          <span
+            className="tabular-nums"
+            style={{
+              fontFamily: SERIF,
+              fontWeight: 900,
+              fontSize: "1.75rem",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            {avgB}
+          </span>
+          <span
+            className="text-[10px] font-medium tracking-[0.2em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            avg
+          </span>
+        </div>
+      </div>
+
+      {/* Radar — solid octagon grid, editorial feel */}
+      <div style={{ height: 460 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={data} margin={{ top: 24, right: 80, bottom: 24, left: 80 }}>
+            <PolarGrid
+              stroke="var(--t-border-bright)"
+              gridType="polygon"
+            />
+            <PolarAngleAxis
+              dataKey="subject"
+              tick={(tickProps) => (
+                <EditorialTick {...tickProps} data={data} />
+              )}
+              tickLine={false}
+            />
+            <Radar
+              name="A"
+              dataKey="A"
+              stroke={ACCENT_A}
+              strokeWidth={1.5}
+              fill={ACCENT_A}
+              fillOpacity={0.16}
+              isAnimationActive={false}
+              dot={{ fill: ACCENT_A, r: 3, stroke: "transparent" }}
+            />
+            <Radar
+              name="B"
+              dataKey="B"
+              stroke={ACCENT_B}
+              strokeWidth={1.5}
+              fill={ACCENT_B}
+              fillOpacity={0.16}
+              isAnimationActive={false}
+              dot={{ fill: ACCENT_B, r: 3, stroke: "transparent" }}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+    </section>
+  );
 }
 
-function CompareRow({
-  label, a, b, winner,
-}: {
-  label: string;
-  a: React.ReactNode;
-  b: React.ReactNode;
-  winner?: "a" | "b" | null;
+function EditorialTick(props: {
+  x?: number;
+  y?: number;
+  payload?: { value: string };
+  textAnchor?: "inherit" | "end" | "start" | "middle";
+  data: { subject: string; A: number; B: number }[];
 }) {
+  const { x = 0, y = 0, payload, textAnchor = "middle", data } = props;
+  const entry = data.find((d) => d.subject === payload?.value);
+
   return (
-    <div className="grid grid-cols-[140px_1fr_1fr] border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
-      <div className="px-4 py-3.5 flex items-center">
-        <span className="text-xs font-bold text-gray-400 dark:text-gray-600 uppercase tracking-wider">{label}</span>
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      fill="var(--text-secondary)"
+      fontSize={13}
+      fontWeight={500}
+      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "0.04em" }}
+    >
+      {payload?.value}
+      <tspan
+        dx={8}
+        fill={ACCENT_A}
+        style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, letterSpacing: "0.1em" }}
+      >
+        {entry?.A ?? 0}
+      </tspan>
+      <tspan
+        dx={3}
+        fill="var(--text-tertiary)"
+      >
+        ·
+      </tspan>
+      <tspan
+        dx={3}
+        fill={ACCENT_B}
+        style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, letterSpacing: "0.1em" }}
+      >
+        {entry?.B ?? 0}
+      </tspan>
+    </text>
+  );
+}
+
+// ── Score face-off column (for head-to-head hero) ──────────────────────
+function ScoreFaceoff({
+  letter,
+  idea,
+  score,
+  isWinner,
+  accent,
+}: {
+  letter: string;
+  idea: Idea;
+  score: number;
+  isWinner: boolean;
+  accent: string;
+}) {
+  const numColor = scoreHex(score);
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <span
+          className="inline-flex items-center justify-center w-6 h-6 shrink-0"
+          style={{
+            background: accent,
+            color: "#fff",
+            fontFamily: DISPLAY,
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            letterSpacing: "0.1em",
+          }}
+        >
+          {letter}
+        </span>
+        <span
+          className="text-[14px] font-medium tracking-[0.3em] uppercase truncate"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          {idea.category}
+        </span>
+        {isWinner && (
+          <span
+            className="text-[10px] font-medium tracking-[0.3em] uppercase shrink-0"
+            style={{ fontFamily: DISPLAY, color: "#10b981" }}
+          >
+            Leads
+          </span>
+        )}
       </div>
-      <div className={`px-4 py-3.5 flex items-center border-l min-w-0 overflow-hidden ${winner === "a" ? "bg-emerald-500/5" : ""}`}
-        style={{ borderColor: "var(--t-border-subtle)" }}>
-        <div className="flex items-center gap-2 w-full min-w-0">
-          {a}
-          {winner === "a" && <Trophy className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />}
-        </div>
+
+      <div className="flex items-baseline gap-2 mb-4">
+        <span
+          className="leading-[0.82] tabular-nums"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "clamp(5rem, 9vw, 7.5rem)",
+            letterSpacing: "-0.05em",
+            color: numColor,
+          }}
+        >
+          {score}
+        </span>
+        <span
+          className="pb-1 text-sm font-medium tracking-[0.3em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          / 100
+        </span>
       </div>
-      <div className={`px-4 py-3.5 flex items-center border-l min-w-0 overflow-hidden ${winner === "b" ? "bg-emerald-500/5" : ""}`}
-        style={{ borderColor: "var(--t-border-subtle)" }}>
-        <div className="flex items-center gap-2 w-full min-w-0">
-          {b}
-          {winner === "b" && <Trophy className="w-3.5 h-3.5 text-emerald-400 shrink-0 ml-auto" />}
-        </div>
-      </div>
+
+      <p
+        className="text-[17px] leading-[1.4]"
+        style={{
+          fontFamily: SERIF,
+          fontWeight: 700,
+          letterSpacing: "-0.01em",
+          color: "var(--text-primary)",
+        }}
+      >
+        For {idea.target_user}
+      </p>
     </div>
   );
 }
 
-type Plan = "free" | "plus" | "pro";
+// ── Editorial face-off rows ────────────────────────────────────────────
+function FaceoffRow({
+  label,
+  a,
+  b,
+  winner,
+}: {
+  label: string;
+  a: string | number | null | undefined;
+  b: string | number | null | undefined;
+  winner: "a" | "b" | null;
+}) {
+  return (
+    <div
+      className="grid grid-cols-[140px_1fr_1fr] gap-x-8 py-5 border-b items-baseline"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      <span
+        className="text-[14px] font-medium tracking-[0.3em] uppercase"
+        style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+      >
+        {label}
+      </span>
+      <FaceoffValue value={a} active={winner === "a"} accent={ACCENT_A} />
+      <FaceoffValue value={b} active={winner === "b"} accent={ACCENT_B} />
+    </div>
+  );
+}
 
+function FaceoffValue({
+  value,
+  active,
+  accent,
+}: {
+  value: string | number | null | undefined;
+  active: boolean;
+  accent: string;
+}) {
+  return (
+    <div className="flex items-baseline gap-3">
+      <span
+        style={{
+          fontFamily: SERIF,
+          fontWeight: 700,
+          fontSize: "1.35rem",
+          letterSpacing: "-0.01em",
+          color: active ? "var(--text-primary)" : "var(--text-secondary)",
+        }}
+      >
+        {value ?? "—"}
+      </span>
+      {active && (
+        <span
+          className="text-[10px] font-medium tracking-[0.25em] uppercase"
+          style={{ fontFamily: DISPLAY, color: accent }}
+        >
+          Leads
+        </span>
+      )}
+    </div>
+  );
+}
+
+function FaceoffTextRow({
+  label,
+  a,
+  b,
+}: {
+  label: string;
+  a: string;
+  b: string;
+}) {
+  return (
+    <div
+      className="grid grid-cols-[140px_1fr_1fr] gap-x-8 py-5 border-b"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      <span
+        className="pt-1 text-[14px] font-medium tracking-[0.3em] uppercase"
+        style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+      >
+        {label}
+      </span>
+      <p
+        className="text-[13.5px] leading-[1.65]"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        {a}
+      </p>
+      <p
+        className="text-[13.5px] leading-[1.65]"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        {b}
+      </p>
+    </div>
+  );
+}
+
+// ── Main Compare page ──────────────────────────────────────────────────
 export default function ComparePage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -437,7 +525,6 @@ export default function ComparePage() {
         return;
       }
 
-      // Plus: only own ideas. Pro: own + all public ideas.
       try {
         const ownRes = await fetch("/api/ideas").then((r) => r.json()).catch(() => ({ ideas: [] }));
         const ownIdeas: Idea[] = ownRes.ideas ?? [];
@@ -445,7 +532,6 @@ export default function ComparePage() {
         if (userPlan === "pro") {
           const allRes = await fetch("/api/ideas/all").then((r) => r.json()).catch(() => ({ ideas: [] }));
           const allIdeas: Idea[] = allRes.ideas ?? [];
-          // Merge own first (so own privates appear), then fill with public ones we don't already have
           const seen = new Set(ownIdeas.map((i) => i.id));
           const merged = [...ownIdeas, ...allIdeas.filter((i) => !seen.has(i.id))];
           setIdeas(merged);
@@ -500,250 +586,372 @@ export default function ComparePage() {
   const reportB = ideaB ? getReport(ideaB) : null;
   const scoreA = reportA?.viability_score ?? 0;
   const scoreB = reportB?.viability_score ?? 0;
-  const winner: "a" | "b" | null = scoreA > scoreB ? "a" : scoreB > scoreA ? "b" : null;
+  const winner: "a" | "b" | null =
+    scoreA > scoreB ? "a" : scoreB > scoreA ? "b" : null;
 
+  // ── Loading ─────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[color:var(--accent)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  // Free users can't compare at all
+  // ── Free — locked ──────────────────────────────────────────────────
   if (plan === "free") {
     return (
-      <div className="max-w-xl mx-auto py-20">
-        <div
-          className="border p-10 text-center"
-          style={{ background: "var(--card-bg)", borderColor: "rgba(99,102,241,0.25)" }}
+      <div className="max-w-6xl mx-auto px-6 py-10 pt-24">
+        <div className="flex items-center gap-4 mb-8">
+          <span
+            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            Compare
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase inline-flex items-center gap-2"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            <Lock className="w-3 h-3" /> Locked
+          </span>
+        </div>
+
+        <h1
+          className="mb-6"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "clamp(2.25rem, 4vw, 3.5rem)",
+            lineHeight: 1.05,
+            letterSpacing: "-0.03em",
+            color: "var(--text-primary)",
+          }}
         >
-          <div
-            className="w-14 h-14 mx-auto mb-5 flex items-center justify-center rounded-full"
-            style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)" }}
+          A paid feature.
+        </h1>
+
+        <p
+          className="text-[16px] leading-[1.75] mb-10 max-w-xl"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          Upgrade to <span style={{ color: "var(--accent)" }}>Plus</span> to compare your own
+          ideas side-by-side, or <span style={{ color: "var(--accent)" }}>Pro</span> to also
+          compare against every public idea on the platform.
+        </p>
+
+        <Link
+          href="/pricing"
+          className="group inline-flex items-center gap-3 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+          style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
+        >
+          See plans
+          <ArrowRight
+            className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"
+            strokeWidth={2}
+          />
+        </Link>
+      </div>
+    );
+  }
+
+  // ── Comparison view ─────────────────────────────────────────────────
+  if (comparing && ideaA && ideaB) {
+    const trendWinner: "a" | "b" | null =
+      reportA?.trend_direction === "Rising" && reportB?.trend_direction !== "Rising"
+        ? "a"
+        : reportB?.trend_direction === "Rising" && reportA?.trend_direction !== "Rising"
+        ? "b"
+        : null;
+    const satWinner: "a" | "b" | null =
+      reportA?.saturation_level === "Low" && reportB?.saturation_level !== "Low"
+        ? "a"
+        : reportB?.saturation_level === "Low" && reportA?.saturation_level !== "Low"
+        ? "b"
+        : null;
+    const simWinner: "a" | "b" | null =
+      (reportA?.similar_count ?? 0) < (reportB?.similar_count ?? 0)
+        ? "a"
+        : (reportB?.similar_count ?? 0) < (reportA?.similar_count ?? 0)
+        ? "b"
+        : null;
+
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        {/* Back link */}
+        <button
+          onClick={() => setComparing(false)}
+          className="inline-flex items-center gap-1.5 text-[15px] font-medium tracking-[0.2em] uppercase mb-10 transition-colors hover:text-[color:var(--text-primary)]"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          <ArrowLeft className="w-3 h-3" /> Back to selection
+        </button>
+
+        {/* Editorial kicker */}
+        <div className="flex items-center gap-4 mb-6">
+          <span
+            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
-            <Lock className="w-6 h-6 text-indigo-400" />
+            The Head-to-Head
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            {winner
+              ? `Idea ${winner === "a" ? "A" : "B"} · +${Math.abs(scoreA - scoreB)} pts`
+              : "Tied"}
+          </span>
+        </div>
+
+        <h1
+          className="mb-8"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "clamp(2.5rem, 5vw, 4rem)",
+            lineHeight: 1.02,
+            letterSpacing: "-0.03em",
+            color: "var(--text-primary)",
+          }}
+        >
+          Idea A vs Idea B.
+        </h1>
+
+        {/* Head-to-head hero */}
+        <section
+          className="relative py-10 mb-6"
+          style={{
+            borderTop: "1px solid var(--t-border-subtle)",
+            borderBottom: "1px solid var(--t-border-subtle)",
+          }}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 mb-8">
+            <ScoreFaceoff
+              letter="A"
+              idea={ideaA}
+              score={scoreA}
+              isWinner={winner === "a"}
+              accent={ACCENT_A}
+            />
+            <ScoreFaceoff
+              letter="B"
+              idea={ideaB}
+              score={scoreB}
+              isWinner={winner === "b"}
+              accent={ACCENT_B}
+            />
           </div>
-          <h1 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">
-            Compare is a paid feature
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
-            Upgrade to <span className="font-bold text-indigo-400">Plus</span> to compare
-            your own ideas side-by-side, or <span className="font-bold text-indigo-400">Pro</span>{" "}
-            to also compare against every public idea on the platform.
-          </p>
-          <Link
-            href="/pricing"
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white"
-            style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+
+          {winner && (
+            <p
+              className="leading-[1.15] mb-5 max-w-3xl"
+              style={{
+                fontFamily: SERIF,
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: "clamp(1.35rem, 2.4vw, 2rem)",
+                letterSpacing: "-0.01em",
+                color: "var(--text-primary)",
+              }}
+            >
+              &ldquo;Idea {winner === "a" ? "A" : "B"} leads by{" "}
+              {Math.abs(scoreA - scoreB)} points.&rdquo;
+            </p>
+          )}
+
+          <p
+            className="text-[14.5px] leading-[1.75] max-w-3xl"
+            style={{ color: "var(--text-secondary)" }}
           >
-            See plans <ArrowRight className="w-4 h-4" />
+            {winner === "a"
+              ? reportA?.summary
+              : winner === "b"
+              ? reportB?.summary
+              : "Both ideas score evenly on the overall viability index. The detail rows below may tip the balance."}
+          </p>
+        </section>
+
+        {/* 8-Dimension radar */}
+        <DualRadar analysisA={analysisA} analysisB={analysisB} />
+
+        {/* Detail rows */}
+        <section className="mb-14">
+          <KickerRule title="The Breakdown" right="Row by row" />
+          <div
+            className="border-t"
+            style={{ borderColor: "var(--t-border-subtle)" }}
+          >
+            <FaceoffRow
+              label="Market Trend"
+              a={reportA?.trend_direction}
+              b={reportB?.trend_direction}
+              winner={trendWinner}
+            />
+            <FaceoffRow
+              label="Saturation"
+              a={reportA?.saturation_level}
+              b={reportB?.saturation_level}
+              winner={satWinner}
+            />
+            <FaceoffRow
+              label="Similar / 30d"
+              a={reportA?.similar_count}
+              b={reportB?.similar_count}
+              winner={simWinner}
+            />
+            <FaceoffTextRow
+              label="AI Summary"
+              a={reportA?.summary ?? "—"}
+              b={reportB?.summary ?? "—"}
+            />
+            <FaceoffTextRow
+              label="Idea"
+              a={truncate(ideaA.description, 160)}
+              b={truncate(ideaB.description, 160)}
+            />
+          </div>
+        </section>
+
+        {/* Inline secondary actions */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <Link
+            href={`/ideas/${ideaA.id}`}
+            className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: ACCENT_A }}
+          >
+            View full report A
+            <ArrowRight
+              className="w-3 h-3 transition-transform group-hover:translate-x-1"
+              strokeWidth={2}
+            />
+          </Link>
+          <span aria-hidden style={{ color: "var(--t-border-bright)" }}>
+            ·
+          </span>
+          <Link
+            href={`/ideas/${ideaB.id}`}
+            className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: ACCENT_B }}
+          >
+            View full report B
+            <ArrowRight
+              className="w-3 h-3 transition-transform group-hover:translate-x-1"
+              strokeWidth={2}
+            />
           </Link>
         </div>
       </div>
     );
   }
 
-  // ── Comparison view ──────────────────────────────────────────────────────────
-  if (comparing && ideaA && ideaB) {
-    const TIconA = TREND_ICON[reportA?.trend_direction ?? "Stable"] ?? Minus;
-    const TIconB = TREND_ICON[reportB?.trend_direction ?? "Stable"] ?? Minus;
-
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button onClick={() => setComparing(false)}
-              className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors mb-3">
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to selection
-            </button>
-            <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Idea Comparison</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Side-by-side analysis of two ideas</p>
-          </div>
-          {winner && (
-            <div className="flex items-center gap-2 px-4 py-2 border"
-              style={{ background: "rgba(16,185,129,0.08)", borderColor: "rgba(16,185,129,0.2)" }}>
-              <Trophy className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm font-bold text-emerald-400">
-                Idea {winner === "a" ? "A" : "B"} leads by {Math.abs(scoreA - scoreB)} pts
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="border overflow-hidden"
-          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-          {/* Column headers */}
-          <div className="grid grid-cols-[140px_1fr_1fr] border-b"
-            style={{ borderColor: "var(--t-border-card)", background: "var(--card-bg)" }}>
-            <div className="px-4 py-3" />
-            {([["A", ideaA], ["B", ideaB]] as [string, Idea][]).map(([label, idea]) => (
-              <div key={label} className="px-4 py-3 border-l min-w-0 overflow-hidden" style={{ borderColor: "var(--t-border-subtle)" }}>
-                <div className="flex items-center gap-2 mb-0.5 min-w-0">
-                  <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-extrabold flex items-center justify-center shrink-0">
-                    {label}
-                  </span>
-                  <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider truncate">{idea.category}</span>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{idea.target_user}</p>
-              </div>
-            ))}
-          </div>
-
-          <CompareRow label="Viability Score"
-            a={<ScoreCircle score={scoreA} />}
-            b={<ScoreCircle score={scoreB} />}
-            winner={winner}
-          />
-          <CompareRow label="AI Summary"
-            a={<p className="text-xs text-gray-400 leading-relaxed">{reportA?.summary ?? "—"}</p>}
-            b={<p className="text-xs text-gray-400 leading-relaxed">{reportB?.summary ?? "—"}</p>}
-          />
-          <CompareRow label="Idea"
-            a={<p className="text-xs text-gray-400 leading-relaxed">{truncate(ideaA.description, 120)}</p>}
-            b={<p className="text-xs text-gray-400 leading-relaxed">{truncate(ideaB.description, 120)}</p>}
-          />
-          <CompareRow label="Market Trend"
-            a={
-              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${TREND_PILL[reportA?.trend_direction ?? "Stable"] ?? TREND_PILL.Stable}`}>
-                <TIconA className="w-3 h-3 inline mr-1" />{reportA?.trend_direction ?? "—"}
-              </span>
-            }
-            b={
-              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${TREND_PILL[reportB?.trend_direction ?? "Stable"] ?? TREND_PILL.Stable}`}>
-                <TIconB className="w-3 h-3 inline mr-1" />{reportB?.trend_direction ?? "—"}
-              </span>
-            }
-            winner={
-              reportA?.trend_direction === "Rising" && reportB?.trend_direction !== "Rising" ? "a"
-              : reportB?.trend_direction === "Rising" && reportA?.trend_direction !== "Rising" ? "b"
-              : null
-            }
-          />
-          <CompareRow label="Saturation"
-            a={<span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${SAT_PILL[reportA?.saturation_level ?? "Low"] ?? SAT_PILL.Low}`}>{reportA?.saturation_level ?? "—"}</span>}
-            b={<span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${SAT_PILL[reportB?.saturation_level ?? "Low"] ?? SAT_PILL.Low}`}>{reportB?.saturation_level ?? "—"}</span>}
-            winner={
-              reportA?.saturation_level === "Low" && reportB?.saturation_level !== "Low" ? "a"
-              : reportB?.saturation_level === "Low" && reportA?.saturation_level !== "Low" ? "b"
-              : null
-            }
-          />
-          <CompareRow label="Similar Ideas"
-            a={<span className="text-lg font-extrabold text-gray-900 dark:text-white">{reportA?.similar_count ?? "—"}<span className="text-xs text-gray-400 dark:text-gray-600 font-normal ml-1">/ 30d</span></span>}
-            b={<span className="text-lg font-extrabold text-gray-900 dark:text-white">{reportB?.similar_count ?? "—"}<span className="text-xs text-gray-400 dark:text-gray-600 font-normal ml-1">/ 30d</span></span>}
-            winner={
-              (reportA?.similar_count ?? 0) < (reportB?.similar_count ?? 0) ? "a"
-              : (reportB?.similar_count ?? 0) < (reportA?.similar_count ?? 0) ? "b"
-              : null
-            }
-          />
-          <div className="grid grid-cols-[140px_1fr_1fr]">
-            <div className="px-4 py-4" />
-            {([ideaA, ideaB] as Idea[]).map((idea, idx) => (
-              <div key={idea.id} className="px-4 py-4 border-l" style={{ borderColor: "var(--t-border-subtle)" }}>
-                <Link href={`/ideas/${idea.id}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">
-                  View full report {idx === 0 ? "A" : "B"} <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Dual radar — two ideas overlaid on same chart */}
-        <DualRadar analysisA={analysisA} analysisB={analysisB} />
-
-        {winner && (
-          <div className="mt-6 p-5 border"
-            style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.07))", borderColor: "rgba(129,140,248,0.2)" }}>
-            <div className="flex items-start gap-3">
-              <Trophy className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-                  Idea {winner === "a" ? "A" : "B"} shows stronger potential
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                  {winner === "a" ? reportA?.summary : reportB?.summary}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // ── Selection view ───────────────────────────────────────────────────────────
+  // ── Selection view ──────────────────────────────────────────────────
   const bothSelected = selected.length === 2;
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
-      <PageHeader
-        title="Compare ideas"
-        meta={`${ideas.length} available`}
-        description={
-          plan === "plus"
-            ? "Pick two of your own ideas to place side-by-side. Upgrade to Pro to compare against any public idea."
-            : "Pick two ideas to place side-by-side. We'll analyze signals across 8 agents."
-        }
-        action={
-          plan === "plus" ? (
-            <Link
-              href="/pricing"
-              className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-semibold border transition-colors"
-              style={{
-                color: "var(--accent)",
-                borderColor: "var(--accent-ring)",
-                background: "var(--accent-soft)",
-              }}
-            >
-              Upgrade to Pro →
-            </Link>
-          ) : undefined
-        }
-      />
+    <div className="max-w-6xl mx-auto px-6 py-10">
+      {/* Editorial header */}
+      <div className="flex items-center gap-4 mb-6">
+        <span
+          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          Compare
+        </span>
+        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+        <span
+          className="text-[15px] font-medium tracking-[0.25em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          {ideas.length} available
+        </span>
+      </div>
 
-      {/* Static A/B dock — always visible at the top of the page */}
+      <h1
+        className="mb-4"
+        style={{
+          fontFamily: SERIF,
+          fontWeight: 900,
+          fontSize: "clamp(2.5rem, 5vw, 4rem)",
+          lineHeight: 1.02,
+          letterSpacing: "-0.03em",
+          color: "var(--text-primary)",
+        }}
+      >
+        Two ideas, head-to-head.
+      </h1>
+
+      <div
+        className="text-[17px] leading-[1.6] mb-10 space-y-1"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        {plan === "plus" ? (
+          <>
+            <p>Pick two of your own ideas to place side-by-side.</p>
+            <p>Upgrade to Pro to compare against any public idea.</p>
+          </>
+        ) : (
+          <>
+            <p>Pick two ideas to place side-by-side.</p>
+            <p>We&apos;ll read them across 8 agents.</p>
+          </>
+        )}
+      </div>
+
+      {/* A/B dock */}
       <section
         aria-label="Comparison slots"
-        className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mb-6"
+        className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mb-12"
       >
         {[0, 1].map((i) => {
           const selIdea = ideas.find((x) => x.id === selected[i]);
           const letter = String.fromCharCode(65 + i);
           const filled = !!selIdea;
+          const accent = i === 0 ? ACCENT_A : ACCENT_B;
           return (
             <div
               key={i}
-              className="flex items-center gap-3 p-3.5 border min-h-[68px] transition-all duration-150"
+              className="flex items-center gap-4 px-5 py-4 border min-h-[72px]"
               style={{
-                borderColor: filled ? "var(--accent-ring)" : "var(--t-border-card)",
-                background: filled ? "var(--accent-soft)" : "var(--card-bg)",
+                borderColor: filled ? "var(--accent-ring)" : "var(--t-border-subtle)",
+                background: "var(--card-bg)",
               }}
             >
               <span
-                className="w-8 h-8 flex items-center justify-center text-sm font-bold shrink-0 border"
+                className="inline-flex items-center justify-center w-7 h-7 shrink-0"
                 style={{
+                  background: filled ? accent : "transparent",
                   color: filled ? "#fff" : "var(--text-tertiary)",
-                  background: filled ? "var(--accent)" : "transparent",
-                  borderColor: filled ? "var(--accent)" : "var(--t-border-card)",
+                  border: filled ? "none" : "1px solid var(--t-border-subtle)",
+                  fontFamily: DISPLAY,
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
                 }}
               >
                 {letter}
               </span>
               {filled ? (
-                <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="flex-1 min-w-0 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p
-                      className="text-[11px] font-semibold uppercase tracking-widest truncate"
-                      style={{ color: "var(--text-tertiary)" }}
+                      className="text-[14px] font-medium tracking-[0.3em] uppercase truncate"
+                      style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
                     >
                       {selIdea!.category} · {timeAgo(selIdea!.created_at)}
                     </p>
                     <p
-                      className="text-sm font-semibold truncate"
-                      style={{ color: "var(--text-primary)" }}
+                      className="truncate mt-0.5"
+                      style={{
+                        fontFamily: SERIF,
+                        fontWeight: 700,
+                        fontSize: "1.05rem",
+                        letterSpacing: "-0.01em",
+                        color: "var(--text-primary)",
+                      }}
                     >
                       {selIdea!.target_user}
                     </p>
@@ -751,172 +959,215 @@ export default function ComparePage() {
                   <button
                     onClick={() => toggleSelect(selIdea!.id)}
                     aria-label={`Remove idea ${letter}`}
-                    className="shrink-0 text-xs font-medium px-2 h-7 border transition-colors hover:bg-[color:var(--t-border-subtle)]"
-                    style={{
-                      color: "var(--text-tertiary)",
-                      borderColor: "var(--t-border-card)",
-                    }}
+                    className="shrink-0 text-[10px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+                    style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
                   >
                     Remove
                   </button>
                 </div>
               ) : (
-                <span className="text-sm font-medium" style={{ color: "var(--text-tertiary)" }}>
-                  Pick an idea below as {letter}
+                <span
+                  className="text-[15px] italic"
+                  style={{ fontFamily: SERIF, color: "var(--text-tertiary)" }}
+                >
+                  Pick an idea as {letter}
                 </span>
               )}
             </div>
           );
         })}
 
-        {/* Compare action */}
         <button
           onClick={startCompare}
           disabled={!bothSelected}
-          className="inline-flex items-center justify-center gap-1.5 h-[68px] md:h-auto px-6 text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-3 h-[72px] md:h-auto px-8 text-[14px] font-medium tracking-[0.3em] uppercase transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90"
           style={{
-            background: bothSelected ? "var(--accent)" : "var(--card-bg)",
+            fontFamily: DISPLAY,
+            background: bothSelected ? "var(--accent)" : "transparent",
             color: bothSelected ? "#fff" : "var(--text-tertiary)",
-            border: bothSelected ? "none" : "1px solid var(--t-border-card)",
+            border: bothSelected ? "none" : "1px solid var(--t-border-subtle)",
           }}
         >
-          <GitCompare className="w-4 h-4" />
-          {bothSelected ? "Compare" : `${selected.length}/2`}
-          {bothSelected && <ArrowRight className="w-4 h-4" />}
+          {bothSelected ? (
+            <>
+              Compare
+              <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />
+            </>
+          ) : (
+            `${selected.length}/2`
+          )}
         </button>
       </section>
 
-      {/* Search + category filter */}
-      <div className="flex items-center gap-2 mb-4">
+      {/* Search + filter — minimal editorial bar */}
+      <div
+        className="flex items-center gap-4 mb-6 pb-4 border-b"
+        style={{ borderColor: "var(--t-border-subtle)" }}
+      >
         <div className="relative flex-1">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5"
             style={{ color: "var(--text-tertiary)" }}
           />
           <input
             type="text"
-            placeholder="Search ideas by description, target, or category…"
+            placeholder="Search by target, description, or category…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 h-9 text-sm border outline-none transition-colors focus:border-[color:var(--accent)]"
-            style={{
-              background: "var(--card-bg)",
-              borderColor: "var(--t-border-card)",
-              color: "var(--text-primary)",
-            }}
+            className="w-full pl-6 pr-3 h-9 text-[14px] bg-transparent outline-none"
+            style={{ color: "var(--text-primary)" }}
           />
         </div>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="h-9 px-3 text-sm font-medium border outline-none transition-colors focus:border-[color:var(--accent)] cursor-pointer"
-          style={{
-            background: "var(--card-bg)",
-            borderColor: "var(--t-border-card)",
-            color: "var(--text-primary)",
-            minWidth: 160,
-          }}
+          className="h-9 pl-3 pr-3 text-[14px] font-medium tracking-[0.25em] uppercase bg-transparent cursor-pointer outline-none"
+          style={{ fontFamily: DISPLAY, color: "var(--text-primary)" }}
           aria-label="Filter by category"
         >
           {CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>
-              {cat === "All" ? "All categories" : cat}
+              {cat === "All" ? "All Categories" : cat}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Result count */}
       <p
-        className="text-xs mb-3"
-        style={{ color: "var(--text-tertiary)" }}
+        className="text-[14px] font-medium tracking-[0.3em] uppercase mb-6"
+        style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
       >
         {filtered.length} {filtered.length === 1 ? "idea" : "ideas"}
-        {(search || category !== "All") && ` match your filter`}
+        {(search || category !== "All") && " match"}
       </p>
 
-      {/* Ideas grid — compact, 2-col on md+, click to select */}
+      {/* Ideas grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 border"
-          style={{ borderColor: "var(--t-border)", background: "var(--card-bg)" }}>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">No ideas match your filter.</p>
+        <div
+          className="text-center py-20"
+          style={{ borderTop: "1px solid var(--t-border-subtle)", borderBottom: "1px solid var(--t-border-subtle)" }}
+        >
+          <p
+            className="text-[15px] italic"
+            style={{ fontFamily: SERIF, color: "var(--text-tertiary)" }}
+          >
+            No ideas match your filter.
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((idea) => {
             const report = getReport(idea);
             const isSelected = selected.includes(idea.id);
             const selIdx = selected.indexOf(idea.id);
             const selLetter = isSelected ? String.fromCharCode(65 + selIdx) : null;
             const vScore = report?.viability_score ?? null;
-            const trendLabel = report?.trend_direction as TrendDirection | null;
-            const satLabel = report?.saturation_level ?? null;
+            const theme = getCategoryTheme(idea.category);
+            const scoreColor =
+              vScore === null
+                ? "var(--text-tertiary)"
+                : vScore >= 70
+                ? "#10b981"
+                : vScore >= 50
+                ? "#f59e0b"
+                : "#ef4444";
 
             return (
               <button
                 key={idea.id}
                 onClick={() => toggleSelect(idea.id)}
                 aria-pressed={isSelected}
-                className="relative text-left border p-4 transition-all duration-150 hover:-translate-y-0.5 overflow-hidden group"
+                className="group relative text-left flex flex-col min-h-[210px] p-6 border transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--t-border-bright)] focus:outline-none focus-visible:border-[color:var(--accent-ring)]"
                 style={{
-                  background: isSelected ? "var(--accent-soft)" : "var(--card-bg)",
-                  borderColor: isSelected ? "var(--accent-ring)" : "var(--t-border-card)",
+                  background: "var(--card-bg)",
+                  borderColor: isSelected
+                    ? "var(--accent-ring)"
+                    : "var(--t-border-card)",
                 }}
               >
-                {/* A/B floating badge when selected */}
-                {selLetter && (
+                {isSelected && (
                   <span
-                    className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center text-xs font-bold z-10"
-                    style={{ background: "var(--accent)", color: "#fff" }}
-                  >
-                    {selLetter}
-                  </span>
+                    aria-hidden
+                    className="absolute left-0 top-0 bottom-0 w-[3px]"
+                    style={{ background: "var(--accent)" }}
+                  />
                 )}
 
-                {/* Header row: score + category + time */}
-                <div className="flex items-center gap-3 mb-3">
-                  <ScoreBadge score={vScore} size="hero" />
-                  <div className="flex-1 min-w-0 pr-8">
-                    <p
-                      className="text-[10px] font-semibold uppercase tracking-widest truncate"
-                      style={{ color: "var(--text-tertiary)" }}
+                {/* Top row — category + score */}
+                <div className="flex items-start justify-between gap-4 mb-5">
+                  <span
+                    className="inline-flex items-center gap-1.5 text-[15px] font-semibold tracking-wider uppercase"
+                    style={{ color: "var(--text-tertiary)" }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ background: theme.accent }}
+                      aria-hidden="true"
+                    />
+                    {idea.category}
+                  </span>
+
+                  <div className="flex items-baseline gap-1 shrink-0">
+                    <span
+                      className="tabular-nums leading-none"
+                      style={{
+                        fontFamily: SERIF,
+                        fontWeight: 900,
+                        fontSize: "1.75rem",
+                        letterSpacing: "-0.02em",
+                        color: scoreColor,
+                      }}
                     >
-                      {idea.category}
-                    </p>
-                    <p
-                      className="text-[11px] font-medium mt-0.5"
-                      style={{ color: "var(--text-tertiary)" }}
+                      {vScore ?? "—"}
+                    </span>
+                    <span
+                      className="text-[13px] font-medium tracking-[0.15em] uppercase"
+                      style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
                     >
-                      {timeAgo(idea.created_at)}
-                    </p>
+                      /100
+                    </span>
                   </div>
                 </div>
 
-                {/* Target + description */}
-                <p
-                  className="text-sm font-semibold mb-1 line-clamp-1"
+                <h3
+                  className="text-[17px] font-semibold leading-snug mb-2 line-clamp-2"
                   style={{ color: "var(--text-primary)" }}
                 >
                   For {idea.target_user}
-                </p>
+                </h3>
+
                 <p
-                  className="text-sm leading-relaxed line-clamp-2 mb-3 min-h-[40px]"
-                  style={{ color: "var(--text-secondary)" }}
+                  className="text-[13px] leading-relaxed line-clamp-2 flex-1"
+                  style={{ color: "var(--text-tertiary)" }}
                 >
                   {idea.description}
                 </p>
 
-                {/* Meta row: trend + saturation (plain text, no pills) */}
-                {(trendLabel || satLabel) && (
-                  <div className="flex items-center gap-3 text-xs">
-                    {trendLabel && <TrendLabel direction={trendLabel} />}
-                    {satLabel && (
-                      <span className="font-medium" style={{ color: "var(--text-tertiary)" }}>
-                        {satLabel} sat
-                      </span>
-                    )}
-                  </div>
-                )}
+                {/* Footer — time + A/B indicator */}
+                <div
+                  className="flex items-center justify-between mt-5 pt-4 text-[15px] border-t"
+                  style={{
+                    borderColor: "var(--t-border-subtle)",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  <span className="truncate">{timeAgo(idea.created_at)}</span>
+                  {selLetter ? (
+                    <span
+                      className="inline-flex items-center justify-center w-5 h-5 text-[15px] font-bold shrink-0 ml-3"
+                      style={{ background: "var(--accent)", color: "#fff" }}
+                    >
+                      {selLetter}
+                    </span>
+                  ) : (
+                    <span
+                      className="tracking-wider uppercase text-[14px] font-medium shrink-0 ml-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ color: "var(--text-tertiary)" }}
+                    >
+                      Select
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}

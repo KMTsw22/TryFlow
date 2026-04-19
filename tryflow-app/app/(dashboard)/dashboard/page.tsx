@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Plus, ArrowRight, BarChart3, FileText, GitCompare } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { OnboardingChecklist } from "@/components/dashboard/OnboardingChecklist";
-import { IdeaTable, type IdeaTableRow } from "@/components/ideas/IdeaTable";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { IdeaGrid, type IdeaGridItem } from "@/components/ideas/IdeaGrid";
 import type { TrendDirection } from "@/components/ui/TrendLabel";
 import type { IdeaStatus } from "@/components/ui/StatusBadge";
+
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
 
 interface Report {
   viability_score: number;
@@ -39,7 +41,7 @@ function deriveStatus(idea: Idea): IdeaStatus {
   return "live";
 }
 
-function toTableRow(idea: Idea): IdeaTableRow {
+function toGridItem(idea: Idea): IdeaGridItem {
   const r = getReport(idea);
   return {
     id: idea.id,
@@ -47,8 +49,10 @@ function toTableRow(idea: Idea): IdeaTableRow {
     target_user: idea.target_user,
     description: idea.description,
     created_at: idea.created_at,
+    stage: idea.stage,
     viability_score: r?.viability_score ?? null,
     trend_direction: (r?.trend_direction as TrendDirection | undefined) ?? null,
+    saturation_level: r?.saturation_level ?? null,
     status: deriveStatus(idea),
   };
 }
@@ -74,169 +78,210 @@ export default async function DashboardPage() {
     ?? ideas[0]?.id
     ?? null;
 
-  // Derive row data + find highest-scored idea for subtle highlight
-  const rows = ideas.map(toTableRow);
-  const topScoringId = rows
+  const items = ideas.map(toGridItem);
+  const topScoringId = items
     .filter((r) => r.viability_score !== null)
-    .reduce<IdeaTableRow | null>(
+    .reduce<IdeaGridItem | null>(
       (best, cur) =>
         !best || (cur.viability_score ?? 0) > (best.viability_score ?? 0) ? cur : best,
       null,
     )?.id ?? null;
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <PageHeader
-        title="My Ideas"
-        meta={hasIdeas ? `${ideas.length} total` : undefined}
-        description="Your submitted ideas and the AI insight reports attached to them."
-        action={
-          <Link
-            href="/submit"
-            className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white font-semibold px-4 h-9 text-sm hover:brightness-110 transition-all"
+    <div className="max-w-6xl mx-auto px-6 py-10">
+      {/* Editorial header */}
+      <div className="flex items-center gap-4 mb-6">
+        <span
+          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          My Ideas
+        </span>
+        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+        {hasIdeas && (
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
-            <Plus className="w-4 h-4" /> Submit idea
-          </Link>
-        }
-      />
+            {ideas.length} total
+          </span>
+        )}
+      </div>
 
-      {/* Onboarding checklist (self-hides once all steps done or dismissed) */}
+      <div className="flex items-start justify-between gap-8 mb-4 flex-wrap">
+        <h1
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "clamp(2.5rem, 5vw, 4rem)",
+            lineHeight: 1.02,
+            letterSpacing: "-0.03em",
+            color: "var(--text-primary)",
+          }}
+        >
+          Your signals.
+        </h1>
+        <Link
+          href="/submit"
+          className="group inline-flex items-center gap-2 mt-4 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70 shrink-0"
+          style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
+        >
+          Submit idea
+          <ArrowRight
+            className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"
+            strokeWidth={2}
+          />
+        </Link>
+      </div>
+
+      <div
+        className="text-[17px] leading-[1.6] mb-10 space-y-1"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        <p>Every idea you&apos;ve submitted, with its viability score and AI insight attached.</p>
+        <p>Click any to open the full report.</p>
+      </div>
+
+      {/* Onboarding checklist */}
       <OnboardingChecklist
         hasIdeas={hasIdeas}
         hasReport={hasReport}
         firstIdeaId={firstReportIdeaId}
       />
 
-      {/* Empty state */}
-      {!hasIdeas && (
-        <div
-          className="border p-12 text-center"
-          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
+      {/* Empty state — editorial */}
+      {!hasIdeas && <EmptyState />}
+
+      {/* Ideas grid */}
+      {hasIdeas && <IdeaGrid items={items} highlightId={topScoringId} />}
+
+      {/* Bottom — secondary navigation, editorial link row */}
+      {hasIdeas && (
+        <div className="mt-16 pt-8 border-t flex flex-wrap items-center justify-between gap-4"
+          style={{ borderColor: "var(--t-border-subtle)" }}
         >
-          <div
-            className="w-12 h-12 flex items-center justify-center mx-auto mb-5"
-            style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}
+          <span
+            className="text-[15px] font-medium tracking-[0.3em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
-            <FileText className="w-5 h-5" style={{ color: "var(--accent)" }} />
-          </div>
-          <h2
-            className="text-base font-semibold mb-2"
-            style={{ color: "var(--text-primary)" }}
-          >
-            No ideas yet
-          </h2>
-          <p
-            className="text-sm max-w-sm mx-auto mb-6 leading-relaxed"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Submit your first startup idea anonymously. Get an instant insight report showing viability, market saturation, and trend direction.
-          </p>
-          <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto mb-8 text-left">
-            {[
-              { step: "01", label: "Submit",  desc: "Category, target, description" },
-              { step: "02", label: "Analyze", desc: "AI clusters, scores, trends" },
-              { step: "03", label: "Decide",  desc: "Viability report · next steps" },
-            ].map((s) => (
-              <div
-                key={s.step}
-                className="p-4 border"
-                style={{ background: "var(--card-bg)", borderColor: "var(--t-border-subtle)" }}
-              >
-                <div
-                  className="text-xs font-mono mb-1"
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  {s.step}
-                </div>
-                <div
-                  className="text-sm font-semibold mb-0.5"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  {s.label}
-                </div>
-                <div className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-                  {s.desc}
-                </div>
-              </div>
-            ))}
-          </div>
-          <Link
-            href="/submit"
-            className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white font-semibold px-5 h-10 text-sm hover:brightness-110 transition-all"
-          >
-            Submit your first idea <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      )}
-
-      {/* Ideas table */}
-      {hasIdeas && (
-        <>
-          <div className="flex items-end justify-between mb-3">
-            <div>
-              <h2
-                className="text-sm font-semibold"
-                style={{ color: "var(--text-primary)" }}
-              >
-                All ideas
-              </h2>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-tertiary)" }}>
-                {topScoringId
-                  ? "Click a column header to sort · Top-scoring idea highlighted"
-                  : "Click a column header to sort · Reports in progress"}
-              </p>
-            </div>
-          </div>
-          <IdeaTable rows={rows} highlightId={topScoringId} />
-        </>
-      )}
-
-      {/* Bottom CTAs */}
-      {hasIdeas && (
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Link
-            href="/explore"
-            className="border p-4 flex items-center justify-between transition-colors hover:bg-[color:var(--t-border-subtle)]"
-            style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
-          >
-            <div>
-              <p
-                className="text-sm font-semibold mb-0.5"
-                style={{ color: "var(--text-primary)" }}
-              >
-                Explore market trends
-              </p>
-              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-                Live data from all anonymous submissions
-              </p>
-            </div>
-            <BarChart3
-              className="w-4 h-4 shrink-0"
-              style={{ color: "var(--text-tertiary)" }}
-            />
-          </Link>
-          {ideas.length >= 2 && (
+            Keep going
+          </span>
+          <div className="flex items-center gap-6 flex-wrap">
             <Link
-              href="/compare"
-              className="border p-4 flex items-center justify-between transition-colors hover:bg-[color:var(--t-border-subtle)]"
-              style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}
+              href="/explore"
+              className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+              style={{ fontFamily: DISPLAY, color: "var(--text-secondary)" }}
             >
-              <div>
-                <p
-                  className="text-sm font-semibold mb-0.5"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  Compare your ideas
-                </p>
-                <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-                  Pick 2 and see which to pursue
-                </p>
-              </div>
-              <GitCompare className="w-4 h-4 shrink-0" style={{ color: "var(--accent)" }} />
+              Explore the market
+              <ArrowRight
+                className="w-3 h-3 transition-transform group-hover:translate-x-1"
+                strokeWidth={2}
+              />
             </Link>
-          )}
+            {ideas.length >= 2 && (
+              <>
+                <span aria-hidden style={{ color: "var(--t-border-bright)" }}>·</span>
+                <Link
+                  href="/compare"
+                  className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+                  style={{ fontFamily: DISPLAY, color: "var(--text-secondary)" }}
+                >
+                  Compare two ideas
+                  <ArrowRight
+                    className="w-3 h-3 transition-transform group-hover:translate-x-1"
+                    strokeWidth={2}
+                  />
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div
+      className="py-20 border-t border-b"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      <p
+        className="text-[14px] font-medium tracking-[0.35em] uppercase mb-5"
+        style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+      >
+        Nothing yet
+      </p>
+
+      <p
+        className="leading-[1.15] mb-5 max-w-2xl"
+        style={{
+          fontFamily: SERIF,
+          fontStyle: "italic",
+          fontWeight: 400,
+          fontSize: "clamp(1.5rem, 3vw, 2.25rem)",
+          letterSpacing: "-0.01em",
+          color: "var(--text-primary)",
+        }}
+      >
+        &ldquo;Submit your first idea. Get a signal before you build.&rdquo;
+      </p>
+
+      <p
+        className="text-[15px] leading-[1.75] mb-10 max-w-2xl"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        Anonymous submission, 8 specialist agents, one viability score in under two minutes. No commitment, no email dance.
+      </p>
+
+      {/* 3-step editorial */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-8 mb-10 max-w-3xl">
+        {[
+          { step: "01", label: "Submit", desc: "Category, target user, short description." },
+          { step: "02", label: "Analyze", desc: "8 AI agents read the signal across dimensions." },
+          { step: "03", label: "Decide", desc: "Viability score, pros, cons, next steps." },
+        ].map((s) => (
+          <div key={s.step}>
+            <span
+              className="tabular-nums leading-none block mb-3"
+              style={{
+                fontFamily: SERIF,
+                fontWeight: 900,
+                fontSize: "2.25rem",
+                letterSpacing: "-0.03em",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {s.step}
+            </span>
+            <p
+              className="text-[14px] font-medium tracking-[0.3em] uppercase mb-2"
+              style={{ fontFamily: DISPLAY, color: "var(--text-primary)" }}
+            >
+              {s.label}
+            </p>
+            <p
+              className="text-[13.5px] leading-[1.65]"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              {s.desc}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <Link
+        href="/submit"
+        className="group inline-flex items-center gap-3 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+        style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
+      >
+        Submit your first idea
+        <ArrowRight
+          className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"
+          strokeWidth={2}
+        />
+      </Link>
     </div>
   );
 }

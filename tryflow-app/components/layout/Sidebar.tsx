@@ -114,7 +114,7 @@ export function Sidebar({ isLoggedIn, plan }: Props) {
             {section.title && (
               <div
                 className={cn(
-                  "px-3 mb-1.5 text-[10px] font-semibold tracking-widest uppercase transition-all duration-150 overflow-hidden whitespace-nowrap",
+                  "px-3 mb-1.5 text-[12px] font-semibold tracking-widest uppercase transition-all duration-150 overflow-hidden whitespace-nowrap",
                   expanded ? "opacity-100 h-4 delay-75" : "opacity-0 h-0"
                 )}
                 style={{ color: "var(--text-tertiary)" }}
@@ -216,7 +216,7 @@ export function Sidebar({ isLoggedIn, plan }: Props) {
                 </span>
                 <span
                   className={cn(
-                    "text-[10px] font-bold uppercase tracking-widest transition-all duration-150",
+                    "text-[12px] font-bold uppercase tracking-widest transition-all duration-150",
                     expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
                   )}
                   style={{ color: "var(--text-tertiary)" }}

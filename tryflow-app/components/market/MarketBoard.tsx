@@ -181,29 +181,35 @@ export function MarketBoard({ rawData, isLocked }: Props) {
 
   const rangeLabel = range === "7d" ? "7d" : range === "30d" ? "30d" : "all time";
 
+  const DISPLAY = "'Oswald', sans-serif";
+
   return (
     <>
       {/* Signal strip */}
       <section
         aria-label="Market signals"
         className={cn(
-          "mb-8 transition-all",
+          "mb-14 transition-all",
           isLocked && "blur-sm pointer-events-none select-none"
         )}
         aria-hidden={isLocked ? "true" : undefined}
       >
-        <div className="flex items-center justify-between mb-3">
-          <p
-            className="text-[11px] font-semibold tracking-widest uppercase"
-            style={{ color: "var(--text-tertiary)" }}
+        {/* Kicker rule with time range toggle */}
+        <div className="flex items-center gap-4 mb-8">
+          <span
+            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
-            Key signals
-          </p>
+            Key Signals
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
           <TimeRangeToggle value={range} onChange={setRange} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* 1. Gaining momentum — period-over-period submission growth */}
+        <div
+          className="grid grid-cols-1 md:grid-cols-3 border-t border-b"
+          style={{ borderColor: "var(--t-border-subtle)" }}
+        >
           <SignalCard
             type="rising"
             category={momentum?.category ?? null}
@@ -220,10 +226,9 @@ export function MarketBoard({ rawData, isLocked }: Props) {
                   : `No gaining category this ${rangeLabel}`
             }
             href={momentum ? `/explore/${encodeURIComponent(momentum.category)}` : undefined}
-            label="Gaining momentum"
+            label="Gaining Momentum"
+            position="first"
           />
-
-          {/* 2. Highest quality — best avg viability score (≥2 reports) */}
           <SignalCard
             type="crowded"
             category={quality?.category ?? null}
@@ -238,10 +243,9 @@ export function MarketBoard({ rawData, isLocked }: Props) {
                 : "Need at least 2 scored ideas per category"
             }
             href={quality ? `/explore/${encodeURIComponent(quality.category)}` : undefined}
-            label="Highest quality"
+            label="Highest Quality"
+            position="middle"
           />
-
-          {/* 3. Underexplored — high quality + low volume (the real opportunity) */}
           <SignalCard
             type="open"
             category={underexplored?.category ?? null}
@@ -257,42 +261,38 @@ export function MarketBoard({ rawData, isLocked }: Props) {
             }
             href={underexplored ? `/explore/${encodeURIComponent(underexplored.category)}` : undefined}
             label="Underexplored"
+            position="last"
           />
         </div>
 
-        {/* Honest disclaimer about data source */}
         <p
-          className="text-[11px] mt-3"
-          style={{ color: "var(--text-tertiary)" }}
+          className="text-[14px] font-medium tracking-[0.25em] uppercase mt-4"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
-          * Based on anonymous TryWepp submissions — reflects founder activity on this platform, not real-world market data.
+          * TryWepp submissions only · not real-world market data
         </p>
       </section>
 
-      {/* Category breakdown table */}
-      <div className="relative">
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <h2
-              className="text-sm font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Category breakdown
-            </h2>
-            <p
-              className="text-xs mt-0.5"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              {range === "all"
-                ? "All-time totals · sort by any column · click a row to drill down"
-                : `Submissions over the last ${rangeLabel} · sort by any column · click a row to drill down`}
-            </p>
-          </div>
-          {isLocked && (
-            <p className="text-xs font-semibold" style={{ color: "var(--text-tertiary)" }}>
-              Pro members only
-            </p>
-          )}
+      {/* Category breakdown */}
+      <section className="relative">
+        <div className="flex items-center gap-4 mb-8">
+          <span
+            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            Category Breakdown
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            {isLocked
+              ? "Pro only"
+              : range === "all"
+              ? "All-time · sort any column"
+              : `Last ${rangeLabel} · sort any column`}
+          </span>
         </div>
 
         <div
@@ -304,7 +304,7 @@ export function MarketBoard({ rawData, isLocked }: Props) {
         >
           <CategoryTable rows={rows} rangeLabel={range} />
         </div>
-      </div>
+      </section>
     </>
   );
 }

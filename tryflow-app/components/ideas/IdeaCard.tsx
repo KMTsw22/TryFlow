@@ -1,8 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Clock, Mail, MailX } from "lucide-react";
 import { getCategoryTheme, timeAgo } from "@/lib/categories";
-import { ScoreBadge } from "@/components/ui/ScoreBadge";
-import { TrendLabel, type TrendDirection } from "@/components/ui/TrendLabel";
 
 export interface IdeaCardData {
   id: string;
@@ -29,6 +26,9 @@ interface Props {
   showCategory?: boolean;
 }
 
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
+
 const STAGE_LABEL: Record<string, string> = {
   idea: "Just an Idea",
   prototype: "Prototype",
@@ -40,141 +40,160 @@ function truncate(text: string, max: number) {
   return text.length > max ? text.slice(0, max).trimEnd() + "…" : text;
 }
 
-export function IdeaCard({ idea, size = "default", href, showCategory = true }: Props) {
+function scoreColor(score: number | null) {
+  if (score === null) return "var(--text-tertiary)";
+  if (score >= 70) return "var(--signal-success)";
+  if (score >= 50) return "var(--signal-warning)";
+  return "var(--signal-danger)";
+}
+
+export function IdeaCard({
+  idea,
+  size = "default",
+  href,
+  showCategory = true,
+}: Props) {
   const theme = getCategoryTheme(idea.category);
   const score = idea.viability_score ?? null;
-  const trend = idea.trend_direction as TrendDirection | null | undefined;
-  const sat = idea.saturation_level as "Low" | "Medium" | "High" | null | undefined;
+  const color = scoreColor(score);
   const targetHref = href ?? `/ideas/${idea.id}`;
-
+  const stage =
+    idea.stage && STAGE_LABEL[idea.stage] ? STAGE_LABEL[idea.stage] : null;
   const isHero = size === "hero";
+
+  const scoreDisplay = score !== null ? score.toString() : "—";
+  const scoreSize = isHero ? "2.5rem" : "1.75rem";
 
   return (
     <Link
       href={targetHref}
-      className={`group relative flex flex-col overflow-hidden border transition-all duration-150 hover:-translate-y-0.5 hover:border-[color:var(--t-border-bright)] ${
-        isHero ? "min-h-[240px]" : "min-h-[200px]"
+      className={`group relative flex flex-col p-6 border transition-all duration-200 hover:-translate-y-0.5 hover:border-[color:var(--t-border-bright)] ${
+        isHero ? "min-h-[260px]" : "min-h-[210px]"
       }`}
       style={{
         background: "var(--card-bg)",
         borderColor: "var(--t-border-card)",
       }}
     >
-      <div className={`relative flex flex-col flex-1 ${isHero ? "p-6" : "p-5"}`}>
-        {/* Header — category + time + score */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2 min-w-0 flex-wrap">
-            {showCategory && (
-              <span
-                className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-semibold"
-                style={{
-                  background: "var(--card-bg)",
-                  border: "1px solid var(--t-border-card)",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: theme.accent }}
-                  aria-hidden="true"
-                />
-                <span className="truncate">{idea.category}</span>
-              </span>
-            )}
-            <span
-              className="inline-flex items-center gap-1 text-[11px] font-medium"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              <Clock className="w-3 h-3" />
-              {timeAgo(idea.created_at)}
-            </span>
-          </div>
-
-          {score !== null && <ScoreBadge score={score} size="hero" />}
-        </div>
-
-        {/* Target user — main heading */}
-        <p
-          className={`font-semibold leading-snug mb-1.5 ${
-            isHero ? "text-xl" : "text-base"
-          }`}
-          style={{ color: "var(--text-primary)" }}
-        >
-          For {truncate(idea.target_user, isHero ? 80 : 50)}
-        </p>
-
-        {/* Description */}
-        <p
-          className={`leading-relaxed flex-1 ${
-            isHero ? "text-[15px] line-clamp-4" : "text-sm line-clamp-2"
-          }`}
-          style={{ color: "var(--text-secondary)" }}
-        >
-          {idea.description}
-        </p>
-
-        {/* AI pull-quote — hero only */}
-        {isHero && idea.summary && (
-          <div
-            className="mt-4 pl-3 border-l italic text-sm leading-relaxed"
-            style={{
-              borderColor: "var(--t-border-bright)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            &ldquo;{truncate(idea.summary, 140)}&rdquo;
-          </div>
-        )}
-
-        {/* Footer — meta row + CTA */}
-        <div className="flex items-end justify-between gap-3 mt-4 flex-wrap">
-          <div className="flex items-center gap-3 flex-wrap text-xs">
-            {idea.stage && STAGE_LABEL[idea.stage] && (
-              <span
-                className="font-medium"
-                style={{ color: "var(--text-tertiary)" }}
-              >
-                {STAGE_LABEL[idea.stage]}
-              </span>
-            )}
-            {trend && <TrendLabel direction={trend} />}
-            {sat && (
-              <span
-                className="font-medium"
-                style={{ color: "var(--text-tertiary)" }}
-              >
-                {sat} sat
-              </span>
-            )}
-            {idea.contactOpen === true && (
-              <span
-                className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400"
-                title="This submitter is open to investor contact"
-              >
-                <Mail className="w-3 h-3" />
-                Open to contact
-              </span>
-            )}
-            {idea.contactOpen === false && (
-              <span
-                className="inline-flex items-center gap-1 font-medium"
-                style={{ color: "var(--text-tertiary)" }}
-                title="This submitter has disabled contact"
-              >
-                <MailX className="w-3 h-3" />
-                Contact off
-              </span>
-            )}
-          </div>
-
+      {/* Top row — category or stage (left) + score (right) */}
+      <div className="flex items-start justify-between gap-4 mb-5">
+        {showCategory ? (
           <span
-            className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 text-[14px] font-semibold tracking-wider uppercase"
             style={{ color: "var(--text-tertiary)" }}
           >
-            View
-            <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{ background: theme.accent }}
+              aria-hidden="true"
+            />
+            {idea.category}
+          </span>
+        ) : stage ? (
+          <span
+            className="text-[13px] font-medium tracking-[0.3em] uppercase truncate"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            {stage}
+          </span>
+        ) : (
+          <span />
+        )}
+
+        <div className="flex items-baseline gap-1 shrink-0">
+          <span
+            className="tabular-nums leading-none"
+            style={{
+              fontFamily: SERIF,
+              fontWeight: 900,
+              fontSize: scoreSize,
+              letterSpacing: "-0.02em",
+              color,
+            }}
+          >
+            {scoreDisplay}
+          </span>
+          <span
+            className="text-[13px] font-medium tracking-[0.15em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            /100
           </span>
         </div>
+      </div>
+
+      {/* Target user */}
+      <h3
+        className={`leading-snug mb-2 line-clamp-2 ${isHero ? "text-[19px]" : "text-[17px]"}`}
+        style={{
+          fontFamily: SERIF,
+          fontWeight: 700,
+          letterSpacing: "-0.01em",
+          color: "var(--text-primary)",
+        }}
+      >
+        For {truncate(idea.target_user, isHero ? 80 : 60)}
+      </h3>
+
+      {/* Description */}
+      <p
+        className={`leading-relaxed flex-1 ${isHero ? "text-[14px] line-clamp-3" : "text-[13px] line-clamp-2"}`}
+        style={{ color: "var(--text-secondary)" }}
+      >
+        {idea.description}
+      </p>
+
+      {/* Hero only: AI pull-quote */}
+      {isHero && idea.summary && (
+        <p
+          className="mt-4 pl-3 border-l italic text-[13.5px] leading-[1.55] line-clamp-3"
+          style={{
+            borderColor: "var(--t-border-bright)",
+            color: "var(--text-secondary)",
+            fontFamily: SERIF,
+          }}
+        >
+          &ldquo;{truncate(idea.summary, 160)}&rdquo;
+        </p>
+      )}
+
+      {/* Footer — meta (left) + contact indicator (right) */}
+      <div
+        className="flex items-center justify-between mt-5 pt-4 text-[13px] border-t"
+        style={{
+          borderColor: "var(--t-border-subtle)",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        <span className="truncate">
+          {timeAgo(idea.created_at)}
+          {/* Stage already shown in top-left for showCategory=false, so avoid duplication */}
+          {showCategory && stage && (
+            <>
+              <span className="mx-1.5 opacity-50">·</span>
+              {stage}
+            </>
+          )}
+        </span>
+
+        {idea.contactOpen === true && (
+          <span
+            className="shrink-0 text-[11px] font-medium tracking-[0.3em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--signal-success)" }}
+            title="Open to investor contact"
+          >
+            Open
+          </span>
+        )}
+        {idea.contactOpen === false && (
+          <span
+            className="shrink-0 text-[11px] font-medium tracking-[0.3em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+            title="Contact disabled"
+          >
+            Contact off
+          </span>
+        )}
       </div>
     </Link>
   );

@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, Circle, X, ArrowRight, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowRight, X } from "lucide-react";
 
 interface Props {
   hasIdeas: boolean;
@@ -12,6 +11,9 @@ interface Props {
 }
 
 const STORAGE_KEY = "trywepp_onboarding_v1";
+
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
 
 type Stored = { dismissed?: boolean; browsedMarket?: boolean };
 
@@ -51,35 +53,41 @@ export function OnboardingChecklist({ hasIdeas, hasReport, firstIdeaId }: Props)
 
   if (allDone) return null;
 
-  const steps = [
+  const steps: Array<{
+    key: string;
+    done: boolean;
+    label: string;
+    desc: string;
+    cta: { label: string; href: string; onClick?: () => void } | null;
+  }> = [
     {
       key: "submit",
       done: step1Done,
-      title: "Submit your first idea",
+      label: "Submit",
       desc: "Get an AI viability score in under 2 minutes.",
-      cta: step1Done ? null : { label: "Submit", href: "/submit" },
+      cta: step1Done ? null : { label: "Start", href: "/submit" },
     },
     {
       key: "report",
       done: step2Done,
-      title: "Read your insight report",
-      desc: "See viability, market saturation, and trend direction.",
+      label: "Read",
+      desc: "Open your insight report — score, saturation, trend.",
       cta:
         step2Done || !step1Done
           ? null
           : firstIdeaId
-          ? { label: "Open report", href: `/ideas/${firstIdeaId}` }
+          ? { label: "Open", href: `/ideas/${firstIdeaId}` }
           : null,
     },
     {
       key: "market",
       done: step3Done,
-      title: "Browse the market",
+      label: "Explore",
       desc: "See what other founders are building across 9 categories.",
       cta: step3Done
         ? null
         : {
-            label: "Open Market",
+            label: "Browse",
             href: "/explore",
             onClick: () => {
               const next = { ...stored, browsedMarket: true };
@@ -99,85 +107,86 @@ export function OnboardingChecklist({ hasIdeas, hasReport, firstIdeaId }: Props)
   };
 
   return (
-    <div
-      className="relative border p-5 mb-6"
-      style={{
-        background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04))",
-        borderColor: "rgba(129,140,248,0.25)",
-      }}
+    <section
+      aria-label="Getting started checklist"
+      className="relative mb-14 pb-10 border-b"
+      style={{ borderColor: "var(--t-border-subtle)" }}
     >
       <button
         onClick={dismiss}
         aria-label="Dismiss onboarding"
-        className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-200 transition-colors"
+        className="absolute top-0 right-0 p-2 transition-opacity hover:opacity-70"
+        style={{ color: "var(--text-tertiary)" }}
       >
-        <X className="w-4 h-4" />
+        <X className="w-3.5 h-3.5" strokeWidth={2} />
       </button>
 
-      <div className="flex items-center gap-2 mb-1">
-        <Sparkles className="w-4 h-4 text-indigo-400" />
-        <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase">
-          Getting started
-        </p>
-        <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto mr-6">
+      <div className="flex items-center gap-4 mb-6">
+        <span
+          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
+        >
+          Getting Started
+        </span>
+        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+        <span
+          className="text-[15px] font-medium tracking-[0.25em] uppercase tabular-nums"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
           {completedCount} / 3
         </span>
       </div>
-      <h2 className="text-lg font-extrabold text-gray-900 dark:text-white mb-4">
-        3 steps to get the most out of Try.Wepp
-      </h2>
 
-      <ul className="space-y-2">
-        {steps.map((s) => (
-          <li
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-6">
+        {steps.map((s, i) => (
+          <div
             key={s.key}
-            className={cn(
-              "flex items-center gap-3 p-3 border transition-colors",
-              s.done
-                ? "opacity-60"
-                : "hover:border-indigo-400/40"
-            )}
-            style={{
-              background: "var(--card-bg)",
-              borderColor: s.done ? "var(--t-border-subtle)" : "var(--t-border-card)",
-            }}
+            className="flex flex-col"
+            style={{ opacity: s.done ? 0.5 : 1 }}
           >
-            <div className="shrink-0">
-              {s.done ? (
-                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                </div>
-              ) : (
-                <Circle className="w-6 h-6 text-gray-400 dark:text-gray-600" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p
-                className={cn(
-                  "text-sm font-semibold",
-                  s.done
-                    ? "text-gray-500 dark:text-gray-400 line-through"
-                    : "text-gray-900 dark:text-white"
-                )}
+            <div className="flex items-baseline gap-3 mb-2">
+              <span
+                className="tabular-nums leading-none"
+                style={{
+                  fontFamily: SERIF,
+                  fontWeight: 900,
+                  fontSize: "1.5rem",
+                  letterSpacing: "-0.02em",
+                  color: s.done ? "var(--signal-success)" : "var(--text-tertiary)",
+                }}
               >
-                {s.title}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {s.desc}
-              </p>
+                {s.done ? "✓" : String(i + 1).padStart(2, "0")}
+              </span>
+              <span
+                className="text-[15px] font-medium tracking-[0.3em] uppercase"
+                style={{ fontFamily: DISPLAY, color: "var(--text-primary)" }}
+              >
+                {s.label}
+              </span>
             </div>
+            <p
+              className="text-[13px] leading-[1.6] mb-3"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              {s.desc}
+            </p>
             {s.cta && (
               <Link
                 href={s.cta.href}
                 onClick={s.cta.onClick}
-                className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-indigo-500 dark:text-indigo-400 hover:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                className="group inline-flex items-center gap-1.5 text-[14px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70 mt-auto"
+                style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
               >
-                {s.cta.label} <ArrowRight className="w-3.5 h-3.5" />
+                {s.cta.label}
+                <ArrowRight
+                  className="w-3 h-3 transition-transform group-hover:translate-x-1"
+                  strokeWidth={2}
+                />
               </Link>
             )}
-          </li>
+          </div>
         ))}
-      </ul>
-    </div>
+      </div>
+    </section>
   );
 }

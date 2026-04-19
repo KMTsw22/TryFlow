@@ -28,13 +28,13 @@
     --nav-bg: rgba(255,255,255,0.95);
     --card-bg: rgba(0,0,0,0.025);
     --input-bg: rgba(0,0,0,0.04);
-    --t-border: rgba(0,0,0,0.07);
-    --t-border-card: rgba(0,0,0,0.09);
-    --t-border-bright: rgba(0,0,0,0.10);
-    --t-input-border: rgba(0,0,0,0.13);
-    --t-border-subtle: rgba(0,0,0,0.05);
-    --chart-grid: rgba(0,0,0,0.08);
-    --chart-tick: rgba(0,0,0,0.45);
+    --t-border: rgba(0,0,0,0.12);
+    --t-border-card: rgba(0,0,0,0.14);
+    --t-border-bright: rgba(0,0,0,0.18);
+    --t-input-border: rgba(0,0,0,0.18);
+    --t-border-subtle: rgba(0,0,0,0.08);
+    --chart-grid: rgba(0,0,0,0.12);
+    --chart-tick: rgba(0,0,0,0.62);
     --gradient-navy: linear-gradient(180deg, #eef2ff 0%, #f0f4ff 100%);
 
     /* ── Surface hierarchy (new, layered depth) ──────── */
@@ -44,9 +44,12 @@
     --surface-3: #ffffff;   /* modals, popovers (with shadow) */
 
     /* ── Text hierarchy (new) ────────────────────────── */
-    --text-primary:   #09090b;
-    --text-secondary: #52525b;
-    --text-tertiary:  #a1a1aa;
+    /* Labels/meta should read as confidently as body text on light bg.
+       Hierarchy is conveyed via font size/weight/case — NOT via gray tint.
+       All tiers near-black: contrast on #f1f5f9 is 14:1+ for every tier. */
+    --text-primary:   #000000;
+    --text-secondary: #0a0a0b;
+    --text-tertiary:  #27272a;
 
     /* ── Accent (single source of truth) ─────────────── */
     --accent:       #6366f1;
@@ -81,10 +84,11 @@
     --surface-2: #171b26;
     --surface-3: #1f2431;
 
-    /* Text hierarchy — dark */
+    /* Text hierarchy — dark. Contrast on #050816 bg:
+       primary ≈ 17:1, secondary ≈ 9.5:1, tertiary ≈ 7.3:1 (AAA). */
     --text-primary:   #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-tertiary:  #71717a;
+    --text-secondary: #d4d4d8;
+    --text-tertiary:  #a1a1aa;
 
     /* Accent stays same hex, tweak soft tint for dark */
     --accent:       #818cf8;

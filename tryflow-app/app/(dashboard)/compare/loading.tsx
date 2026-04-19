@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function CompareLoading() {
   return (
-    <div className="max-w-5xl mx-auto p-8">
+    <div className="max-w-6xl mx-auto px-6 py-10">
       {/* PageHeader skeleton */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div className="flex-1 space-y-2">

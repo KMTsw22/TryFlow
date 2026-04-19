@@ -23,9 +23,9 @@ const TREND_ICON = {
 };
 
 const TREND_META = {
-  Rising:    { label: "Rising",    color: "text-emerald-500 dark:text-emerald-400" },
-  Stable:    { label: "Stable",    color: "text-amber-500 dark:text-amber-400" },
-  Declining: { label: "Declining", color: "text-red-500 dark:text-red-400" },
+  Rising:    { label: "Rising",    color: "var(--signal-success)" },
+  Stable:    { label: "Stable",    color: "var(--signal-warning)" },
+  Declining: { label: "Declining", color: "var(--signal-danger)" },
 };
 
 export function CategoryCard({ data }: Props) {
@@ -62,30 +62,48 @@ export function CategoryCard({ data }: Props) {
           >
             {theme.emoji}
           </div>
-          <h3 className="flex-1 text-lg font-bold text-gray-900 dark:text-white tracking-tight truncate">
+          <h3
+            className="flex-1 text-lg font-bold tracking-tight truncate"
+            style={{ color: "var(--text-primary)" }}
+          >
             {data.category}
           </h3>
-          <ArrowUpRight className="shrink-0 w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          <ArrowUpRight
+            className="shrink-0 w-4 h-4 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            style={{ color: "var(--text-tertiary)" }}
+          />
         </div>
 
         {/* Big number */}
         <div className="flex items-baseline gap-1.5 mb-3">
-          <span className="text-3xl font-extrabold text-gray-900 dark:text-white leading-none">
+          <span
+            className="text-3xl font-extrabold leading-none tabular-nums"
+            style={{ color: "var(--text-primary)" }}
+          >
             {data.last30}
           </span>
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+          <span
+            className="text-xs font-semibold"
+            style={{ color: "var(--text-tertiary)" }}
+          >
             ideas in last 30 days
           </span>
         </div>
 
         {/* Trend + saturation — single clean row */}
         <div className="flex items-center gap-3 text-sm">
-          <span className={`inline-flex items-center gap-1 font-semibold ${trendMeta.color}`}>
+          <span
+            className="inline-flex items-center gap-1 font-semibold"
+            style={{ color: trendMeta.color }}
+          >
             <TIcon className="w-3.5 h-3.5" />
             {trendMeta.label}
           </span>
-          <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-          <span className="text-gray-600 dark:text-gray-300 font-medium">
+          <span
+            className="w-1 h-1 rounded-full"
+            style={{ background: "var(--t-border-bright)" }}
+          />
+          <span className="font-medium" style={{ color: "var(--text-secondary)" }}>
             {data.saturation} saturation
           </span>
         </div>
@@ -100,7 +118,7 @@ export function CategoryCard({ data }: Props) {
             }}
           >
             ◆ {data.opportunityLabel}
-            <span className="text-gray-500 dark:text-gray-400 font-normal ml-1.5">
+            <span className="font-normal ml-1.5" style={{ color: "var(--text-tertiary)" }}>
               · {data.total} total submissions
             </span>
           </p>

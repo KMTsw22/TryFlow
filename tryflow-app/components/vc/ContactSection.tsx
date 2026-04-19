@@ -22,15 +22,15 @@ export function ContactSection({ ideaId, category, canContact, isSubscriber }: P
     return (
       <div
         className="mt-6 p-6 border text-center"
-        style={{ background: "rgba(99,102,241,0.05)", borderColor: "rgba(99,102,241,0.2)" }}
+        style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}
       >
-        <Lock className="w-5 h-5 text-indigo-400 mx-auto mb-2" />
-        <p className="text-sm font-bold text-white mb-1">Pro subscription required to contact submitters</p>
-        <p className="text-xs text-gray-500 mb-4">Subscribers can reach out directly to submitters of ideas they&apos;re interested in.</p>
+        <Lock className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--accent)" }} />
+        <p className="text-sm font-bold mb-1" style={{ color: "var(--text-primary)" }}>Pro subscription required to contact submitters</p>
+        <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>Subscribers can reach out directly to submitters of ideas they&apos;re interested in.</p>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white"
-          style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white transition-[filter] hover:brightness-110"
+          style={{ background: "var(--accent)" }}
         >
           Upgrade to Pro →
         </Link>
@@ -44,7 +44,7 @@ export function ContactSection({ ideaId, category, canContact, isSubscriber }: P
         className="mt-6 p-5 border"
         style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
       >
-        <p className="text-xs text-gray-400 text-center">This submitter has not enabled contact.</p>
+        <p className="text-xs text-center" style={{ color: "var(--text-tertiary)" }}>This submitter has not enabled contact.</p>
       </div>
     );
   }
@@ -76,62 +76,63 @@ export function ContactSection({ ideaId, category, canContact, isSubscriber }: P
   return (
     <div
       className="mt-6 border"
-      style={{ background: "rgba(99,102,241,0.04)", borderColor: "rgba(129,140,248,0.25)" }}
+      style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}
     >
       <div
         className="px-6 py-4 border-b flex items-center gap-2"
-        style={{ borderColor: "rgba(129,140,248,0.15)" }}
+        style={{ borderColor: "var(--t-border-subtle)" }}
       >
 
-        <Mail className="w-4 h-4 text-indigo-400" />
-        <p className="text-sm font-bold text-gray-900 dark:text-white">Contact the Submitter</p>
+        <Mail className="w-4 h-4" style={{ color: "var(--accent)" }} />
+        <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>Contact the Submitter</p>
       </div>
 
       <div className="px-6 py-5 space-y-4">
         {sent ? (
           <div className="text-center py-4">
-            <p className="text-sm font-bold text-emerald-400 mb-1">Gmail opened.</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">The recipient, subject, and message have been pre-filled.</p>
+            <p className="text-sm font-bold mb-1" style={{ color: "var(--signal-success)" }}>Gmail opened.</p>
+            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>The recipient, subject, and message have been pre-filled.</p>
             <button
               onClick={() => setSent(false)}
-              className="mt-4 text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="mt-4 text-xs transition-[filter] hover:brightness-110"
+              style={{ color: "var(--accent)" }}
             >
               Write again
             </button>
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Click <strong className="text-gray-600 dark:text-gray-400">Open in Gmail</strong> after writing to open the Gmail compose window.
+            <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+              Click <strong style={{ color: "var(--text-secondary)" }}>Open in Gmail</strong> after writing to open the Gmail compose window.
             </p>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Subject</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-tertiary)" }}>Subject</label>
               <input
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none"
-                style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                className="w-full px-4 py-2.5 text-sm focus:outline-none"
+                style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)", color: "var(--text-primary)" }}
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Message</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-tertiary)" }}>Message</label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
                 placeholder="Hi, I'm [name] from [company]. I came across your idea and would love to connect..."
-                className="w-full px-4 py-2.5 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none resize-none"
-                style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                className="w-full px-4 py-2.5 text-sm focus:outline-none resize-none"
+                style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)", color: "var(--text-primary)" }}
               />
             </div>
-            {error && <p className="text-xs text-red-400">{error}</p>}
+            {error && <p className="text-xs" style={{ color: "var(--signal-danger)" }}>{error}</p>}
             <div className="flex justify-end">
               <button
                 onClick={handleOpenGmail}
                 disabled={loading || !subject.trim() || !message.trim()}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white transition-[filter] hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100"
+                style={{ background: "var(--accent)" }}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                 Open in Gmail

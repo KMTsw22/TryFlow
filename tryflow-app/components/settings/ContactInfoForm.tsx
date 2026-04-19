@@ -145,12 +145,12 @@ export function ContactInfoForm({
           {saving ? "Saving…" : "Save"}
         </button>
         {saved && (
-          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="text-xs font-medium" style={{ color: "var(--signal-success)" }}>
             Saved
           </span>
         )}
         {error && (
-          <span className="text-xs" style={{ color: "var(--signal-danger, #ef4444)" }}>
+          <span className="text-xs" style={{ color: "var(--signal-danger)" }}>
             {error}
           </span>
         )}

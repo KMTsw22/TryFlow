@@ -93,15 +93,23 @@ export default async function PricingPage() {
       >
         <Link href="/" className="flex items-center gap-2">
           <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-gray-900 dark:text-white text-sm">Try.Wepp</span>
+          <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>Try.Wepp</span>
         </Link>
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
-            <Link href="/dashboard" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+            <Link
+              href="/dashboard"
+              className="text-sm transition-colors hover:text-[color:var(--text-primary)]"
+              style={{ color: "var(--text-tertiary)" }}
+            >
               Dashboard
             </Link>
           ) : (
-            <Link href="/login" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+            <Link
+              href="/login"
+              className="text-sm transition-colors hover:text-[color:var(--text-primary)]"
+              style={{ color: "var(--text-tertiary)" }}
+            >
               Sign in
             </Link>
           )}
@@ -111,13 +119,22 @@ export default async function PricingPage() {
       <div className="max-w-6xl mx-auto px-6 py-16">
         {/* Header */}
         <div className="text-center mb-14">
-          <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-3">
+          <p
+            className="text-xs font-bold tracking-widest uppercase mb-3"
+            style={{ color: "var(--accent)" }}
+          >
             Subscription Plans
           </p>
-          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-4">
+          <h1
+            className="text-4xl font-extrabold tracking-tight mb-4"
+            style={{ color: "var(--text-primary)" }}
+          >
             Subscribe to Market Intelligence
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-base max-w-lg mx-auto">
+          <p
+            className="text-base max-w-lg mx-auto"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Analyze idea trends submitted anonymously by aspiring founders in real time.
             Available exclusively to VC and corporate subscribers.
           </p>
@@ -142,23 +159,26 @@ export default async function PricingPage() {
             borderColor: "var(--t-border)",
           }}
         >
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6 text-center">
+          <h2
+            className="text-lg font-bold mb-6 text-center"
+            style={{ color: "var(--text-primary)" }}
+          >
             What you get with Pro
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                color: "#818cf8",
+                color: "var(--accent)",
                 title: "Real-time Trends Dashboard",
                 desc: "Monitor idea flows across 9 categories in real time. See Rising · Stable · Declining directions and market saturation at a glance.",
               },
               {
-                color: "#34d399",
+                color: "var(--signal-success)",
                 title: "Opportunity Signal Indicators",
                 desc: "Capture the right investment timing with 9 signals — Hot Gap · Heating Up · Competitive and more — combining trend and saturation data.",
               },
               {
-                color: "#f472b6",
+                color: "var(--signal-warning)",
                 title: "Contact Idea Submitters",
                 desc: "Reach up to 10 idea submitters per day. Submitter emails are never directly exposed.",
               },
@@ -166,9 +186,9 @@ export default async function PricingPage() {
               <div key={title} className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
+                  <h3 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{title}</h3>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{desc}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{desc}</p>
               </div>
             ))}
           </div>
@@ -176,8 +196,8 @@ export default async function PricingPage() {
 
         {/* Security note */}
         <div className="flex items-center gap-3 justify-center">
-          <Shield className="w-4 h-4 text-gray-600 shrink-0" />
-          <p className="text-xs text-gray-600">
+          <Shield className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
             Payments are securely processed via Stripe. You can cancel anytime,
             and your access continues until the end of the current billing period.
           </p>

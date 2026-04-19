@@ -131,12 +131,12 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
             {saving ? "Saving…" : "Save changes"}
           </button>
           {saved && (
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="text-xs font-medium" style={{ color: "var(--signal-success)" }}>
               Saved
             </span>
           )}
           {error && (
-            <span className="text-xs" style={{ color: "var(--signal-danger, #ef4444)" }}>
+            <span className="text-xs" style={{ color: "var(--signal-danger)" }}>
               {error}
             </span>
           )}
@@ -148,7 +148,7 @@ export function ProfileForm({ initialName, email, avatarUrl }: Props) {
         <button
           onClick={handleLogout}
           disabled={loggingOut}
-          className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 hover:text-[color:var(--signal-danger,#ef4444)]"
+          className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors disabled:opacity-50 hover:text-[color:var(--signal-danger)]"
           style={{ color: "var(--text-tertiary)" }}
         >
           {loggingOut ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}

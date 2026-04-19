@@ -115,7 +115,7 @@ async function generateAiDescription(
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const res = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 300,
+      max_tokens: 80,
       messages: [
         { role: "system", content: systemPrompt },
         {

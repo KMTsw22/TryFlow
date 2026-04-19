@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Lock, Sparkles } from "lucide-react";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ArrowRight, Lock } from "lucide-react";
 import { MarketBoard, type CategoryRawData } from "@/components/market/MarketBoard";
 import { LiveFeed } from "@/components/market/LiveFeed";
+
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
 
 const CATEGORIES = [
   "SaaS / B2B", "Consumer App", "Marketplace", "Dev Tools",
@@ -26,7 +28,6 @@ export default async function ExplorePage() {
 
   const isLocked = profile?.plan !== "pro";
 
-  // Fetch all non-private submissions with score so we can surface quality, not just volume.
   const { data: allRows } = await supabase
     .from("idea_submissions")
     .select("category, created_at, insight_reports (viability_score)")
@@ -49,7 +50,6 @@ export default async function ExplorePage() {
     return ir.viability_score ?? null;
   }
 
-  // ── Build per-category daily60 timeseries + score aggregates ──────────────
   const now = new Date();
   const msInDay = 24 * 60 * 60 * 1000;
 
@@ -75,7 +75,6 @@ export default async function ExplorePage() {
     return { category: cat, daily60, allTime, avgScore, scoreSample };
   });
 
-  // Fetch latest submissions for live feed (lightweight — 10 most recent)
   const { data: latestData } = await supabase
     .from("idea_submissions")
     .select("id, category, target_user, description, created_at")
@@ -87,88 +86,148 @@ export default async function ExplorePage() {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
-      {/* Navbar */}
+      {/* Editorial navbar */}
       <nav
-        className="border-b px-6 h-[60px] flex items-center justify-between"
-        style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}
+        className="border-b px-6 h-[64px] flex items-center justify-between"
+        style={{
+          background: "var(--nav-bg)",
+          borderColor: "var(--t-border-subtle)",
+          backdropFilter: "blur(12px)",
+        }}
       >
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>Try.Wepp</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <img src="/logo.png" className="w-6 h-6" alt="Try.Wepp" />
+          <span
+            style={{
+              fontFamily: SERIF,
+              fontWeight: 900,
+              fontSize: "1rem",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            Try.Wepp
+          </span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-6">
           <Link
             href="/dashboard"
-            className="text-sm transition-colors"
-            style={{ color: "var(--text-tertiary)" }}
+            className="text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             Dashboard
           </Link>
           <Link
             href="/submit"
-            className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white text-sm font-semibold px-3 h-8 hover:brightness-110 transition-all"
+            className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
           >
             Submit idea
+            <span aria-hidden>→</span>
           </Link>
         </div>
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-10">
-        <PageHeader
-          title="Market"
-          description="Where founders on TryWepp are placing bets — volume, momentum, and average viability across 9 categories. Reflects submissions on this platform, not real-world market data."
-        />
+        {/* Editorial header */}
+        <div className="flex items-center gap-4 mb-6">
+          <span
+            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            Market
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            9 categories · live
+          </span>
+        </div>
 
-        {/* Relative container so the paywall overlay can cover signal strip + table together */}
+        <h1
+          className="mb-4"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "clamp(2.5rem, 5vw, 4rem)",
+            lineHeight: 1.02,
+            letterSpacing: "-0.03em",
+            color: "var(--text-primary)",
+          }}
+        >
+          Where founders bet.
+        </h1>
+
+        <div
+          className="text-[17px] leading-[1.6] mb-12 space-y-1"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          <p>Volume, momentum, and average viability across nine categories.</p>
+          <p>Every number reflects anonymous submissions on this platform &mdash; not real-world market data.</p>
+        </div>
+
+        {/* Board + paywall overlay */}
         <div className="relative">
           <MarketBoard rawData={rawData} isLocked={isLocked} />
 
-          {/* Paywall overlay — only when locked */}
           {isLocked && (
             <div
               className="absolute inset-0 flex items-center justify-center p-6"
               style={{
-                background: "linear-gradient(180deg, rgba(10,10,15,0.25) 0%, rgba(10,10,15,0.75) 60%)",
+                background: "linear-gradient(180deg, rgba(10,10,15,0.35) 0%, rgba(10,10,15,0.85) 60%)",
+                backdropFilter: "blur(4px)",
               }}
             >
-              <div
-                className="max-w-md w-full text-center border p-8"
-                style={{
-                  background: "var(--card-bg)",
-                  borderColor: "var(--accent-ring)",
-                  backdropFilter: "blur(8px)",
-                }}
-              >
-                <div
-                  className="inline-flex items-center justify-center w-12 h-12 mb-4"
-                  style={{ background: "var(--accent-soft)" }}
-                >
-                  <Lock className="w-5 h-5" style={{ color: "var(--accent)" }} />
+              <div className="max-w-xl w-full">
+                <div className="flex items-center gap-4 mb-6">
+                  <span
+                    className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.35em] uppercase"
+                    style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
+                  >
+                    <Lock className="w-3 h-3" strokeWidth={2} /> Pro Feature
+                  </span>
+                  <span className="flex-1 h-px" style={{ background: "var(--accent-ring)" }} />
                 </div>
+
+                <h2
+                  className="mb-5"
+                  style={{
+                    fontFamily: SERIF,
+                    fontWeight: 900,
+                    fontSize: "clamp(2rem, 4vw, 3rem)",
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.03em",
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  Unlock the full market.
+                </h2>
+
                 <p
-                  className="text-xs font-semibold tracking-widest uppercase mb-2"
-                  style={{ color: "var(--accent)" }}
+                  className="text-[15px] leading-[1.7] mb-8"
+                  style={{ color: "var(--text-secondary)" }}
                 >
-                  Pro feature
+                  Every category&apos;s trend direction, saturation, and opportunity signal &mdash; refreshed in real time. Compare across time ranges, drill into submissions, and watch newcomers land in real time.
                 </p>
-                <h3
-                  className="text-xl font-bold mb-2"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  Unlock the full market dashboard
-                </h3>
-                <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-                  See every category&apos;s trend direction, saturation, and opportunity signal — refreshed in real time.
-                </p>
+
                 <Link
                   href="/pricing"
-                  className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white font-semibold px-5 h-10 text-sm hover:brightness-110 transition-all"
+                  className="group inline-flex items-center gap-3 text-[15px] font-medium tracking-[0.35em] uppercase transition-opacity hover:opacity-70"
+                  style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
                 >
-                  <Sparkles className="w-4 h-4" />
                   Upgrade to Pro
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight
+                    className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"
+                    strokeWidth={2}
+                  />
                 </Link>
-                <p className="mt-4 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+
+                <p
+                  className="mt-5 text-[14px] font-medium tracking-[0.3em] uppercase"
+                  style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+                >
                   7-day free trial · Cancel anytime
                 </p>
               </div>
@@ -176,9 +235,9 @@ export default async function ExplorePage() {
           )}
         </div>
 
-        {/* Live submissions feed — the living pulse of the market */}
+        {/* Live submissions feed */}
         {!isLocked && latest.length > 0 && (
-          <div className="mt-10">
+          <div className="mt-16">
             <LiveFeed items={latest} />
           </div>
         )}

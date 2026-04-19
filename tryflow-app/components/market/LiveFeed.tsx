@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Radio } from "lucide-react";
 import { timeAgo, getCategoryTheme } from "@/lib/categories";
 
 export interface LiveFeedItem {
@@ -14,6 +13,9 @@ interface Props {
   items: LiveFeedItem[];
 }
 
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
+
 function truncate(text: string, max: number) {
   return text.length > max ? text.slice(0, max).trimEnd() + "…" : text;
 }
@@ -23,67 +25,57 @@ export function LiveFeed({ items }: Props) {
 
   return (
     <section aria-label="Recent submissions">
-      <div className="flex items-end justify-between mb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            {/* Pulse indicator */}
-            <span className="relative flex w-2 h-2">
-              <span
-                className="absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping"
-                style={{ background: "var(--signal-success, #10b981)" }}
-              />
-              <span
-                className="relative inline-flex w-2 h-2 rounded-full"
-                style={{ background: "var(--signal-success, #10b981)" }}
-              />
-            </span>
-            <h2
-              className="text-sm font-semibold"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Live submissions
-            </h2>
-          </div>
-          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-            The pulse of the market · newest first
-          </p>
-        </div>
-        <p
-          className="hidden sm:flex items-center gap-1 text-[11px] font-medium"
-          style={{ color: "var(--text-tertiary)" }}
+      {/* Editorial kicker */}
+      <div className="flex items-center gap-4 mb-8">
+        <span
+          className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.35em] uppercase"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
-          <Radio className="w-3 h-3" /> Last {items.length}
-        </p>
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: "var(--signal-success)" }}
+            aria-hidden
+          />
+          Live Submissions
+        </span>
+        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+        <span
+          className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+        >
+          Last {items.length} · newest first
+        </span>
       </div>
 
       <ul
-        className="border divide-y overflow-hidden"
-        style={{
-          background: "var(--card-bg)",
-          borderColor: "var(--t-border-card)",
-        }}
+        className="border-t"
+        style={{ borderColor: "var(--t-border-subtle)" }}
       >
         {items.map((item) => {
           const theme = getCategoryTheme(item.category);
           return (
-            <li key={item.id}>
+            <li
+              key={item.id}
+              className="border-b"
+              style={{ borderColor: "var(--t-border-subtle)" }}
+            >
               <Link
                 href={`/ideas/${item.id}`}
-                className="grid items-center gap-4 px-5 py-3.5 transition-colors group hover:bg-[color:var(--t-border-subtle)]"
+                className="grid items-center gap-4 py-2 transition-opacity group hover:opacity-80"
                 style={{
-                  borderColor: "var(--t-border-subtle)",
-                  gridTemplateColumns: "110px minmax(0, 1.3fr) minmax(0, 2fr) 80px",
+                  gridTemplateColumns: "140px minmax(0, 1.2fr) minmax(0, 2fr) 90px",
                 }}
               >
-                {/* Category dot + label */}
+                {/* Category */}
                 <div className="flex items-center gap-2 min-w-0">
                   <span
                     className="w-1.5 h-1.5 rounded-full shrink-0"
                     style={{ background: theme.accent }}
+                    aria-hidden
                   />
                   <span
-                    className="text-[11px] font-semibold uppercase tracking-wider truncate"
-                    style={{ color: "var(--text-tertiary)" }}
+                    className="text-[14px] font-medium tracking-[0.3em] uppercase truncate"
+                    style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
                   >
                     {item.category}
                   </span>
@@ -91,24 +83,30 @@ export function LiveFeed({ items }: Props) {
 
                 {/* Target user */}
                 <p
-                  className="text-sm font-medium truncate"
-                  style={{ color: "var(--text-primary)" }}
+                  className="truncate"
+                  style={{
+                    fontFamily: SERIF,
+                    fontWeight: 700,
+                    fontSize: "1.05rem",
+                    letterSpacing: "-0.01em",
+                    color: "var(--text-primary)",
+                  }}
                 >
                   For {item.target_user}
                 </p>
 
-                {/* Description snippet — hidden on small screens */}
+                {/* Description */}
                 <p
-                  className="hidden md:block text-sm truncate"
+                  className="hidden md:block text-[13.5px] leading-[1.5] truncate"
                   style={{ color: "var(--text-secondary)" }}
                 >
-                  {truncate(item.description, 90)}
+                  {truncate(item.description, 100)}
                 </p>
 
-                {/* Relative time */}
+                {/* Time */}
                 <p
-                  className="text-xs font-mono tabular-nums text-right"
-                  style={{ color: "var(--text-tertiary)" }}
+                  className="text-right text-[14px] font-medium tracking-[0.2em] uppercase tabular-nums"
+                  style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
                 >
                   {timeAgo(item.created_at)}
                 </p>

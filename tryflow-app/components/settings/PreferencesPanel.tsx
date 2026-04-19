@@ -46,7 +46,7 @@ export function PreferencesPanel() {
     },
     {
       key: "publicProfile",
-      icon: <Globe className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />,
+      icon: <Globe className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />,
       label: "Public profile",
       desc: "Let your submitted ideas appear in the public feed.",
       active: prefs.publicProfile,
@@ -54,7 +54,7 @@ export function PreferencesPanel() {
     },
     {
       key: "twoFactor",
-      icon: <Shield className="w-4 h-4 text-violet-500 dark:text-violet-400" />,
+      icon: <Shield className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />,
       label: "Two-factor auth",
       desc: "Add an extra layer of security to your account.",
       active: prefs.twoFactor,
@@ -66,7 +66,7 @@ export function PreferencesPanel() {
     <div className="space-y-4">
       {/* Theme toggle — treated as a preference row for consistency */}
       <PreferenceRow
-        icon={<Palette className="w-4 h-4 text-amber-500 dark:text-amber-400" />}
+        icon={<Palette className="w-4 h-4" style={{ color: "var(--text-secondary)" }} />}
         label="Appearance"
         desc={isDark ? "Currently using dark mode" : "Currently using light mode"}
         active={!isDark}
@@ -85,7 +85,7 @@ export function PreferencesPanel() {
       ))}
 
       {saved && (
-        <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 pt-1">
+        <p className="text-xs font-medium pt-1" style={{ color: "var(--signal-success)" }}>
           Preferences saved.
         </p>
       )}

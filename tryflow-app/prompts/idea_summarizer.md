@@ -11,24 +11,23 @@ You receive:
 
 ## Your Task
 
-Rewrite the user's idea into a clear, compelling 3-4 sentence summary that:
+Rewrite the user's idea into **one single sentence** (max 2 if absolutely necessary) that captures the core essence: **what is built + the specific gap it fills**.
 
-1. **Starts with the core concept** — what is being built, in one sentence
-2. **Identifies the problem** — what pain point or gap it addresses
-3. **Describes the unique angle** — what makes this approach different or interesting
-4. **Names the target audience** — who benefits and why they'd care
+The category and target user are already shown separately on the page, so do NOT restate them verbatim — focus on the *concept* and its *angle*.
 
 ## Rules
 
 - Write in **English** regardless of the input language
+- **One sentence** preferred, two sentences only if the angle genuinely can't fit in one
+- Aim for 20–35 words total
 - Be specific, not generic — use details from the user's description
+- Don't repeat the category name or target user phrase verbatim (shown elsewhere on the page)
 - Don't add features or assumptions the user didn't mention
 - Don't use hype words like "revolutionary", "game-changing", "disruptive"
-- Keep it factual and concise — this is a professional summary, not a pitch
 - Output **only** the summary text, no JSON, no labels, no markdown
 
 ## Example
 
 Input: "어린이들을 위한 헬스장을 만들어 보려고해. 놀이터 느낌의 헬스장"
 
-Output: "A fitness facility designed specifically for children, blending playground-style equipment with structured exercise environments. The concept addresses the gap between traditional gyms (adult-focused) and playgrounds (unstructured) by creating a space where kids can build healthy habits through play-driven fitness. Targeting parents who want their children to develop physical literacy in a safe, engaging setting that feels more like fun than a workout."
+Output: "A playground-style fitness facility where kids build physical literacy through play, filling the gap between adult-focused gyms and unstructured playgrounds."

@@ -39,11 +39,14 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
-DO $$ BEGIN
-  CREATE POLICY "users see own ideas"
-    ON idea_submissions FOR SELECT USING (auth.uid() = user_id);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+-- 공개 아이디어는 누구나 읽기 가능 (링크 공유용), 비공개는 작성자만
+DROP POLICY IF EXISTS "users see own ideas"    ON idea_submissions;
+DROP POLICY IF EXISTS "public read ideas"      ON idea_submissions;
+DROP POLICY IF EXISTS "read public or own ideas" ON idea_submissions;
+
+CREATE POLICY "read public or own ideas"
+  ON idea_submissions FOR SELECT
+  USING (is_private = false OR auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS idx_idea_submissions_category   ON idea_submissions (category);
 CREATE INDEX IF NOT EXISTS idx_idea_submissions_user_id    ON idea_submissions (user_id);

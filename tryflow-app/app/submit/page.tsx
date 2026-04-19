@@ -8,10 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 const IDEA_STAGES = [
-  { value: "idea",           label: "Just an idea",     sub: "Concept only",             color: "#60a5fa" },
-  { value: "prototype",      label: "Prototype",        sub: "Something working",        color: "#a78bfa" },
-  { value: "early_traction", label: "Early traction",   sub: "Some real users",          color: "#fb923c" },
-  { value: "launched",       label: "Launched",         sub: "Fully deployed",           color: "#ef4444" },
+  { value: "idea",           label: "Just an idea",     sub: "Concept only",             color: "var(--text-tertiary)" },
+  { value: "prototype",      label: "Prototype",        sub: "Something working",        color: "var(--accent)" },
+  { value: "early_traction", label: "Early traction",   sub: "Some real users",          color: "var(--signal-warning)" },
+  { value: "launched",       label: "Launched",         sub: "Fully deployed",           color: "var(--signal-success)" },
 ] as const;
 
 const CATEGORIES = [
@@ -227,7 +227,7 @@ export default function SubmitPage() {
                   For {iteratingFrom.target_user} · {iteratingFrom.category}
                 </p>
                 <p
-                  className="text-[11px] mt-1 leading-relaxed"
+                  className="text-[13px] mt-1 leading-relaxed"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   Fields are prefilled. Edit anything, then submit as a new idea — your original stays untouched.
@@ -289,7 +289,7 @@ export default function SubmitPage() {
                   }}
                 >
                   <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all"
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 transition-all"
                     style={{
                       background: active
                         ? "var(--accent)"
@@ -397,7 +397,7 @@ export default function SubmitPage() {
                     style={INPUT_STYLE}
                   />
                   {form.target_user.length > 0 && form.target_user.trim().length < 5 && (
-                    <p className="text-xs font-medium" style={{ color: "#f59e0b" }}>
+                    <p className="text-xs font-medium mt-2" style={{ color: "var(--signal-warning)" }}>
                       Need at least 5 characters — you have {form.target_user.trim().length}.
                     </p>
                   )}
@@ -434,8 +434,8 @@ export default function SubmitPage() {
                         form.description.length === 0
                           ? "var(--text-tertiary)"
                           : form.description.length >= 30
-                            ? "#10b981"
-                            : "#f59e0b",
+                            ? "var(--signal-success)"
+                            : "var(--signal-warning)",
                     }}
                   >
                     {form.description.length === 0
@@ -487,7 +487,7 @@ export default function SubmitPage() {
                             </span>
                           </div>
                           <p
-                            className="text-[11px] mt-0.5 ml-3.5"
+                            className="text-[13px] mt-0.5 ml-3.5"
                             style={{ color: "var(--text-tertiary)" }}
                           >
                             {s.sub}
@@ -538,7 +538,7 @@ export default function SubmitPage() {
                         Want to upload privately?
                       </p>
                       <p
-                        className="text-[11px] mt-0.5 leading-relaxed"
+                        className="text-[13px] mt-0.5 leading-relaxed"
                         style={{ color: "var(--text-secondary)" }}
                       >
                         <Link
@@ -607,7 +607,7 @@ export default function SubmitPage() {
                           ].map((f) => (
                             <div key={f.key}>
                               <label
-                                className="block text-[11px] font-semibold mb-1"
+                                className="block text-[13px] font-semibold mb-1"
                                 style={{ color: "var(--text-secondary)" }}
                               >
                                 {f.label}
@@ -641,7 +641,7 @@ export default function SubmitPage() {
                 {error && (
                   <p
                     className="mt-4 text-xs font-medium"
-                    style={{ color: "var(--signal-danger, #ef4444)" }}
+                    style={{ color: "var(--signal-danger)" }}
                   >
                     {error}
                   </p>
@@ -729,7 +729,7 @@ function Section({
         </span>
         {helper && (
           <p
-            className="text-[11px] mt-1 leading-relaxed"
+            className="text-[13px] mt-1 leading-relaxed"
             style={{ color: "var(--text-tertiary)" }}
           >
             {helper}
@@ -776,7 +776,7 @@ function VisibilityCard({
         </span>
       </div>
       <p
-        className="text-[11px] leading-snug"
+        className="text-[13px] leading-snug"
         style={{ color: "var(--text-tertiary)" }}
       >
         {desc}

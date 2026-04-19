@@ -15,27 +15,31 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-navy flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--page-bg)" }}>
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Link href="/" className="flex items-center gap-2.5 mb-4">
             <img src="/logo.png" className="w-11 h-11" alt="Try.Wepp" />
           </Link>
-          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Try.Wepp</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Anonymous Founder Idea Signals</p>
+          <h1 className="text-2xl font-extrabold" style={{ color: "var(--text-primary)" }}>Try.Wepp</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>Anonymous Founder Idea Signals</p>
         </div>
 
         <div className="border p-8" style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white text-center">Sign in to continue</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-1 mb-8">
+          <h2 className="text-lg font-bold text-center" style={{ color: "var(--text-primary)" }}>Sign in to continue</h2>
+          <p className="text-sm text-center mt-1 mb-8" style={{ color: "var(--text-tertiary)" }}>
             New or returning — just click below
           </p>
 
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 border text-gray-700 dark:text-white font-semibold px-6 py-3 transition-colors text-sm hover:opacity-80"
-            style={{ borderColor: "var(--t-border-card)", background: "var(--input-bg)" }}
+            className="w-full flex items-center justify-center gap-3 border font-semibold px-6 py-3 transition-colors text-sm hover:opacity-80"
+            style={{
+              borderColor: "var(--t-border-card)",
+              background: "var(--input-bg)",
+              color: "var(--text-primary)",
+            }}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
@@ -46,16 +50,28 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
-          <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-6 leading-relaxed">
+          <p className="text-xs text-center mt-6 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
             By signing in, you agree to our{" "}
-            <a href="#" className="text-indigo-400 hover:text-indigo-300">Terms of Service</a>
+            <a
+              href="#"
+              className="transition-[filter] hover:brightness-110"
+              style={{ color: "var(--accent)" }}
+            >
+              Terms of Service
+            </a>
             {" "}and{" "}
-            <a href="#" className="text-indigo-400 hover:text-indigo-300">Privacy Policy</a>
+            <a
+              href="#"
+              className="transition-[filter] hover:brightness-110"
+              style={{ color: "var(--accent)" }}
+            >
+              Privacy Policy
+            </a>
           </p>
         </div>
 
-        <p className="text-center text-xs text-gray-400 dark:text-gray-600 mt-6">
-          <Link href="/" className="hover:text-gray-600 dark:hover:text-gray-400 transition-colors">← Back to home</Link>
+        <p className="text-center text-xs mt-6" style={{ color: "var(--text-tertiary)" }}>
+          <Link href="/" className="transition-[filter] hover:brightness-125">← Back to home</Link>
         </p>
       </div>
     </div>

@@ -27,7 +27,8 @@ export function TopBar({ userName = "User", userImage }: TopBarProps) {
       <div className="flex items-center gap-3 ml-auto">
         <Link
           href="/submit"
-          className="inline-flex items-center gap-1.5 bg-indigo-500 text-white text-sm font-bold px-4 py-2 hover:bg-indigo-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-white text-sm font-bold px-4 py-2 transition-[filter] hover:brightness-110"
+          style={{ background: "var(--accent)" }}
         >
           <Plus className="w-3.5 h-3.5" /> Submit idea
         </Link>
@@ -36,11 +37,19 @@ export function TopBar({ userName = "User", userImage }: TopBarProps) {
           {userImage ? (
             <Image src={userImage} alt={userName} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+              style={{ background: "var(--accent)" }}
+            >
               {initials}
             </div>
           )}
-          <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 max-w-[120px] truncate">{userName}</p>
+          <p
+            className="text-sm font-semibold max-w-[120px] truncate"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {userName}
+          </p>
         </div>
       </div>
     </header>

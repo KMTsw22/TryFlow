@@ -4,8 +4,10 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { IdeaCard } from "@/components/ideas/IdeaCard";
 import { CATEGORIES } from "@/lib/categories";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { CategoryInsightPanel } from "@/components/market/CategoryInsightPanel";
+
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
 
 interface InsightReport {
   viability_score: number;
@@ -134,19 +136,46 @@ export default async function CategoryIdeasPage({
 
   if (profile?.plan !== "pro") redirect("/pricing");
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("idea_submissions")
     .select(`
       id, category, target_user, description, created_at, user_id, stage,
       insight_reports (viability_score, saturation_level, trend_direction, summary),
-      analysis_reports (viability_score),
-      user_profiles (allow_contact)
+      analysis_reports (viability_score)
     `)
     .eq("category", category)
     .eq("is_private", false)
     .order("created_at", { ascending: false });
 
-  const ideas = (data ?? []) as unknown as IdeaRow[];
+  if (error) {
+    console.error("Category ideas query failed:", error);
+  }
+
+  const ideasBase = (data ?? []) as unknown as Omit<IdeaRow, "user_profiles">[];
+
+  // Fetch submitter profiles separately (no FK between idea_submissions.user_id
+  // and user_profiles.id — both only share a FK to auth.users).
+  const submitterIds = Array.from(
+    new Set(ideasBase.map((i) => i.user_id).filter((x): x is string => !!x)),
+  );
+
+  const profileMap = new Map<string, { allow_contact: boolean | null }>();
+  if (submitterIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("user_profiles")
+      .select("id, allow_contact")
+      .in("id", submitterIds);
+    for (const p of profiles ?? []) {
+      profileMap.set(p.id as string, { allow_contact: p.allow_contact ?? null });
+    }
+  }
+
+  const ideas: IdeaRow[] = ideasBase.map((i) => ({
+    ...i,
+    user_profiles: i.user_id
+      ? profileMap.get(i.user_id) ?? null
+      : null,
+  }));
 
   // ── Compute insight panel data ────────────────────────────────────────────
   const now = new Date();
@@ -192,28 +221,44 @@ export default async function CategoryIdeasPage({
 
   return (
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
-      {/* Navbar */}
+      {/* Editorial navbar */}
       <nav
-        className="border-b px-6 h-[60px] flex items-center justify-between"
-        style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}
+        className="border-b px-6 h-[64px] flex items-center justify-between"
+        style={{
+          background: "var(--nav-bg)",
+          borderColor: "var(--t-border-subtle)",
+          backdropFilter: "blur(12px)",
+        }}
       >
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>Try.Wepp</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <img src="/logo.png" className="w-6 h-6" alt="Try.Wepp" />
+          <span
+            style={{
+              fontFamily: SERIF,
+              fontWeight: 900,
+              fontSize: "1rem",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
+          >
+            Try.Wepp
+          </span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-6">
           <Link
             href="/dashboard"
-            className="text-sm transition-colors"
-            style={{ color: "var(--text-tertiary)" }}
+            className="text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             Dashboard
           </Link>
           <Link
             href="/submit"
-            className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white text-sm font-semibold px-3 h-8 hover:brightness-110 transition-all"
+            className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+            style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
           >
             Submit idea
+            <span aria-hidden>→</span>
           </Link>
         </div>
       </nav>
@@ -222,21 +267,54 @@ export default async function CategoryIdeasPage({
         {/* Back link */}
         <Link
           href="/explore"
-          className="inline-flex items-center gap-1.5 text-xs font-medium mb-6 transition-colors hover:text-[color:var(--text-primary)]"
-          style={{ color: "var(--text-tertiary)" }}
+          className="inline-flex items-center gap-1.5 text-[15px] font-medium tracking-[0.2em] uppercase mb-10 transition-colors hover:text-[color:var(--text-primary)]"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Market
+          <ArrowLeft className="w-3 h-3" /> Back to Market
         </Link>
 
-        <PageHeader
-          title={category}
-          meta={`${ideas.length} ${ideas.length === 1 ? "idea" : "ideas"}`}
-          description="Anonymous submissions in this category. Below, the past 4 weeks of activity and recurring themes from founder descriptions."
-        />
+        {/* Editorial kicker */}
+        <div className="flex items-center gap-4 mb-6">
+          <span
+            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            Category · Market
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            {ideas.length} {ideas.length === 1 ? "idea" : "ideas"}
+          </span>
+        </div>
+
+        <h1
+          className="mb-4"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 900,
+            fontSize: "clamp(2.5rem, 5vw, 4rem)",
+            lineHeight: 1.02,
+            letterSpacing: "-0.03em",
+            color: "var(--text-primary)",
+          }}
+        >
+          {category}.
+        </h1>
+
+        <div
+          className="text-[17px] leading-[1.6] mb-14 space-y-1"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          <p>Anonymous submissions in this category.</p>
+          <p>Four weeks of activity, recurring themes pulled from founder descriptions, and every live idea below.</p>
+        </div>
 
         {/* Insight panel */}
         {ideas.length > 0 && (
-          <div className="mb-10">
+          <div className="mb-14">
             <CategoryInsightPanel
               data={{
                 weeklyBuckets,
@@ -252,48 +330,67 @@ export default async function CategoryIdeasPage({
         {/* Ideas list */}
         {ideas.length === 0 ? (
           <div
-            className="text-center py-20 border"
-            style={{ borderColor: "var(--t-border-card)", background: "var(--card-bg)" }}
+            className="py-20 border-t border-b"
+            style={{ borderColor: "var(--t-border-subtle)" }}
           >
             <p
-              className="text-base font-semibold mb-1"
-              style={{ color: "var(--text-primary)" }}
+              className="text-[15px] font-medium tracking-[0.35em] uppercase mb-5"
+              style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
             >
-              No {category} ideas yet.
+              Nothing yet
             </p>
             <p
-              className="text-sm mb-6 max-w-sm mx-auto"
-              style={{ color: "var(--text-secondary)" }}
+              className="leading-[1.15] mb-5 max-w-2xl"
+              style={{
+                fontFamily: SERIF,
+                fontStyle: "italic",
+                fontWeight: 400,
+                fontSize: "clamp(1.5rem, 3vw, 2.25rem)",
+                letterSpacing: "-0.01em",
+                color: "var(--text-primary)",
+              }}
             >
-              Be the first founder to stake a claim in this category.
+              &ldquo;No {category} ideas yet. Be the first to stake a claim.&rdquo;
             </p>
             <Link
               href="/submit"
-              className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white font-semibold px-5 h-10 text-sm hover:brightness-110 transition-all"
+              className="group inline-flex items-center gap-3 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+              style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
             >
-              Submit the first idea <ArrowRight className="w-4 h-4" />
+              Submit the first idea
+              <ArrowRight
+                className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"
+                strokeWidth={2}
+              />
             </Link>
           </div>
         ) : (
-          <>
-            <div className="flex items-baseline justify-between mb-4">
-              <h2
-                className="text-sm font-semibold"
-                style={{ color: "var(--text-primary)" }}
+          <section aria-label="All submissions">
+            <div className="flex items-center gap-4 mb-8">
+              <span
+                className="text-[15px] font-medium tracking-[0.35em] uppercase"
+                style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
               >
-                All submissions
-              </h2>
-              <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+                All Submissions
+              </span>
+              <span
+                className="flex-1 h-px"
+                style={{ background: "var(--t-border-subtle)" }}
+              />
+              <span
+                className="text-[15px] font-medium tracking-[0.25em] uppercase"
+                style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+              >
                 Newest first
-              </p>
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {ideas.map((idea) => (
                 <IdeaCard key={idea.id} idea={toCardData(idea)} showCategory={false} />
               ))}
             </div>
-          </>
+          </section>
         )}
       </div>
     </div>

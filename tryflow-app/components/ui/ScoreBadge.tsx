@@ -9,7 +9,7 @@ interface Props {
 
 function resolveColor(score: number | null | undefined) {
   if (score === null || score === undefined) {
-    return { hex: "#71717a", text: "text-zinc-500 dark:text-zinc-400" };
+    return { hex: "#71717a", text: "text-zinc-600 dark:text-zinc-400" };
   }
   if (score >= 70) return { hex: "#10b981", text: "text-emerald-600 dark:text-emerald-400" };
   if (score >= 50) return { hex: "#f59e0b", text: "text-amber-600 dark:text-amber-400" };
@@ -35,7 +35,7 @@ export function ScoreBadge({ score, size = "inline", className }: Props) {
         >
           {display}
         </span>
-        <span className="text-[9px] font-semibold leading-none mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+        <span className="text-[11px] font-semibold leading-none mt-0.5" style={{ color: "var(--text-tertiary)" }}>
           /100
         </span>
       </div>

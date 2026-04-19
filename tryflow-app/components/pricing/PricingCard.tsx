@@ -56,20 +56,18 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
     <div
       className="flex flex-col"
       style={{
-        background: plan.highlighted
-          ? "linear-gradient(160deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12))"
-          : "var(--card-bg)",
+        background: plan.highlighted ? "var(--accent-soft)" : "var(--card-bg)",
         border: plan.highlighted
-          ? "1px solid rgba(129,140,248,0.4)"
+          ? "1px solid var(--accent-ring)"
           : "1px solid var(--t-border-card)",
         position: "relative",
       }}
     >
       {plan.highlighted && (
         <div
-          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-[10px] font-bold tracking-widest uppercase"
+          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-[12px] font-bold tracking-widest uppercase"
           style={{
-            background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+            background: "var(--accent)",
             color: "white",
           }}
         >
@@ -80,16 +78,28 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
       <div className="p-7 flex flex-col flex-1">
         {/* Name & price */}
         <div className="mb-6">
-          <p className="text-xs font-bold tracking-widest text-gray-500 uppercase mb-2">
+          <p
+            className="text-xs font-bold tracking-widest uppercase mb-2"
+            style={{ color: "var(--text-tertiary)" }}
+          >
             {plan.name}
           </p>
           <div className="flex items-end gap-1 mb-3">
-            <span className="text-4xl font-extrabold text-gray-900 dark:text-white">{plan.price}</span>
+            <span
+              className="text-4xl font-extrabold"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {plan.price}
+            </span>
             {plan.period && (
-              <span className="text-gray-500 text-sm mb-1">{plan.period}</span>
+              <span className="text-sm mb-1" style={{ color: "var(--text-tertiary)" }}>
+                {plan.period}
+              </span>
             )}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{plan.description}</p>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+            {plan.description}
+          </p>
         </div>
 
         {/* Features */}
@@ -98,15 +108,15 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
             <li key={f} className="flex items-start gap-2.5">
               <Check
                 className="w-4 h-4 shrink-0 mt-0.5"
-                style={{ color: plan.highlighted ? "#818cf8" : "#34d399" }}
+                style={{ color: plan.highlighted ? "var(--accent)" : "var(--signal-success)" }}
               />
-              <span className="text-sm text-gray-600 dark:text-gray-300">{f}</span>
+              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{f}</span>
             </li>
           ))}
           {plan.locked.map((f) => (
             <li key={f} className="flex items-start gap-2.5 opacity-35">
-              <Lock className="w-4 h-4 shrink-0 mt-0.5 text-gray-600" />
-              <span className="text-sm text-gray-500 line-through">{f}</span>
+              <Lock className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "var(--text-tertiary)" }} />
+              <span className="text-sm line-through" style={{ color: "var(--text-tertiary)" }}>{f}</span>
             </li>
           ))}
         </ul>
@@ -117,9 +127,9 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
           <button
             onClick={handleStripeCheckout}
             disabled={loading}
-            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-white transition-[filter] hover:brightness-110 disabled:opacity-60"
             style={{
-              background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
+              background: "var(--accent)",
             }}
           >
             {loading ? (
@@ -134,8 +144,11 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
         ) : plan.ctaHref?.startsWith("mailto:") ? (
           <a
             href={plan.ctaHref}
-            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold text-indigo-300 border transition-colors hover:text-white hover:border-indigo-400"
-            style={{ borderColor: "rgba(129,140,248,0.3)" }}
+            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold border transition-colors"
+            style={{
+              color: "var(--accent)",
+              borderColor: "var(--accent-ring)",
+            }}
           >
             {plan.ctaLabel}
             <ArrowRight className="w-4 h-4" />
@@ -143,8 +156,11 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
         ) : plan.id === "free" ? (
           <Link
             href={plan.ctaHref ?? "/"}
-            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-indigo-600 dark:text-indigo-400 border transition-colors hover:text-indigo-500 dark:hover:text-indigo-300"
-            style={{ borderColor: "rgba(99,102,241,0.35)" }}
+            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold border transition-[filter] hover:brightness-110"
+            style={{
+              color: "var(--accent)",
+              borderColor: "var(--accent-ring)",
+            }}
           >
             {plan.ctaLabel}
             <ArrowRight className="w-4 h-4" />
@@ -152,8 +168,11 @@ export function PricingCard({ plan, isLoggedIn }: Props) {
         ) : (
           <Link
             href={plan.ctaHref ?? "/"}
-            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold text-gray-400 border transition-colors hover:text-gray-200 hover:border-gray-500"
-            style={{ borderColor: "var(--t-input-border)" }}
+            className="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold border transition-colors"
+            style={{
+              color: "var(--text-secondary)",
+              borderColor: "var(--t-input-border)",
+            }}
           >
             {plan.ctaLabel}
           </Link>

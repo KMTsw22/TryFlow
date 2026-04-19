@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
 import DeepAnalysis from "@/components/DeepAnalysis";
 import { ContactSection } from "@/components/vc/ContactSection";
 import { PendingReportView } from "@/components/ideas/PendingReportView";
@@ -110,26 +110,48 @@ export default async function IdeaReportPage({
 
   const Navbar = (
     <nav
-      className="border-b px-6 h-[60px] flex items-center justify-between"
-      style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)", backdropFilter: "blur(12px)" }}
+      className="border-b px-6 h-[64px] flex items-center justify-between"
+      style={{
+        background: "var(--nav-bg)",
+        borderColor: "var(--t-border-subtle)",
+        backdropFilter: "blur(12px)",
+      }}
     >
-      <Link href="/" className="flex items-center gap-2">
-        <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-        <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>Try.Wepp</span>
+      <Link href="/" className="flex items-center gap-2.5">
+        <img src="/logo.png" className="w-6 h-6" alt="Try.Wepp" />
+        <span
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 900,
+            fontSize: "1rem",
+            letterSpacing: "-0.02em",
+            color: "var(--text-primary)",
+          }}
+        >
+          Try.Wepp
+        </span>
       </Link>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-6">
         <Link
           href="/dashboard"
-          className="text-sm transition-colors"
-          style={{ color: "var(--text-tertiary)" }}
+          className="text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+          style={{
+            fontFamily: "'Oswald', sans-serif",
+            color: "var(--text-tertiary)",
+          }}
         >
           My ideas
         </Link>
         <Link
           href="/submit"
-          className="inline-flex items-center gap-1.5 bg-[color:var(--accent)] text-white text-sm font-semibold px-3 h-8 hover:brightness-110 transition-all"
+          className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+          style={{
+            fontFamily: "'Oswald', sans-serif",
+            color: "var(--accent)",
+          }}
         >
           Submit idea
+          <span aria-hidden>→</span>
         </Link>
       </div>
     </nav>
@@ -152,40 +174,69 @@ export default async function IdeaReportPage({
         {/* Breadcrumb / back link */}
         <Link
           href={isOwnIdea ? "/dashboard" : "/explore"}
-          className="inline-flex items-center gap-1.5 text-xs font-medium mb-5 transition-colors hover:text-[color:var(--text-primary)]"
-          style={{ color: "var(--text-tertiary)" }}
+          className="inline-flex items-center gap-1.5 text-[15px] font-medium tracking-[0.2em] uppercase mb-10 transition-colors hover:text-[color:var(--text-primary)]"
+          style={{
+            fontFamily: "'Oswald', sans-serif",
+            color: "var(--text-tertiary)",
+          }}
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-3 h-3" />
           {isOwnIdea ? "Back to my ideas" : "Back to market"}
         </Link>
 
-        {/* Meta row — category dot + submitted + stage */}
-        <div className="flex items-center gap-2 flex-wrap text-xs mb-2" style={{ color: "var(--text-tertiary)" }}>
-          <span className="inline-flex items-center gap-1.5">
+        {/* Editorial kicker — category · report · meta */}
+        <div className="flex items-center gap-4 mb-6">
+          <span className="inline-flex items-center gap-2 shrink-0">
             <span
               className="w-1.5 h-1.5 rounded-full"
               style={{ background: theme.accent }}
             />
-            <span className="font-semibold tracking-wider uppercase">{idea.category}</span>
+            <span
+              className="text-[15px] font-medium tracking-[0.3em] uppercase"
+              style={{
+                fontFamily: "'Oswald', sans-serif",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {idea.category} · Viability Report
+            </span>
           </span>
-          <span className="w-1 h-1 rounded-full" style={{ background: "var(--t-border-bright)" }} />
-          <span>Submitted {submittedAgo}</span>
-          {stageLabel && (
-            <>
-              <span className="w-1 h-1 rounded-full" style={{ background: "var(--t-border-bright)" }} />
-              <span>{stageLabel}</span>
-            </>
-          )}
+          <span
+            className="flex-1 h-px"
+            style={{ background: "var(--t-border-subtle)" }}
+          />
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+            style={{
+              fontFamily: "'Oswald', sans-serif",
+              color: "var(--text-tertiary)",
+            }}
+          >
+            {submittedAgo}
+            {stageLabel ? ` · ${stageLabel}` : ""}
+          </span>
         </div>
 
-        {/* H1 — compact, no decorative eyebrow */}
+        {/* H1 — editorial display */}
         <h1
-          className="text-2xl font-bold tracking-tight mb-1"
-          style={{ color: "var(--text-primary)" }}
+          className="mb-6"
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 900,
+            fontSize: "clamp(2.5rem, 5vw, 4rem)",
+            lineHeight: 1.02,
+            letterSpacing: "-0.03em",
+            color: "var(--text-primary)",
+          }}
         >
-          For {idea.target_user}
+          For {idea.target_user}.
         </h1>
-        <p className="text-sm leading-relaxed max-w-3xl mb-8" style={{ color: "var(--text-secondary)" }}>
+
+        {/* Dek — full-width prose to match kicker/H1 right edge */}
+        <p
+          className="text-[17px] leading-[1.75] mb-4"
+          style={{ color: "var(--text-secondary)" }}
+        >
           {report.ai_description ?? idea.description}
         </p>
 
@@ -199,32 +250,65 @@ export default async function IdeaReportPage({
           actionAnchor="next-actions"
         />
 
-        {/* Original submission — collapsed-feel, clearly secondary */}
-        <details
-          className="mb-6 border group"
-          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}
-        >
+        {/* Original submission — full-width kicker rule, expandable */}
+        <details className="mb-14 group">
           <summary
-            className="px-5 py-3 cursor-pointer text-xs font-semibold tracking-wider uppercase flex items-center justify-between list-none"
-            style={{ color: "var(--text-tertiary)" }}
+            className="py-3 cursor-pointer list-none flex items-center gap-4 transition-opacity hover:opacity-80"
           >
-            Original submission
-            <span className="text-[11px] font-normal normal-case transition-transform group-open:rotate-180">▾</span>
+            <span
+              className="text-[15px] font-medium tracking-[0.35em] uppercase"
+              style={{
+                fontFamily: "'Oswald', sans-serif",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              Original Submission
+            </span>
+            <span
+              className="flex-1 h-px"
+              style={{ background: "var(--t-border-subtle)" }}
+            />
+            <span
+              className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase"
+              style={{
+                fontFamily: "'Oswald', sans-serif",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              <span className="group-open:hidden">Expand</span>
+              <span className="hidden group-open:inline">Collapse</span>
+              <ChevronDown
+                className="w-3 h-3 transition-transform group-open:rotate-180"
+                strokeWidth={2.25}
+              />
+            </span>
           </summary>
-          <div className="px-5 pb-5 pt-1 space-y-3">
+          <div
+            className="mt-6 pl-5 space-y-5 border-l max-w-3xl"
+            style={{ borderColor: "var(--t-border-subtle)" }}
+          >
             <div>
-              <p className="text-[11px] font-semibold tracking-wider uppercase mb-1" style={{ color: "var(--text-tertiary)" }}>
+              <p
+                className="text-[15px] font-medium tracking-[0.3em] uppercase mb-2"
+                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+              >
                 Target user
               </p>
-              <p className="text-sm" style={{ color: "var(--text-primary)" }}>
+              <p className="text-[15px]" style={{ color: "var(--text-primary)" }}>
                 {idea.target_user}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold tracking-wider uppercase mb-1" style={{ color: "var(--text-tertiary)" }}>
+              <p
+                className="text-[15px] font-medium tracking-[0.3em] uppercase mb-2"
+                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+              >
                 Your description
               </p>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+              <p
+                className="text-[15px] leading-[1.75]"
+                style={{ color: "var(--text-secondary)" }}
+              >
                 {idea.description}
               </p>
             </div>
@@ -284,24 +368,33 @@ export default async function IdeaReportPage({
           />
         )}
 
-        {/* Footer — quiet text links, no big buttons */}
+        {/* Footer — minimal colophon */}
         <div
-          className="mt-10 pt-6 flex flex-wrap items-center justify-between gap-3 text-xs border-t"
-          style={{ borderColor: "var(--t-border-subtle)", color: "var(--text-tertiary)" }}
+          className="mt-14 pt-6 flex flex-wrap items-center justify-between gap-4 border-t"
+          style={{ borderColor: "var(--t-border-subtle)" }}
         >
-          <p>Private report · Accessible via this link</p>
-          <div className="flex items-center gap-4">
-            <Link
-              href={`/explore/${encodeURIComponent(idea.category)}`}
-              className="transition-colors hover:text-[color:var(--text-primary)]"
-            >
-              More {idea.category} ideas →
-            </Link>
+          <p
+            className="text-[13px] leading-[1.6]"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            {idea.is_private
+              ? "Private report · Only you can open this."
+              : "Public report · Anyone with this link can open it."}
+          </p>
+          <div className="flex items-center gap-6">
             <Link
               href="/submit"
-              className="transition-colors hover:text-[color:var(--text-primary)]"
+              className="group inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+              style={{
+                fontFamily: "'Oswald', sans-serif",
+                color: "var(--text-tertiary)",
+              }}
             >
-              Submit another
+              Submit another idea
+              <ArrowRight
+                className="w-3 h-3 transition-transform group-hover:translate-x-0.5"
+                strokeWidth={2}
+              />
             </Link>
           </div>
         </div>

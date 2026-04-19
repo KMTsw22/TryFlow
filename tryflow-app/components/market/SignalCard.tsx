@@ -1,49 +1,34 @@
 import Link from "next/link";
-import { TrendingUp, Award, Target, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * Visual "tone" for the signal card. The names stay for backward-compat,
- * but the labels passed from MarketBoard describe the actual signal
- * (e.g. "Gaining momentum", "Highest quality", "Underexplored").
- */
 export type SignalType = "rising" | "crowded" | "open";
 
 interface Props {
   type: SignalType;
-  /** The category being spotlighted by this signal, e.g. "Dev Tools" */
   category: string | null;
-  /** Primary metric line, e.g. "+240% · 12 new" */
   primaryMetric: string;
-  /** Supporting context, e.g. "vs last 7 days" */
   secondaryMetric?: string;
-  /** Click destination (category drill-down) */
   href?: string;
   className?: string;
-  /** Overrides the default META label for honest, caller-provided copy. */
   label?: string;
+  /** Position in the 3-col grid — controls left border (hairline separator between cells). */
+  position?: "first" | "middle" | "last";
 }
 
-const META: Record<SignalType, {
-  label: string;
-  icon: typeof TrendingUp;
-  accentClass: string;
-}> = {
-  rising: {
-    label: "Gaining momentum",
-    icon: TrendingUp,
-    accentClass: "text-emerald-600 dark:text-emerald-400",
-  },
-  crowded: {
-    label: "Highest quality",
-    icon: Award,
-    accentClass: "text-amber-600 dark:text-amber-400",
-  },
-  open: {
-    label: "Underexplored",
-    icon: Target,
-    accentClass: "text-indigo-600 dark:text-indigo-400",
-  },
+const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Oswald', sans-serif";
+
+const ACCENT_BY_TYPE: Record<SignalType, string> = {
+  rising: "var(--signal-success)",
+  crowded: "var(--signal-warning)",
+  open: "var(--accent)",
+};
+
+const DEFAULT_LABEL: Record<SignalType, string> = {
+  rising: "Gaining Momentum",
+  crowded: "Highest Quality",
+  open: "Underexplored",
 };
 
 export function SignalCard({
@@ -54,63 +39,71 @@ export function SignalCard({
   href,
   className,
   label,
+  position = "middle",
 }: Props) {
-  const meta = META[type];
-  const Icon = meta.icon;
   const isEmpty = !category;
-  const resolvedLabel = label ?? meta.label;
+  const resolvedLabel = label ?? DEFAULT_LABEL[type];
+  const accent = ACCENT_BY_TYPE[type];
 
   const inner = (
     <div
       className={cn(
-        "flex flex-col p-5 border h-full transition-all duration-150",
-        !isEmpty && "hover:border-[color:var(--t-border-bright)]",
-        className
+        "relative flex flex-col h-full p-7 min-h-[180px] transition-opacity",
+        position !== "first" && "md:border-l",
+        !isEmpty && "hover:opacity-80",
+        className,
       )}
-      style={{
-        background: "var(--card-bg)",
-        borderColor: "var(--t-border-card)",
-      }}
+      style={{ borderColor: "var(--t-border-subtle)" }}
     >
-      {/* Label row */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Kicker label + arrow */}
+      <div className="flex items-start justify-between gap-4 mb-5">
         <span
-          className={cn(
-            "inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-widest uppercase",
-            meta.accentClass
-          )}
+          className="text-[15px] font-medium tracking-[0.3em] uppercase"
+          style={{ fontFamily: DISPLAY, color: accent }}
         >
-          <Icon className="w-3.5 h-3.5" />
           {resolvedLabel}
         </span>
         {!isEmpty && (
           <ArrowUpRight
-            className="w-4 h-4 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
             style={{ color: "var(--text-tertiary)" }}
+            strokeWidth={1.75}
           />
         )}
       </div>
 
       {/* Category name */}
       <h3
-        className="text-xl font-bold tracking-tight mb-2"
+        className="mb-3 leading-[1.1]"
         style={{
+          fontFamily: SERIF,
+          fontWeight: 900,
+          fontSize: "1.75rem",
+          letterSpacing: "-0.02em",
           color: isEmpty ? "var(--text-tertiary)" : "var(--text-primary)",
         }}
       >
         {category ?? "No signal yet"}
       </h3>
 
-      {/* Metrics */}
+      {/* Primary metric */}
       <p
-        className="font-mono text-sm font-semibold tabular-nums"
-        style={{ color: "var(--text-secondary)" }}
+        className="tabular-nums mb-1"
+        style={{
+          fontFamily: SERIF,
+          fontWeight: 700,
+          fontSize: "1rem",
+          letterSpacing: "-0.005em",
+          color: isEmpty ? "var(--text-tertiary)" : "var(--text-secondary)",
+        }}
       >
         {isEmpty ? "—" : primaryMetric}
       </p>
+
+      {/* Secondary context */}
       {secondaryMetric && (
         <p
-          className="text-xs mt-1"
+          className="text-[13px] leading-[1.5] mt-auto pt-3"
           style={{ color: "var(--text-tertiary)" }}
         >
           {secondaryMetric}

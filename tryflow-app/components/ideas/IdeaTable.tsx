@@ -72,7 +72,7 @@ export function IdeaTable({ rows, highlightId }: Props) {
     >
       {/* Header */}
       <div
-        className="grid items-center gap-4 px-5 py-3 border-b text-[11px] font-semibold tracking-wider uppercase"
+        className="grid items-center gap-4 px-5 py-3 border-b text-[13px] font-semibold tracking-wider uppercase"
         style={{
           borderColor: "var(--t-border)",
           gridTemplateColumns: GRID_TEMPLATE,

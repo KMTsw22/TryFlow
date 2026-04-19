@@ -25,7 +25,7 @@ export default async function SettingsPage() {
     : { data: null };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-6 py-10">
       <PageHeader
         title="Settings"
         description="Manage your profile, contact preferences, and account."
@@ -99,7 +99,7 @@ export default async function SettingsPage() {
           <div className="mb-4">
             <h2
               className="text-sm font-semibold"
-              style={{ color: "var(--signal-danger, #ef4444)" }}
+              style={{ color: "var(--signal-danger)" }}
             >
               Danger zone
             </h2>
@@ -129,7 +129,7 @@ export default async function SettingsPage() {
             <button
               disabled
               title="Contact support to delete your account"
-              className="shrink-0 h-9 px-4 text-xs font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-500/10"
+              className="shrink-0 h-9 px-4 text-xs font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 color: "var(--signal-danger, #ef4444)",
                 borderColor: "rgba(239, 68, 68, 0.3)",

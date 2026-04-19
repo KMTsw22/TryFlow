@@ -47,6 +47,14 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
     }
   };
 
+  const channelRow =
+    "flex items-center gap-3 px-4 py-3 text-sm transition-colors";
+  const channelRowStyle = {
+    background: "var(--input-bg)",
+    border: "1px solid var(--t-input-border)",
+    color: "var(--text-secondary)",
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -55,7 +63,7 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
     >
       <div
         className="w-full max-w-lg"
-        style={{ background: "var(--sidebar-bg)", border: "1px solid var(--t-border-bright)" }}
+        style={{ background: "var(--surface-3)", border: "1px solid var(--t-border-bright)" }}
       >
         {/* Header */}
         <div
@@ -63,10 +71,15 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
           style={{ borderBottom: "1px solid var(--t-border)" }}
         >
           <div>
-            <p className="text-xs font-bold tracking-widest text-indigo-400 uppercase mb-0.5">Contact</p>
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white">{category}</h2>
+            <p className="text-xs font-bold tracking-widest uppercase mb-0.5" style={{ color: "var(--accent)" }}>Contact</p>
+            <h2 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{category}</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+          <button
+            onClick={onClose}
+            className="transition-colors"
+            style={{ color: "var(--text-tertiary)" }}
+            aria-label="Close"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -74,27 +87,27 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
         <div className="px-6 py-6 space-y-4">
           {contactInfo ? (
             <div className="space-y-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
                 Gmail has been opened. You can also reach out through the additional channels below.
               </p>
               <div className="space-y-2">
                 {contactInfo.email && (
                   <a
                     href={`mailto:${contactInfo.email}`}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                    className={channelRow}
+                    style={channelRowStyle}
                   >
-                    <Mail className="w-4 h-4 text-indigo-400 shrink-0" />
+                    <Mail className="w-4 h-4 shrink-0" style={{ color: "var(--accent)" }} />
                     <span className="truncate">{contactInfo.email}</span>
                   </a>
                 )}
                 {contactInfo.phone && (
                   <a
                     href={`tel:${contactInfo.phone}`}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                    className={channelRow}
+                    style={channelRowStyle}
                   >
-                    <Phone className="w-4 h-4 text-green-400 shrink-0" />
+                    <Phone className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
                     <span>{contactInfo.phone}</span>
                   </a>
                 )}
@@ -103,19 +116,19 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
                     href={contactInfo.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                    className={channelRow}
+                    style={channelRowStyle}
                   >
-                    <Linkedin className="w-4 h-4 text-blue-400 shrink-0" />
+                    <Linkedin className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
                     <span className="truncate">{contactInfo.linkedin}</span>
                   </a>
                 )}
                 {contactInfo.other && (
                   <div
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300"
-                    style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                    className={channelRow}
+                    style={channelRowStyle}
                   >
-                    <Link className="w-4 h-4 text-pink-400 shrink-0" />
+                    <Link className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
                     <span>{contactInfo.other}</span>
                   </div>
                 )}
@@ -123,7 +136,8 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
               <div className="flex justify-end pt-1">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  className="px-4 py-2 text-sm transition-colors"
+                  style={{ color: "var(--text-tertiary)" }}
                 >
                   Close
                 </button>
@@ -131,50 +145,51 @@ export function ContactModal({ ideaId, category, onClose }: Props) {
             </div>
           ) : (
             <>
-              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                Write your message and click <strong className="text-gray-600 dark:text-gray-300">Open in Gmail</strong> to open the Gmail compose window with everything pre-filled.
+              <p className="text-xs leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
+                Write your message and click <strong style={{ color: "var(--text-secondary)" }}>Open in Gmail</strong> to open the Gmail compose window with everything pre-filled.
               </p>
 
               {/* Subject */}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Subject</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-tertiary)" }}>Subject</label>
                 <input
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                  style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                  className="w-full px-4 py-2.5 text-sm focus:outline-none transition-colors"
+                  style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)", color: "var(--text-primary)" }}
                 />
               </div>
 
               {/* Message */}
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5">Message</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: "var(--text-tertiary)" }}>Message</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   rows={5}
                   placeholder="Hi, I'm [name] from [company]. I came across your idea and would love to connect..."
-                  className="w-full px-4 py-2.5 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)" }}
+                  className="w-full px-4 py-2.5 text-sm focus:outline-none resize-none transition-colors"
+                  style={{ background: "var(--input-bg)", border: "1px solid var(--t-input-border)", color: "var(--text-primary)" }}
                 />
               </div>
 
-              {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+              {error && <p className="text-xs font-medium" style={{ color: "var(--signal-danger)" }}>{error}</p>}
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  className="px-4 py-2 text-sm transition-colors"
+                  style={{ color: "var(--text-tertiary)" }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleOpenGmail}
                   disabled={loading || !subject.trim() || !message.trim()}
-                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
-                  style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6)" }}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white transition-[filter] hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100"
+                  style={{ background: "var(--accent)" }}
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

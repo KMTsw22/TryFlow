@@ -20,7 +20,6 @@ import {
   TrendingDown,
   Minus,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 
 interface AgentAnalysis {
@@ -137,10 +136,10 @@ const SAT_CONFIG: Record<string, { color: string; bg: string; bar: string }> = {
 
 function SignalBadge({ label, value }: { label: string; value: string }) {
   return (
-    <div className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px]"
+    <div className="inline-flex items-center gap-1.5 px-2 py-1 text-[13px]"
       style={{ background: "var(--input-bg)", border: "1px solid var(--t-border-bright)" }}>
-      <span className="text-gray-500">{label}</span>
-      <span className="font-semibold text-gray-600 dark:text-gray-300">{value}</span>
+      <span style={{ color: "var(--text-tertiary)" }}>{label}</span>
+      <span className="font-semibold" style={{ color: "var(--text-secondary)" }}>{value}</span>
     </div>
   );
 }
@@ -235,35 +234,65 @@ function AgentSignals({ agentKey, data }: { agentKey: string; data: AgentAnalysi
 
 function MetricsGrid({ trendDirection, saturationLevel, similarCount }: { trendDirection: string; saturationLevel: string; similarCount: number }) {
   const trend = TREND_CONFIG[trendDirection] ?? TREND_CONFIG.Stable;
-  const sat = SAT_CONFIG[saturationLevel] ?? SAT_CONFIG.Medium;
-  const TrendIcon = trend.icon;
 
   return (
-    <div className="grid grid-cols-3 gap-3 mb-4">
-      <div className={`border p-5 text-center ${trend.border}`}
-        style={{ background: "var(--card-bg)" }}>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Market Trend</p>
-        <div className={`w-10 h-10 ${trend.bg} flex items-center justify-center mx-auto mb-2`}>
-          <TrendIcon className={`w-5 h-5 ${trend.color}`} />
-        </div>
-        <p className={`text-sm font-bold ${trend.color}`}>{trendDirection}</p>
-      </div>
+    <div
+      className="grid grid-cols-3 mb-14 border-t border-b"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      <MetricCell label="Trend" value={trendDirection} valueColor={trend.color} />
+      <MetricCell label="Saturation" value={saturationLevel} />
+      <MetricCell
+        label="Similar ideas"
+        value={similarCount.toString()}
+        hint="last 30 days"
+      />
+    </div>
+  );
+}
 
-      <div className="border p-5 text-center"
-        style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Saturation</p>
-        <div className={`w-10 h-10 ${sat.bg} flex items-center justify-center mx-auto mb-2`}>
-          <span className={`text-sm font-black ${sat.color}`}>{saturationLevel[0]}</span>
-        </div>
-        <p className={`text-sm font-bold ${sat.color}`}>{saturationLevel}</p>
-      </div>
-
-      <div className="border p-5 text-center"
-        style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Similar Ideas</p>
-        <p className="text-3xl font-extrabold text-gray-900 dark:text-white mb-1">{similarCount}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">last 30 days</p>
-      </div>
+function MetricCell({
+  label,
+  value,
+  valueColor,
+  hint,
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+  hint?: string;
+}) {
+  return (
+    <div
+      className="py-8 px-6 border-r last:border-r-0"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      <p
+        className="text-[15px] font-medium tracking-[0.3em] uppercase mb-3"
+        style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+      >
+        {label}
+      </p>
+      <p
+        className={`leading-none ${valueColor ?? ""}`}
+        style={{
+          fontFamily: "'Playfair Display', serif",
+          fontWeight: 700,
+          fontSize: "1.75rem",
+          letterSpacing: "-0.01em",
+          color: valueColor ? undefined : "var(--text-primary)",
+        }}
+      >
+        {value}
+      </p>
+      {hint && (
+        <p
+          className="mt-2 text-[15px] font-medium tracking-[0.25em] uppercase"
+          style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+        >
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
@@ -292,14 +321,14 @@ function getVerdict(score: number, trend: string, saturation: string): { label: 
 }
 
 function OverallSignal({ score, summary, trend, saturation }: { score: number; summary: string; trend: string; saturation: string }) {
-  const vColor = score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
-  const vBg = score >= 70 ? "#10b981" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const vColor = score >= 70 ? "var(--signal-success)" : score >= 50 ? "var(--signal-warning)" : "var(--signal-danger)";
+  const vBg = vColor;
   const verdict = getVerdict(score, trend, saturation);
 
   return (
     <div className="border p-8 mb-4 text-center"
       style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Overall Signal</p>
+      <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "var(--text-tertiary)" }}>Overall Signal</p>
       <div className="relative w-32 h-32 mx-auto mb-4">
         <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
           <circle cx="60" cy="60" r="52" fill="none" stroke="var(--t-border-card)" strokeWidth="12" />
@@ -313,15 +342,15 @@ function OverallSignal({ score, summary, trend, saturation }: { score: number; s
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-3xl font-extrabold ${vColor}`}>{score}</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">/100</span>
+          <span className="text-3xl font-extrabold" style={{ color: vColor }}>{score}</span>
+          <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>/100</span>
         </div>
       </div>
       <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-3"
         style={{ background: verdict.bg }}>
         <span className={`text-xs font-bold ${verdict.color}`}>{verdict.label}</span>
       </div>
-      <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed max-w-md mx-auto">{summary}</p>
+      <p className="text-sm leading-relaxed max-w-md mx-auto" style={{ color: "var(--text-secondary)" }}>{summary}</p>
     </div>
   );
 }
@@ -357,13 +386,17 @@ function WeightedBreakdown({
   if (entries.length === 0) return null;
 
   return (
-    <ul className="divide-y" style={{ borderColor: "var(--t-border-subtle)" }}>
-      {entries.map((entry) => {
+    <ul
+      className="border-t"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      {entries.map((entry, i) => {
         const isExpanded = expandedKey === entry.key;
         return (
           <BreakdownRow
             key={entry.key}
             entry={entry}
+            rank={i + 1}
             isExpanded={isExpanded}
             onToggle={() => onToggle(isExpanded ? null : entry.key)}
             analysis={analysis}
@@ -379,6 +412,7 @@ function WeightedBreakdown({
 
 function BreakdownRow({
   entry,
+  rank,
   isExpanded,
   onToggle,
   analysis,
@@ -387,6 +421,7 @@ function BreakdownRow({
   detailed,
 }: {
   entry: WeightedEntry;
+  rank: number;
   isExpanded: boolean;
   onToggle: () => void;
   analysis: AnalysisReport["analysis"];
@@ -394,72 +429,85 @@ function BreakdownRow({
   onToggleFull: (key: string | null) => void;
   detailed?: boolean;
 }) {
-  const { key, meta, score, weight } = entry;
-  const Icon = meta.icon;
-  const scoreColor = score >= 70 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
-  const barColor = score >= 70 ? "#34d399" : score >= 50 ? "#fbbf24" : "#f87171";
-  const weightPct = Math.round(weight * 100);
+  const { key, meta, score } = entry;
+  const barColor =
+    score >= 70 ? "var(--signal-success)" : score >= 50 ? "var(--signal-warning)" : "var(--signal-danger)";
 
   return (
     <li
-      className="transition-colors"
-      style={{
-        background: isExpanded ? "rgba(99,102,241,0.05)" : "transparent",
-        boxShadow: isExpanded ? "inset 2px 0 0 0 rgba(129,140,248,0.9)" : undefined,
-      }}
+      className="transition-opacity border-b"
+      style={{ borderColor: "var(--t-border-subtle)" }}
     >
-      {/* Clickable row */}
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isExpanded}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-white/[0.03] focus:outline-none focus-visible:bg-white/[0.05] transition-colors"
+        className="w-full flex items-center gap-5 py-3.5 text-left focus:outline-none group transition-opacity hover:opacity-80"
       >
-        {/* Icon */}
-        <span className={`w-7 h-7 ${meta.bg} flex items-center justify-center shrink-0`}>
-          <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
+        {/* Rank */}
+        <span
+          className="shrink-0 tabular-nums leading-none text-right w-7"
+          style={{
+            fontFamily: "'Oswald', sans-serif",
+            fontWeight: 500,
+            fontSize: "0.85rem",
+            letterSpacing: "0.15em",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {String(rank).padStart(2, "0")}
         </span>
 
-        {/* Label */}
+        {/* Agent label */}
         <span
-          className="text-sm font-semibold shrink-0"
-          style={{ color: "var(--text-primary)", minWidth: 112 }}
+          className="shrink-0"
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontWeight: 700,
+            fontSize: "1rem",
+            letterSpacing: "-0.01em",
+            color: "var(--text-primary)",
+            minWidth: 150,
+          }}
         >
           {meta.label}
         </span>
 
-        {/* Weight */}
-        <span
-          className="text-[10px] font-mono tabular-nums font-bold shrink-0 text-right"
-          style={{ color: "var(--text-tertiary)", minWidth: 34 }}
-          title={`Weight ${weightPct}% of overall viability score`}
-        >
-          {weightPct}%
-        </span>
-
-        {/* Score bar */}
+        {/* Bar */}
         <div
-          className="flex-1 h-1.5 rounded-full overflow-hidden"
-          style={{ background: "var(--t-border-bright)" }}
+          className="flex-1 h-[2px]"
+          style={{ background: "var(--t-border-subtle)" }}
         >
           <div
-            className="h-full rounded-full transition-all duration-700"
+            className="h-full transition-all duration-700"
             style={{ width: `${score}%`, background: barColor }}
           />
         </div>
 
         {/* Score */}
-        <span
-          className={`font-mono tabular-nums font-bold text-sm shrink-0 text-right ${scoreColor}`}
-          style={{ minWidth: 56 }}
-        >
-          {score}
-          <span className="text-[10px] ml-0.5" style={{ color: "var(--text-tertiary)" }}>/100</span>
+        <span className="flex items-baseline gap-1 shrink-0 tabular-nums" style={{ minWidth: 44 }}>
+          <span
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 900,
+              fontSize: "1.1rem",
+              letterSpacing: "-0.02em",
+              color: barColor,
+            }}
+          >
+            {score}
+          </span>
         </span>
 
-        {/* Chevron affordance */}
-        <span className="shrink-0 ml-1" style={{ color: "var(--text-tertiary)" }}>
-          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        {/* Chevron */}
+        <span
+          className="shrink-0 transition-transform"
+          style={{
+            color: "var(--text-tertiary)",
+            transform: isExpanded ? "rotate(180deg)" : undefined,
+          }}
+        >
+          <ChevronDown className="w-3 h-3" strokeWidth={1.75} />
         </span>
       </button>
 
@@ -521,7 +569,7 @@ function RowDetail({
           className="mt-3 pt-3 border-t"
           style={{ borderColor: "var(--t-border-bright)" }}
         >
-          <p className="text-[11px] font-bold mb-1 tracking-wider uppercase text-indigo-400">
+          <p className="text-[13px] font-bold mb-1 tracking-wider uppercase" style={{ color: "var(--accent)" }}>
             Detailed Analysis
           </p>
           <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
@@ -535,7 +583,8 @@ function RowDetail({
         <button
           type="button"
           onClick={() => onToggleFull(isFull ? null : agentKey)}
-          className="mt-3 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1"
+          className="mt-3 text-[13px] font-bold transition-[filter] hover:brightness-110 inline-flex items-center gap-1"
+          style={{ color: "var(--accent)" }}
         >
           {isFull ? "Show less ↑" : "Read full analysis ↓"}
         </button>
@@ -629,26 +678,31 @@ export default function DeepAnalysis({
   if (loading) {
     return (
       <div className="border p-8"
-        style={{ background: "rgba(99,102,241,0.05)", borderColor: "rgba(99,102,241,0.2)" }}>
+        style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}>
         <div className="text-center">
           <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4"
-            style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}>
-            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+            style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}>
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--accent)" }} />
           </div>
-          <h3 className="text-lg font-extrabold text-white mb-2">AI Deep Analysis in Progress</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">8 specialist agents analyzing in parallel</p>
+          <h3 className="text-lg font-extrabold mb-2" style={{ color: "var(--text-primary)" }}>AI Deep Analysis in Progress</h3>
+          <p className="text-sm mb-6" style={{ color: "var(--text-tertiary)" }}>8 specialist agents analyzing in parallel</p>
           <div className="max-w-sm mx-auto space-y-2">
-            {ANALYSIS_STEPS.map((step, i) => (
-              <div key={step}
-                className={`flex items-center gap-2 text-xs transition-all duration-300 ${
-                  i < stepIndex ? "text-emerald-400" : i === stepIndex ? "text-indigo-300 font-bold" : "text-gray-500"
-                }`}>
-                {i < stepIndex ? <span className="w-4 text-center">✓</span>
-                  : i === stepIndex ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-                  : <span className="w-4 text-center">·</span>}
-                {step}
-              </div>
-            ))}
+            {ANALYSIS_STEPS.map((step, i) => {
+              const stepColor =
+                i < stepIndex ? "var(--signal-success)"
+                : i === stepIndex ? "var(--accent)"
+                : "var(--text-tertiary)";
+              return (
+                <div key={step}
+                  className="flex items-center gap-2 text-xs transition-all duration-300"
+                  style={{ color: stepColor, fontWeight: i === stepIndex ? 700 : 400 }}>
+                  {i < stepIndex ? <span className="w-4 text-center">✓</span>
+                    : i === stepIndex ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+                    : <span className="w-4 text-center">·</span>}
+                  {step}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -687,19 +741,24 @@ export default function DeepAnalysis({
           <OverallSignal score={weightedScore} summary={report.summary} trend={trendDirection} saturation={saturationLevel} />
         )}
 
-        {/* Metrics — trend / saturation / similar count */}
-        <MetricsGrid trendDirection={trendDirection} saturationLevel={saturationLevel} similarCount={similarCount} />
-
-        {/* 8-agent breakdown — ranked bars with inline drill-down */}
-        <div className="border p-6"
-          style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-          <div className="flex items-center gap-2 mb-5">
-            <Brain className="w-4 h-4 text-indigo-400" />
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">8-Agent Analysis Breakdown</p>
+        {/* 8-agent breakdown — editorial section */}
+        <section className="mb-14">
+          <div className="flex items-center gap-4 mb-8">
+            <span
+              className="text-[15px] font-medium tracking-[0.35em] uppercase"
+              style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+            >
+              The Agents
+            </span>
+            <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+            <span
+              className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+              style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+            >
+              8 dimensions · ranked
+            </span>
           </div>
 
-          {/* Weighted breakdown — ranked bars with inline drill-down.
-              Click any row to expand the agent's assessment below it. */}
           <WeightedBreakdown
             entries={rankedEntries}
             analysis={report.analysis}
@@ -712,33 +771,50 @@ export default function DeepAnalysis({
             onToggleFull={setFullAgent}
             detailed={detailed}
           />
-        </div>
+        </section>
 
         {/* Submitter Pro upsell — shown instead of detail sections for free users */}
         {!detailed && (
-          <div className="border p-6"
-            style={{
-              background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))",
-              borderColor: "rgba(99,102,241,0.25)",
-            }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
-              <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest">Summary view</p>
+          <section className="mb-14">
+            <div className="flex items-center gap-4 mb-8">
+              <span
+                className="text-[15px] font-medium tracking-[0.35em] uppercase"
+                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--accent)" }}
+              >
+                Summary View
+              </span>
+              <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
             </div>
-            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed mb-4">
-              You&apos;re seeing the summarized score and radar. Upgrade to{" "}
-              <span className="font-bold text-white">Plus</span> to unlock
-              detailed per-agent assessments, cross-agent insights, opportunities,
-              risks, and recommended next steps on your own ideas.
-            </p>
-            <a
-              href="/pricing"
-              className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-4 py-2 text-xs hover:bg-indigo-400 transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Upgrade to Plus
-            </a>
-          </div>
+            <div className="max-w-3xl">
+              <p
+                className="mb-6 leading-[1.2]"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  fontSize: "1.5rem",
+                  letterSpacing: "-0.01em",
+                  color: "var(--text-primary)",
+                }}
+              >
+                &ldquo;Unlock detailed per-agent assessments.&rdquo;
+              </p>
+              <p
+                className="text-[14.5px] leading-[1.75] mb-6"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                You&apos;re seeing the summarized score and radar. Upgrade to Plus to unlock cross-agent insights, opportunities, risks, and recommended next steps on your own ideas.
+              </p>
+              <a
+                href="/pricing"
+                className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--accent)" }}
+              >
+                Upgrade to Plus
+                <ArrowRight className="w-3 h-3" strokeWidth={1.75} />
+              </a>
+            </div>
+          </section>
         )}
 
         {/* Cross-agent insights — Submitter Pro only */}
@@ -746,17 +822,17 @@ export default function DeepAnalysis({
           <div className="border p-6"
             style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-4 h-4 text-indigo-400" />
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Cross-Agent Insights</p>
+              <Brain className="w-4 h-4" style={{ color: "var(--accent)" }} />
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Cross-Agent Insights</p>
             </div>
             <ul className="space-y-2">
               {report.cross_agent_insights.map((insight, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className="w-5 h-5 rounded-full text-indigo-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5"
-                    style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)" }}>
+                  <span className="w-5 h-5 rounded-full text-[15px] font-bold flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ color: "var(--accent)", background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}>
                     {i + 1}
                   </span>
-                  <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{insight}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{insight}</p>
                 </li>
               ))}
             </ul>
@@ -770,14 +846,14 @@ export default function DeepAnalysis({
               <div className="border p-6"
                 style={{ background: "rgba(16,185,129,0.04)", borderColor: "rgba(16,185,129,0.2)" }}>
                 <div className="flex items-center gap-2 mb-4">
-                  <Lightbulb className="w-4 h-4 text-emerald-400" />
-                  <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Opportunities</p>
+                  <Lightbulb className="w-4 h-4" style={{ color: "var(--signal-success)" }} />
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--signal-success)" }}>Opportunities</p>
                 </div>
                 <ul className="space-y-3">
                   {report.opportunities.map((opp, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-0.5 shrink-0 font-bold">+</span>
-                      <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{opp}</p>
+                      <span className="mt-0.5 shrink-0 font-bold" style={{ color: "var(--signal-success)" }}>+</span>
+                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{opp}</p>
                     </li>
                   ))}
                 </ul>
@@ -787,14 +863,14 @@ export default function DeepAnalysis({
               <div className="border p-6"
                 style={{ background: "rgba(239,68,68,0.04)", borderColor: "rgba(239,68,68,0.2)" }}>
                 <div className="flex items-center gap-2 mb-4">
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
-                  <p className="text-xs font-bold text-red-500 uppercase tracking-widest">Risks</p>
+                  <AlertTriangle className="w-4 h-4" style={{ color: "var(--signal-danger)" }} />
+                  <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--signal-danger)" }}>Risks</p>
                 </div>
                 <ul className="space-y-3">
                   {report.risks.map((risk, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <span className="text-red-400 mt-0.5 shrink-0 font-bold">!</span>
-                      <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{risk}</p>
+                      <span className="mt-0.5 shrink-0 font-bold" style={{ color: "var(--signal-danger)" }}>!</span>
+                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{risk}</p>
                     </li>
                   ))}
                 </ul>
@@ -808,17 +884,18 @@ export default function DeepAnalysis({
           <div className="border p-6"
             style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
             <div className="flex items-center gap-2 mb-4">
-              <ArrowRight className="w-4 h-4 text-indigo-400" />
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">Next Steps This Week</p>
+              <ArrowRight className="w-4 h-4" style={{ color: "var(--accent)" }} />
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--text-tertiary)" }}>Next Steps This Week</p>
             </div>
             <ul className="space-y-2">
               {report.next_steps.map((step, i) => (
                 <li key={i} className="flex items-start gap-3 p-2"
-                  style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}>
-                  <span className="w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}>
+                  <span className="w-5 h-5 rounded-full text-white text-[15px] font-bold flex items-center justify-center shrink-0 mt-0.5"
+                    style={{ background: "var(--accent)" }}>
                     {i + 1}
                   </span>
-                  <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{step}</p>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{step}</p>
                 </li>
               ))}
             </ul>
@@ -840,25 +917,26 @@ export default function DeepAnalysis({
       <MetricsGrid trendDirection={trendDirection} saturationLevel={saturationLevel} similarCount={similarCount} />
 
       <div className="border p-8 text-center"
-        style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06))", borderColor: "rgba(99,102,241,0.2)" }}>
+        style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}>
         <div className="w-14 h-14 flex items-center justify-center mx-auto mb-4"
-          style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)" }}>
-          <Sparkles className="w-7 h-7 text-indigo-400" />
+          style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}>
+          <Sparkles className="w-7 h-7" style={{ color: "var(--accent)" }} />
         </div>
-        <h3 className="text-lg font-extrabold text-white mb-2">Want a deeper analysis?</h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+        <h3 className="text-lg font-extrabold mb-2" style={{ color: "var(--text-primary)" }}>Want a deeper analysis?</h3>
+        <p className="text-sm mb-6 max-w-sm mx-auto" style={{ color: "var(--text-tertiary)" }}>
           Our AI system runs 8 specialist agents in parallel to analyze market size,
           competition, timing, monetization, technical complexity, regulation,
           defensibility, and user acquisition.
         </p>
         <button
           onClick={startAnalysis}
-          className="inline-flex items-center gap-2 bg-indigo-500 text-white font-bold px-6 py-3 text-sm hover:bg-indigo-400 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 text-white font-bold px-6 py-3 text-sm transition-[filter] hover:brightness-110 cursor-pointer"
+          style={{ background: "var(--accent)" }}
         >
           <Sparkles className="w-4 h-4" />
           Run AI Deep Analysis
         </button>
-        {error && <p className="mt-4 text-xs text-red-400">{error}</p>}
+        {error && <p className="mt-4 text-xs" style={{ color: "var(--signal-danger)" }}>{error}</p>}
       </div>
     </>
   );

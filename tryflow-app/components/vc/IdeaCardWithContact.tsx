@@ -26,11 +26,12 @@ interface IdeaRow {
   analysis_reports: AnalysisReport | AnalysisReport[] | null;
 }
 
-const STAGE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  idea:           { label: "Just an Idea",     color: "text-sky-400",     bg: "rgba(14,165,233,0.10)",  border: "rgba(14,165,233,0.25)" },
-  prototype:      { label: "Prototype / Demo", color: "text-violet-400",  bg: "rgba(139,92,246,0.10)", border: "rgba(139,92,246,0.25)" },
-  early_traction: { label: "Early Traction",   color: "text-amber-400",   bg: "rgba(251,191,36,0.10)", border: "rgba(251,191,36,0.25)" },
-  launched:       { label: "Launched",          color: "text-emerald-400", bg: "rgba(52,211,153,0.10)", border: "rgba(52,211,153,0.25)" },
+// Stage colors map to semantic signals where possible; neutral for early.
+const STAGE_META: Record<string, { label: string; fg: string; bg: string; border: string }> = {
+  idea:           { label: "Just an Idea",     fg: "var(--text-tertiary)",  bg: "var(--t-border-subtle)", border: "var(--t-border)" },
+  prototype:      { label: "Prototype / Demo", fg: "var(--accent)",         bg: "var(--accent-soft)",      border: "var(--accent-ring)" },
+  early_traction: { label: "Early Traction",   fg: "var(--signal-warning)", bg: "rgba(245,158,11,0.10)",   border: "rgba(245,158,11,0.25)" },
+  launched:       { label: "Launched",         fg: "var(--signal-success)", bg: "rgba(16,185,129,0.10)",   border: "rgba(16,185,129,0.25)" },
 };
 
 interface Props {
@@ -38,16 +39,19 @@ interface Props {
   isSubscriber: boolean; // kept for future use
 }
 
-const TREND_PILL = {
-  Rising:    "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20",
-  Stable:    "bg-amber-500/15 text-amber-400 border border-amber-500/20",
-  Declining: "bg-red-500/15 text-red-400 border border-red-500/20",
+type PillStyle = { fg: string; bg: string; border: string };
+
+const TREND_PILL: Record<string, PillStyle> = {
+  Rising:    { fg: "var(--signal-success)", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.25)" },
+  Stable:    { fg: "var(--signal-warning)", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)" },
+  Declining: { fg: "var(--signal-danger)",  bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.25)" },
 };
 
-const SAT_PILL = {
-  Low:    "bg-indigo-500/15 text-indigo-300 border border-indigo-500/20",
-  Medium: "bg-violet-500/15 text-violet-300 border border-violet-500/20",
-  High:   "bg-orange-500/15 text-orange-300 border border-orange-500/20",
+// Saturation: low = good (less competition), high = bad.
+const SAT_PILL: Record<string, PillStyle> = {
+  Low:    { fg: "var(--signal-success)", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.25)" },
+  Medium: { fg: "var(--signal-warning)", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)" },
+  High:   { fg: "var(--signal-danger)",  bg: "rgba(239,68,68,0.12)",  border: "rgba(239,68,68,0.25)" },
 };
 
 function truncate(text: string, max: number) {
@@ -66,93 +70,111 @@ function getAiScore(idea: IdeaRow): number | null {
   return r?.viability_score ?? null;
 }
 
+function scoreHex(score: number | null) {
+  if (score === null) return "var(--text-tertiary)";
+  if (score >= 70) return "var(--signal-success)";
+  if (score >= 50) return "var(--signal-warning)";
+  return "var(--signal-danger)";
+}
+
 export function IdeaCardWithContact({ idea }: Props) {
   const report = getReport(idea);
   const aiScore = getAiScore(idea);
   const vScore = aiScore ?? report?.viability_score ?? null;
   const hasAiScore = aiScore !== null;
 
-  const vColor =
-    vScore === null ? "text-gray-500"
-    : vScore >= 70 ? "text-emerald-400"
-    : vScore >= 50 ? "text-amber-400"
-    : "text-red-400";
-  const vRing =
-    vScore === null ? "border-gray-700/40 bg-gray-700/10"
-    : vScore >= 70 ? "border-emerald-500/30 bg-emerald-500/10"
-    : vScore >= 50 ? "border-amber-500/30 bg-amber-500/10"
-    : "border-red-500/30 bg-red-500/10";
+  const vColor = scoreHex(vScore);
 
-  const trendPill = report
-    ? TREND_PILL[report.trend_direction as keyof typeof TREND_PILL] ?? TREND_PILL.Stable
-    : null;
-  const satPill = report
-    ? SAT_PILL[report.saturation_level as keyof typeof SAT_PILL] ?? SAT_PILL.Low
-    : null;
+  const trendPill = report ? TREND_PILL[report.trend_direction] ?? TREND_PILL.Stable : null;
+  const satPill = report ? SAT_PILL[report.saturation_level] ?? SAT_PILL.Low : null;
+  const stageMeta = idea.stage ? STAGE_META[idea.stage] : null;
 
   return (
     <Link
       href={`/ideas/${idea.id}`}
-      className="flex flex-col border p-5 transition-all duration-200 hover:border-indigo-500/30 cursor-pointer"
+      className="flex flex-col border p-5 transition-colors cursor-pointer hover:[border-color:var(--accent-ring)]"
       style={{
         background: "var(--card-bg)",
-        borderColor: idea.allow_contact ? "rgba(129,140,248,0.2)" : "var(--t-border-card)",
+        borderColor: idea.allow_contact ? "var(--accent-ring)" : "var(--t-border-card)",
       }}
     >
       {/* Top row: score + anonymous badge */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex flex-col items-start gap-1">
-          <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-full border ${vRing}`}>
+          <div
+            className="flex flex-col items-center justify-center w-12 h-12 rounded-full border"
+            style={{
+              borderColor: vScore === null ? "var(--t-border-card)" : vColor,
+              background: vScore === null ? "var(--card-bg)" : "color-mix(in srgb, " + vColor + " 10%, transparent)",
+            }}
+          >
             {vScore !== null ? (
               <>
-                <span className={`text-base font-extrabold leading-none ${vColor}`}>{vScore}</span>
-                <span className="text-[9px] text-gray-500 leading-none mt-0.5">/100</span>
+                <span className="text-base font-extrabold leading-none" style={{ color: vColor }}>{vScore}</span>
+                <span className="text-[11px] leading-none mt-0.5" style={{ color: "var(--text-tertiary)" }}>/100</span>
               </>
             ) : (
-              <span className="text-gray-500 text-xs">—</span>
+              <span className="text-xs" style={{ color: "var(--text-tertiary)" }}>—</span>
             )}
           </div>
           {hasAiScore && (
-            <span className="text-[9px] font-bold text-indigo-400">✦ AI</span>
+            <span className="text-[11px] font-bold" style={{ color: "var(--accent)" }}>✦ AI</span>
           )}
         </div>
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider pt-1">Anonymous</span>
+        <span
+          className="text-[12px] font-bold uppercase tracking-wider pt-1"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          Anonymous
+        </span>
       </div>
 
       {/* Target user */}
-      <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider mb-1.5">
+      <p
+        className="text-[13px] font-semibold uppercase tracking-wider mb-1.5"
+        style={{ color: "var(--accent)" }}
+      >
         For: {truncate(idea.target_user, 45)}
       </p>
 
       {/* Description */}
-      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed flex-1 mb-4">
+      <p
+        className="text-sm leading-relaxed flex-1 mb-4"
+        style={{ color: "var(--text-secondary)" }}
+      >
         {truncate(idea.description, 130)}
       </p>
 
       {/* Bottom row */}
       <div className="flex items-center gap-1.5 flex-wrap">
-        {idea.stage && STAGE_META[idea.stage] && (() => {
-          const s = STAGE_META[idea.stage!]!;
-          return (
-            <span
-              className={`text-[10px] font-bold px-2 py-0.5 ${s.color}`}
-              style={{ background: s.bg, border: `1px solid ${s.border}` }}
-            >
-              {s.label}
-            </span>
-          );
-        })()}
+        {stageMeta && (
+          <span
+            className="text-[12px] font-bold px-2 py-0.5"
+            style={{ color: stageMeta.fg, background: stageMeta.bg, border: `1px solid ${stageMeta.border}` }}
+          >
+            {stageMeta.label}
+          </span>
+        )}
         {trendPill && (
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${trendPill}`}>
+          <span
+            className="text-[12px] font-bold px-2 py-0.5 rounded-full"
+            style={{ color: trendPill.fg, background: trendPill.bg, border: `1px solid ${trendPill.border}` }}
+          >
             {report!.trend_direction}
           </span>
         )}
         {satPill && (
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${satPill}`}>
+          <span
+            className="text-[12px] font-bold px-2 py-0.5 rounded-full"
+            style={{ color: satPill.fg, background: satPill.bg, border: `1px solid ${satPill.border}` }}
+          >
             {report!.saturation_level} sat.
           </span>
         )}
-        <span className="ml-auto text-[11px] text-gray-500 flex items-center gap-0.5">
+        <span
+          className="ml-auto text-[13px] flex items-center gap-0.5"
+          style={{ color: "var(--text-tertiary)" }}
+        >
           View details <ArrowRight className="w-3 h-3" />
         </span>
       </div>
