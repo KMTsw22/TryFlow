@@ -110,13 +110,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { error: delErr } = await supabase
+    // .select() forces the query to return affected rows so we can detect
+    // RLS-silent failures (no DELETE policy → 0 rows, no error).
+    const { data: deleted, error: delErr } = await supabase
       .from("idea_submissions")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .select("id");
 
     if (delErr) {
       console.error("DELETE /api/ideas/[id]", delErr);
+      return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    }
+    if (!deleted || deleted.length === 0) {
+      console.error("DELETE /api/ideas/[id] — 0 rows affected (likely missing RLS DELETE policy)");
       return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
     }
 
