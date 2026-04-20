@@ -23,6 +23,7 @@ export function TimeRangeToggle({ value, onChange, className }: Props) {
       aria-label="Time range"
       className={cn("inline-flex items-center gap-5", className)}
     >
+    
       {OPTIONS.map((opt) => {
         const active = opt.value === value;
         return (
