@@ -6,6 +6,7 @@ import { ArrowRight, TrendingUp, Minus, ChevronDown, Sparkles, BarChart3 } from 
 import { ParticleBackground } from "@/components/ui/ParticleBackground";
 import { IdeaBubbles } from "@/components/ui/IdeaBubbles";
 import { ScrollSeeds } from "@/components/ui/ScrollSeeds";
+import { Brand } from "@/components/layout/Brand";
 
 // ── Hooks ──────────────────────────────────────────────────────────────────
 function useScrolled(threshold = 12) {
@@ -518,11 +519,7 @@ export default function HomePage() {
         boxShadow: scrolled ? "0 1px 20px rgba(0,0,0,0.06)" : "none",
       }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-[60px]">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" className="w-7 h-7 " alt="Try.Wepp" />
-            <span className="font-bold text-sm tracking-tight transition-colors duration-300"
-              style={{ color: scrolled ? "#0B1026" : "white" }}>Try.Wepp</span>
-          </Link>
+          <Brand size="md" color={scrolled ? "#0B1026" : "white"} />
           <div className="flex items-center gap-2">
             <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors duration-300"
               style={{ color: scrolled ? "#6b7280" : "rgba(255,255,255,0.7)" }}>
@@ -1064,10 +1061,7 @@ export default function HomePage() {
       {/* ── Footer ── */}
       <footer className="py-8 px-6" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-            <span className="text-sm font-bold text-white">Try.Wepp</span>
-          </Link>
+          <Brand size="md" color="white" />
           <p className="text-xs text-white/30">© 2026 Try.Wepp · Anonymous Founder Idea Signals</p>
         </div>
       </footer>

@@ -12,23 +12,36 @@ interface Props {
   className?: string;
 }
 
-const CONFIG: Record<TrendDirection, { icon: typeof TrendingUp; color: string }> = {
-  Rising:    { icon: TrendingUp,   color: "text-emerald-600 dark:text-emerald-400" },
-  Stable:    { icon: Minus,        color: "text-amber-600 dark:text-amber-400" },
-  Declining: { icon: TrendingDown, color: "text-red-600 dark:text-red-400" },
+// Text stays neutral. The direction icon carries a subtle tone so the trend
+// still reads at a glance without flooding dense tables with color.
+const ICON_COLOR: Record<TrendDirection, string> = {
+  Rising: "var(--signal-success)",
+  Stable: "var(--text-tertiary)",
+  Declining: "var(--signal-danger)",
+};
+
+const ICON_MAP: Record<TrendDirection, typeof TrendingUp> = {
+  Rising: TrendingUp,
+  Stable: Minus,
+  Declining: TrendingDown,
 };
 
 export function TrendLabel({ direction, size = "sm", delta, className }: Props) {
-  const { icon: Icon, color } = CONFIG[direction];
+  const Icon = ICON_MAP[direction];
   const textSize = size === "md" ? "text-sm" : "text-xs";
   const iconSize = size === "md" ? "w-4 h-4" : "w-3.5 h-3.5";
 
   return (
-    <span className={cn("inline-flex items-center gap-1 font-semibold", textSize, color, className)}>
-      <Icon className={iconSize} />
+    <span
+      className={cn("inline-flex items-center gap-1.5 font-semibold", textSize, className)}
+      style={{ color: "var(--text-secondary)" }}
+    >
+      <Icon className={iconSize} style={{ color: ICON_COLOR[direction] }} />
       <span>{direction}</span>
       {delta && (
-        <span className="font-mono tabular-nums ml-0.5">{delta}</span>
+        <span className="font-mono tabular-nums ml-0.5" style={{ color: "var(--text-tertiary)" }}>
+          {delta}
+        </span>
       )}
     </span>
   );

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Shield } from "lucide-react";
 import { PricingCard } from "@/components/pricing/PricingCard";
+import { Brand } from "@/components/layout/Brand";
 
 const PLANS = [
   {
@@ -91,10 +92,7 @@ export default async function PricingPage() {
           backdropFilter: "blur(12px)",
         }}
       >
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>Try.Wepp</span>
-        </Link>
+        <Brand size="md" />
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
             <Link

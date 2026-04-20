@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   RadarChart,
   Radar,
@@ -10,10 +10,10 @@ import {
 } from "recharts";
 import { ArrowRight } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAnalysis } from "./AnalysisContext";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Props {
-  submissionId: string;
   fallbackScore: number;
   fallbackSummary: string;
   trendDirection: string;
@@ -97,18 +97,11 @@ function getVerdict(
   return { label: "Weak signal — explore adjacent angles", tone: "danger" };
 }
 
-const TONE_HEX = {
-  success: "var(--signal-success)",
-  warning: "var(--signal-warning)",
-  danger: "var(--signal-danger)",
-};
-
 const SERIF = "'Playfair Display', serif";
 const DISPLAY = "'Oswald', sans-serif";
 
 // ── Component ──────────────────────────────────────────────────────────────
 export function IdeaHero({
-  submissionId,
   fallbackScore,
   fallbackSummary,
   trendDirection,
@@ -116,6 +109,7 @@ export function IdeaHero({
   actionAnchor = "next-actions",
 }: Props) {
   const { isDark } = useTheme();
+<<<<<<< Updated upstream
   const [report, setReport] = useState<ApiReport | null>(null);
 
   useEffect(() => {
@@ -149,11 +143,28 @@ export function IdeaHero({
       window.removeEventListener("tryflow:analysis_complete", onComplete);
     };
   }, [submissionId]);
+=======
+  const { report, status } = useAnalysis();
+  const isPending = status === "pending";
+>>>>>>> Stashed changes
 
   const score = report?.viability_score ?? fallbackScore;
   const summary = report?.summary ?? fallbackSummary;
   const verdict = getVerdict(score, trendDirection, saturationLevel);
-  const toneHex = TONE_HEX[verdict.tone];
+  // The big numeric score follows the project-wide threshold convention so
+  // the same score displays the same color everywhere (dashboard cards,
+  // detail hero, deep-analysis ring, compare, etc).
+  //   ≥70 → success, ≥50 → warning, <50 → danger
+  const scoreHex =
+    score >= 70
+      ? "var(--signal-success)"
+      : score >= 50
+      ? "var(--signal-warning)"
+      : "var(--signal-danger)";
+  // Verdict label (italic quote) keeps its contextual phrasing — a 49 in a
+  // low-saturation rising market reads differently than a 49 in a crowded
+  // declining market — but the score color itself stays consistent with the
+  // rest of the app.
 
   const { strongest, weakest, radarData, maxScore } = useMemo(() => {
     if (!report?.analysis) {
@@ -211,49 +222,98 @@ export function IdeaHero({
 
       {/* Top grid — Score+verdict (left) | Radar (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-x-12 gap-y-10 items-center mb-8">
-        {/* Left — score + verdict + summary */}
+        {/* Left — score + verdict + summary (fully skeletonized while pending
+            so the heuristic placeholder never competes with the final AI result) */}
         <div className="min-w-0">
-          <div className="flex items-baseline gap-3 mb-6">
-            <span
-              className="leading-[0.82] tabular-nums"
-              style={{
-                fontFamily: SERIF,
-                fontWeight: 900,
-                fontSize: "clamp(6rem, 11vw, 9rem)",
-                letterSpacing: "-0.05em",
-                color: toneHex,
-              }}
-            >
-              {score}
-            </span>
-            <span
-              className="pb-2 text-sm font-medium tracking-[0.3em] uppercase"
-              style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-            >
-              / 100
-            </span>
-          </div>
+          {isPending ? (
+            <>
+              <div className="flex items-baseline gap-3 mb-6">
+                <span
+                  className="block rounded-md animate-pulse"
+                  style={{
+                    background: "var(--t-border-subtle)",
+                    width: "clamp(9rem, 16vw, 14rem)",
+                    height: "clamp(5rem, 9vw, 7.5rem)",
+                  }}
+                  aria-label="Score loading"
+                />
+                <span
+                  className="pb-2 text-sm font-medium tracking-[0.3em] uppercase"
+                  style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)", opacity: 0.6 }}
+                >
+                  / 100
+                </span>
+              </div>
+              <div className="space-y-3 mb-5">
+                <span
+                  className="block h-6 rounded-sm animate-pulse"
+                  style={{ background: "var(--t-border-subtle)", width: "72%" }}
+                />
+                <span
+                  className="block h-6 rounded-sm animate-pulse"
+                  style={{ background: "var(--t-border-subtle)", width: "48%" }}
+                />
+              </div>
+              <div className="space-y-2">
+                <span
+                  className="block h-3 rounded-sm animate-pulse"
+                  style={{ background: "var(--t-border-subtle)", width: "96%" }}
+                />
+                <span
+                  className="block h-3 rounded-sm animate-pulse"
+                  style={{ background: "var(--t-border-subtle)", width: "88%" }}
+                />
+                <span
+                  className="block h-3 rounded-sm animate-pulse"
+                  style={{ background: "var(--t-border-subtle)", width: "64%" }}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-3 mb-6">
+                <span
+                  className="leading-[0.82] tabular-nums"
+                  style={{
+                    fontFamily: SERIF,
+                    fontWeight: 900,
+                    fontSize: "clamp(6rem, 11vw, 9rem)",
+                    letterSpacing: "-0.05em",
+                    color: scoreHex,
+                  }}
+                >
+                  {score}
+                </span>
+                <span
+                  className="pb-2 text-sm font-medium tracking-[0.3em] uppercase"
+                  style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+                >
+                  / 100
+                </span>
+              </div>
 
-          <p
-            className="leading-[1.15] mb-5"
-            style={{
-              fontFamily: SERIF,
-              fontStyle: "italic",
-              fontWeight: 400,
-              fontSize: "clamp(1.35rem, 2.4vw, 2rem)",
-              letterSpacing: "-0.01em",
-              color: "var(--text-primary)",
-            }}
-          >
-            &ldquo;{verdict.label}.&rdquo;
-          </p>
+              <p
+                className="leading-[1.15] mb-5"
+                style={{
+                  fontFamily: SERIF,
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  fontSize: "clamp(1.35rem, 2.4vw, 2rem)",
+                  letterSpacing: "-0.01em",
+                  color: "var(--text-primary)",
+                }}
+              >
+                &ldquo;{verdict.label}.&rdquo;
+              </p>
 
-          <p
-            className="text-[14.5px] leading-[1.75]"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            {summary}
-          </p>
+              <p
+                className="text-[14.5px] leading-[1.75]"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {summary}
+              </p>
+            </>
+          )}
         </div>
 
         {/* Right — radar */}
@@ -278,8 +338,8 @@ export function IdeaHero({
                 />
                 <Radar
                   dataKey="value"
-                  stroke={toneHex}
-                  fill={toneHex}
+                  stroke={scoreHex}
+                  fill={scoreHex}
                   fillOpacity={0.14}
                   strokeWidth={1.25}
                   isAnimationActive={false}
@@ -295,8 +355,8 @@ export function IdeaHero({
         className="border-t pt-5"
         style={{ borderColor: "var(--t-border-subtle)" }}
       >
-        <DimensionRow label="Strongest" agent={strongest} loading={!report} max={maxScore} />
-        <DimensionRow label="Weakest" agent={weakest} loading={!report} max={maxScore} />
+        <DimensionRow label="Strongest" agent={strongest} loading={isPending} max={maxScore} />
+        <DimensionRow label="Weakest" agent={weakest} loading={isPending} max={maxScore} />
 
         {/* CTA — inline with rows, right-aligned, no extra mt */}
         <div className="flex justify-end pt-4">
@@ -349,19 +409,27 @@ function DimensionRow({
       >
         {label}
       </span>
-      <span
-        className="shrink-0 truncate"
-        style={{
-          fontFamily: SERIF,
-          fontWeight: 700,
-          fontSize: "1.15rem",
-          letterSpacing: "-0.01em",
-          color: loading || !agent ? "var(--text-tertiary)" : "var(--text-primary)",
-          minWidth: 140,
-        }}
-      >
-        {loading ? "Analysing…" : agent?.label ?? "—"}
-      </span>
+      {loading ? (
+        <span
+          className="shrink-0 h-3 rounded-sm animate-pulse"
+          style={{ background: "var(--t-border-subtle)", width: 120, minWidth: 120 }}
+          aria-label={`${label} loading`}
+        />
+      ) : (
+        <span
+          className="shrink-0 truncate"
+          style={{
+            fontFamily: SERIF,
+            fontWeight: 700,
+            fontSize: "1.15rem",
+            letterSpacing: "-0.01em",
+            color: agent ? "var(--text-primary)" : "var(--text-tertiary)",
+            minWidth: 140,
+          }}
+        >
+          {agent?.label ?? "—"}
+        </span>
+      )}
 
       {/* Bar */}
       <div
@@ -384,14 +452,16 @@ function DimensionRow({
             color: scoreHex,
           }}
         >
-          {agent?.score ?? "—"}
+          {agent?.score ?? (loading ? "" : "—")}
         </span>
-        <span
-          className="text-[14px] font-medium tracking-[0.2em] uppercase"
-          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-        >
-          /100
-        </span>
+        {!loading && (
+          <span
+            className="text-[14px] font-medium tracking-[0.2em] uppercase"
+            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+          >
+            /100
+          </span>
+        )}
       </span>
     </div>
   );

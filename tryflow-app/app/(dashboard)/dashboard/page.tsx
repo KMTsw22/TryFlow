@@ -34,15 +34,19 @@ function getReport(idea: Idea): Report | null {
   return idea.insight_reports;
 }
 
-function deriveStatus(idea: Idea): IdeaStatus {
+function deriveStatus(idea: Idea, hasAi: boolean): IdeaStatus {
   const hasReport = !!getReport(idea);
   if (!hasReport) return "analyzing";
+  // Any idea with insight_reports but no AI yet is still "analyzing" (background job pending)
+  if (!hasAi && !idea.is_private) return "analyzing";
   if (idea.is_private) return "private";
   return "live";
 }
 
-function toGridItem(idea: Idea): IdeaGridItem {
+function toGridItem(idea: Idea, aiScore: number | null): IdeaGridItem {
   const r = getReport(idea);
+  // AI score wins when available; otherwise fall back to heuristic insight score.
+  const score = aiScore ?? r?.viability_score ?? null;
   return {
     id: idea.id,
     category: idea.category,
@@ -50,10 +54,10 @@ function toGridItem(idea: Idea): IdeaGridItem {
     description: idea.description,
     created_at: idea.created_at,
     stage: idea.stage,
-    viability_score: r?.viability_score ?? null,
+    viability_score: score,
     trend_direction: (r?.trend_direction as TrendDirection | undefined) ?? null,
     saturation_level: r?.saturation_level ?? null,
-    status: deriveStatus(idea),
+    status: deriveStatus(idea, aiScore !== null),
   };
 }
 
@@ -61,24 +65,38 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: rawIdeas } = await supabase
-    .from("idea_submissions")
-    .select(`
-      id, category, target_user, description, created_at, stage, is_private,
-      insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
-    `)
-    .eq("user_id", user!.id)
-    .order("created_at", { ascending: false });
+  // Fetch ideas with heuristic + AI reports in parallel.
+  const [{ data: rawIdeas }, { data: rawAi }] = await Promise.all([
+    supabase
+      .from("idea_submissions")
+      .select(`
+        id, category, target_user, description, created_at, stage, is_private,
+        insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
+      `)
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("analysis_reports")
+      .select("submission_id, viability_score"),
+  ]);
 
   const ideas = (rawIdeas ?? []) as unknown as Idea[];
   const hasIdeas = ideas.length > 0;
+
+  // Map submission_id → AI viability_score for O(1) lookup.
+  const aiScoreBySubmission = new Map<string, number>();
+  for (const row of rawAi ?? []) {
+    if (row.submission_id && typeof row.viability_score === "number") {
+      aiScoreBySubmission.set(row.submission_id, row.viability_score);
+    }
+  }
 
   const hasReport = ideas.some((i) => !!getReport(i));
   const firstReportIdeaId = ideas.find((i) => !!getReport(i))?.id
     ?? ideas[0]?.id
     ?? null;
 
-  const items = ideas.map(toGridItem);
+  const items = ideas.map((i) => toGridItem(i, aiScoreBySubmission.get(i.id) ?? null));
   const topScoringId = items
     .filter((r) => r.viability_score !== null)
     .reduce<IdeaGridItem | null>(

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useAnalysis } from "@/components/ideas/AnalysisContext";
 import {
   Sparkles,
   Loader2,
@@ -699,13 +700,26 @@ export default function DeepAnalysis({
   hideNextSteps = false,
   hideInsightsBlock = false,
 }: DeepAnalysisProps) {
+<<<<<<< Updated upstream
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+=======
+  // Pulls report state from the shared AnalysisContext. This means:
+  //   - One source of truth + one polling loop for the whole page
+  //   - No duplicate /api/analysis fetches across components
+  //   - Hero, NextSteps, Working/Breaking, and DeepAnalysis all transition
+  //     from skeleton to real content at exactly the same moment.
+  // When status === "failed" the AnalysisProgressStrip at the top of the
+  // idea page carries the retry CTA — this component renders nothing.
+  const ctx = useAnalysis();
+  const report = (ctx.report ?? null) as AnalysisReport | null;
+  const loading = ctx.status === "pending";
+>>>>>>> Stashed changes
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [fullAgent, setFullAgent] = useState<string | null>(null);
-  const [checked, setChecked] = useState(false);
 
+<<<<<<< Updated upstream
   // SSE progression state
   const [hardGate, setHardGate] = useState<StepState>("pending");
   const [llmGate, setLlmGate] = useState<StepState>("pending");
@@ -879,9 +893,16 @@ export default function DeepAnalysis({
   if (!checked) return null;
 
   // ── Loading ───────────────────────────────────────────────────────────────────
+=======
+  // ── Loading — inline editorial skeleton matching the final agent-grid layout.
+  // Replaces the old centered spinner + step-list block so the whole page has
+  // one consistent loading language. The top-of-page AnalysisProgressStrip is
+  // the single status signal.
+>>>>>>> Stashed changes
   if (loading) {
     const doneAgents = Object.values(agentProg).filter((s) => s.state === "done").length;
     return (
+<<<<<<< Updated upstream
       <div
         className="border p-8"
         style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}
@@ -975,6 +996,64 @@ export default function DeepAnalysis({
           </div>
         )}
       </div>
+=======
+      <section className="mb-14" aria-label="Loading AI deep analysis">
+        <div className="flex items-center gap-4 mb-8">
+          <span
+            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            style={{
+              fontFamily: "'Oswald', sans-serif",
+              color: "var(--text-tertiary)",
+              opacity: 0.7,
+            }}
+          >
+            The Agents
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          <span
+            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+            style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+          >
+            8 dimensions
+          </span>
+        </div>
+        <ul className="border-t" style={{ borderColor: "var(--t-border-subtle)" }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <li
+              key={i}
+              className="flex items-center gap-5 py-4 border-b"
+              style={{ borderColor: "var(--t-border-subtle)" }}
+            >
+              <span
+                className="shrink-0 tabular-nums w-7 text-right"
+                style={{
+                  fontFamily: "'Oswald', sans-serif",
+                  fontWeight: 500,
+                  fontSize: "0.85rem",
+                  letterSpacing: "0.15em",
+                  color: "var(--text-tertiary)",
+                  opacity: 0.5,
+                }}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span
+                className="shrink-0 h-3 rounded-sm animate-pulse"
+                style={{ background: "var(--t-border-subtle)", width: 120 }}
+              />
+              <span
+                className="flex-1 h-[2px]"
+                style={{ background: "var(--t-border-subtle)" }}
+              />
+              <span
+                className="shrink-0 h-3 rounded-sm animate-pulse tabular-nums"
+                style={{ background: "var(--t-border-subtle)", width: 40 }}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+>>>>>>> Stashed changes
     );
   }
 
@@ -1174,6 +1253,7 @@ export default function DeepAnalysis({
     );
   }
 
+<<<<<<< Updated upstream
   // ── CTA (no analysis yet) ─────────────────────────────────────────────────────
   return (
     <>
@@ -1234,4 +1314,11 @@ export default function DeepAnalysis({
       </div>
     </>
   );
+=======
+  // ── No analysis yet — the AnalysisProgressStrip at top of page already
+  // carries the retry CTA and the "what happened" explanation, so here we
+  // render nothing. Keeps the idea detail page from showing two competing
+  // "run analysis" blocks.
+  return null;
+>>>>>>> Stashed changes
 }

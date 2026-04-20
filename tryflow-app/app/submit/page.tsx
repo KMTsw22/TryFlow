@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight, Lock, EyeOff, Globe, Sparkles, RefreshCw, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { Brand } from "@/components/layout/Brand";
 
 const IDEA_STAGES = [
   { value: "idea",           label: "Just an idea",     sub: "Concept only",             color: "var(--text-tertiary)" },
@@ -169,7 +170,11 @@ export default function SubmitPage() {
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error || "Something went wrong"); setLoading(false); return; }
-      router.push(`/ideas/${json.submissionId}`);
+      // Full navigation so we escape the Next.js router cache. Using router.push
+      // has shown intermittent cases where a previously-viewed idea page is
+      // served instead of the freshly-created submissionId.
+      window.location.assign(`/ideas/${json.submissionId}`);
+      return;
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -183,12 +188,7 @@ export default function SubmitPage() {
         className="flex items-center justify-between px-6 h-[60px] border-b"
         style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)" }}
       >
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" className="w-7 h-7" alt="Try.Wepp" />
-          <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
-            Try.Wepp
-          </span>
-        </Link>
+        <Brand size="md" />
         <div
           className="inline-flex items-center gap-1.5 text-xs font-medium"
           style={{ color: "var(--text-tertiary)" }}

@@ -1,16 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
-interface Props {
-  submissionId: string;
-}
-
-interface ApiReport {
-  cross_agent_insights: string[];
-  opportunities: string[];
-  risks: string[];
-}
+import { useMemo } from "react";
+import { useAnalysis } from "./AnalysisContext";
 
 type Signal = { text: string; source: "opportunity" | "cross" | "risk" };
 
@@ -24,6 +15,7 @@ const DISPLAY = "'Oswald', sans-serif";
  * Rendered as two editorial columns with kicker rules and typographic list rows,
  * no background tints or heavy borders.
  */
+<<<<<<< Updated upstream
 export function WorkingBreakingBoard({ submissionId }: Props) {
   const [report, setReport] = useState<ApiReport | null>(null);
 
@@ -60,6 +52,10 @@ export function WorkingBreakingBoard({ submissionId }: Props) {
       window.removeEventListener("tryflow:analysis_complete", onComplete);
     };
   }, [submissionId]);
+=======
+export function WorkingBreakingBoard() {
+  const { report, status } = useAnalysis();
+>>>>>>> Stashed changes
 
   const { working, breaking } = useMemo(() => {
     if (!report) return { working: [] as Signal[], breaking: [] as Signal[] };
@@ -77,26 +73,56 @@ export function WorkingBreakingBoard({ submissionId }: Props) {
     return { working, breaking };
   }, [report]);
 
-  if (!report) {
+  if (status === "pending") {
     return (
       <section
-        aria-label="What's working and what's breaking"
+        aria-label="Loading insights"
         className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 mb-14"
       >
-        {[0, 1].map((i) => (
-          <div key={i}>
+        {(["working", "breaking"] as const).map((kind) => (
+          <div key={kind}>
             <div className="flex items-center gap-4 mb-6">
               <span
-                className="h-3 w-28 animate-pulse"
-                style={{ background: "var(--t-border-subtle)" }}
-              />
+                className="text-[15px] font-medium tracking-[0.35em] uppercase"
+                style={{
+                  fontFamily: DISPLAY,
+                  color: kind === "working" ? "var(--signal-success)" : "var(--signal-danger)",
+                  opacity: 0.5,
+                }}
+              >
+                What&apos;s {kind === "working" ? "Working" : "Breaking"}
+              </span>
               <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
             </div>
-            <div className="space-y-3">
+            <ul className="space-y-4">
               {[0, 1, 2].map((j) => (
-                <div key={j} className="h-4 animate-pulse" style={{ background: "var(--t-border-subtle)" }} />
+                <li key={j} className="flex items-start gap-4">
+                  <span
+                    className="shrink-0 font-mono text-base font-bold w-3 text-center"
+                    style={{
+                      color: kind === "working" ? "var(--signal-success)" : "var(--signal-danger)",
+                      opacity: 0.4,
+                    }}
+                    aria-hidden
+                  >
+                    {kind === "working" ? "+" : "−"}
+                  </span>
+                  <div className="flex-1 space-y-2">
+                    <span
+                      className="block h-3 rounded-sm animate-pulse"
+                      style={{
+                        background: "var(--t-border-subtle)",
+                        width: j === 0 ? "92%" : j === 1 ? "78%" : "84%",
+                      }}
+                    />
+                    <span
+                      className="block h-3 rounded-sm animate-pulse"
+                      style={{ background: "var(--t-border-subtle)", width: j === 2 ? "56%" : "64%" }}
+                    />
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         ))}
       </section>

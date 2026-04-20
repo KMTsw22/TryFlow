@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Lock } from "lucide-react";
 import { MarketBoard, type CategoryRawData } from "@/components/market/MarketBoard";
 import { LiveFeed } from "@/components/market/LiveFeed";
+import { TopBar } from "@/components/layout/TopBar";
 
 const SERIF = "'Playfair Display', serif";
 const DISPLAY = "'Oswald', sans-serif";
@@ -86,48 +87,10 @@ export default async function ExplorePage() {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
-      {/* Editorial navbar */}
-      <nav
-        className="border-b px-6 h-[64px] flex items-center justify-between"
-        style={{
-          background: "var(--nav-bg)",
-          borderColor: "var(--t-border-subtle)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        <Link href="/" className="flex items-center gap-2.5">
-          <img src="/logo.png" className="w-6 h-6" alt="Try.Wepp" />
-          <span
-            style={{
-              fontFamily: SERIF,
-              fontWeight: 900,
-              fontSize: "1rem",
-              letterSpacing: "-0.02em",
-              color: "var(--text-primary)",
-            }}
-          >
-            Try.Wepp
-          </span>
-        </Link>
-        <div className="flex items-center gap-6">
-          <Link
-            href="/dashboard"
-            className="text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
-            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/submit"
-            className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
-            style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
-          >
-            Submit idea
-            <span aria-hidden>→</span>
-          </Link>
-        </div>
-      </nav>
-
+      <TopBar
+        userName={user.user_metadata?.full_name ?? user.email ?? "User"}
+        userImage={user.user_metadata?.avatar_url}
+      />
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* Editorial header */}
         <div className="flex items-center gap-4 mb-6">

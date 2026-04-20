@@ -132,6 +132,104 @@ async function generateAiDescription(
   }
 }
 
+// ── Gibberish / spam gatekeeper ───────────────────────────────────────────────
+
+/**
+ * Fast heuristic check. Rejects obvious keyboard mashing without calling GPT.
+ * Permissive — only flags text that's clearly not a real idea:
+ *   - low ratio of unique characters (e.g. "asdfasdfasdf")
+ *   - almost no whitespace (no word boundaries)
+ *   - dominated by punctuation / symbol / jamo runs
+ *
+ * Returns true if the text passes the cheap heuristic (i.e. *might* be valid).
+ * The real judgement happens in the GPT step.
+ */
+function passesHeuristic(text: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length < 30) return false;
+
+  // At least 3 whitespace-separated tokens — real ideas have phrases.
+  const tokens = trimmed.split(/\s+/).filter((t) => t.length > 0);
+  if (tokens.length < 3) return false;
+
+  // Character diversity — randomly mashed jamo has low diversity relative to length.
+  const uniqueChars = new Set(trimmed.toLowerCase().replace(/\s/g, ""));
+  const nonSpaceLen = trimmed.replace(/\s/g, "").length;
+  const diversity = uniqueChars.size / Math.max(1, nonSpaceLen);
+  if (nonSpaceLen >= 40 && diversity < 0.12) return false;
+
+  // Reject if >30% of non-whitespace characters are punctuation/symbols.
+  const symbolMatches = trimmed.match(/[!@#$%^&*()_+\-=[\]{};:'"\\|,.<>/?~`;ㅣㅡㅏㅓㅗㅜㅑㅕㅛㅠ]/g);
+  const symbolRatio = (symbolMatches?.length ?? 0) / Math.max(1, nonSpaceLen);
+  if (symbolRatio > 0.3) return false;
+
+  return true;
+}
+
+/**
+ * GPT-powered gatekeeper. Uses gpt-4o-mini (fast/cheap) to decide if the
+ * submission is a good-faith startup idea vs. gibberish/spam/test text.
+ *
+ * Accepts: short ideas, broken English, non-English, rough sketches.
+ * Rejects: random keyboard mashing, obvious jokes, test submissions like "asdf".
+ *
+ * On API error, returns { valid: true } — don't block legitimate users because
+ * OpenAI is flaky.
+ */
+async function validateIdeaWithAI(
+  category: string,
+  targetUser: string,
+  description: string
+): Promise<{ valid: boolean; reason?: string }> {
+  if (!process.env.OPENAI_API_KEY) return { valid: true };
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 120,
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: `You are a gatekeeper for a startup idea submission platform.
+Decide if the submission below is a GOOD-FAITH attempt to describe a product, service, or startup idea.
+
+ACCEPT (valid=true):
+- Ideas in any language, with typos, rough sketches, or incomplete thoughts
+- Short but coherent descriptions
+- Unusual or niche ideas
+- Partial phrases if they convey intent
+
+REJECT (valid=false):
+- Random keyboard mashing (e.g. "asdfasdf", "ㅁㄴㅇㄹ", "qwerty123")
+- Obvious jokes or troll submissions
+- Test strings ("test", "hello", "lorem ipsum")
+- Nonsense that no human could interpret as an idea
+- Empty content padded with filler
+
+When valid=false, provide a "reason" field with a short, friendly English sentence explaining what was wrong so the user can fix it.
+
+Return ONLY strict JSON: {"valid": boolean, "reason"?: string}`,
+        },
+        {
+          role: "user",
+          content: `Category: ${category}\nTarget User: ${targetUser}\nDescription: ${description}`,
+        },
+      ],
+    });
+
+    const text = res.choices[0]?.message?.content?.trim() ?? "";
+    const parsed = JSON.parse(text) as { valid?: boolean; reason?: string };
+    if (typeof parsed.valid !== "boolean") return { valid: true };
+    return { valid: parsed.valid, reason: parsed.reason };
+  } catch (err) {
+    console.error("[ideas] AI validation failed, allowing through:", err);
+    return { valid: true };
+  }
+}
+
 // ── POST /api/ideas ───────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -146,6 +244,31 @@ export async function POST(req: NextRequest) {
     }
     if (!CATEGORIES.includes(category as typeof CATEGORIES[number])) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+
+    // 2-stage gatekeeper: cheap heuristic first, then GPT for borderline cases.
+    if (!passesHeuristic(description)) {
+      return NextResponse.json(
+        {
+          error:
+            "This doesn't look like an idea description. Try a sentence or two in plain language describing what you're building.",
+          code: "invalid_idea",
+        },
+        { status: 400 }
+      );
+    }
+
+    const gate = await validateIdeaWithAI(category, target_user, description);
+    if (!gate.valid) {
+      return NextResponse.json(
+        {
+          error:
+            gate.reason ??
+            "We couldn't interpret this as a real idea. Try describing it in a clearer sentence.",
+          code: "invalid_idea",
+        },
+        { status: 400 }
+      );
     }
 
     const supabase = await createClient();
@@ -195,6 +318,18 @@ export async function POST(req: NextRequest) {
       ai_description: aiDescription,
     });
     if (repErr) throw repErr;
+
+    // Fire-and-forget: kick off the 8-agent AI deep analysis in the background.
+    // The client redirects to the detail page immediately and polls for completion.
+    // We intentionally don't await so the submit flow stays snappy.
+    const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
+    if (origin) {
+      fetch(`${origin}/api/analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionId }),
+      }).catch((err) => console.error("[ideas] background analysis trigger failed:", err));
+    }
 
     return NextResponse.json({ submissionId, report: { ...insight, aiDescription } }, { status: 201 });
   } catch (err) {

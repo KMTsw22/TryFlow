@@ -185,22 +185,11 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
       ) : (
         <ul>
           {sorted.map((r) => {
-            const sparkTone: "positive" | "danger" | "muted" =
-              r.direction === "Rising"
-                ? "positive"
-                : r.direction === "Declining"
-                ? "danger"
-                : "muted";
-
+            // Sparkline intentionally uses a muted neutral tone — trend is already
+            // communicated by the TrendLabel's directional icon in the next column.
+            // Coloring the sparkline too turns the whole table into a sea of green.
             const avgAvailable = r.avgScore !== null && r.scoreSample > 0;
             const avgNoisy = avgAvailable && r.scoreSample < 2;
-            const avgHex = !avgAvailable
-              ? null
-              : r.avgScore! >= 70
-              ? "var(--signal-success)"
-              : r.avgScore! >= 50
-              ? "var(--signal-warning)"
-              : "var(--signal-danger)";
 
             return (
               <li
@@ -276,7 +265,7 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
                             fontWeight: 900,
                             fontSize: "1.15rem",
                             letterSpacing: "-0.02em",
-                            color: avgHex!,
+                            color: "var(--text-primary)",
                           }}
                         >
                           {r.avgScore}
@@ -307,7 +296,7 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
                   <div className="min-w-0">
                     <Sparkline
                       points={r.sparkline}
-                      tone={sparkTone}
+                      tone="muted"
                       width={100}
                       height={22}
                       ariaLabel={`Submission trend for ${r.category}`}

@@ -10,7 +10,15 @@ import { IdeaActionDock } from "@/components/ideas/IdeaActionDock";
 import { NextStepsCard } from "@/components/ideas/NextStepsCard";
 import { WorkingBreakingBoard } from "@/components/ideas/WorkingBreakingBoard";
 import { OwnerVisibilityCard } from "@/components/ideas/OwnerVisibilityCard";
+import { AnalysisProvider, type AnalysisReport } from "@/components/ideas/AnalysisContext";
+import { AnalysisProgressStrip } from "@/components/ideas/AnalysisProgressStrip";
+import { Brand } from "@/components/layout/Brand";
 import { getCategoryTheme, timeAgo } from "@/lib/categories";
+
+// Force fresh render on every request — we need the latest analysis_reports row
+// so the hero score doesn't flash from heuristic → AI on client-side refetch.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface Report {
   viability_score: number;
@@ -67,7 +75,7 @@ export default async function IdeaReportPage({
       .single(),
     supabase
       .from("analysis_reports")
-      .select("viability_score, summary")
+      .select("viability_score, summary, analysis, cross_agent_insights, opportunities, risks, next_steps")
       .eq("submission_id", id)
       .maybeSingle(),
   ]);
@@ -117,20 +125,7 @@ export default async function IdeaReportPage({
         backdropFilter: "blur(12px)",
       }}
     >
-      <Link href="/" className="flex items-center gap-2.5">
-        <img src="/logo.png" className="w-6 h-6" alt="Try.Wepp" />
-        <span
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontWeight: 900,
-            fontSize: "1rem",
-            letterSpacing: "-0.02em",
-            color: "var(--text-primary)",
-          }}
-        >
-          Try.Wepp
-        </span>
-      </Link>
+      <Brand size="sm" />
       <div className="flex items-center gap-6">
         <Link
           href="/dashboard"
@@ -166,9 +161,23 @@ export default async function IdeaReportPage({
     );
   }
 
+  const initialAnalysisReport: AnalysisReport | null = aiData
+    ? {
+        viability_score: aiData.viability_score,
+        summary: aiData.summary,
+        analysis: (aiData.analysis ?? {}) as AnalysisReport["analysis"],
+        cross_agent_insights: ((aiData as unknown) as { cross_agent_insights?: string[] }).cross_agent_insights ?? [],
+        opportunities: ((aiData as unknown) as { opportunities?: string[] }).opportunities ?? [],
+        risks: ((aiData as unknown) as { risks?: string[] }).risks ?? [],
+        next_steps: ((aiData as unknown) as { next_steps?: string[] }).next_steps ?? [],
+      }
+    : null;
+
   return (
+    <AnalysisProvider submissionId={idea.id} initialReport={initialAnalysisReport}>
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
       {Navbar}
+      <AnalysisProgressStrip submissionId={idea.id} />
 
       <div className="max-w-5xl mx-auto px-6 py-10">
         {/* Breadcrumb / back link */}
@@ -240,9 +249,10 @@ export default async function IdeaReportPage({
           {report.ai_description ?? idea.description}
         </p>
 
-        {/* Hero — 2-col verdict + score + strongest/weakest */}
+        {/* Hero — 2-col verdict + score + strongest/weakest. AI data flows
+            in via AnalysisProvider so the score renders correctly on first
+            paint (no heuristic → AI flash) and swaps in once polling lands. */}
         <IdeaHero
-          submissionId={idea.id}
           fallbackScore={report.viability_score}
           fallbackSummary={report.summary}
           trendDirection={report.trend_direction}
@@ -316,10 +326,10 @@ export default async function IdeaReportPage({
         </details>
 
         {/* Next Steps — hoisted above Analysis so action follows decision */}
-        {detailed && <NextStepsCard submissionId={idea.id} />}
+        {detailed && <NextStepsCard />}
 
         {/* What's working / What's breaking — unified insight view */}
-        {detailed && <WorkingBreakingBoard submissionId={idea.id} />}
+        {detailed && <WorkingBreakingBoard />}
 
         {/* Deep Analysis — hides OverallSignal/Next Steps/Insights (rendered above),
             limits agent grid to top-3 with collapse for the rest */}
@@ -399,9 +409,8 @@ export default async function IdeaReportPage({
           </div>
         </div>
 
-        {/* Silence unused-variable warnings without removing feature flags */}
-        <span className="hidden" data-ai-score={aiData?.viability_score} />
       </div>
     </div>
+    </AnalysisProvider>
   );
 }

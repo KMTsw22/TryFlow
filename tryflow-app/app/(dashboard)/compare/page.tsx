@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { ArrowRight, ArrowLeft, Search, Lock } from "lucide-react";
 import { getCategoryTheme } from "@/lib/categories";
+import { getDimensionByShortLabel } from "@/lib/dimensions";
 import {
   RadarChart,
   Radar,
@@ -145,6 +146,16 @@ function DualRadar({
   analysisA: Analysis | null;
   analysisB: Analysis | null;
 }) {
+  // Hover state for the dimension tooltip. We track which label is hovered
+  // and where to place the tooltip — the tick component reports its anchor
+  // position up to the container so the tooltip renders as a single HTML
+  // overlay (SVG-native tooltips are ugly; this keeps the editorial voice).
+  const [hovered, setHovered] = useState<{
+    subject: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
   const data = Object.keys(AGENT_LABELS).map((key) => ({
     subject: AGENT_LABELS[key],
     A: analysisA?.[key as keyof Analysis]?.score ?? 0,
@@ -219,8 +230,9 @@ function DualRadar({
         </div>
       </div>
 
-      {/* Radar — solid octagon grid, editorial feel */}
-      <div style={{ height: 460 }}>
+      {/* Radar — solid octagon grid, editorial feel. Wrapped in relative
+          container so the dimension tooltip can overlay it absolutely. */}
+      <div className="relative" style={{ height: 460 }}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={data} margin={{ top: 24, right: 80, bottom: 24, left: 80 }}>
             <PolarGrid
@@ -230,7 +242,11 @@ function DualRadar({
             <PolarAngleAxis
               dataKey="subject"
               tick={(tickProps) => (
-                <EditorialTick {...tickProps} data={data} />
+                <EditorialTick
+                  {...tickProps}
+                  data={data}
+                  onHover={setHovered}
+                />
               )}
               tickLine={false}
             />
@@ -256,8 +272,66 @@ function DualRadar({
             />
           </RadarChart>
         </ResponsiveContainer>
+
+        {/* Hover tooltip — explains what each dimension actually measures.
+            Positioned above the hovered label using the tick's reported
+            SVG anchor point. */}
+        {hovered && <DimensionTooltip subject={hovered.subject} x={hovered.x} y={hovered.y} />}
       </div>
     </section>
+  );
+}
+
+function DimensionTooltip({
+  subject,
+  x,
+  y,
+}: {
+  subject: string;
+  x: number;
+  y: number;
+}) {
+  const meta = getDimensionByShortLabel(subject);
+  if (!meta) return null;
+
+  return (
+    <div
+      role="tooltip"
+      className="absolute z-30 pointer-events-none"
+      style={{
+        left: x,
+        top: y,
+        transform: "translate(-50%, calc(-100% - 14px))",
+        maxWidth: 280,
+      }}
+    >
+      <div
+        className="px-4 py-3 text-left shadow-lg"
+        style={{
+          background: "var(--surface-3)",
+          border: "1px solid var(--t-border-bright)",
+        }}
+      >
+        <p
+          className="text-[12px] font-medium tracking-[0.3em] uppercase mb-1.5"
+          style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
+        >
+          {meta.full}
+        </p>
+        <p
+          className="text-[13px] leading-[1.6] mb-2"
+          style={{ color: "var(--text-primary)" }}
+        >
+          {meta.description}
+        </p>
+        <p
+          className="text-[12px] leading-[1.5] italic"
+          style={{ fontFamily: SERIF, color: "var(--text-tertiary)" }}
+        >
+          High score: {meta.highMeans}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -267,42 +341,59 @@ function EditorialTick(props: {
   payload?: { value: string };
   textAnchor?: "inherit" | "end" | "start" | "middle";
   data: { subject: string; A: number; B: number }[];
+  onHover?: (hover: { subject: string; x: number; y: number } | null) => void;
 }) {
-  const { x = 0, y = 0, payload, textAnchor = "middle", data } = props;
+  const { x = 0, y = 0, payload, textAnchor = "middle", data, onHover } = props;
   const entry = data.find((d) => d.subject === payload?.value);
+  const subject = payload?.value ?? "";
 
+  // Transparent hit-target rectangle behind the label so the entire glyph
+  // row (including the score tspans) is a comfortable hover zone.
   return (
-    <text
-      x={x}
-      y={y}
-      textAnchor={textAnchor}
-      fill="var(--text-secondary)"
-      fontSize={13}
-      fontWeight={500}
-      style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "0.04em" }}
+    <g
+      style={{ cursor: "help" }}
+      onMouseEnter={() => onHover?.({ subject, x, y })}
+      onMouseLeave={() => onHover?.(null)}
     >
-      {payload?.value}
-      <tspan
-        dx={8}
-        fill={ACCENT_A}
-        style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, letterSpacing: "0.1em" }}
+      <rect
+        x={x - 70}
+        y={y - 12}
+        width={140}
+        height={22}
+        fill="transparent"
+      />
+      <text
+        x={x}
+        y={y}
+        textAnchor={textAnchor}
+        fill="var(--text-secondary)"
+        fontSize={13}
+        fontWeight={500}
+        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "0.04em" }}
       >
-        {entry?.A ?? 0}
-      </tspan>
-      <tspan
-        dx={3}
-        fill="var(--text-tertiary)"
-      >
-        ·
-      </tspan>
-      <tspan
-        dx={3}
-        fill={ACCENT_B}
-        style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, letterSpacing: "0.1em" }}
-      >
-        {entry?.B ?? 0}
-      </tspan>
-    </text>
+        {subject}
+        <tspan
+          dx={8}
+          fill={ACCENT_A}
+          style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, letterSpacing: "0.1em" }}
+        >
+          {entry?.A ?? 0}
+        </tspan>
+        <tspan
+          dx={3}
+          fill="var(--text-tertiary)"
+        >
+          ·
+        </tspan>
+        <tspan
+          dx={3}
+          fill={ACCENT_B}
+          style={{ fontFamily: "'Oswald', sans-serif", fontWeight: 600, letterSpacing: "0.1em" }}
+        >
+          {entry?.B ?? 0}
+        </tspan>
+      </text>
+    </g>
   );
 }
 

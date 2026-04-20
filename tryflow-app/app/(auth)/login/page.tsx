@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import { Brand } from "@/components/layout/Brand";
 
 export default function LoginPage() {
   const handleGoogleLogin = async () => {
@@ -19,11 +20,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <Link href="/" className="flex items-center gap-2.5 mb-4">
-            <img src="/logo.png" className="w-11 h-11" alt="Try.Wepp" />
-          </Link>
-          <h1 className="text-2xl font-extrabold" style={{ color: "var(--text-primary)" }}>Try.Wepp</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--text-tertiary)" }}>Anonymous Founder Idea Signals</p>
+          <Brand size="lg" className="mb-2" />
+          <p className="text-sm mt-2" style={{ color: "var(--text-tertiary)" }}>Anonymous Founder Idea Signals</p>
         </div>
 
         <div className="border p-8" style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>

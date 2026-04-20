@@ -93,14 +93,24 @@ export function Sidebar({ isLoggedIn, plan }: Props) {
         className="flex items-center gap-2.5 px-3.5 py-4 shrink-0 h-[60px]"
         style={{ borderBottom: "1px solid var(--t-border)" }}
       >
-        <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-2.5">
+        <Link
+          href="/"
+          aria-label="Try.Wepp — go to home"
+          className="flex items-center gap-2.5"
+        >
           <img src="/logo.png" className="w-7 h-7 shrink-0" alt="Try.Wepp" />
           <span
             className={cn(
-              "font-bold text-sm whitespace-nowrap transition-all duration-150",
+              "whitespace-nowrap transition-all duration-150",
               expanded ? "opacity-100 delay-75" : "opacity-0"
             )}
-            style={{ color: "var(--text-primary)" }}
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontWeight: 900,
+              fontSize: "1rem",
+              letterSpacing: "-0.02em",
+              color: "var(--text-primary)",
+            }}
           >
             Try.Wepp
           </span>

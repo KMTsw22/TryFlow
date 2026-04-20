@@ -1,24 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-
-interface Props {
-  submissionId: string;
-  /** Hide the card until the analysis is loaded and has next_steps */
-  fallbackVisible?: boolean;
-}
+import { useAnalysis } from "./AnalysisContext";
 
 const SERIF = "'Playfair Display', serif";
 const DISPLAY = "'Oswald', sans-serif";
 
 /**
  * Editorial "This week's actions" — numbered rows separated by hairline rules.
- * Pulls next_steps from /api/analysis (cached on the server).
+ * Reads next_steps from shared AnalysisContext.
  */
-export function NextStepsCard({ submissionId }: Props) {
-  const [steps, setSteps] = useState<string[] | null>(null);
+export function NextStepsCard() {
+  const { report, status } = useAnalysis();
 
+<<<<<<< Updated upstream
   useEffect(() => {
     let cancelled = false;
     const fetchSteps = async () => {
@@ -50,25 +45,51 @@ export function NextStepsCard({ submissionId }: Props) {
   }, [submissionId]);
 
   if (steps === null) {
+=======
+  if (status === "pending") {
+>>>>>>> Stashed changes
     return (
       <section className="mb-14" aria-label="Loading next actions">
-        <KickerRule title="This Week" right="Loading…" />
-        <div className="space-y-0">
+        <KickerRule title="This Week" />
+        <div>
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="h-16 animate-pulse border-b"
-              style={{
-                background: "var(--t-border-subtle)",
-                borderColor: "var(--t-border-subtle)",
-              }}
-            />
+              className="flex items-baseline gap-6 py-6 border-b"
+              style={{ borderColor: "var(--t-border-subtle)" }}
+            >
+              <span
+                className="shrink-0"
+                style={{
+                  fontFamily: SERIF,
+                  fontWeight: 900,
+                  fontSize: "2.5rem",
+                  letterSpacing: "-0.03em",
+                  color: "var(--text-tertiary)",
+                  width: "3.5rem",
+                  opacity: 0.5,
+                }}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div className="flex-1 space-y-2">
+                <span
+                  className="block h-3 rounded-sm animate-pulse"
+                  style={{ background: "var(--t-border-subtle)", width: "90%" }}
+                />
+                <span
+                  className="block h-3 rounded-sm animate-pulse"
+                  style={{ background: "var(--t-border-subtle)", width: "60%" }}
+                />
+              </div>
+            </div>
           ))}
         </div>
       </section>
     );
   }
 
+  const steps = report?.next_steps ?? [];
   if (steps.length === 0) return null;
 
   const EFFORT_BY_INDEX = ["2 hours", "1 day", "1 week", "2 weeks", "—"];
@@ -131,7 +152,7 @@ export function NextStepsCard({ submissionId }: Props) {
   );
 }
 
-function KickerRule({ title, right }: { title: string; right?: string }) {
+function KickerRule({ title, right }: { title: string; right?: string | null }) {
   return (
     <div className="flex items-center gap-4 mb-8">
       <span
