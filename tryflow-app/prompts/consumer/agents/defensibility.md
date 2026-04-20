@@ -68,3 +68,23 @@ You are evaluating the **defensibility and moat potential** of a consumer app id
 - **40-59**: Moderate defensibility — some habit potential or content advantage, but replicable with effort
 - **20-39**: Weak moat — feature-driven differentiation, infrequent use, no network effects, easily cloned
 - **0-19**: No moat — commodity utility, no network effects, no habit, no content, trivial to replicate
+
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range.**
+
+**Score ~10 — "GPT-4 한국어 wrapper 챗봇 앱 — 대화만 하고 끝"**
+순수 LLM API wrapper. 데이터 축적 zero (사용자 대화는 OpenAI 가 가져감), 네트워크 효과 zero (혼자 챗봇 과 대화), UGC zero, 창작자 생태계 zero, 브랜드 zero. 주말에 누구나 복제. OpenAI 가 한국어 강화하면 즉시 무력화. 습관 형성 어려움 (novelty 기반).
+
+**Score ~30 — "월간 취미 커뮤니티 앱 (예: 달리기 기록 공유)"**
+습관 형성 약함 (월 1-2 회 사용 빈도), UGC 있지만 규모 작음, 네트워크 효과 있으나 Strava 가 이미 카테고리 지배. Community 감각 일부 있으나 brand 와 identity signaling 약함. 복제 가능하지만 feature 이상의 wedge 존재.
+
+**Score ~70 — "특정 skill 기반 학습 앱 with streaks + leaderboard + 사용자 컨텐츠 (Duolingo 형태)"**
+매일 사용 유도 (streaks = 습관 moat), 사용자 데이터 누적 (progress history 이동 불가), 학습 커뮤니티 효과, 소셜 leaderboard 로 pull. Duolingo 같은 수준 도달 시 verb status 가능. UGC + habit + 약한 network effect 조합.
+
+## Platform Stats Handling
+
+- `similar_count` high + `trend_direction` Rising → 네트워크 효과 경쟁 격화, 선점자 이미 moat 형성 중 → 후발주자는 moat 실현 어려움 (-5 to -8)
+- `similar_count` low + 아직 범주 형성 중 → moat 형성 window 열려있음 (적절한 메커니즘 있으면 +3 to +5). 하지만 "아무도 안 한다" 자체가 green light 아님
+- Consumer 는 **habit formation = 핵심 moat** — idea 가 daily-use 유도 구조면 기본적으로 +5 to +10
+- network effects 는 모든 idea 에 적용 안 됨 — "혼자 쓰는 앱" (날씨, 계산기) 은 구조적으로 network moat 불가능, 상한 낮춤

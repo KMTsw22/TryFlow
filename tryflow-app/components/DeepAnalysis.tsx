@@ -68,24 +68,16 @@ interface DeepAnalysisProps {
 
 // ── Weights & scoring ─────────────────────────────────────────────────────────
 
-const AGENT_WEIGHTS: Record<string, number> = {
-  market_size: 0.20,
-  competition: 0.15,
-  timing: 0.10,
-  monetization: 0.15,
-  technical_difficulty: 0.15,
-  regulation: 0.10,
-  defensibility: 0.10,
-  user_acquisition: 0.05,
-};
+// Shared viability scoring (weighted harmonic mean). Server mirror in route.ts.
+import { VIABILITY_WEIGHTS as AGENT_WEIGHTS, computeViabilityScore } from "@/lib/viability";
 
 function calcWeightedScore(analysis: AnalysisReport["analysis"]): number {
-  let total = 0;
-  for (const [key, weight] of Object.entries(AGENT_WEIGHTS)) {
+  const scores: Record<string, number | null> = {};
+  for (const key of Object.keys(AGENT_WEIGHTS)) {
     const agent = analysis?.[key as keyof typeof analysis];
-    if (agent) total += agent.score * weight;
+    scores[key] = agent ? agent.score : null;
   }
-  return Math.round(Math.min(95, Math.max(5, total)));
+  return computeViabilityScore(scores);
 }
 
 // ── Agent metadata ────────────────────────────────────────────────────────────
@@ -104,19 +96,75 @@ const AGENT_META: Record<
   user_acquisition:     { label: "Acquisition",   icon: Users,       color: "text-teal-400",   bg: "bg-teal-500/10",   weight: "5%"  },
 };
 
-const ANALYSIS_STEPS = [
-  "Initializing multi-agent system...",
-  "Market Size agent analyzing TAM/SAM...",
-  "Competition agent mapping landscape...",
-  "Timing agent evaluating market window...",
-  "Monetization agent assessing revenue models...",
-  "Technical agent evaluating build complexity...",
-  "Regulation agent checking compliance...",
-  "Defensibility agent analyzing moats...",
-  "User Acquisition agent planning GTM...",
-  "Synthesizer merging 8 agent results...",
-  "Generating final report...",
-];
+// Real-time progress via SSE. Each step maps to a server-emitted event.
+type StepState = "pending" | "active" | "done" | "failed";
+
+type AgentCitation = {
+  url: string;
+  title: string;
+  excerpt: string;
+  relevance?: string;
+};
+
+type SseEvent =
+  | { event: "hard_gate_done"; pass: boolean; hints?: string[] }
+  | { event: "llm_gate_start" }
+  | { event: "llm_gate_done"; pass: boolean; reason?: string; hints?: string[] }
+  | { event: "agents_start"; ids: string[] }
+  | { event: "agent_pass_done"; id: string; pass: 1 | 2 | 3; score?: number }
+  | {
+      event: "agent_done";
+      id: string;
+      score: number | null;
+      assessment: string | null;
+      citations: AgentCitation[];
+    }
+  | { event: "synthesizer_start" }
+  | { event: "synthesizer_draft_done" }
+  | { event: "synthesizer_critique_done" }
+  | { event: "complete"; analysisId: string; viabilityScore: number; report: AnalysisReport }
+  | { event: "failed"; stage: string; message: string; hints?: string[] };
+
+function StepRow({
+  label,
+  state,
+  trailing,
+}: {
+  label: string;
+  state: StepState;
+  trailing?: string;
+}) {
+  const color =
+    state === "done"
+      ? "var(--signal-success)"
+      : state === "failed"
+      ? "var(--signal-danger)"
+      : state === "active"
+      ? "var(--accent)"
+      : "var(--text-tertiary)";
+  return (
+    <div
+      className="flex items-center gap-2 text-xs py-0.5 transition-all duration-300"
+      style={{ color, fontWeight: state === "active" ? 700 : 400 }}
+    >
+      {state === "done" ? (
+        <span className="w-4 text-center">✓</span>
+      ) : state === "failed" ? (
+        <span className="w-4 text-center">✗</span>
+      ) : state === "active" ? (
+        <Loader2 className="w-3 h-3 animate-spin shrink-0" />
+      ) : (
+        <span className="w-4 text-center">·</span>
+      )}
+      <span className="flex-1">{label}</span>
+      {trailing && (
+        <span className="text-[11px] font-mono" style={{ color: "var(--text-primary)" }}>
+          {trailing}
+        </span>
+      )}
+    </div>
+  );
+}
 
 // ── Dark-themed configs ───────────────────────────────────────────────────────
 
@@ -578,6 +626,50 @@ function RowDetail({
         </div>
       )}
 
+      {/* Citations (only when Tavily evidence grounding was active) */}
+      {(() => {
+        const cits = (agentData as { citations?: AgentCitation[] }).citations;
+        if (!Array.isArray(cits) || cits.length === 0) return null;
+        return (
+          <div
+            className="mt-3 pt-3 border-t"
+            style={{ borderColor: "var(--t-border-bright)" }}
+          >
+            <p
+              className="text-[11px] font-bold mb-2 tracking-[0.2em] uppercase"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Evidence · {cits.length}
+            </p>
+            <ul className="space-y-1.5">
+              {cits.map((c, i) => (
+                <li key={i} className="text-[12px] leading-relaxed">
+                  <a
+                    href={c.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:underline break-all"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    {c.title || c.url}
+                  </a>
+                  {c.excerpt && (
+                    <span className="block mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+                      &ldquo;{c.excerpt}&rdquo;
+                    </span>
+                  )}
+                  {c.relevance && (
+                    <span className="block text-[11px] mt-0.5" style={{ color: "var(--text-tertiary)" }}>
+                      → {c.relevance}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
+
       {/* Read full toggle */}
       {detailed && (isLong || agentData.detailed_assessment) && (
         <button
@@ -610,10 +702,27 @@ export default function DeepAnalysis({
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stepIndex, setStepIndex] = useState(0);
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [fullAgent, setFullAgent] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
+
+  // SSE progression state
+  const [hardGate, setHardGate] = useState<StepState>("pending");
+  const [llmGate, setLlmGate] = useState<StepState>("pending");
+  const [agentProg, setAgentProg] = useState<
+    Record<
+      string,
+      {
+        state: StepState;
+        score?: number;
+        citations?: AgentCitation[];
+        pass?: 1 | 2 | 3;
+      }
+    >
+  >({});
+  const [synthDraft, setSynthDraft] = useState<StepState>("pending");
+  const [synthCritique, setSynthCritique] = useState<StepState>("pending");
+  const [gateHints, setGateHints] = useState<string[]>([]);
 
   useEffect(() => {
     async function check() {
@@ -637,34 +746,129 @@ export default function DeepAnalysis({
     check();
   }, [submissionId]);
 
-  useEffect(() => {
-    if (!loading) return;
-    const interval = setInterval(() => {
-      setStepIndex((i) => (i < ANALYSIS_STEPS.length - 1 ? i + 1 : i));
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [loading]);
+  function handleSseEvent(evt: SseEvent) {
+    switch (evt.event) {
+      case "hard_gate_done":
+        setHardGate(evt.pass ? "done" : "failed");
+        if (!evt.pass && evt.hints) setGateHints(evt.hints);
+        break;
+      case "llm_gate_start":
+        setLlmGate("active");
+        break;
+      case "llm_gate_done":
+        setLlmGate(evt.pass ? "done" : "failed");
+        if (!evt.pass && evt.hints) setGateHints(evt.hints);
+        break;
+      case "agents_start":
+        setAgentProg(
+          Object.fromEntries(evt.ids.map((id) => [id, { state: "active" as StepState, pass: 1 as const }]))
+        );
+        break;
+      case "agent_pass_done":
+        setAgentProg((prev) => ({
+          ...prev,
+          [evt.id]: {
+            ...prev[evt.id],
+            state: "active",
+            pass: evt.pass,
+            // Show draft score during passes 1-2; final score overrides on agent_done.
+            score: typeof evt.score === "number" ? evt.score : prev[evt.id]?.score,
+          },
+        }));
+        break;
+      case "agent_done":
+        setAgentProg((prev) => ({
+          ...prev,
+          [evt.id]: {
+            state: "done",
+            score: evt.score ?? prev[evt.id]?.score,
+            citations: evt.citations,
+            pass: 3,
+          },
+        }));
+        break;
+      case "synthesizer_start":
+        setSynthDraft("active");
+        break;
+      case "synthesizer_draft_done":
+        setSynthDraft("done");
+        setSynthCritique("active");
+        break;
+      case "synthesizer_critique_done":
+        setSynthCritique("done");
+        break;
+      case "complete":
+        setReport(evt.report);
+        // Notify sibling components (IdeaHero, NextStepsCard, WorkingBreakingBoard)
+        // that a fresh analysis exists for this submission so they can refetch.
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("tryflow:analysis_complete", { detail: { submissionId } })
+          );
+        }
+        break;
+      case "failed":
+        setError(evt.message);
+        if (evt.hints) setGateHints(evt.hints);
+        break;
+    }
+  }
 
   async function startAnalysis() {
     setLoading(true);
     setError(null);
-    setStepIndex(0);
+    setHardGate("pending");
+    setLlmGate("pending");
+    setAgentProg({});
+    setSynthDraft("pending");
+    setSynthCritique("pending");
+    setGateHints([]);
+
     try {
       const res = await fetch("/api/analysis", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
         body: JSON.stringify({ submissionId }),
       });
-      const data = await res.json();
-      if (!res.ok) {
+
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}));
         if (res.status === 409 && data.analysisId) {
           const getRes = await fetch(`/api/analysis?submissionId=${submissionId}`);
           const getData = await getRes.json();
-          if (getData.report) { setReport(getData.report); setLoading(false); return; }
+          if (getData.report) {
+            setReport(getData.report);
+            setLoading(false);
+            return;
+          }
         }
         throw new Error(data.error || "Analysis failed");
       }
-      setReport(data.report);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+        for (const chunk of chunks) {
+          const dataLine = chunk.split("\n").find((l) => l.startsWith("data: "));
+          if (!dataLine) continue;
+          try {
+            const evt = JSON.parse(dataLine.slice(6)) as SseEvent;
+            handleSseEvent(evt);
+          } catch {
+            /* skip malformed */
+          }
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -676,35 +880,100 @@ export default function DeepAnalysis({
 
   // ── Loading ───────────────────────────────────────────────────────────────────
   if (loading) {
+    const doneAgents = Object.values(agentProg).filter((s) => s.state === "done").length;
     return (
-      <div className="border p-8"
-        style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}>
-        <div className="text-center">
-          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4"
-            style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}>
+      <div
+        className="border p-8"
+        style={{ background: "var(--accent-soft)", borderColor: "var(--accent-ring)" }}
+      >
+        <div className="text-center mb-6">
+          <div
+            className="w-16 h-16 flex items-center justify-center mx-auto mb-4"
+            style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-ring)" }}
+          >
             <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--accent)" }} />
           </div>
-          <h3 className="text-lg font-extrabold mb-2" style={{ color: "var(--text-primary)" }}>AI Deep Analysis in Progress</h3>
-          <p className="text-sm mb-6" style={{ color: "var(--text-tertiary)" }}>8 specialist agents analyzing in parallel</p>
-          <div className="max-w-sm mx-auto space-y-2">
-            {ANALYSIS_STEPS.map((step, i) => {
-              const stepColor =
-                i < stepIndex ? "var(--signal-success)"
-                : i === stepIndex ? "var(--accent)"
-                : "var(--text-tertiary)";
+          <h3 className="text-lg font-extrabold mb-1" style={{ color: "var(--text-primary)" }}>
+            AI Deep Analysis in Progress
+          </h3>
+          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
+            실시간 스트리밍 · {doneAgents}/8 agents done
+          </p>
+        </div>
+
+        <div className="max-w-sm mx-auto space-y-5">
+          <div>
+            <div
+              className="text-[10px] tracking-[0.3em] uppercase mb-1.5"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Quality Gates
+            </div>
+            <StepRow label="Hard filter" state={hardGate} />
+            <StepRow label="LLM effort check" state={llmGate} />
+          </div>
+
+          <div>
+            <div
+              className="text-[10px] tracking-[0.3em] uppercase mb-1.5"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Agents
+            </div>
+            {(Object.keys(AGENT_META) as (keyof typeof AGENT_META)[]).map((id) => {
+              const meta = AGENT_META[id];
+              const prog = agentProg[id as string];
+              const citCount = prog?.citations?.length ?? 0;
+              const scoreStr = typeof prog?.score === "number" ? String(prog.score) : "";
+              // While active, show pass progress. When done, show score + citations.
+              const passStr =
+                prog?.state === "active" && prog.pass ? `${prog.pass}/3` : "";
+              const parts: string[] = [];
+              if (passStr) parts.push(passStr);
+              if (scoreStr) parts.push(scoreStr);
+              if (citCount > 0) parts.push(`📎${citCount}`);
+              const trailing = parts.length > 0 ? parts.join(" · ") : undefined;
               return (
-                <div key={step}
-                  className="flex items-center gap-2 text-xs transition-all duration-300"
-                  style={{ color: stepColor, fontWeight: i === stepIndex ? 700 : 400 }}>
-                  {i < stepIndex ? <span className="w-4 text-center">✓</span>
-                    : i === stepIndex ? <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-                    : <span className="w-4 text-center">·</span>}
-                  {step}
-                </div>
+                <StepRow
+                  key={id as string}
+                  label={meta.label}
+                  state={prog?.state ?? "pending"}
+                  trailing={trailing}
+                />
               );
             })}
           </div>
+
+          <div>
+            <div
+              className="text-[10px] tracking-[0.3em] uppercase mb-1.5"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Synthesizer
+            </div>
+            <StepRow label="Draft" state={synthDraft} />
+            <StepRow label="Critique & revise" state={synthCritique} />
+          </div>
         </div>
+
+        {gateHints.length > 0 && (
+          <div
+            className="max-w-sm mx-auto mt-6 p-3"
+            style={{
+              background: "var(--surface-subtle)",
+              border: "1px solid var(--t-border-subtle)",
+            }}
+          >
+            <div className="text-xs font-bold mb-1" style={{ color: "var(--text-primary)" }}>
+              개선 제안
+            </div>
+            <ul className="text-xs space-y-1" style={{ color: "var(--text-secondary)" }}>
+              {gateHints.map((h, i) => (
+                <li key={i}>· {h}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   }
@@ -723,7 +992,7 @@ export default function DeepAnalysis({
           key,
           meta,
           score: agentData.score,
-          weight: AGENT_WEIGHTS[key as string] ?? 0,
+          weight: AGENT_WEIGHTS[key as keyof typeof AGENT_WEIGHTS] ?? 0,
         };
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
@@ -936,7 +1205,32 @@ export default function DeepAnalysis({
           <Sparkles className="w-4 h-4" />
           Run AI Deep Analysis
         </button>
-        {error && <p className="mt-4 text-xs" style={{ color: "var(--signal-danger)" }}>{error}</p>}
+        {error && (
+          <div className="mt-4 max-w-md mx-auto">
+            <p className="text-xs mb-2" style={{ color: "var(--signal-danger)" }}>{error}</p>
+            {gateHints.length > 0 && (
+              <div
+                className="p-3 text-left"
+                style={{
+                  background: "var(--surface-subtle)",
+                  border: "1px solid var(--t-border-subtle)",
+                }}
+              >
+                <div
+                  className="text-[10px] tracking-[0.2em] uppercase mb-1.5"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  개선 제안
+                </div>
+                <ul className="text-xs space-y-1" style={{ color: "var(--text-secondary)" }}>
+                  {gateHints.map((h, i) => (
+                    <li key={i}>· {h}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

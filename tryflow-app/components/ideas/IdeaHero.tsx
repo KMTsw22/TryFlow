@@ -120,7 +120,7 @@ export function IdeaHero({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const fetchReport = async () => {
       try {
         const res = await fetch(`/api/analysis?submissionId=${submissionId}`);
         const data = await res.json();
@@ -134,8 +134,20 @@ export function IdeaHero({
       } catch {
         /* fall back to server-provided summary/score */
       }
-    })();
-    return () => { cancelled = true; };
+    };
+
+    fetchReport();
+
+    const onComplete = (e: Event) => {
+      const detail = (e as CustomEvent<{ submissionId?: string }>).detail;
+      if (detail?.submissionId === submissionId) fetchReport();
+    };
+    window.addEventListener("tryflow:analysis_complete", onComplete);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("tryflow:analysis_complete", onComplete);
+    };
   }, [submissionId]);
 
   const score = report?.viability_score ?? fallbackScore;

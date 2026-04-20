@@ -58,3 +58,22 @@ You are evaluating the **regulatory environment** of a consumer app idea.
 - **40-59**: Moderate regulation — health/financial data, UGC moderation at scale, COPPA considerations
 - **20-39**: Heavy regulation — biometric data, children as primary audience, gambling mechanics, financial services licensing
 - **0-19**: Prohibitive — requires medical device approval, financial licenses across jurisdictions, or legally gray territory (crypto, cannabis, adult content)
+
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. Higher score = easier regulatory path. **Use the full 5-95 range.**
+
+**Score ~10 — "미성년자 대상 AI 연애 시뮬레이션 앱, 성인 컨텐츠 포함 가능"**
+COPPA 정면 위반 위험 + 주별 minor 온라인 안전법 (Utah, Texas, Louisiana 등) 위반 + Apple/Google App Store 즉시 거부 사유 + Character.ai 자살 소송으로 전례 있음. 성인 콘텐츠 + 미성년자 = 법적으로 거의 불가능. FBI / FTC 조사 대상 가능.
+
+**Score ~30 — "의료 진단 보조 AI 챗봇 (증상 입력 → 질병 추천), 일반 소비자용"**
+FDA SaMD (Software as a Medical Device) 승인 필요 가능성 + FTC Health Breach Notification + HIPAA (파트너 병원 연결 시) + 오진 시 의료과실 책임. 의료 자문 법 주별로 다름. 1-2 년 + $500K-2M 컴플라이언스 비용 예상.
+
+**Score ~70 — "일일 명상·수면 가이드 subscription 앱"**
+표준 App Store 컴플라이언스 + GDPR/CCPA 기본 + 건강 데이터 처리하지만 의료 claim 없어 FDA 비대상. Calm, Headspace 선례로 규제 path 검증됨. 구독 transparency 준수 + 기본 privacy 정책이면 통과. 컴플라이언스 비용 $30-100K.
+
+## Platform Stats Handling
+
+- Platform stats 는 regulation 점수에 **직접 영향 없음** — 법적 리스크는 idea 본질에 달림
+- 예외: **App Store / Play Store 거부 리스크** 가 consumer 에선 실질적 regulation 역할 — 기존 similar apps 가 App Store 에 존재하면 승인 경로 열려있다는 신호 (+3)
+- AI 규제 영역 (미성년자 AI 대화, 감정 인식, biometric) 은 EU AI Act + 미국 주별 새 법으로 빠르게 강화 중 — 리스크 상향 조정

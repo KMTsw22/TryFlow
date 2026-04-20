@@ -21,7 +21,7 @@ export function NextStepsCard({ submissionId }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const fetchSteps = async () => {
       try {
         const res = await fetch(`/api/analysis?submissionId=${submissionId}`);
         const data = await res.json();
@@ -33,8 +33,20 @@ export function NextStepsCard({ submissionId }: Props) {
       } catch {
         if (!cancelled) setSteps([]);
       }
-    })();
-    return () => { cancelled = true; };
+    };
+
+    fetchSteps();
+
+    const onComplete = (e: Event) => {
+      const detail = (e as CustomEvent<{ submissionId?: string }>).detail;
+      if (detail?.submissionId === submissionId) fetchSteps();
+    };
+    window.addEventListener("tryflow:analysis_complete", onComplete);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("tryflow:analysis_complete", onComplete);
+    };
   }, [submissionId]);
 
   if (steps === null) {

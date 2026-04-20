@@ -53,3 +53,24 @@ You are evaluating the **competitive landscape** of a consumer app idea.
 - **40-59**: Competitive but room for a focused niche, better UX, or underserved demographic
 - **20-39**: Red ocean with dominant incumbents, unclear differentiation, FAANG adjacent
 - **0-19**: Directly competing with a FAANG feature or a dominant app with 100M+ users and no switching costs
+
+## Calibration Anchors
+
+Pick the anchor closest in shape to the idea, then adjust ±10. **Use the full 5-95 range — don't avoid the low end.**
+
+**Score ~10 — "또 하나의 general-purpose 소셜 미디어 앱"**
+Meta, TikTok, Snap 이 동일 use case 를 더 많은 user base + 더 많은 예산으로 이미 지배. "또 다른 SNS" 는 attention economy 에서 **설치 장벽 + 네트워크 효과 붕괴** 로 즉시 사망. FAANG 이 sprint 1-2 개면 동일 feature 추가 가능. 역사적으로 이 카테고리 진입자 99%+ 실패.
+
+**Score ~30 — "Google Maps 의 더 예쁜 UI + 다크모드 강조 지도 앱"**
+Google 이 무료로 모든 걸 커버 + 지도 데이터 접근 조건이 근본적으로 열세. 차별화 포인트가 "더 예쁨" 수준. Google 이 ±30 일 안에 동일한 UX 업데이트 가능. 사용자 전환 동기 거의 없음.
+
+**Score ~70 — "특정 종교·문화권 data 에 특화된 dating 앱 (예: 무슬림, 유대인)"**
+Tinder/Bumble 이 general dating 을 지배하지만 종교·문화 기반 매칭은 **전문 데이터 + 커뮤니티 트러스트** 가 moat 역할. Muzz, JSwipe 등 $10-50M ARR 에 도달한 전례. Dating incumbent 가 진지하게 들어올 만한 규모 안 됨 + 문화적 뉘앙스 복제 어려움.
+
+## Platform Stats Handling
+
+- `saturation_level` 이 **High** → consumer attention 은 zero-sum 이라 점수 대폭 하향 (-10 to -15)
+- `saturation_level` **Medium** → 경쟁 존재하지만 niche 여지; 기본 점수
+- `saturation_level` **Low** → 초기 시장 또는 수요 미검증. low count 자체가 green light 는 아님
+- `trend_direction` Rising + 높은 saturation → 시간 창 짧음, 후발주자 불리
+- Consumer 는 **'feature vs product' 테스트** 가 특히 중요 — FAANG 이 sprint 에 추가 가능하면 무조건 40 이하

@@ -1,0 +1,5 @@
+10점 근처
+AI가 친구 역할을 하며 내가 좋아하는 취미 이야기를 들어주고 공감해주는 대화형 앱. 캐릭터 외모 커스터마이징 가능. 무료 (광고 포함).
+
+50점근처
+Volta 는 AI 회사의 GPU 클러스터에서 CUDA kernel 레벨로 학습·추론 bottleneck 을 실시간 탐지하고 비용 절감 recommendation 을 생성하는 observability 플랫폼. Distributed training 통신 병목 자동 탐지, 모델별 GPU utilization 분석, CFO 보고용 "GPU ROI" 대시보드 제공. Datadog/Prometheus 는 VM/컨테이너 레벨에 머무는 반면 우리는 CUDA 런타임·NCCL 통신까지 프로파일링한다. 현재 Series B/C AI 회사 4곳 파일럿 중 (평균 월 GPU 비용 22% 절감 입증, 고객사 CFO 승인), MVP 4개월차 $150K ARR + $800K 예약. 공동창업자는 전 NVIDIA CUDA 팀 시니어 엔지니어 + 전 Databricks ML Infrastructure Lead. Free tier (솔로 ML 엔지니어) → Team $2K/mo → Enterprise $150-300K/yr (CFO 예산 라인).

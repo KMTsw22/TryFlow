@@ -64,3 +64,24 @@ You are evaluating the **market timing** of a consumer app idea.
 - **40-59**: Timing is neutral — no strong urgency or headwind, could work but no external forcing function
 - **20-39**: Timing challenges — behavior not yet formed, technology immature, cultural moment has passed or not arrived
 - **0-19**: Too early (tech not ready, no user pull) or too late (category dominated, bundled into platforms)
+
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range.**
+
+**Score ~10 — "MySpace 스타일 HTML 커스터마이즈 프로필 앱 + 음악 자동재생"**
+2008 년에 끝난 시장. Instagram/TikTok 이 지배한 후 **개인 홈페이지 개념** 자체가 소멸. 지금 다시 들어가는 건 cultural moment 의 정반대. 신기술 enabler 도, 신규 buyer 행동도, 새 forcing function 도 없음. 순전한 nostalgia.
+
+**Score ~30 — "2023 식 short-form video 앱 (TikTok 복제)"**
+short-form video 는 TikTok/Reels/Shorts 가 이미 commoditized. 신규 진입 여지 거의 없고 FAANG 네트워크 효과 장벽 극심. AI 생성 컨텐츠 등 new angle 없으면 timing 늦음.
+
+**Score ~70 — "Apple Vision Pro 용 소셜 피트니스 앱 (2026 Q1)"**
+Vision Pro 2024 출시 + ecosystem 형성 중 + 피트니스/wellness 트렌드 + spatial computing early adopters. 플랫폼 새로움 + 기존 fitness 행동 pattern 이 자연스럽게 전환 가능. 선도자 효과 기대 가능. AR/VR 플랫폼 cycle 이 정확히 맞음.
+
+## Platform Stats Handling
+
+- `trend_direction` Rising 이 consumer 에서 가장 강력한 timing 신호 (+5 to +10)
+- `trend_direction` Declining + `saturation_level` High → 카테고리 cycle 후반, 늦음 (−10 to −15)
+- `saturation_level` Low + Stable → mature niche 일 수도, 너무 이른 것일 수도 — 설명으로 판별 필요
+- Consumer 는 **1월 새해 다짐** / **여름 여행** / **holiday 전자기기 활성화** 같은 **계절적 timing** 존재 — idea 가 seasonal fit 하면 bonus
+- AI 기반 consumer 앱은 현재 wide-open 상태 (category 형성 중) → AI 기능 포함 시 timing bonus +3 to +5

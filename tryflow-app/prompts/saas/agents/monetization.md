@@ -46,6 +46,25 @@ Evaluate whether this idea can generate sustainable, scalable revenue.
 - **20-39**: Hard to monetize — ad-dependent, very low ACV, or buyers resist paying
 - **0-19**: No clear monetization path or fundamentally free/commodity product
 
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range — don't avoid the low end (5-15) for ideas that genuinely deserve it.**
+
+**Score ~10 — "익명 메시지 보드, 광고 없음, 구독 없음"**
+수익 모델 자체가 부재. 사용자도 돈 낼 의향 zero, 광고 거부, 구독 거부. Yik Yak / Whisper 가 이 패턴으로 망함. 운영 비용 (서버, 모더레이션) 만 누적되며 매출 line 자체 없음. ACV $0.
+
+**Score ~30 — "Free Chrome extension that helps developers format JSON, with optional $5/mo pro features"**
+Buyer is an individual developer; ACV ceiling is ~$60/yr. Market is flooded with free alternatives. Gross margin is fine (it's a browser extension) but absolute revenue per user is tiny. No expansion motion — it's a utility, not a workflow. Hard to build a venture-scale business even with millions of users.
+
+**Score ~70 — "Compliance automation platform for Series B+ SaaS companies (SOC 2 / ISO 27001 / HIPAA)"**
+Clear buyer (CISO / Head of Security / compliance lead) with dedicated budget. ACV lands $20-60K depending on frameworks. Expansion is natural — add frameworks, add users, add vendor risk management. NRR 120%+ is realistic. Gross margin 75%+ on standard SaaS economics. Comparable: Vanta, Drata, Secureframe all reached $100M+ ARR.
+
+## Platform Stats Handling
+
+- High `saturation_level` can compress pricing (more alternatives → buyers have leverage); mild negative (−3 to −5) if your idea is in a category with known pricing wars.
+- Rising `trend_direction` suggests growing category spend; mild positive for expansion-revenue potential (+3 to +5).
+- Stats don't override fundamentals — a clear buyer with proven WTP outweighs saturation concerns.
+
 ## Output Format (strict JSON)
 
 ```json
@@ -66,7 +85,7 @@ Evaluate whether this idea can generate sustainable, scalable revenue.
 
 ## Rules
 
-- Be calibrated: most ideas score 35-65.
+- Be calibrated: most reasonable ideas score 35-65. **Score below 20** for ideas with no revenue model whatsoever, zero WTP signal, or buyers who structurally cannot pay.
 - Reference comparable companies' pricing when possible.
 - If the description is vague, penalize but explain what's missing.
 - No filler. Every sentence must carry information.

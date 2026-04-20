@@ -51,6 +51,27 @@ Determine if the timing is right — too early, right on time, or too late.
 - **20-39**: Timing challenges — market not ready, need to educate buyers, no urgency
 - **0-19**: Too early (technology not ready) or too late (commoditized/bundled)
 
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range — don't avoid the low end (5-15) for ideas that genuinely deserve it.**
+
+**Score ~10 — "MySpace 스타일 소셜 네트워크 — 음악 재생 가능한 HTML 커스터마이징 프로필"**
+2008년에 끝난 시장. 카테고리 자체가 commoditized 후 사라짐. 지금 들어가는 건 forcing function 의 정반대 — 사용자가 떠난 이유가 시장에 그대로 잔존. 신기술 enabler 도, 새 buyer 행동도, 규제 변화도 없음.
+
+**Score ~30 — "B2B voice-agent platform for field service dispatch"**
+Voice AI is credible now, but buyer readiness in field service dispatch is early — most mid-market operators are still digitizing paper workflows. Budget line for "AI voice agents" doesn't exist yet; founders would need to educate the market. No strong forcing function — buyers are curious but not urgent. Right direction, 12-18 months too early.
+
+**Score ~70 — "AI model governance platform for regulated enterprises"**
+EU AI Act enforcement (2024-2026) and NIST AI RMF adoption create a real forcing function. Enterprises are standing up AI governance committees now and budgeting for tooling. LLM proliferation makes the "which models are we using and are they compliant" problem concrete. Category is emerging — 3-5 well-funded players — but not yet commoditized. Classic "right time" pattern.
+
+## Platform Stats Handling
+
+- `trend_direction` is the primary platform signal for this axis.
+- **Rising** trend → strong "right time" signal, bias score upward (+5 to +10).
+- **Declining** trend AND **High** saturation → late / commoditizing, bias downward (−10 to −15).
+- **Stable** + **Low** saturation → either mature niche or too early; resolve with rubric and fundamentals.
+- **Declining** + **Low** saturation → likely too early or too late, investigate which from the idea description.
+
 ## Output Format (strict JSON)
 
 ```json
@@ -70,7 +91,7 @@ Determine if the timing is right — too early, right on time, or too late.
 
 ## Rules
 
-- Be calibrated: most ideas score 35-65.
+- Be calibrated: most reasonable ideas score 35-65. **Score below 20** for ideas in commoditized / dead categories or with no plausible forcing function.
 - Reference specific macro trends or events, not generic statements.
 - If the description is vague, penalize but explain what's missing.
 - No filler. Every sentence must carry information.

@@ -50,6 +50,25 @@ Evaluate what competitive advantages this product can build and how durable they
 - **20-39**: Weak moat — primarily brand/first-mover, easily disrupted
 - **0-19**: No moat — commodity product, trivial to replicate
 
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range — don't avoid the low end (5-15) for ideas that genuinely have zero moat.**
+
+**Score ~10 — "ChatGPT 한국어 인터페이스 — OpenAI API 에 한국어 prompt template 만 추가한 웹"**
+순수 LLM wrapper 의 정수. 1주일이면 누구나 복제 가능. 데이터 0, 네트워크 효과 0, 통합 0, 브랜드 0, 스위칭 비용 0. OpenAI 가 한국어 강화하면 즉시 무력화. 기술적/비즈니스적 moat 메커니즘이 단 하나도 식별되지 않음.
+
+**Score ~30 — "Chat UI wrapper around GPT-4 for writing cold sales emails"**
+Thin application layer on commodity LLM infra. No proprietary data — users paste prompts and get text. No workflow lock-in (copy-paste output). No network effects. A competitor with a weekend of work can ship a near-identical product using the same API. Best-case moat is brand + distribution, which is a 6-month lead at most.
+
+**Score ~70 — "Multi-tenant data observability platform that learns each customer's data patterns"**
+Core moat compounds with tenure: the longer a customer is on the platform, the more the anomaly-detection models know their normal. Heavy integration web (warehouses, BI, pipeline tools) creates real switching cost. Some cross-customer intelligence (industry-wide anomaly patterns) creates a weak data network effect. Not an unbreakable moat, but 18-24 months of accumulated customer-specific tuning is genuinely hard for a replicant to overcome.
+
+## Platform Stats Handling
+
+- **High** saturation AND Rising trend AND idea's fundamentals show low switching costs → explicit "race" condition, reduce score 10-15. Many similar ideas competing for the same undifferentiated ground means no moat forms before consolidation.
+- **Low** saturation → first-mover window is still open; mild positive if the idea has credible moat mechanics (+3 to +5). Do NOT reward "first mover" on its own — first mover without a moat mechanism is not defensible.
+- Stats cannot upgrade a product with no moat mechanics; stats only modulate the size of an existing moat signal.
+
 ## Output Format (strict JSON)
 
 ```json
@@ -69,7 +88,7 @@ Evaluate what competitive advantages this product can build and how durable they
 
 ## Rules
 
-- Be calibrated: most ideas score 35-65.
+- Be calibrated: most reasonable ideas score 35-65. **Score below 20** for pure LLM/API wrappers or commodity products with zero identifiable moat mechanism.
 - Assess moats the product CAN build, not just what exists today.
 - If the description is vague, penalize but explain what's missing.
 - No filler. Every sentence must carry information.

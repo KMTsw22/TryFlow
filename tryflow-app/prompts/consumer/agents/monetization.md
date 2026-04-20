@@ -80,3 +80,24 @@ You are evaluating the **monetization potential** of a consumer app idea.
 - **40-59**: Monetization possible but unproven — low ARPU, ad-dependent, or severe subscription fatigue in category
 - **20-39**: Hard to monetize — users expect free, ad economics require unrealistic scale, 30% cut kills margins
 - **0-19**: No clear monetization path — commodity utility, users will never pay, and scale for ads is unreachable
+
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range.**
+
+**Score ~10 — "익명 메시지 게시판, 광고 없음, 구독 없음, 그냥 무료"**
+수익 모델 자체가 부재. 사용자 지불 의향 zero, 광고 거부 명시, 구독 거부. Yik Yak / Whisper 이 이 패턴으로 망함. 서버·모더레이션 비용만 누적. ARPU $0. Apple/Google 30% 차감 이전에 매출 라인 자체가 없음.
+
+**Score ~30 — "AI 관상 앱, 월 ₩3,900 구독"**
+낮은 ARPU + churn 극심 (novelty 기반이라 3개월 뒤 이탈 90%+). $3/month 이 Apple 30% 차감 후 $2.10. 유의미 scale (100K paying) 에 도달해도 $210K/month 천장. Consumer ARPU 하위권. 광고 붙여도 DAU 작아서 CPM 무의미.
+
+**Score ~70 — "피트니스 앱, 월 $12.99 / 연 $79.99 subscription"**
+Fitness 카테고리 평균 ARPU $10-15/월 대 적합. 3-5% 전환율 healthy. Strava/Peloton 선례로 WTP 검증됨. 연 pricing 으로 churn 완화, 30% 차감 후에도 LTV 작동. 다이어트·습관 형성 같은 지속 가치가 churn 낮춤.
+
+## Platform Stats Handling
+
+- `saturation_level` High 인 성숙 카테고리 (dating, fitness, music) → subscription 경제 이미 검증됨, pricing power 유지 가능
+- `saturation_level` High 인 commodity 카테고리 (general utility, basic social) → subscription 거부감 강함, 광고 레이스 불가피
+- `trend_direction` Rising → 시장 spend 증가 신호 (+3 to +5), expansion 가능성
+- Consumer 는 **platform tax 30% 항상 반영** — 계산식에서 Apple/Google 차감 후 경제성 따져야 함
+- Subscription fatigue 가 점점 커지는 추세 — ad-supported + freemium hybrid 가 안전한 기본값

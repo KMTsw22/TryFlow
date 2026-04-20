@@ -214,7 +214,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("idea_submissions")
       .select(`
-        id, category, target_user, description, created_at,
+        id, category, target_user, description, created_at, user_id,
         insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
       `)
       .eq("user_id", user.id)

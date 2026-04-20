@@ -91,3 +91,24 @@ You are evaluating the **user acquisition strategy and feasibility** of a consum
 - **40-59**: Acquisition possible but expensive, limited virality, paid-dependent, retention is average (D30 5-10%)
 - **20-39**: High CPI, no viral mechanics, single-channel dependent, retention below benchmarks (D30 <5%)
 - **0-19**: No clear path to users — no virality, prohibitive CPI, no organic discovery, or fundamental retention problem
+
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range.**
+
+**Score ~10 — "고령층 (70+) 대상 smart home 제어 앱"**
+타겟이 **앱 스토어 검색 패턴 자체가 없음** — 보통 가족이 설정해줌 (간접 buyer 구조). 광고 채널 미스매치 (TikTok/Instagram 70+ 도달 어려움), TV 광고 비싸고 CPI 불가산정. 바이럴 0 (고령층 소셜 공유 희박). D30 retention 예측 어렵고 지원 부담 높음. 실질 CAC 계산조차 어려움.
+
+**Score ~30 — "프리미엄 명상 앱 (Calm·Headspace 경쟁)"**
+이미 top 10 player 가 App Store 검색 + 광고 예산 지배. Subscription 앱 CPI $15-30, 신규 진입자 unit economics 거의 불가. Viral mechanic 약함 (명상은 혼자 함). Retention 은 카테고리 평균 수준이지만 차별화 없이 전환율 낮음. 큰 예산 아니면 고사.
+
+**Score ~70 — "친구 매칭 운동 챌린지 앱 (K-factor 자연적으로 높음)"**
+사용 자체가 친구 초대 유도 ("이 챌린지에 참여해!"). K-factor 0.5-0.8 예상, 소셜 공유 (Strava 식 운동 기록 공유) 내장. Fitness 카테고리 App Store 에서 organic discovery 가능. 광고 + 바이럴 + 인플루언서 3채널 viable. D7 retention 25%+ 카테고리 평균 상회 가능.
+
+## Platform Stats Handling
+
+- `saturation_level` High → 광고 경매 과열, CPI 급상승. 차별화 없으면 -5 to -10
+- `saturation_level` Low + 신규 카테고리 → market education 부담 (-3 to -5) 하지만 선도자 organic 기회 (+3 if viral mechanic 명확)
+- `trend_direction` Rising → App Store 에서 category ranking 상승 기회 (+3)
+- Consumer 는 **App Store 검색** 이 discovery 의 65-70% — ASO 가능성 (specific keyword 존재 여부) 가 실질 지표
+- **Post-ATT 현실** (iOS 14.5+) — 광고 기반 acquisition 은 2020 대비 30-50% 비효율화, viral/organic 이 구조적 우위

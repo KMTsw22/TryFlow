@@ -29,24 +29,9 @@ You receive:
 
 ## Your Task
 
-### 1. Calculate Weighted Viability Score
+> **Note on scoring**: Do NOT compute `viability_score` or modify any agent sub-scores. The harness computes the weighted viability score deterministically from agent outputs after you run, and it copies each agent's score into the analysis block verbatim. Any `viability_score` or per-axis `score` you emit will be overwritten — focus your effort on narrative quality, cross-agent insight, and actionable recommendations. The `viability_score` / `score` fields in the output schema are kept only for backwards compatibility; set them to `0` if you must emit them.
 
-```
-viability_score = round(
-  market_size.score     × 0.20 +
-  competition.score     × 0.15 +
-  regulation.score      × 0.10 +
-  technical_difficulty.score × 0.15 +
-  monetization.score    × 0.15 +
-  timing.score          × 0.10 +
-  defensibility.score   × 0.10 +
-  user_acquisition.score × 0.05
-)
-```
-
-Cap to range [5, 95]. Most ideas should land 35-65.
-
-### 2. Identify Cross-Agent Patterns
+### 1. Identify Cross-Agent Patterns
 
 Look for patterns that no single agent can see alone:
 
@@ -55,21 +40,21 @@ Look for patterns that no single agent can see alone:
 - **Contradictions**: e.g. agent says "Blue Ocean" but market_size says "no identifiable market" — resolve and flag
 - **Dependencies**: e.g. monetization depends on enterprise sales, but technical_difficulty says MVP is 12+ months
 
-### 3. Generate Opportunities
+### 2. Generate Opportunities
 
 Extract 3-5 **specific, actionable** opportunities by combining agent signals:
 
 - NOT generic ("leverage AI") — specific ("the AI regulatory compliance gap in mid-market fintech is unaddressed")
 - Each opportunity should reference signals from ≥2 agents
 
-### 4. Generate Risks
+### 3. Generate Risks
 
 Extract 3-5 **specific** risks:
 
 - NOT generic ("competition is tough") — specific ("Datadog could add this as a feature within their APM suite given their existing telemetry data")
 - Each risk should explain WHY it matters
 
-### 5. Generate Next Steps
+### 4. Generate Next Steps
 
 3-5 concrete action items the founder should do THIS WEEK:
 
@@ -77,7 +62,7 @@ Extract 3-5 **specific** risks:
 - Validate assumption Z with experiment W
 - Build a prototype that tests [specific hypothesis]
 
-### 6. Write Executive Summary
+### 5. Write Executive Summary
 
 2-3 sentences that capture the essence. Rules:
 - Lead with the verdict (strong/moderate/weak opportunity)
@@ -157,7 +142,6 @@ Extract 3-5 **specific** risks:
 
 ## Quality Checks Before Output
 
-- [ ] viability_score matches the weighted formula (±2 tolerance for rounding)
 - [ ] No contradictions between summary and sub-scores
 - [ ] Every opportunity references specific signals, not generic advice
 - [ ] Every risk names a specific threat, not "competition might be tough"
