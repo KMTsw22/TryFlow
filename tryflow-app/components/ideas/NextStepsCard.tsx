@@ -13,41 +13,7 @@ const DISPLAY = "'Oswald', sans-serif";
 export function NextStepsCard() {
   const { report, status } = useAnalysis();
 
-<<<<<<< Updated upstream
-  useEffect(() => {
-    let cancelled = false;
-    const fetchSteps = async () => {
-      try {
-        const res = await fetch(`/api/analysis?submissionId=${submissionId}`);
-        const data = await res.json();
-        if (!cancelled && data.report?.next_steps) {
-          setSteps(data.report.next_steps as string[]);
-        } else if (!cancelled) {
-          setSteps([]);
-        }
-      } catch {
-        if (!cancelled) setSteps([]);
-      }
-    };
-
-    fetchSteps();
-
-    const onComplete = (e: Event) => {
-      const detail = (e as CustomEvent<{ submissionId?: string }>).detail;
-      if (detail?.submissionId === submissionId) fetchSteps();
-    };
-    window.addEventListener("tryflow:analysis_complete", onComplete);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener("tryflow:analysis_complete", onComplete);
-    };
-  }, [submissionId]);
-
-  if (steps === null) {
-=======
   if (status === "pending") {
->>>>>>> Stashed changes
     return (
       <section className="mb-14" aria-label="Loading next actions">
         <KickerRule title="This Week" />

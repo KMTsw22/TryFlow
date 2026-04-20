@@ -15,47 +15,8 @@ const DISPLAY = "'Oswald', sans-serif";
  * Rendered as two editorial columns with kicker rules and typographic list rows,
  * no background tints or heavy borders.
  */
-<<<<<<< Updated upstream
-export function WorkingBreakingBoard({ submissionId }: Props) {
-  const [report, setReport] = useState<ApiReport | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchReport = async () => {
-      try {
-        const res = await fetch(`/api/analysis?submissionId=${submissionId}`);
-        const data = await res.json();
-        if (!cancelled && data.report) {
-          setReport({
-            cross_agent_insights: data.report.cross_agent_insights ?? [],
-            opportunities: data.report.opportunities ?? [],
-            risks: data.report.risks ?? [],
-          });
-        } else if (!cancelled) {
-          setReport({ cross_agent_insights: [], opportunities: [], risks: [] });
-        }
-      } catch {
-        if (!cancelled) setReport({ cross_agent_insights: [], opportunities: [], risks: [] });
-      }
-    };
-
-    fetchReport();
-
-    const onComplete = (e: Event) => {
-      const detail = (e as CustomEvent<{ submissionId?: string }>).detail;
-      if (detail?.submissionId === submissionId) fetchReport();
-    };
-    window.addEventListener("tryflow:analysis_complete", onComplete);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener("tryflow:analysis_complete", onComplete);
-    };
-  }, [submissionId]);
-=======
 export function WorkingBreakingBoard() {
   const { report, status } = useAnalysis();
->>>>>>> Stashed changes
 
   const { working, breaking } = useMemo(() => {
     if (!report) return { working: [] as Signal[], breaking: [] as Signal[] };

@@ -109,44 +109,8 @@ export function IdeaHero({
   actionAnchor = "next-actions",
 }: Props) {
   const { isDark } = useTheme();
-<<<<<<< Updated upstream
-  const [report, setReport] = useState<ApiReport | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const fetchReport = async () => {
-      try {
-        const res = await fetch(`/api/analysis?submissionId=${submissionId}`);
-        const data = await res.json();
-        if (!cancelled && data.report) {
-          setReport({
-            viability_score: data.report.viability_score,
-            summary: data.report.summary,
-            analysis: data.report.analysis,
-          });
-        }
-      } catch {
-        /* fall back to server-provided summary/score */
-      }
-    };
-
-    fetchReport();
-
-    const onComplete = (e: Event) => {
-      const detail = (e as CustomEvent<{ submissionId?: string }>).detail;
-      if (detail?.submissionId === submissionId) fetchReport();
-    };
-    window.addEventListener("tryflow:analysis_complete", onComplete);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener("tryflow:analysis_complete", onComplete);
-    };
-  }, [submissionId]);
-=======
   const { report, status } = useAnalysis();
   const isPending = status === "pending";
->>>>>>> Stashed changes
 
   const score = report?.viability_score ?? fallbackScore;
   const summary = report?.summary ?? fallbackSummary;
