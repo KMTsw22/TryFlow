@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { AGENT_IDS, type AgentId } from "@/lib/viability";
 
 export interface AnalysisReport {
@@ -101,13 +101,15 @@ export function AnalysisProvider({
   const [spotlightAgent, setSpotlightAgent] = useState<AgentId | null>(null);
   const [failureHints, setFailureHints] = useState<string[]>([]);
 
-  // Guard so we don't open the stream more than once per mount.
-  const startedRef = useRef(false);
-
+  // 2026-04 fix: React strict mode (dev) 의 이중 mount 에 의해 첫 fetch 가 즉시
+  // abort 되고 재시작이 안 되는 버그 수정. 과거엔 startedRef 로 2번째 mount 를
+  // 막았는데, 첫 fetch 가 cleanup 에서 abort 되어 아무 것도 안 됐음.
+  //
+  // 해결: setTimeout 으로 debounce. 첫 mount 는 타이머 세팅만, strict mode
+  // cleanup 이 타이머 clear. 두 번째 mount 에서 새 타이머가 실제 fetch 를 쏨.
+  // Production 에서는 한 번만 mount → 50ms 지연 후 정상 실행.
   useEffect(() => {
     if (initialReport) return;
-    if (startedRef.current) return;
-    startedRef.current = true;
 
     const abort = new AbortController();
 
@@ -271,9 +273,12 @@ export function AnalysisProvider({
       }
     }
 
-    consume();
+    // Debounce 로 strict mode 이중 mount 회피 — 첫 mount 의 cleanup 이 타이머
+    // 를 clear 하고, 재 mount 에서 새 타이머가 실제 실행함.
+    const timer = setTimeout(() => consume(), 50);
 
     return () => {
+      clearTimeout(timer);
       abort.abort();
     };
   }, [submissionId, initialReport]);

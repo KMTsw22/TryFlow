@@ -77,13 +77,29 @@ type QualityGateResult = { ok: true } | { ok: false; hints: string[] };
 function runQualityGate(input: {
   description: string;
   target_user: string;
+  /** axis_* 컬럼 데이터 — 새 6-axis 제출 폼에서 옴. 있으면 ratio 체크 스킵. */
+  axes?: {
+    market?: string | null;
+    problem?: string | null;
+    timing?: string | null;
+    product?: string | null;
+    defensibility?: string | null;
+    business_model?: string | null;
+  };
 }): QualityGateResult {
   const desc = input.description.trim();
   const target = input.target_user.trim();
   const hints: string[] = [];
 
-  // 1) Minimum length
-  if (desc.length < 30) {
+  // 새 폼 감지 — axis 답변이 하나라도 있으면 structured 제출로 간주.
+  const hasAxes =
+    !!input.axes &&
+    Object.values(input.axes).some(
+      (v) => typeof v === "string" && v.trim().length > 0
+    );
+
+  // 1) Minimum length — axis 제출이면 각 axis 가 form 단에서 이미 30자 이상 검증됨.
+  if (!hasAxes && desc.length < 30) {
     hints.push(`아이디어 설명을 최소 30자 이상 작성해주세요 (현재 ${desc.length}자).`);
   }
   if (target.length < 2) {
@@ -96,25 +112,31 @@ function runQualityGate(input: {
     hints.push("설명에 실제 언어 문자 (한글/영어 등) 가 포함되어야 합니다.");
   }
 
-  // 3) Unique-character ratio — catches "asdfasdf", "ㅁㅇㅁㅇ", keyboard mashing.
-  // Threshold is length-dependent because natural long prose (especially Korean/CJK with
-  // repeated particles/endings, or markdown with |, ---, #) has inherently lower ratios.
-  const compact = desc.replace(/\s/g, "");
-  if (compact.length >= 10) {
-    const ratio = new Set(compact).size / compact.length;
-    const minRatio = compact.length >= 200 ? 0.06 : compact.length >= 60 ? 0.15 : 0.25;
-    if (ratio < minRatio) {
-      hints.push("반복된 문자 비율이 너무 높습니다. 실제 아이디어 설명을 작성해주세요.");
+  // 3) Unique-character ratio — axis 제출은 스킵.
+  // 2026-04: 새 폼의 concat description ("Market: ...\n\nProblem: ..." 형식) 은
+  // 라벨이 반복되는 데다 한국어 답변이 유사한 표현을 쓸 때 ratio 가 자연스럽게
+  // 낮아짐 → false positive 빈발. 각 axis 는 form 에서 min 30자로 이미 검증됐고
+  // LLM 이 따로 걸러내므로 여기서 중복 체크 안 함. 옛 single-desc 폼에만 적용.
+  if (!hasAxes) {
+    const compact = desc.replace(/\s/g, "");
+    if (compact.length >= 10) {
+      const ratio = new Set(compact).size / compact.length;
+      const minRatio = compact.length >= 200 ? 0.06 : compact.length >= 60 ? 0.15 : 0.25;
+      if (ratio < minRatio) {
+        hints.push("반복된 문자 비율이 너무 높습니다. 실제 아이디어 설명을 작성해주세요.");
+      }
     }
   }
 
-  // 4) Single word repeated heavily (e.g., "test test test test test")
+  // 4) Single word repeated heavily (e.g., "test test test test test").
+  // axis 제출엔 threshold 살짝 완화 (axis 라벨 "Market/Problem/..." 자체가 반복어로 잡힘).
   const words = desc.toLowerCase().split(/\s+/).filter((w) => w.length >= 2);
   if (words.length >= 5) {
     const counts = new Map<string, number>();
     for (const w of words) counts.set(w, (counts.get(w) ?? 0) + 1);
     const maxCount = Math.max(...counts.values());
-    if (maxCount / words.length > 0.6) {
+    const threshold = hasAxes ? 0.75 : 0.6;
+    if (maxCount / words.length > threshold) {
       hints.push("같은 단어가 과도하게 반복됩니다.");
     }
   }
@@ -142,6 +164,13 @@ const CATEGORY_FOLDER: Record<string, string> = {
 // 새로: 파일당 최초 1회만 읽고 Map 에 저장. 워커 lifetime 동안 0 disk I/O.
 // prompt 파일은 런타임에 바뀌지 않으므로 invalidation 불필요.
 const PROMPT_CACHE = new Map<string, string>();
+
+// 2026-04: 동일 submissionId 에 대한 동시 분석 실행 방지 (in-memory).
+// React strict mode 이중 mount 등으로 같은 submission 에 대해 두 번 SSE stream
+// 이 시작되면 양쪽 모두 LLM 호출 전부 돌린 뒤 INSERT 에서 한쪽만 성공 → 비용 2배.
+// 여기서 먼저 들어온 run 이 끝날 때까지 두 번째 run 은 대기시키고, 끝나면
+// 이미 저장된 row 를 가져와서 즉시 complete 이벤트만 emit 하게 함.
+const ACTIVE_ANALYSES = new Map<string, Promise<void>>();
 
 async function loadFile(filePath: string): Promise<string> {
   const cached = PROMPT_CACHE.get(filePath);
@@ -451,6 +480,9 @@ async function* runAnalysisStream(
   const t0 = Date.now();
   const tlog = (label: string) =>
     console.log(`[analysis ${submissionId.slice(0, 6)}] +${Date.now() - t0}ms ${label}`);
+  // Lock release is hoisted so finally can reach it regardless of where we register.
+  // Initialize to no-op; real resolver gets assigned once lockPromise is created.
+  let resolveOwnLock: () => void = () => {};
   try {
     tlog("stream start");
     if (!process.env.OPENAI_API_KEY) {
@@ -481,7 +513,23 @@ async function* runAnalysisStream(
 
     const { data: idea, error: ideaErr } = ideaRes;
     if (ideaErr || !idea) {
-      yield { event: "failed", stage: "fetch", message: "Submission not found" };
+      // Log the real Supabase error — "Submission not found" alone masks schema
+      // issues (missing columns etc.) which are the common failure mode.
+      console.error("[analysis] idea fetch failed:", {
+        submissionId,
+        error: ideaErr,
+        code: ideaErr?.code,
+        message: ideaErr?.message,
+        details: ideaErr?.details,
+        hint: ideaErr?.hint,
+      });
+      yield {
+        event: "failed",
+        stage: "fetch",
+        message: ideaErr?.message
+          ? `DB error: ${ideaErr.message}${ideaErr.hint ? ` (${ideaErr.hint})` : ""}`
+          : "Submission not found",
+      };
       return;
     }
 
@@ -490,10 +538,59 @@ async function* runAnalysisStream(
       return;
     }
 
-    // 1단: 하드 게이트
+    // 동일 submission 에 대한 동시 실행 대기 — 먼저 들어온 run 이 끝나면 저장된
+    // row 를 읽어서 즉시 complete 처리. LLM 2중 호출 방지 (비용 절약).
+    const activeSibling = ACTIVE_ANALYSES.get(submissionId);
+    if (activeSibling) {
+      tlog("sibling run active — waiting for it to finish");
+      await activeSibling.catch(() => {});
+      const { data: siblingResult } = await supabase
+        .from("analysis_reports")
+        .select(
+          "id, viability_score, summary, analysis, cross_agent_insights, opportunities, risks, next_steps"
+        )
+        .eq("submission_id", submissionId)
+        .maybeSingle();
+      if (siblingResult) {
+        tlog("returning sibling's result");
+        yield {
+          event: "complete",
+          analysisId: siblingResult.id,
+          viabilityScore: siblingResult.viability_score,
+          report: siblingResult,
+        };
+        return;
+      }
+      // Sibling finished without writing (failed) → proceed with own run below.
+    }
+
+    // Register our run so other concurrent requests wait.
+    // resolveOwnLock (hoisted) is called in finally to unblock waiters.
+    const lockPromise = new Promise<void>((res) => {
+      resolveOwnLock = res;
+    });
+    ACTIVE_ANALYSES.set(submissionId, lockPromise);
+
+    // 1단: 하드 게이트 — axis_* 컬럼 넘겨서 새 폼 제출은 ratio 체크 스킵.
+    const ideaWithAxes = idea as typeof idea & {
+      axis_market?: string | null;
+      axis_problem?: string | null;
+      axis_timing?: string | null;
+      axis_product?: string | null;
+      axis_defensibility?: string | null;
+      axis_business_model?: string | null;
+    };
     const hard = runQualityGate({
       description: idea.description ?? "",
       target_user: idea.target_user ?? "",
+      axes: {
+        market: ideaWithAxes.axis_market,
+        problem: ideaWithAxes.axis_problem,
+        timing: ideaWithAxes.axis_timing,
+        product: ideaWithAxes.axis_product,
+        defensibility: ideaWithAxes.axis_defensibility,
+        business_model: ideaWithAxes.axis_business_model,
+      },
     });
     tlog("hard gate done");
     yield { event: "hard_gate_done", pass: hard.ok, hints: hard.ok ? undefined : hard.hints };
@@ -712,6 +809,36 @@ async function* runAnalysisStream(
     });
 
     if (insertErr) {
+      // 2026-04: submission_id UNIQUE 제약 때문에 동시 실행 시 한쪽은 여기서 튕김.
+      // 그 경우 다른 쪽이 이미 insert 했으므로 그 row 를 가져와서 complete 처리.
+      // 양쪽 client 가 동일한 분석 결과 받음 (LLM 중복 호출은 있지만 UX 는 정상).
+      const code = (insertErr as { code?: string }).code;
+      const msg = insertErr.message?.toLowerCase() ?? "";
+      const isDuplicate =
+        code === "23505" || msg.includes("duplicate") || msg.includes("unique");
+
+      if (isDuplicate) {
+        tlog("duplicate insert — fetching existing row from sibling run");
+        const { data: existing } = await supabase
+          .from("analysis_reports")
+          .select(
+            "id, viability_score, summary, analysis, cross_agent_insights, opportunities, risks, next_steps"
+          )
+          .eq("submission_id", submissionId)
+          .maybeSingle();
+
+        if (existing) {
+          yield {
+            event: "complete",
+            analysisId: existing.id,
+            viabilityScore: existing.viability_score,
+            report: existing,
+          };
+          return;
+        }
+      }
+
+      console.error("[analysis] insert failed:", insertErr);
       yield { event: "failed", stage: "db", message: String(insertErr) };
       return;
     }
@@ -721,6 +848,11 @@ async function* runAnalysisStream(
   } catch (err) {
     console.error("runAnalysisStream", err);
     yield { event: "failed", stage: "unknown", message: String(err) };
+  } finally {
+    // Release the in-memory lock so waiting siblings can proceed and read the
+    // saved row (or run themselves if this one failed before insert).
+    ACTIVE_ANALYSES.delete(submissionId);
+    resolveOwnLock();
   }
 }
 
@@ -748,22 +880,49 @@ export async function POST(req: NextRequest) {
   // SSE path: stream events as they happen
   if (wantsStream) {
     const encoder = new TextEncoder();
+    // Client aborts (React strict mode, navigation) close the downstream
+    // consumer → the next controller.enqueue throws "Invalid state: Controller
+    // is already closed". We detect that via `cancel()` callback + a flag, and
+    // short-circuit the generator gracefully instead of logging as an error.
+    let closed = false;
     const stream = new ReadableStream({
       async start(controller) {
+        const safeEnqueue = (chunk: Uint8Array) => {
+          if (closed) return;
+          try {
+            controller.enqueue(chunk);
+          } catch {
+            // Downstream already gone (abort/nav) — stop quietly.
+            closed = true;
+          }
+        };
+
         try {
           for await (const evt of runAnalysisStream(submissionId!)) {
-            controller.enqueue(encoder.encode(sseEncode(evt)));
+            if (closed) break;
+            safeEnqueue(encoder.encode(sseEncode(evt)));
           }
         } catch (err) {
-          console.error("SSE stream error", err);
-          controller.enqueue(
-            encoder.encode(
-              sseEncode({ event: "failed", stage: "unknown", message: String(err) })
-            )
-          );
+          if (!closed) {
+            console.error("SSE stream error", err);
+            safeEnqueue(
+              encoder.encode(
+                sseEncode({ event: "failed", stage: "unknown", message: String(err) })
+              )
+            );
+          }
         } finally {
-          controller.close();
+          if (!closed) {
+            try {
+              controller.close();
+            } catch {
+              /* already closed */
+            }
+          }
         }
+      },
+      cancel() {
+        closed = true;
       },
     });
     return new Response(stream, {
