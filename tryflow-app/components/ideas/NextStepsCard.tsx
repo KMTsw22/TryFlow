@@ -3,8 +3,8 @@
 import { ArrowRight } from "lucide-react";
 import { useAnalysis } from "./AnalysisContext";
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 /**
  * Editorial "This week's actions" — numbered rows separated by hairline rules.
@@ -95,7 +95,7 @@ export function NextStepsCard() {
               {step}
             </p>
             <span
-              className="shrink-0 text-[15px] font-medium tracking-[0.3em] uppercase"
+              className="shrink-0 text-[15px] font-medium tracking-[0.08em] uppercase"
               style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
               title="Rough effort estimate"
             >
@@ -107,7 +107,7 @@ export function NextStepsCard() {
 
       {steps.length > 3 && (
         <p
-          className="mt-5 inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase"
+          className="mt-5 inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           {steps.length - 3} more in the full analysis
@@ -122,7 +122,7 @@ function KickerRule({ title, right }: { title: string; right?: string | null }) 
   return (
     <div className="flex items-center gap-4 mb-8">
       <span
-        className="text-[15px] font-medium tracking-[0.35em] uppercase"
+        className="text-[15px] font-medium tracking-[0.08em] uppercase"
         style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
       >
         {title}
@@ -130,7 +130,7 @@ function KickerRule({ title, right }: { title: string; right?: string | null }) 
       <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
       {right && (
         <span
-          className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+          className="text-[15px] font-medium tracking-[0.06em] uppercase shrink-0"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           {right}

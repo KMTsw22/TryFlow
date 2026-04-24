@@ -46,7 +46,7 @@ export function Brand({
       <img src="/logo.png" className={cn(tokens.icon, "shrink-0")} alt="Try.Wepp" />
       <span
         style={{
-          fontFamily: "'Playfair Display', serif",
+          fontFamily: "'Fraunces', serif",
           fontWeight: 900,
           fontSize: tokens.text,
           letterSpacing: "-0.02em",

@@ -4,23 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useAnalysis } from "./AnalysisContext";
 
-const DISPLAY = "'Oswald', sans-serif";
-const SERIF = "'Playfair Display', serif";
+const DISPLAY = "'Inter', sans-serif";
+const SERIF = "'Fraunces', serif";
 
 // Rough per-agent time budget so the bar feels like it's doing something.
 // Real backend doesn't stream progress, so this is a time-based simulation
 // capped at 95% until the poll actually returns a report.
 const TOTAL_ESTIMATE_MS = 45_000;
+// 2026-04 refactor: 8 axes → 6. See decisions/evaluation-axes-rationale.md.
 const AGENT_STAGES = [
-  "Initializing 8-agent system",
-  "Market size — TAM / SAM",
-  "Competition — landscape mapping",
-  "Timing — market window",
-  "Monetization — revenue models",
-  "Technical — build complexity",
-  "Regulation — compliance",
-  "Defensibility — moats",
-  "Acquisition — GTM channels",
+  "Initializing 6-agent system",
+  "Market — size & quality",
+  "Problem — urgency & pain",
+  "Timing — why now",
+  "Product — 10x vs alternatives",
+  "Moat — defensibility",
+  "Business model — economics & GTM",
   "Synthesizing final report",
 ];
 
@@ -94,7 +93,7 @@ export function AnalysisProgressStrip({ submissionId }: Props) {
       <div className="max-w-5xl mx-auto px-6 py-5">
         <div className="flex items-baseline gap-4 mb-3">
           <span
-            className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[0.35em] uppercase shrink-0"
+            className="inline-flex items-center gap-2.5 text-[13px] font-medium tracking-[0.08em] uppercase shrink-0"
             style={{
               fontFamily: DISPLAY,
               color: failed ? "var(--signal-danger)" : "var(--accent)",
@@ -112,10 +111,10 @@ export function AnalysisProgressStrip({ submissionId }: Props) {
             style={{ background: failed ? "var(--signal-danger)" : "var(--accent-ring)" }}
           />
           <span
-            className="text-[13px] font-medium tracking-[0.3em] uppercase shrink-0"
+            className="text-[13px] font-medium tracking-[0.08em] uppercase shrink-0"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
-            {failed ? "Action needed" : "8 specialist agents"}
+            {failed ? "Action needed" : "6 specialist agents"}
           </span>
         </div>
 
@@ -129,7 +128,7 @@ export function AnalysisProgressStrip({ submissionId }: Props) {
           }}
         >
           {failed
-            ? "The 8-agent analysis didn’t complete — the score shown below is the preliminary heuristic reading. Run the full analysis to get the real AI verdict."
+            ? "The 6-agent analysis didn’t complete — the score shown below is the preliminary heuristic reading. Run the full analysis to get the real AI verdict."
             : `${stageLabel}…`}
         </p>
 
@@ -138,7 +137,7 @@ export function AnalysisProgressStrip({ submissionId }: Props) {
             type="button"
             onClick={handleRetry}
             disabled={retrying}
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold tracking-[0.25em] uppercase text-white transition-[filter] hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-[13px] font-bold tracking-[0.06em] uppercase text-white transition-[filter] hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ fontFamily: DISPLAY, background: "var(--accent)" }}
           >
             {retrying ? (

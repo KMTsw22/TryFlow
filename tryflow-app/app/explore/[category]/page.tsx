@@ -4,11 +4,15 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { IdeaCard } from "@/components/ideas/IdeaCard";
 import { CATEGORIES } from "@/lib/categories";
-import { CategoryInsightPanel } from "@/components/market/CategoryInsightPanel";
+import {
+  AverageViabilityHero,
+  MarketHealthStrip,
+  TopInCategory,
+} from "@/components/market/CategoryInsightPanel";
 import { TopBar } from "@/components/layout/TopBar";
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 interface InsightReport {
   viability_score: number;
@@ -76,50 +80,19 @@ function toCardData(idea: IdeaRow) {
   };
 }
 
-// ── Keyword extraction ──────────────────────────────────────────────────────
-const STOPWORDS = new Set([
-  "the", "and", "for", "that", "this", "with", "from", "have", "has", "had",
-  "are", "was", "were", "been", "being", "will", "would", "could", "should",
-  "can", "our", "your", "their", "they", "them", "its", "you", "all", "any",
-  "but", "not", "who", "how", "why", "what", "when", "where", "which",
-  "about", "into", "over", "than", "then", "some", "such", "also", "just",
-  "like", "want", "need", "use", "using", "make", "makes", "made", "get",
-  "users", "user", "people", "someone", "anyone", "everyone", "thing",
-  "things", "way", "ways", "service", "services", "product", "products",
-  "tool", "tools", "app", "apps", "platform", "solution", "solutions",
-  "help", "helps", "helping", "lets", "let", "allows", "allow", "provides",
-  "provide", "provides", "based", "new", "one", "two", "three", "more",
-  "most", "very", "really", "quick", "quickly", "easy", "easily",
-  "through", "across", "without", "within",
-]);
-
-function extractKeywords(texts: string[], topN = 6): { word: string; count: number }[] {
-  const counts = new Map<string, number>();
-  for (const text of texts) {
-    const matches = text.toLowerCase().match(/\b[a-z][a-z-]{2,}\b/g) ?? [];
-    const seenInDoc = new Set<string>();
-    for (const raw of matches) {
-      const word = raw.replace(/-+$/, "");
-      if (word.length < 3) continue;
-      if (STOPWORDS.has(word)) continue;
-      // Count each word once per idea (document frequency) to reduce boilerplate repetition
-      if (seenInDoc.has(word)) continue;
-      seenInDoc.add(word);
-      counts.set(word, (counts.get(word) ?? 0) + 1);
-    }
-  }
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, topN)
-    .map(([word, count]) => ({ word, count }));
-}
+// 2026-04: 옛 keyword extraction (STOPWORDS / extractKeywords) 제거 — VC 의사결정에
+// 도움 안 되는 단어 빈도 카운트라 인사이트 패널 재설계와 함께 폐기됨.
 
 export default async function CategoryIdeasPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ open?: string }>;
 }) {
   const { category: rawCategory } = await params;
+  const { open } = await searchParams;
+  const onlyOpen = open === "1";
   const category = decodeURIComponent(rawCategory);
 
   if (!CATEGORIES.includes(category)) notFound();
@@ -171,54 +144,103 @@ export default async function CategoryIdeasPage({
     }
   }
 
-  const ideas: IdeaRow[] = ideasBase.map((i) => ({
+  // 어떤 아이디어가 이미 저장(❤️)됐는지 조회 — 카드 하트 채움 상태 결정
+  const ideaIds = ideasBase.map((i) => i.id);
+  const savedIdSet = new Set<string>();
+  if (ideaIds.length > 0) {
+    const { data: saved } = await supabase
+      .from("saved_ideas")
+      .select("submission_id")
+      .eq("user_id", user.id)
+      .in("submission_id", ideaIds);
+    for (const s of saved ?? []) {
+      if (typeof s.submission_id === "string") savedIdSet.add(s.submission_id);
+    }
+  }
+
+  const allIdeas: IdeaRow[] = ideasBase.map((i) => ({
     ...i,
     user_profiles: i.user_id
       ? profileMap.get(i.user_id) ?? null
       : null,
   }));
 
+  // "Open only" 필터 — VC 가 연락 가능한 founder 만 보고 싶을 때
+  const ideas = onlyOpen
+    ? allIdeas.filter((i) => getContactOpen(i) === true)
+    : allIdeas;
+  const openCount = allIdeas.filter((i) => getContactOpen(i) === true).length;
+
   // ── Compute insight panel data ────────────────────────────────────────────
-  const now = new Date();
-  const msInDay = 24 * 60 * 60 * 1000;
+  // 2026-04 redesign: VC 가 카테고리 들어왔을 때 actionable 한 정보만.
+  //   • Top 3 by viability score → 바로 클릭 가능한 베스트 후보
+  //   • Market Health (avg / saturation / trend / total) → 컨텍스트
+  // 기존 weekly chart + top keywords 는 폐기 (VC 의사결정에 도움 안 됨).
 
-  // Weekly rollup: 4 buckets × 7 days, oldest → newest
-  const WEEKS = 4;
-  const DAYS_PER_WEEK = 7;
-  const periodDays = WEEKS * DAYS_PER_WEEK;
+  type ScoredIdea = { id: string; category: string; target_user: string; viability_score: number };
+  const scoredIdeas: ScoredIdea[] = ideas
+    .map((i) => {
+      const score = getAiScore(i) ?? getInsight(i)?.viability_score ?? null;
+      if (score === null) return null;
+      return {
+        id: i.id,
+        category: i.category,
+        target_user: i.target_user,
+        viability_score: score,
+      };
+    })
+    .filter((x): x is ScoredIdea => x !== null);
 
-  const weeklyCounts: number[] = Array(WEEKS).fill(0);
-  let totalThis = 0;
-  let totalPrev = 0;
+  // Top 5 by score (descending) — 스캔하기 편하면서 충분한 후보 보기
+  const topIdeas = [...scoredIdeas]
+    .sort((a, b) => b.viability_score - a.viability_score)
+    .slice(0, 5);
 
-  for (const idea of ideas) {
-    const submitted = new Date(idea.created_at).getTime();
-    const ageDays = Math.floor((now.getTime() - submitted) / msInDay);
-    if (ageDays < periodDays) {
-      const weekFromNow = Math.floor(ageDays / DAYS_PER_WEEK); // 0 = this week, WEEKS-1 = oldest
-      const bucket = WEEKS - 1 - weekFromNow;
-      if (bucket >= 0 && bucket < WEEKS) weeklyCounts[bucket]++;
-      totalThis++;
-    } else if (ageDays < periodDays * 2) {
-      totalPrev++;
+  // Avg viability — only across ideas that actually have a score
+  const avgScore =
+    scoredIdeas.length > 0
+      ? Math.round(
+          scoredIdeas.reduce((s, x) => s + x.viability_score, 0) / scoredIdeas.length
+        )
+      : null;
+
+  // Top score — 카테고리 최고 점수 (VC benchmark)
+  const topScore =
+    scoredIdeas.length > 0 ? Math.max(...scoredIdeas.map((x) => x.viability_score)) : null;
+
+  // Fresh count — 최근 7일 이내 제출 (activity signal)
+  const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const newThisWeekCount = ideas.filter(
+    (i) => new Date(i.created_at).getTime() > sevenDaysAgoMs
+  ).length;
+
+  // Modal saturation / trend — most common value across category reports.
+  function modalOf<T extends string>(values: T[]): T | null {
+    if (values.length === 0) return null;
+    const counts = new Map<T, number>();
+    for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+    let best: T | null = null;
+    let bestCount = 0;
+    for (const [v, c] of counts) {
+      if (c > bestCount) {
+        best = v;
+        bestCount = c;
+      }
     }
+    return best;
   }
-
-  // For each bucket, compute the start date (oldest day of the 7-day window)
-  const weeklyBuckets = weeklyCounts.map((count, i) => {
-    const startAgeDays = (WEEKS - i) * DAYS_PER_WEEK - 1;
-    const start = new Date(now.getTime() - startAgeDays * msInDay);
-    return { startISO: start.toISOString(), count };
-  });
-
-  // Extract top keywords from descriptions
-  const topKeywords = extractKeywords(
-    ideas.map((i) => i.description ?? ""),
-    6,
-  );
-
-  // Most recent activity — ideas are ordered created_at desc, so [0] is latest
-  const lastActivityAt = ideas[0]?.created_at ?? null;
+  const saturationValues = ideas
+    .map((i) => getInsight(i)?.saturation_level)
+    .filter((x): x is "Low" | "Medium" | "High" =>
+      x === "Low" || x === "Medium" || x === "High"
+    );
+  const trendValues = ideas
+    .map((i) => getInsight(i)?.trend_direction)
+    .filter((x): x is "Rising" | "Stable" | "Declining" =>
+      x === "Rising" || x === "Stable" || x === "Declining"
+    );
+  const modalSaturation = modalOf(saturationValues);
+  const modalTrend = modalOf(trendValues);
 
   return (
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
@@ -230,63 +252,76 @@ export default async function CategoryIdeasPage({
         {/* Back link */}
         <Link
           href="/explore"
-          className="inline-flex items-center gap-1.5 text-[15px] font-medium tracking-[0.2em] uppercase mb-10 transition-colors hover:text-[color:var(--text-primary)]"
+          className="inline-flex items-center gap-1.5 text-[15px] font-medium tracking-[0.06em] uppercase mb-10 transition-colors hover:text-[color:var(--text-primary)]"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           <ArrowLeft className="w-3 h-3" /> Back to Market
         </Link>
 
-        {/* Editorial kicker */}
+        {/* Full-width kicker — "Category · Market ──── N ideas" 가 페이지 실제 오른쪽 끝까지 */}
         <div className="flex items-center gap-4 mb-6">
           <span
-            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            className="text-[15px] font-medium tracking-[0.08em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             Category · Market
           </span>
           <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
           <span
-            className="text-[15px] font-medium tracking-[0.25em] uppercase"
+            className="text-[15px] font-medium tracking-[0.06em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             {ideas.length} {ideas.length === 1 ? "idea" : "ideas"}
           </span>
         </div>
 
-        <h1
-          className="mb-4"
-          style={{
-            fontFamily: SERIF,
-            fontWeight: 900,
-            fontSize: "clamp(2.5rem, 5vw, 4rem)",
-            lineHeight: 1.02,
-            letterSpacing: "-0.03em",
-            color: "var(--text-primary)",
-          }}
-        >
-          {category}.
-        </h1>
+        {/* Header 2-column: 좌측 타이틀+인트로, 우측 Average Viability hero.
+            카테고리 정체성 + 점수가 매거진 커버처럼 좌우 대조로 배치. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] items-end gap-x-12 gap-y-8 mb-10">
+          <div className="min-w-0">
+            <h1
+              className="mb-4"
+              style={{
+                fontFamily: SERIF,
+                fontWeight: 900,
+                fontSize: "clamp(2.5rem, 5vw, 4rem)",
+                lineHeight: 1.02,
+                letterSpacing: "-0.03em",
+                color: "var(--text-primary)",
+              }}
+            >
+              {category}.
+            </h1>
 
-        <div
-          className="text-[17px] leading-[1.6] mb-14 space-y-1"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          <p>Anonymous submissions in this category.</p>
-          <p>Four weeks of activity, recurring themes pulled from founder descriptions, and every live idea below.</p>
+            <div
+              className="text-[17px] leading-[1.6] space-y-1"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              <p>Anonymous submissions in this category.</p>
+              <p>Top scoring ideas, market health at a glance, and every live idea below.</p>
+            </div>
+          </div>
+
+          {/* Average Viability hero — 헤더 우측 */}
+          {ideas.length > 0 && <AverageViabilityHero avgScore={avgScore} />}
         </div>
 
-        {/* Insight panel */}
+        {/* Market Health Strip — 4 메트릭 가로 한 줄, 전체 폭 */}
         {ideas.length > 0 && (
           <div className="mb-14">
-            <CategoryInsightPanel
-              data={{
-                weeklyBuckets,
-                totalThis,
-                totalPrev,
-                lastActivityAt,
-                topKeywords,
-              }}
+            <MarketHealthStrip
+              modalSaturation={modalSaturation}
+              modalTrend={modalTrend}
+              topScore={topScore}
+              newThisWeekCount={newThisWeekCount}
             />
+          </div>
+        )}
+
+        {/* Top in Category — 전체 폭, 메인 액션 섹션 */}
+        {ideas.length > 0 && topIdeas.length > 0 && (
+          <div className="mb-14">
+            <TopInCategory topIdeas={topIdeas} />
           </div>
         )}
 
@@ -297,7 +332,7 @@ export default async function CategoryIdeasPage({
             style={{ borderColor: "var(--t-border-subtle)" }}
           >
             <p
-              className="text-[15px] font-medium tracking-[0.35em] uppercase mb-5"
+              className="text-[15px] font-medium tracking-[0.08em] uppercase mb-5"
               style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
             >
               Nothing yet
@@ -317,7 +352,7 @@ export default async function CategoryIdeasPage({
             </p>
             <Link
               href="/submit"
-              className="group inline-flex items-center gap-3 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+              className="group inline-flex items-center gap-3 text-[15px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
               style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
             >
               Submit the first idea
@@ -329,9 +364,9 @@ export default async function CategoryIdeasPage({
           </div>
         ) : (
           <section aria-label="All submissions">
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex items-center gap-4 mb-5 flex-wrap">
               <span
-                className="text-[15px] font-medium tracking-[0.35em] uppercase"
+                className="text-[15px] font-medium tracking-[0.08em] uppercase"
                 style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
               >
                 All Submissions
@@ -340,19 +375,69 @@ export default async function CategoryIdeasPage({
                 className="flex-1 h-px"
                 style={{ background: "var(--t-border-subtle)" }}
               />
+              {/* Filter toggle — "Open only" for VC */}
+              {openCount > 0 && (
+                <Link
+                  href={
+                    onlyOpen
+                      ? `/explore/${encodeURIComponent(category)}`
+                      : `/explore/${encodeURIComponent(category)}?open=1`
+                  }
+                  className="inline-flex items-center gap-2 px-3 py-1 text-[11.5px] font-bold tracking-[0.08em] uppercase transition-colors shrink-0"
+                  style={{
+                    fontFamily: DISPLAY,
+                    color: onlyOpen ? "var(--signal-success)" : "var(--text-tertiary)",
+                    background: onlyOpen ? "rgba(16, 185, 129, 0.10)" : "transparent",
+                    border: onlyOpen
+                      ? "1px solid rgba(16, 185, 129, 0.3)"
+                      : "1px solid var(--t-border-card)",
+                  }}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{
+                      background: onlyOpen ? "var(--signal-success)" : "var(--text-tertiary)",
+                    }}
+                    aria-hidden
+                  />
+                  {onlyOpen ? `Showing open only · ${ideas.length}` : `Open only · ${openCount}`}
+                </Link>
+              )}
               <span
-                className="text-[15px] font-medium tracking-[0.25em] uppercase"
+                className="text-[13px] font-medium tracking-[0.06em] uppercase shrink-0"
                 style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
               >
                 Newest first
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {ideas.map((idea) => (
-                <IdeaCard key={idea.id} idea={toCardData(idea)} showCategory={false} />
-              ))}
-            </div>
+            {ideas.length === 0 ? (
+              <p
+                className="py-8 text-[14.5px] italic"
+                style={{ fontFamily: SERIF, color: "var(--text-tertiary)" }}
+              >
+                No ideas match this filter. {onlyOpen && (
+                  <Link
+                    href={`/explore/${encodeURIComponent(category)}`}
+                    className="underline"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    Show all
+                  </Link>
+                )}
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {ideas.map((idea) => (
+                  <IdeaCard
+                    key={idea.id}
+                    idea={toCardData(idea)}
+                    showCategory={false}
+                    isSaved={savedIdSet.has(idea.id)}
+                  />
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>

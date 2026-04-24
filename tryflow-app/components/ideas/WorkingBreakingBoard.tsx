@@ -5,8 +5,8 @@ import { useAnalysis } from "./AnalysisContext";
 
 type Signal = { text: string; source: "opportunity" | "cross" | "risk" };
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 /**
  * Editorial "Working / Breaking" board.
@@ -44,7 +44,7 @@ export function WorkingBreakingBoard() {
           <div key={kind}>
             <div className="flex items-center gap-4 mb-6">
               <span
-                className="text-[15px] font-medium tracking-[0.35em] uppercase"
+                className="text-[15px] font-medium tracking-[0.08em] uppercase"
                 style={{
                   fontFamily: DISPLAY,
                   color: kind === "working" ? "var(--signal-success)" : "var(--signal-danger)",
@@ -132,14 +132,14 @@ function Column({
       {/* Kicker rule — title in signal color, hairline, count */}
       <div className="flex items-center gap-4 mb-6">
         <span
-          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color }}
         >
           What&apos;s {title}
         </span>
         <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
         <span
-          className="text-[15px] font-medium tabular-nums tracking-[0.2em] uppercase"
+          className="text-[15px] font-medium tabular-nums tracking-[0.06em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           {String(items.length).padStart(2, "0")}
@@ -171,7 +171,7 @@ function Column({
                 {item.text}
                 {item.source === "cross" && (
                   <span
-                    className="ml-2 align-middle text-[14px] font-medium tracking-[0.25em] uppercase"
+                    className="ml-2 align-middle text-[14px] font-medium tracking-[0.06em] uppercase"
                     style={{
                       fontFamily: DISPLAY,
                       color: "var(--text-tertiary)",

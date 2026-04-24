@@ -7,7 +7,7 @@
 ```json
 {
   "input": { /* 원본 아이디어 + 플랫폼 통계 */ },
-  "agent_results": { /* 8개 agent 출력 */ },
+  "agent_results": { /* 6개 agent 출력 (market_size, problem_urgency, timing, product, defensibility, business_model) */ },
   "draft": { /* 방금 네가 만든 초안 리포트 */ }
 }
 ```
@@ -50,7 +50,7 @@ summary 가 "강한 기회" 라고 말하는데 sub-score 중 5개 이상이 45 
   "trend_direction": "...",
   "similar_count": 0,
   "summary": "...",
-  "analysis": { /* 8개 축 */ },
+  "analysis": { /* 6개 축 */ },
   "cross_agent_insights": [ "..." ],
   "opportunities": [ "..." ],
   "risks": [ "..." ],

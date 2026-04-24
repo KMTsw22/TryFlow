@@ -153,10 +153,15 @@ function passesHeuristic(text: string): boolean {
   if (tokens.length < 3) return false;
 
   // Character diversity — randomly mashed jamo has low diversity relative to length.
+  // 2026-04 fix: only enforced on short-to-medium texts (40-200 non-space chars).
+  // Natural English has limited alphabet (26 letters), so longer English text
+  // hits diversity ≈ 0.11-0.12 organically and was being mis-flagged.
+  // Threshold also relaxed 0.12 → 0.10 — only catches actual single/double-char
+  // hammering ("aaaaa..." or "ababab..."), not normal prose.
   const uniqueChars = new Set(trimmed.toLowerCase().replace(/\s/g, ""));
   const nonSpaceLen = trimmed.replace(/\s/g, "").length;
   const diversity = uniqueChars.size / Math.max(1, nonSpaceLen);
-  if (nonSpaceLen >= 40 && diversity < 0.12) return false;
+  if (nonSpaceLen >= 40 && nonSpaceLen < 200 && diversity < 0.10) return false;
 
   // Reject if >30% of non-whitespace characters are punctuation/symbols.
   const symbolMatches = trimmed.match(/[!@#$%^&*()_+\-=[\]{};:'"\\|,.<>/?~`;ㅣㅡㅏㅓㅗㅜㅑㅕㅛㅠ]/g);
@@ -232,9 +237,21 @@ Return ONLY strict JSON: {"valid": boolean, "reason"?: string}`,
 
 // ── POST /api/ideas ───────────────────────────────────────────────────────────
 
+// Axis keys must match db/idea_axis_questions.sql columns + submit page form.
+const AXIS_KEYS = [
+  "axis_market",
+  "axis_problem",
+  "axis_timing",
+  "axis_product",
+  "axis_defensibility",
+  "axis_business_model",
+] as const;
+type AxisKey = (typeof AXIS_KEYS)[number];
+
 export async function POST(req: NextRequest) {
   try {
-    const { category, target_user, description, is_private, stage } = await req.json();
+    const body = await req.json();
+    const { category, target_user, description, is_private, stage, axes } = body;
 
     if (!category || !target_user || !description) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -244,6 +261,19 @@ export async function POST(req: NextRequest) {
     }
     if (!CATEGORIES.includes(category as typeof CATEGORIES[number])) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
+    }
+
+    // Per-axis sanitation. New form sends `axes` object; old clients can omit it
+    // and we fall back to description-only mode (backwards compat).
+    const axisValues: Partial<Record<AxisKey, string | null>> = {};
+    if (axes && typeof axes === "object") {
+      for (const key of AXIS_KEYS) {
+        const val = (axes as Record<string, unknown>)[key];
+        if (typeof val === "string") {
+          const trimmed = val.trim();
+          axisValues[key] = trimmed.length > 0 ? trimmed.slice(0, 500) : null;
+        }
+      }
     }
 
     // 2-stage gatekeeper: cheap heuristic first, then GPT for borderline cases.
@@ -285,7 +315,7 @@ export async function POST(req: NextRequest) {
       allowPrivate = profile?.plan === "plus" || profile?.plan === "pro";
     }
 
-    // Insert submission
+    // Insert submission — include per-axis answers when provided by new form.
     const submissionId = crypto.randomUUID();
     const VALID_STAGES = ["idea", "prototype", "early_traction", "launched"];
     const { error: subErr } = await supabase.from("idea_submissions").insert({
@@ -296,6 +326,7 @@ export async function POST(req: NextRequest) {
       description,
       is_private: allowPrivate,
       stage: VALID_STAGES.includes(stage) ? stage : null,
+      ...axisValues,
     });
     if (subErr) throw subErr;
 

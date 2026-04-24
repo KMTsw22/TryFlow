@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getCategoryTheme, timeAgo } from "@/lib/categories";
+import { HeartButton } from "./HeartButton";
+import { CompareButton } from "@/components/compare/CompareButton";
 
 export interface IdeaCardData {
   id: string;
@@ -14,6 +16,8 @@ export interface IdeaCardData {
   summary?: string | null;
   /** Whether the submitter currently accepts investor contact (null = anonymous / unknown). */
   contactOpen?: boolean | null;
+  /** Total times this idea has been saved. Paired with Signal score as a social-proof signal. */
+  save_count?: number | null;
 }
 
 type Size = "hero" | "default";
@@ -24,10 +28,16 @@ interface Props {
   href?: string;
   /** Show category chip (true by default). Hide when rendered inside a category-filtered view. */
   showCategory?: boolean;
+  /** Heart button — pass `undefined` to omit (e.g., on user's own ideas if you want). */
+  isSaved?: boolean;
+  /** Logged-out viewer — clicking heart redirects to /login. */
+  isAnonymous?: boolean;
+  /** Set to true to hide the heart entirely (e.g., own ideas). */
+  hideSave?: boolean;
 }
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 const STAGE_LABEL: Record<string, string> = {
   idea: "Just an Idea",
@@ -52,6 +62,9 @@ export function IdeaCard({
   size = "default",
   href,
   showCategory = true,
+  isSaved = false,
+  isAnonymous = false,
+  hideSave = false,
 }: Props) {
   const theme = getCategoryTheme(idea.category);
   const score = idea.viability_score ?? null;
@@ -91,7 +104,7 @@ export function IdeaCard({
           </span>
         ) : stage ? (
           <span
-            className="text-[13px] font-medium tracking-[0.3em] uppercase truncate"
+            className="text-[13px] font-medium tracking-[0.08em] uppercase truncate"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             {stage}
@@ -100,25 +113,39 @@ export function IdeaCard({
           <span />
         )}
 
-        <div className="flex items-baseline gap-1 shrink-0">
-          <span
-            className="tabular-nums leading-none"
-            style={{
-              fontFamily: SERIF,
-              fontWeight: 900,
-              fontSize: scoreSize,
-              letterSpacing: "-0.02em",
-              color,
-            }}
-          >
-            {scoreDisplay}
-          </span>
-          <span
-            className="text-[13px] font-medium tracking-[0.15em] uppercase"
-            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-          >
-            /100
-          </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {!hideSave && (
+            <>
+              <CompareButton ideaId={idea.id} variant="icon" size="sm" />
+              <HeartButton
+                ideaId={idea.id}
+                initialSaved={isSaved}
+                isAnonymous={isAnonymous}
+                variant="icon"
+                size="sm"
+              />
+            </>
+          )}
+          <div className="flex items-baseline gap-1 ml-1">
+            <span
+              className="tabular-nums leading-none"
+              style={{
+                fontFamily: SERIF,
+                fontWeight: 900,
+                fontSize: scoreSize,
+                letterSpacing: "-0.02em",
+                color,
+              }}
+            >
+              {scoreDisplay}
+            </span>
+            <span
+              className="text-[13px] font-medium tracking-[0.04em] uppercase"
+              style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+            >
+              /100
+            </span>
+          </div>
         </div>
       </div>
 
@@ -157,7 +184,7 @@ export function IdeaCard({
         </p>
       )}
 
-      {/* Footer — meta (left) + contact indicator (right) */}
+      {/* Footer — meta (left) + watchers + contact indicator (right) */}
       <div
         className="flex items-center justify-between mt-5 pt-4 text-[13px] border-t"
         style={{
@@ -176,24 +203,45 @@ export function IdeaCard({
           )}
         </span>
 
-        {idea.contactOpen === true && (
-          <span
-            className="shrink-0 text-[11px] font-medium tracking-[0.3em] uppercase"
-            style={{ fontFamily: DISPLAY, color: "var(--signal-success)" }}
-            title="Open to investor contact"
-          >
-            Open
-          </span>
-        )}
-        {idea.contactOpen === false && (
-          <span
-            className="shrink-0 text-[11px] font-medium tracking-[0.3em] uppercase"
-            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-            title="Contact disabled"
-          >
-            Contact off
-          </span>
-        )}
+        <span className="flex items-center gap-2.5 shrink-0 ml-3">
+          {/* Watchers — "N watching" paired with Signal score as a dual proof metric.
+              Skip when 0 to keep cards quiet, skip on own cards (watcher count is
+              framed for viewers discovering this idea, not the submitter). */}
+          {typeof idea.save_count === "number" && idea.save_count > 0 && (
+            <span
+              className="inline-flex items-center gap-1 text-[11.5px] font-medium tabular-nums tracking-[0.04em] uppercase"
+              style={{ fontFamily: DISPLAY, color: "#ef4444" }}
+              title={`${idea.save_count} ${idea.save_count === 1 ? "investor" : "investors"} watching`}
+            >
+              <span
+                className="w-1 h-1 rounded-full"
+                style={{ background: "#ef4444" }}
+                aria-hidden
+              />
+              {idea.save_count} watching
+            </span>
+          )}
+
+          {idea.contactOpen === true && (
+            <span
+              className="inline-flex items-center gap-1 text-[10.5px] font-bold tracking-[0.08em] uppercase px-1.5 py-0.5"
+              style={{
+                fontFamily: DISPLAY,
+                color: "var(--signal-success)",
+                background: "rgba(16, 185, 129, 0.10)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+              }}
+              title="Founder is open to investor contact"
+            >
+              <span
+                className="w-1 h-1 rounded-full"
+                style={{ background: "var(--signal-success)" }}
+                aria-hidden
+              />
+              Open
+            </span>
+          )}
+        </span>
       </div>
     </Link>
   );

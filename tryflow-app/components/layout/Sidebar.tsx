@@ -11,15 +11,21 @@ import {
   Plus,
   LogIn,
   Home,
-  GitCompare,
   Sparkles,
   Tag,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-type NavItem = { label: string; icon: typeof Home; href: string };
+type NavItem = {
+  label: string;
+  icon: typeof Home;
+  href: string;
+  /** 메뉴 라벨 옆에 작은 숫자 뱃지 (예: Inbox 미읽음). 0 이면 숨김. */
+  badgeCount?: number;
+};
 type NavSection = { id: string; title: string; items: NavItem[] };
 
 const GUEST_SECTIONS: NavSection[] = [
@@ -33,41 +39,76 @@ const GUEST_SECTIONS: NavSection[] = [
   },
 ];
 
-const AUTH_SECTIONS: NavSection[] = [
-  {
-    id: "create",
-    title: "Create",
-    items: [
-      { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
-    ],
-  },
-  {
-    id: "explore",
-    title: "Explore",
-    items: [
-      { label: "Market",  icon: BarChart3,  href: "/explore" },
-      { label: "Compare", icon: GitCompare, href: "/compare" },
-    ],
-  },
-  {
-    id: "account",
-    title: "Account",
-    items: [
-      { label: "Settings", icon: Settings, href: "/settings" },
-    ],
-  },
-];
+// 2026-04 IA — role-aware:
+//   Founder (Free/Plus): build 중심. My Ideas 가 홈, Market 은 아래쪽에.
+//   Investor (Pro):       discover 중심. Market 이 홈, My Ideas 는 보조로만.
+// Compare: 사이드바 제거 (액션은 카드 [+] + 트레이 담당)
+// Inbox: 사이드바에서 제거됨 (Gmail 통일). /inbox 페이지 자체는 유지되나 nav 에서 진입 불가.
+function buildAuthSections(role: "founder" | "investor"): NavSection[] {
+  if (role === "investor") {
+    return [
+      {
+        id: "discover",
+        title: "Discover",
+        items: [
+          { label: "Market", icon: BarChart3, href: "/explore" },
+          { label: "Watchlist", icon: Heart, href: "/watchlist" },
+        ],
+      },
+      {
+        id: "mywork",
+        title: "My Work",
+        items: [
+          { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
+        ],
+      },
+      {
+        id: "account",
+        title: "Account",
+        items: [{ label: "Settings", icon: Settings, href: "/settings" }],
+      },
+    ];
+  }
+
+  // Founder: 빌드 중심. My Ideas 가 워크벤치. Market 은 참고 surface.
+  return [
+    {
+      id: "workspace",
+      title: "Workspace",
+      items: [
+        { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
+        { label: "Watchlist", icon: Heart, href: "/watchlist" },
+      ],
+    },
+    {
+      id: "research",
+      title: "Research",
+      items: [{ label: "Market", icon: BarChart3, href: "/explore" }],
+    },
+    {
+      id: "account",
+      title: "Account",
+      items: [{ label: "Settings", icon: Settings, href: "/settings" }],
+    },
+  ];
+}
 
 interface Props {
   isLoggedIn: boolean;
   plan?: string | null;
+  /** 'founder' (Free/Plus) or 'investor' (Pro). Drives nav order and emphasis. */
+  role?: "founder" | "investor";
 }
 
-export function Sidebar({ isLoggedIn, plan }: Props) {
+export function Sidebar({
+  isLoggedIn,
+  plan,
+  role = "founder",
+}: Props) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
 
-  const SECTIONS = isLoggedIn ? AUTH_SECTIONS : GUEST_SECTIONS;
+  const SECTIONS = isLoggedIn ? buildAuthSections(role) : GUEST_SECTIONS;
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -105,7 +146,7 @@ export function Sidebar({ isLoggedIn, plan }: Props) {
               expanded ? "opacity-100 delay-75" : "opacity-0"
             )}
             style={{
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "'Fraunces', serif",
               fontWeight: 900,
               fontSize: "1rem",
               letterSpacing: "-0.02em",
@@ -133,16 +174,17 @@ export function Sidebar({ isLoggedIn, plan }: Props) {
               </div>
             )}
             <div className="space-y-0.5">
-              {section.items.map(({ label, icon: Icon, href }) => {
+              {section.items.map(({ label, icon: Icon, href, badgeCount }) => {
                 const active =
                   pathname === href || (href !== "/" && pathname.startsWith(href));
+                const showBadge = typeof badgeCount === "number" && badgeCount > 0;
                 return (
                   <Link
                     key={href}
                     href={href}
-                    title={!expanded ? label : undefined}
+                    title={!expanded ? `${label}${showBadge ? ` (${badgeCount})` : ""}` : undefined}
                     className={cn(
-                      "flex items-center gap-3 px-3 h-9 text-sm font-medium transition-colors whitespace-nowrap rounded-sm",
+                      "relative flex items-center gap-3 px-3 h-9 text-sm font-medium transition-colors whitespace-nowrap rounded-sm",
                       active && "text-[color:var(--text-primary)]",
                       !active && "hover:bg-[color:var(--t-border-subtle)]"
                     )}
@@ -151,20 +193,48 @@ export function Sidebar({ isLoggedIn, plan }: Props) {
                       color: active ? "var(--text-primary)" : "var(--text-secondary)",
                     }}
                   >
-                    <Icon
-                      className="w-4 h-4 shrink-0"
-                      style={{
-                        color: active ? "var(--accent)" : "var(--text-tertiary)",
-                      }}
-                    />
+                    <span className="relative shrink-0">
+                      <Icon
+                        className="w-4 h-4"
+                        style={{
+                          color: active ? "var(--accent)" : "var(--text-tertiary)",
+                        }}
+                      />
+                      {/* Collapsed 상태에서 작은 dot 으로 badge 표시 */}
+                      {showBadge && !expanded && (
+                        <span
+                          className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full"
+                          style={{ background: "var(--accent)" }}
+                          aria-hidden
+                        />
+                      )}
+                    </span>
                     <span
                       className={cn(
-                        "transition-all duration-150",
+                        "flex-1 transition-all duration-150",
                         expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
                       )}
                     >
                       {label}
                     </span>
+                    {/* Expanded 상태에서 숫자 badge */}
+                    {showBadge && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center justify-center px-1.5 h-5 rounded-sm text-[10.5px] font-bold tabular-nums transition-all duration-150",
+                          expanded ? "opacity-100 delay-75" : "opacity-0 w-0 h-0 px-0"
+                        )}
+                        style={{
+                          background: "var(--accent)",
+                          color: "#fff",
+                          fontFamily: "'Inter', sans-serif",
+                          minWidth: expanded ? "1.25rem" : "0",
+                        }}
+                        aria-label={`${badgeCount} new`}
+                      >
+                        {badgeCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

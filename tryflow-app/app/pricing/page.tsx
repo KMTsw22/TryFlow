@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Shield } from "lucide-react";
-import { PricingCard } from "@/components/pricing/PricingCard";
+import { PricingAudienceSwitch } from "@/components/pricing/PricingAudienceSwitch";
 import { Brand } from "@/components/layout/Brand";
 
 const PLANS = [
@@ -59,13 +59,14 @@ const PLANS = [
     price: "$20",
     period: "/month",
     description:
-      "Everything in Plus, plus full access to every public idea — compare, analyze, and reach out.",
+      "Reach founders at the earliest possible stage — before the product is built.",
     features: [
       "Everything in Plus",
-      "Browse all public submitted ideas",
-      "Real-time trends dashboard across 9 categories",
-      "Compare any ideas — yours, theirs, or mixed",
-      "Contact idea submitters via email",
+      "Browse all public submitted ideas across 9 categories",
+      "Real-time market signals + per-category health",
+      "Save founders' ideas to your Watchlist",
+      "Compare ideas side-by-side (yours, theirs, or mixed)",
+      "Send direct intro messages — requests land in founder's inbox",
       "7-day free trial",
     ],
     locked: [],
@@ -114,90 +115,50 @@ export default async function PricingPage() {
         </div>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        {/* Header */}
-        <div className="text-center mb-14">
-          <p
-            className="text-xs font-bold tracking-widest uppercase mb-3"
-            style={{ color: "var(--accent)" }}
+      <div className="max-w-5xl mx-auto px-6 py-16">
+        {/* Editorial kicker */}
+        <div className="flex items-center gap-4 mb-8 max-w-3xl mx-auto">
+          <span
+            className="text-[11.5px] font-medium tracking-[0.16em] uppercase"
+            style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
           >
-            Subscription Plans
-          </p>
-          <h1
-            className="text-4xl font-extrabold tracking-tight mb-4"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Subscribe to Market Intelligence
-          </h1>
-          <p
-            className="text-base max-w-lg mx-auto"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Analyze idea trends submitted anonymously by aspiring founders in real time.
-            Available exclusively to VC and corporate subscribers.
-          </p>
+            Pricing
+          </span>
+          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
         </div>
 
-        {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16 w-full max-w-4xl mx-auto">
-          {PLANS.map((plan) => (
-            <PricingCard
-              key={plan.id}
-              plan={plan}
-              isLoggedIn={isLoggedIn}
-            />
-          ))}
-        </div>
-
-        {/* Features breakdown */}
-        <div
-          className="border p-8 mb-10 max-w-6xl"
+        <h1
+          className="text-center mb-4 mx-auto max-w-3xl leading-[1.03]"
           style={{
-            background: "var(--card-bg)",
-            borderColor: "var(--t-border)",
+            fontFamily: "'Fraunces', serif",
+            fontWeight: 900,
+            fontSize: "clamp(2.75rem, 6vw, 4.5rem)",
+            letterSpacing: "-0.035em",
+            color: "var(--text-primary)",
           }}
         >
-          <h2
-            className="text-lg font-bold mb-6 text-center"
-            style={{ color: "var(--text-primary)" }}
-          >
-            What you get with Pro
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                color: "var(--accent)",
-                title: "Real-time Trends Dashboard",
-                desc: "Monitor idea flows across 9 categories in real time. See Rising · Stable · Declining directions and market saturation at a glance.",
-              },
-              {
-                color: "var(--signal-success)",
-                title: "Opportunity Signal Indicators",
-                desc: "Capture the right investment timing with 9 signals — Hot Gap · Heating Up · Competitive and more — combining trend and saturation data.",
-              },
-              {
-                color: "var(--signal-warning)",
-                title: "Contact Idea Submitters",
-                desc: "Reach up to 10 idea submitters per day. Submitter emails are never directly exposed.",
-              },
-            ].map(({ color, title, desc }) => (
-              <div key={title} className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-                  <h3 className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>{title}</h3>
-                </div>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+          Where ideas meet investors.
+        </h1>
+        <p
+          className="text-center text-[17px] leading-[1.65] mb-14 max-w-xl mx-auto"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          Two sides, one marketplace. Pick the side you're on — we'll show you
+          the plans that matter.
+        </p>
+
+        {/* Dual-audience switch handles plan emphasis + cross-link */}
+        <PricingAudienceSwitch plans={PLANS} isLoggedIn={isLoggedIn} />
 
         {/* Security note */}
-        <div className="flex items-center gap-3 justify-center">
-          <Shield className="w-4 h-4 shrink-0" style={{ color: "var(--text-tertiary)" }} />
-          <p className="text-xs" style={{ color: "var(--text-tertiary)" }}>
-            Payments are securely processed via Stripe. You can cancel anytime,
-            and your access continues until the end of the current billing period.
+        <div className="flex items-center gap-3 justify-center mt-16 pt-10 border-t"
+          style={{ borderColor: "var(--t-border-subtle)" }}>
+          <Shield className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--text-tertiary)" }} />
+          <p
+            className="text-[12px] font-medium tracking-[0.08em] uppercase"
+            style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
+          >
+            Payments via Stripe · Cancel anytime
           </p>
         </div>
       </div>

@@ -10,7 +10,10 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        // 2026-04: Inter 단일 본문/UI 폰트 (peer 표준).
+        // display 는 Hero 한정 — Fraunces 변수 폰트, Playfair 대체.
+        sans: ["Inter", "system-ui", "sans-serif"],
+        display: ["Fraunces", "Georgia", "serif"],
       },
       // Slightly larger default type scale for readability, especially in dark mode.
       // xs: 13px (was 12), sm: 15px (was 14), base: 16px (unchanged).

@@ -8,15 +8,14 @@ import { tavilySearch, hasTavilyKey, type TavilyResult } from "@/lib/tavily";
 import { AGENT_IDS, computeViabilityScore, type AgentId } from "@/lib/viability";
 
 // Per-agent search query hints. Appended to a trimmed description.
+// 2026-04: 8 axes → 6. See decisions/evaluation-axes-rationale.md.
 const AGENT_SEARCH_HINT: Record<AgentId, string> = {
   market_size: "market size TAM forecast industry report 2025",
-  competition: "competitors startups companies landscape",
-  timing: "industry trend 2025 adoption growth",
-  monetization: "pricing revenue model benchmark ACV",
-  technical_difficulty: "technical architecture implementation complexity",
-  regulation: "regulation compliance law requirement",
-  defensibility: "competitive moat network effect switching cost",
-  user_acquisition: "customer acquisition channel CAC growth",
+  problem_urgency: "user pain workflow problem complaint frustration unmet need",
+  timing: "industry trend 2025 adoption growth inflection enabler",
+  product: "alternatives comparison 10x better solution differentiator vs",
+  defensibility: "competitive moat network effect switching cost competitors landscape",
+  business_model: "pricing revenue model benchmark ACV CAC channel go-to-market",
 };
 
 function buildAgentSearchQuery(
@@ -30,21 +29,21 @@ function buildAgentSearchQuery(
   return `${desc} ${target} ${hint}`.slice(0, 380);
 }
 
-// Moat-aware technical adjustment — smooth sigmoid across the entire defensibility range.
-// No arbitrary break point: the "high def → no discount, low def → heavy discount" principle
-// applies continuously from def=0 to def=100.
+// Moat-aware product adjustment — smooth sigmoid across the entire defensibility range.
+// 2026-04: applies to `product` (10x solution) instead of `technical_difficulty`.
+// Principle: a 10x product claim only counts if you can keep being 10x — without a
+// moat, the advantage gets copied. Discount the product score when defensibility is low.
 //
 //   credit = 1 / (1 + exp(-k × (def - midpoint)))
 //   credit = max(credit, floor)
-//   tech_adjusted = tech_raw × credit
+//   product_adjusted = product_raw × credit
 //
 // Parameters chosen so that:
 //   def ≈ 40 → credit 0.50 (midpoint, half discount)
-//   def ≥ 60 → credit ≥ 0.92 (minor discount — Codify-like strong-moat ideas untouched)
-//   def ≤ 25 → credit ≤ 0.20 (heavy discount — "anyone can replicate" territory)
+//   def ≥ 60 → credit ≥ 0.92 (minor discount — strong-moat 10x products untouched)
+//   def ≤ 25 → credit ≤ 0.20 (heavy discount — "10x but anyone can copy" territory)
 //
 // Sigmoid is the standard smoothed-threshold function in ML / statistics / control theory.
-// Tunable: MOAT_MIDPOINT (center), MOAT_STEEPNESS (k), MOAT_CREDIT_FLOOR (minimum).
 const MOAT_MIDPOINT = 40;
 const MOAT_STEEPNESS = 0.12;
 const MOAT_CREDIT_FLOOR = 0.15;
@@ -52,22 +51,22 @@ const MOAT_CREDIT_FLOOR = 0.15;
 function applyCrossAxisCaps(
   agentResults: Record<string, { score?: number } & Record<string, unknown>>
 ): void {
-  const tech = agentResults.technical_difficulty;
+  const product = agentResults.product;
   const def = agentResults.defensibility;
-  if (!tech || !def) return;
-  const techScore = tech.score;
+  if (!product || !def) return;
+  const productScore = product.score;
   const defScore = def.score;
-  if (typeof techScore !== "number" || typeof defScore !== "number") return;
+  if (typeof productScore !== "number" || typeof defScore !== "number") return;
 
   const rawCredit = 1 / (1 + Math.exp(-MOAT_STEEPNESS * (defScore - MOAT_MIDPOINT)));
   const credit = Math.max(rawCredit, MOAT_CREDIT_FLOOR);
-  const adjusted = Math.round(techScore * credit);
+  const adjusted = Math.round(productScore * credit);
 
-  if (adjusted !== techScore) {
+  if (adjusted !== productScore) {
     console.log(
-      `[moat-credit] technical_difficulty ${techScore} → ${adjusted} (defensibility ${defScore}, credit ${credit.toFixed(3)})`
+      `[moat-credit] product ${productScore} → ${adjusted} (defensibility ${defScore}, credit ${credit.toFixed(3)})`
     );
-    tech.score = adjusted;
+    product.score = adjusted;
   }
 }
 
@@ -138,8 +137,18 @@ const CATEGORY_FOLDER: Record<string, string> = {
   // Social / Community, AI / ML, Other → fallback to saas base
 };
 
+// 2026-04 속도 개선: prompt 파일 module-scope 캐시.
+// 기존: 요청당 20-30회 readFile (agent 6개 × 3-4 파일). 디스크 I/O + 파싱.
+// 새로: 파일당 최초 1회만 읽고 Map 에 저장. 워커 lifetime 동안 0 disk I/O.
+// prompt 파일은 런타임에 바뀌지 않으므로 invalidation 불필요.
+const PROMPT_CACHE = new Map<string, string>();
+
 async function loadFile(filePath: string): Promise<string> {
-  return readFile(path.join(process.cwd(), filePath), "utf-8");
+  const cached = PROMPT_CACHE.get(filePath);
+  if (cached !== undefined) return cached;
+  const content = await readFile(path.join(process.cwd(), filePath), "utf-8");
+  PROMPT_CACHE.set(filePath, content);
+  return content;
 }
 
 /**
@@ -184,7 +193,36 @@ function buildUserMessage(input: {
     last_7_count: number;
     prev_7_count: number;
   };
+  axes?: {
+    market?: string | null;
+    problem?: string | null;
+    timing?: string | null;
+    product?: string | null;
+    defensibility?: string | null;
+    business_model?: string | null;
+  };
 }): string {
+  // 2026-04: Founder 가 6 axis 별로 별도 답변 — 새 submit form 에서 옴.
+  // 답변 있는 axis 만 출력. 옛날 single-description 제출은 axes 누락 → 섹션 통째로 생략.
+  const axes = input.axes ?? {};
+  const axisLabels: Record<string, string> = {
+    market: "Market — who feels the pain and how many",
+    problem: "Problem — what they do today and why it's broken",
+    timing: "Timing — why now",
+    product: "Product — what it actually does",
+    defensibility: "Defensibility — what's hard to copy",
+    business_model: "Business model — who pays and why",
+  };
+  const filledAxes = Object.entries(axes).filter(
+    ([, v]) => typeof v === "string" && v.trim().length > 0
+  );
+  const axisBlock =
+    filledAxes.length > 0
+      ? `\n\n## Founder's answers (per axis)\n${filledAxes
+          .map(([key, value]) => `### ${axisLabels[key] ?? key}\n${value}`)
+          .join("\n\n")}`
+      : "";
+
   return `## Idea to Analyze
 - **Category**: ${input.category}
 - **Description**: ${input.description}
@@ -195,50 +233,7 @@ function buildUserMessage(input: {
 - Saturation: ${input.stats.saturation_level}
 - Trend: ${input.stats.trend_direction}
 - Last 7 days: ${input.stats.last_7_count} submissions
-- Prior 7 days: ${input.stats.prev_7_count} submissions`;
-}
-
-type LLMGateResult = {
-  pass: boolean;
-  reason?: string;
-  missing?: string[];
-};
-
-async function runLLMQualityGate(
-  client: OpenAI,
-  input: { category: string; description: string; target_user: string }
-): Promise<LLMGateResult> {
-  try {
-    const systemPrompt = await loadFile("prompts/quality_gate.md");
-    const userMessage = JSON.stringify(
-      { category: input.category, target_user: input.target_user, description: input.description },
-      null,
-      2
-    );
-
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 256,
-      temperature: 0.1,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-    });
-
-    const text = response.choices[0]?.message?.content ?? "";
-    const parsed = JSON.parse(text) as LLMGateResult;
-    return {
-      pass: parsed.pass !== false,
-      reason: parsed.reason,
-      missing: Array.isArray(parsed.missing) ? parsed.missing : undefined,
-    };
-  } catch (err) {
-    // If gate LLM itself fails, fail-open — don't block analysis on infra hiccup.
-    console.error("LLM quality gate failed — failing open:", err);
-    return { pass: true };
-  }
+- Prior 7 days: ${input.stats.prev_7_count} submissions${axisBlock}`;
 }
 
 type Citation = {
@@ -247,15 +242,6 @@ type Citation = {
   excerpt: string;
   relevance?: string;
 };
-
-function buildSearchContextBlock(results: TavilyResult[]): string {
-  if (results.length === 0) return "";
-  const lines = results.map((r, i) => {
-    const snippet = (r.content ?? "").replace(/\s+/g, " ").slice(0, 500);
-    return `[${i + 1}] ${r.title}\n    URL: ${r.url}\n    Snippet: ${snippet}`;
-  });
-  return `\n\n## Web Search Evidence (use ONLY these as citation sources)\n${lines.join("\n\n")}\n\n## Citation Rules\n- You MUST cite 0-5 sources from the list above in a \`citations\` array.\n- The \`url\` in each citation MUST match one of the URLs above EXACTLY.\n- Do NOT invent, modify, or reconstruct URLs from memory.\n- If no source above is genuinely relevant to your axis, return \`citations: []\`.\n- Each citation needs: url, title, excerpt (10-40 words from the snippet), relevance (one short Korean phrase).`;
-}
 
 function validateCitations(
   raw: unknown,
@@ -283,7 +269,7 @@ function validateCitations(
 }
 
 type AgentPassCallback = (
-  pass: 1 | 2 | 3,
+  pass: 1 | 2,
   info: { score?: number }
 ) => void;
 
@@ -294,76 +280,71 @@ async function runAgent(
   userMessage: string,
   onPassDone?: AgentPassCallback
 ): Promise<{ agentId: AgentId; result: Record<string, unknown> | null; error?: string }> {
+  const t0 = Date.now();
+  const tlog = (label: string) =>
+    console.log(`  [agent ${agentId}] +${Date.now() - t0}ms ${label}`);
   try {
     const draftSystemPrompt = await loadAgentPrompt(agentId, input.category);
+    tlog("prompt loaded, firing tavily + draft");
 
-    // Pre-fetch evidence via Tavily. Falls back to empty (no search) if key absent or API fails.
-    let searchBlock = "";
-    let evidenceForLater: TavilyResult[] = [];
-    let allowedUrls = new Set<string>();
-    if (hasTavilyKey()) {
-      const query = buildAgentSearchQuery(agentId, input);
-      const searchRes = await tavilySearch({ query, maxResults: 5 });
-      if (searchRes?.results) {
-        searchBlock = buildSearchContextBlock(searchRes.results);
-        evidenceForLater = searchRes.results;
-        allowedUrls = new Set(searchRes.results.map((r) => r.url));
-      }
-    }
+    // 2026-04 속도 개선 #2 — Tavily + Draft 병렬화.
+    // 기존: Tavily 먼저 → 그 결과를 Draft 에 전달 (sequential).
+    // 새로: Tavily 는 background 로 fire, Draft 는 evidence 없이 즉시 시작.
+    //       Judge 단계에서 evidence 를 최종 반영. agent 당 2-3초 단축.
+    const tavilyPromise: Promise<{ results: TavilyResult[] } | null> = hasTavilyKey()
+      ? tavilySearch({ query: buildAgentSearchQuery(agentId, input), maxResults: 5 }).then(
+          (r) => {
+            tlog(`tavily done (${r?.results?.length ?? 0} results)`);
+            return r ?? null;
+          }
+        )
+      : Promise.resolve(null);
 
-    // ── Pass 1: Draft ────────────────────────────────────────────────────────
-    const draftResp = await client.chat.completions.create({
+    const draftPromise = client.chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 2048,
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: draftSystemPrompt },
-        { role: "user", content: userMessage + searchBlock },
+        { role: "user", content: userMessage },
       ],
+    }).then((r) => {
+      tlog("draft llm done");
+      return r;
     });
+
+    const [searchRes, draftResp] = await Promise.all([tavilyPromise, draftPromise]);
+
     const draft = JSON.parse(draftResp.choices[0]?.message?.content ?? "{}") as Record<
       string,
       unknown
     >;
-    draft.citations = validateCitations(draft.citations, allowedUrls);
+
+    let evidenceForLater: TavilyResult[] = [];
+    let allowedUrls = new Set<string>();
+    if (searchRes?.results) {
+      evidenceForLater = searchRes.results;
+      allowedUrls = new Set(searchRes.results.map((r) => r.url));
+    }
+    // Draft didn't see evidence → any citation in draft is hallucinated. Drop it;
+    // Judge will build citations from the (now available) evidence.
+    draft.citations = [];
+
     onPassDone?.(1, {
       score: typeof draft.score === "number" ? draft.score : undefined,
     });
 
-    // ── Pass 2: Skeptic ──────────────────────────────────────────────────────
-    const skepticSystemPrompt = await loadFile("prompts/agent_skeptic.md");
-    const skepticInput = {
-      idea: input,
-      evidence: evidenceForLater.map((r) => ({ url: r.url, title: r.title, content: r.content })),
-      draft,
-    };
-    const skepticResp = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 1024,
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: skepticSystemPrompt },
-        { role: "user", content: JSON.stringify(skepticInput, null, 2) },
-      ],
-    });
-    const critique = JSON.parse(skepticResp.choices[0]?.message?.content ?? "{}") as Record<
-      string,
-      unknown
-    >;
-    onPassDone?.(2, {});
-
-    // ── Pass 3: Judge ────────────────────────────────────────────────────────
+    // 2026-04 속도 개선 #1 — Skeptic 단계 흡수.
+    // 기존: Draft → Skeptic → Judge (3 LLM calls per agent).
+    // 새로: Draft → Judge (2 LLM calls per agent). Judge 프롬프트가 Step 1
+    //       에서 내부 회의적 비판을 수행한 뒤 Step 2 에서 최종 reconcile.
     const judgeSystemPrompt = await loadFile("prompts/agent_judge.md");
     const judgeInput = {
       idea: input,
       evidence: evidenceForLater.map((r) => ({ url: r.url, title: r.title, content: r.content })),
       draft,
-      critique,
     };
-    // Judge system prompt is the meta rules; we also send the original agent's system prompt
-    // so Judge knows the exact output format / axis-specific fields to produce.
     const judgeResp = await client.chat.completions.create({
       model: "gpt-4o-mini",
       max_tokens: 2048,
@@ -378,17 +359,18 @@ async function runAgent(
         { role: "user", content: JSON.stringify(judgeInput, null, 2) },
       ],
     });
+    tlog(`judge llm done (total ${Date.now() - t0}ms)`);
     const final = JSON.parse(judgeResp.choices[0]?.message?.content ?? "{}") as Record<
       string,
       unknown
     >;
-    // Revalidate citations — Judge might add/drop but never invent.
+    // Judge builds citations from evidence — validate against allowed URLs.
     final.citations = validateCitations(final.citations, allowedUrls);
     // Guardrail: if Judge somehow dropped score, fall back to draft score.
     if (typeof final.score !== "number" && typeof draft.score === "number") {
       final.score = draft.score;
     }
-    onPassDone?.(3, {
+    onPassDone?.(2, {
       score: typeof final.score === "number" ? final.score : undefined,
     });
 
@@ -434,46 +416,12 @@ async function runSynthesizer(
   return JSON.parse(text);
 }
 
-async function runSynthesizerCritique(
-  client: OpenAI,
-  input: Record<string, unknown>,
-  agentResults: Record<string, unknown>,
-  draft: Record<string, unknown>
-): Promise<Record<string, unknown>> {
-  try {
-    const systemPrompt = await loadFile("prompts/synthesizer_critique.md");
-    const userMessage = JSON.stringify({ input, agent_results: agentResults, draft }, null, 2);
-
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 4096,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userMessage },
-      ],
-    });
-
-    const text = response.choices[0]?.message?.content ?? "";
-    const revised = JSON.parse(text);
-    // Fail-open: if critique returns something malformed, keep the draft.
-    if (revised && typeof revised === "object" && "analysis" in revised) return revised;
-    return draft;
-  } catch (err) {
-    console.error("Synthesizer critique failed — using draft:", err);
-    return draft;
-  }
-}
-
 // ── Analysis event stream ──────────────────────────────────────────────────────
 
 type AnalysisEvent =
   | { event: "hard_gate_done"; pass: boolean; hints?: string[] }
-  | { event: "llm_gate_start" }
-  | { event: "llm_gate_done"; pass: boolean; reason?: string; hints?: string[] }
   | { event: "agents_start"; ids: AgentId[] }
-  | { event: "agent_pass_done"; id: AgentId; pass: 1 | 2 | 3; score?: number }
+  | { event: "agent_pass_done"; id: AgentId; pass: 1 | 2; score?: number }
   | {
       event: "agent_done";
       id: AgentId;
@@ -483,7 +431,6 @@ type AnalysisEvent =
     }
   | { event: "synthesizer_start" }
   | { event: "synthesizer_draft_done" }
-  | { event: "synthesizer_critique_done" }
   | {
       event: "complete";
       analysisId: string;
@@ -501,32 +448,44 @@ type AgentResponse = {
 async function* runAnalysisStream(
   submissionId: string
 ): AsyncGenerator<AnalysisEvent, void, unknown> {
+  const t0 = Date.now();
+  const tlog = (label: string) =>
+    console.log(`[analysis ${submissionId.slice(0, 6)}] +${Date.now() - t0}ms ${label}`);
   try {
+    tlog("stream start");
     if (!process.env.OPENAI_API_KEY) {
       yield { event: "failed", stage: "config", message: "OPENAI_API_KEY not configured" };
       return;
     }
 
     const supabase = await createClient();
+    tlog("supabase client ready");
 
-    const { data: idea, error: ideaErr } = await supabase
-      .from("idea_submissions")
-      .select("id, category, target_user, description")
-      .eq("id", submissionId)
-      .single();
+    // 2026-04 속도 개선: idea fetch + existing-analysis check 를 병렬로.
+    // 이전엔 sequential 2번 왕복이었음.
+    const [ideaRes, existingRes] = await Promise.all([
+      supabase
+        .from("idea_submissions")
+        .select(
+          "id, category, target_user, description, axis_market, axis_problem, axis_timing, axis_product, axis_defensibility, axis_business_model"
+        )
+        .eq("id", submissionId)
+        .single(),
+      supabase
+        .from("analysis_reports")
+        .select("id")
+        .eq("submission_id", submissionId)
+        .maybeSingle(),
+    ]);
+    tlog("idea + existing checked");
 
+    const { data: idea, error: ideaErr } = ideaRes;
     if (ideaErr || !idea) {
       yield { event: "failed", stage: "fetch", message: "Submission not found" };
       return;
     }
 
-    const { data: existing } = await supabase
-      .from("analysis_reports")
-      .select("id")
-      .eq("submission_id", submissionId)
-      .single();
-
-    if (existing) {
+    if (existingRes.data) {
       yield { event: "failed", stage: "already_exists", message: "Analysis already exists" };
       return;
     }
@@ -536,6 +495,7 @@ async function* runAnalysisStream(
       description: idea.description ?? "",
       target_user: idea.target_user ?? "",
     });
+    tlog("hard gate done");
     yield { event: "hard_gate_done", pass: hard.ok, hints: hard.ok ? undefined : hard.hints };
     if (!hard.ok) {
       yield {
@@ -549,28 +509,11 @@ async function* runAnalysisStream(
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    // 2단: LLM 게이트
-    yield { event: "llm_gate_start" };
-    const llmGate = await runLLMQualityGate(openai, {
-      category: idea.category,
-      description: idea.description ?? "",
-      target_user: idea.target_user ?? "",
-    });
-    yield {
-      event: "llm_gate_done",
-      pass: llmGate.pass,
-      reason: llmGate.reason,
-      hints: llmGate.missing,
-    };
-    if (!llmGate.pass) {
-      yield {
-        event: "failed",
-        stage: "llm_gate",
-        message: llmGate.reason ?? "아이디어 설명에 성의가 부족해 분석을 건너뛰었습니다.",
-        hints: llmGate.missing ?? [],
-      };
-      return;
-    }
+    // 2026-04 속도 개선: LLM quality gate 제거.
+    // 기존: hard gate 통과 후 LLM 에게 "성의 있는 입력인지" 한 번 더 물음 (3-5s 블로킹).
+    // 근거: hard gate (length/언어/반복 체크) 가 이미 실제 쓰레기는 다 거름.
+    //       LLM gate 는 edge case 만 잡는데 비용 대비 효과가 너무 낮음.
+    // 필요해지면 `agents_start` 와 병렬로 쏘고 결과 오면 abort 하는 식으로 복귀 가능.
 
     // 플랫폼 통계 수집
     const now = new Date();
@@ -602,6 +545,16 @@ async function* runAnalysisStream(
     else if (last7 < (prev7 || 1) * 0.75) trendDirection = "Declining";
     else trendDirection = "Stable";
 
+    // axis_* 컬럼은 새 form 에서 옴. 옛 제출은 null → 자동으로 섹션 누락.
+    type IdeaWithAxes = typeof idea & {
+      axis_market?: string | null;
+      axis_problem?: string | null;
+      axis_timing?: string | null;
+      axis_product?: string | null;
+      axis_defensibility?: string | null;
+      axis_business_model?: string | null;
+    };
+    const ideaA = idea as IdeaWithAxes;
     const input = {
       category: idea.category,
       description: idea.description,
@@ -613,16 +566,25 @@ async function* runAnalysisStream(
         last_7_count: last7,
         prev_7_count: prev7,
       },
+      axes: {
+        market: ideaA.axis_market,
+        problem: ideaA.axis_problem,
+        timing: ideaA.axis_timing,
+        product: ideaA.axis_product,
+        defensibility: ideaA.axis_defensibility,
+        business_model: ideaA.axis_business_model,
+      },
     };
 
     const userMessage = buildUserMessage(input);
 
+    tlog("stats fetched, launching agents");
     // 8개 agent 병렬 실행, 완료되는 순서대로 이벤트 방출
     yield { event: "agents_start", ids: [...AGENT_IDS] };
 
     // Unified queue for both per-pass events and final agent-done events.
     type AgentQueueItem =
-      | { kind: "pass"; agentId: AgentId; pass: 1 | 2 | 3; score?: number }
+      | { kind: "pass"; agentId: AgentId; pass: 1 | 2; score?: number }
       | { kind: "done"; response: AgentResponse };
 
     const queue: AgentQueueItem[] = [];
@@ -703,12 +665,16 @@ async function* runAnalysisStream(
     // the "easy build" signal is actually a commodity red flag — cap it to 50.
     applyCrossAxisCaps(agentResults);
 
-    // Synthesizer draft → critique
+    tlog("all agents done, starting synthesizer");
+    // 2026-04 속도 개선: Synthesizer critique 단계 제거.
+    // 기존: draft 만들고 critique 가 revise. critique 실패 시 draft 사용 (fail-open).
+    // 근거: critique 가 실제로 draft 의 의미있는 수정을 내놓는 경우 드묾.
+    //       agent 결과가 이미 2-pass (Draft → Judge) 로 다듬어진 상태라 2차 critique 가
+    //       중복. 15-20s 가장 큰 절약 구간.
     yield { event: "synthesizer_start" };
-    const draft = await runSynthesizer(openai, input, agentResults);
+    const revised = await runSynthesizer(openai, input, agentResults);
+    tlog("synthesizer done");
     yield { event: "synthesizer_draft_done" };
-    const revised = await runSynthesizerCritique(openai, input, agentResults, draft);
-    yield { event: "synthesizer_critique_done" };
 
     // 결정적 점수 덮어쓰기
     const scoreMap = Object.fromEntries(
@@ -750,6 +716,7 @@ async function* runAnalysisStream(
       return;
     }
 
+    tlog(`complete (total ${Date.now() - t0}ms)`);
     yield { event: "complete", analysisId, viabilityScore, report: revised };
   } catch (err) {
     console.error("runAnalysisStream", err);
@@ -821,7 +788,7 @@ export async function POST(req: NextRequest) {
 
     if (failedEvent) {
       const status =
-        failedEvent.stage === "hard_gate" || failedEvent.stage === "llm_gate"
+        failedEvent.stage === "hard_gate"
           ? 422
           : failedEvent.stage === "already_exists"
           ? 409
@@ -833,7 +800,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            failedEvent.stage === "hard_gate" || failedEvent.stage === "llm_gate"
+            failedEvent.stage === "hard_gate"
               ? "idea_too_vague"
               : failedEvent.stage,
           stage: failedEvent.stage,

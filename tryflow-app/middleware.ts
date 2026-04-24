@@ -42,14 +42,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from /login to dashboard
+  // Redirect authenticated users away from /login to their role-appropriate home.
+  // 2026-04 identity split: Pro(investor) → Market, else → Dashboard.
   if (pathname === "/login" && user) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .maybeSingle();
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = profile?.plan === "pro" ? "/explore" : "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Protect /explore routes — Pro plan only (browse others' public ideas)
+  // /explore 접근 정책 (2026-04 paywall softening):
+  //   /explore           → 모든 로그인 유저. 페이지 안에서 teaser + muted 패턴.
+  //   /explore/[cat]/... → Pro 전용. Free/Plus 는 /pricing 으로.
   if (pathname.startsWith("/explore")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -57,17 +65,17 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("next", pathname);
       return NextResponse.redirect(url);
     }
-
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("plan")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profile?.plan !== "pro") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/pricing";
-      return NextResponse.redirect(url);
+    if (pathname !== "/explore") {
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("plan")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profile?.plan !== "pro") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/pricing";
+        return NextResponse.redirect(url);
+      }
     }
   }
 

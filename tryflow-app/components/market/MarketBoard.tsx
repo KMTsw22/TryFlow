@@ -181,23 +181,25 @@ export function MarketBoard({ rawData, isLocked }: Props) {
 
   const rangeLabel = range === "7d" ? "7d" : range === "30d" ? "30d" : "all time";
 
-  const DISPLAY = "'Oswald', sans-serif";
+  const DISPLAY = "'Inter', sans-serif";
 
   return (
     <>
-      {/* Signal strip */}
+      {/* Signal strip — Free/Plus 에게도 공개 (teaser). 클릭만 차단됨.
+          이전엔 blur-sm 으로 전체가 흐렸지만, 유저가 제품의 "모양" 을 보고
+          업그레이드할 동기를 얻도록 선명하게 둔다. */}
       <section
         aria-label="Market signals"
         className={cn(
           "mb-14 transition-all",
-          isLocked && "blur-sm pointer-events-none select-none"
+          isLocked && "pointer-events-none select-none"
         )}
         aria-hidden={isLocked ? "true" : undefined}
       >
         {/* Kicker rule with time range toggle */}
         <div className="flex items-center gap-4 mb-8">
           <span
-            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            className="text-[15px] font-medium tracking-[0.08em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             Key Signals
@@ -266,7 +268,7 @@ export function MarketBoard({ rawData, isLocked }: Props) {
         </div>
 
         <p
-          className="text-[14px] font-medium tracking-[0.25em] uppercase mt-4"
+          className="text-[14px] font-medium tracking-[0.06em] uppercase mt-4"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           * TryWepp submissions only · not real-world market data
@@ -277,14 +279,14 @@ export function MarketBoard({ rawData, isLocked }: Props) {
       <section className="relative">
         <div className="flex items-center gap-4 mb-8">
           <span
-            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            className="text-[15px] font-medium tracking-[0.08em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             Category Breakdown
           </span>
           <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
           <span
-            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+            className="text-[15px] font-medium tracking-[0.06em] uppercase shrink-0"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             {isLocked
@@ -297,12 +299,23 @@ export function MarketBoard({ rawData, isLocked }: Props) {
 
         <div
           className={cn(
-            "transition-all",
-            isLocked && "blur-md pointer-events-none select-none"
+            "relative transition-all",
+            isLocked && "pointer-events-none select-none"
           )}
           aria-hidden={isLocked ? "true" : undefined}
+          style={{ opacity: isLocked ? 0.35 : 1 }}
         >
           <CategoryTable rows={rows} rangeLabel={range} />
+          {isLocked && (
+            <div
+              aria-hidden
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(180deg, transparent 0%, var(--page-bg) 85%)",
+              }}
+            />
+          )}
         </div>
       </section>
     </>

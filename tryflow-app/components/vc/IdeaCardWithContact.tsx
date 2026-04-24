@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { HeartButton } from "@/components/ideas/HeartButton";
 
 interface InsightReport {
   viability_score: number;
@@ -37,6 +38,10 @@ const STAGE_META: Record<string, { label: string; fg: string; bg: string; border
 interface Props {
   idea: IdeaRow;
   isSubscriber: boolean; // kept for future use
+  /** Whether the current user has saved this idea (heart filled). */
+  isSaved?: boolean;
+  /** True for logged-out viewers — heart click redirects to /login. */
+  isAnonymous?: boolean;
 }
 
 type PillStyle = { fg: string; bg: string; border: string };
@@ -77,7 +82,7 @@ function scoreHex(score: number | null) {
   return "var(--signal-danger)";
 }
 
-export function IdeaCardWithContact({ idea }: Props) {
+export function IdeaCardWithContact({ idea, isSaved = false, isAnonymous = false }: Props) {
   const report = getReport(idea);
   const aiScore = getAiScore(idea);
   const vScore = aiScore ?? report?.viability_score ?? null;
@@ -121,12 +126,21 @@ export function IdeaCardWithContact({ idea }: Props) {
             <span className="text-[11px] font-bold" style={{ color: "var(--accent)" }}>✦ AI</span>
           )}
         </div>
-        <span
-          className="text-[12px] font-bold uppercase tracking-wider pt-1"
-          style={{ color: "var(--text-tertiary)" }}
-        >
-          Anonymous
-        </span>
+        <div className="flex items-center gap-2 pt-1">
+          <HeartButton
+            ideaId={idea.id}
+            initialSaved={isSaved}
+            isAnonymous={isAnonymous}
+            variant="icon"
+            size="sm"
+          />
+          <span
+            className="text-[12px] font-bold uppercase tracking-wider"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            Anonymous
+          </span>
+        </div>
       </div>
 
       {/* Target user */}
@@ -147,6 +161,25 @@ export function IdeaCardWithContact({ idea }: Props) {
 
       {/* Bottom row */}
       <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Open to contact — 가장 먼저, 액센트 색으로 눈에 띄게 */}
+        {idea.allow_contact && (
+          <span
+            className="inline-flex items-center gap-1 text-[12px] font-bold px-2 py-0.5"
+            style={{
+              color: "var(--signal-success)",
+              background: "rgba(16, 185, 129, 0.10)",
+              border: "1px solid rgba(16, 185, 129, 0.35)",
+            }}
+            title="Founder is open to investor contact"
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: "var(--signal-success)" }}
+              aria-hidden
+            />
+            Open to contact
+          </span>
+        )}
         {stageMeta && (
           <span
             className="text-[12px] font-bold px-2 py-0.5"

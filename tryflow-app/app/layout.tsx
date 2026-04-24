@@ -5,12 +5,15 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { CompareTrayProvider } from "@/components/compare/CompareTrayContext";
+import { CompareTray } from "@/components/compare/CompareTray";
+import { ToastProvider } from "@/components/ui/Toast";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Try.Wepp — Pre-launch Market Validation",
+  title: "Try.Wepp — Where Ideas Meet Investors",
   description:
-    "Test your product before you build it. Measure real user reactions with a landing page before you launch.",
+    "The earliest deal flow. Founders submit ideas, AI scores them on 6 VC-backed axes, and Pro investors reach out — before the product is built.",
 };
 
 // Runs before React hydrates. Applies saved theme early to prevent a flash
@@ -29,6 +32,8 @@ export default async function RootLayout({
     const { data: { user } } = await supabase.auth.getUser();
     isLoggedIn = !!user;
     if (user) {
+      // 2026-04: Inbox 사이드바 제거되어 contact_requests count 쿼리 불필요해짐.
+      // /inbox 페이지/API/DB 는 그대로 유지되지만 nav 진입점은 사라짐 (Gmail 통일).
       const { data: profile } = await supabase
         .from("user_profiles")
         .select("plan")
@@ -40,13 +45,23 @@ export default async function RootLayout({
     // Auth or profile query failed — render as logged-out rather than crash the whole app.
   }
 
+  // 2026-04 Role foundation: plan 을 proxy 로 사용해 founder/investor 를 추론.
+  //   Pro 구독 = investor 역할 (deal flow 가 목적)
+  //   그 외    = founder (빌드 중)
+  // 명시적 role 컬럼은 나중에 추가 — 지금은 구독 행동이 의도를 충분히 드러냄.
+  const role: "founder" | "investor" = plan === "pro" ? "investor" : "founder";
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* 2026-04 폰트 시스템 재설계 (교수님 피드백 + 경쟁사 리서치):
+            - Inter — 본문/UI/카드/라벨 (Linear, Notion, Wellfound, Crunchbase 표준)
+            - Fraunces — Hero 헤드라인 한정 (a16z/Sequoia/First Round 패턴, Playfair 대체)
+            Plus Jakarta Sans / Playfair Display / Oswald 는 완전 폐기. */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Oswald:wght@300;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=Caveat:wght@400;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -58,9 +73,14 @@ export default async function RootLayout({
         </Script>
 
         <ThemeProvider>
-          <NavigationProgress />
-          <SidebarWrapper isLoggedIn={isLoggedIn} plan={plan} />
-          <ContentWrapper>{children}</ContentWrapper>
+          <ToastProvider>
+            <CompareTrayProvider>
+              <NavigationProgress />
+              <SidebarWrapper isLoggedIn={isLoggedIn} plan={plan} role={role} />
+              <CompareTray />
+              <ContentWrapper>{children}</ContentWrapper>
+            </CompareTrayProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

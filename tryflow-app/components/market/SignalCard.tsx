@@ -16,8 +16,8 @@ interface Props {
   position?: "first" | "middle" | "last";
 }
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 const ACCENT_BY_TYPE: Record<SignalType, string> = {
   rising: "var(--signal-success)",
@@ -58,7 +58,7 @@ export function SignalCard({
       {/* Kicker label + arrow */}
       <div className="flex items-start justify-between gap-4 mb-5">
         <span
-          className="text-[15px] font-medium tracking-[0.3em] uppercase"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: accent }}
         >
           {resolvedLabel}

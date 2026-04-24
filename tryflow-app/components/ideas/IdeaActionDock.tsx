@@ -15,8 +15,8 @@ interface Props {
   id?: string;
 }
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 type SecondaryAction = {
   href?: string;
@@ -50,9 +50,9 @@ export function IdeaActionDock({
     : canContact
     ? {
         href: "#contact",
-        headline: "Reach out to the builder.",
-        desc: "You have a direct line. Use it before someone else does.",
-        cta: "Contact submitter",
+        headline: "Reach the founder.",
+        desc: "Before the product. Before the deck. Send a short intro and it lands in their inbox.",
+        cta: "Send intro message",
       }
     : {
         href: `/compare?pick=${ideaId}`,
@@ -86,7 +86,7 @@ export function IdeaActionDock({
         style={{ borderColor: "var(--t-border-subtle)" }}
       >
         <p
-          className="text-[15px] font-medium tracking-[0.45em] uppercase mb-6"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase mb-6"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           What now
@@ -114,7 +114,7 @@ export function IdeaActionDock({
 
         <Link
           href={primary.href}
-          className="group inline-flex items-center gap-3 text-[14px] font-medium tracking-[0.35em] uppercase transition-opacity hover:opacity-70"
+          className="group inline-flex items-center gap-3 text-[14px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
           style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
         >
           {primary.cta}
@@ -162,7 +162,7 @@ function SecondaryLink({ action }: { action: SecondaryAction }) {
     color: action.destructive ? "var(--signal-danger)" : "var(--text-secondary)",
   };
   const cls =
-    "group inline-flex items-center gap-2 text-[14px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70";
+    "group inline-flex items-center gap-2 text-[14px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70";
 
   const suffix = action.destructive ? null : (
     <ArrowRight
@@ -257,7 +257,7 @@ function DeleteConfirmModal({
         }}
       >
         <p
-          className="text-[15px] font-medium tracking-[0.35em] uppercase mb-4"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase mb-4"
           style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
         >
           Destructive
@@ -286,7 +286,7 @@ function DeleteConfirmModal({
 
         {error && (
           <p
-            className="text-[14px] font-medium tracking-[0.15em] uppercase mb-5"
+            className="text-[14px] font-medium tracking-[0.04em] uppercase mb-5"
             style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
           >
             {error}
@@ -298,7 +298,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={onClose}
             disabled={deleting}
-            className="text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity disabled:opacity-50 hover:opacity-70"
+            className="text-[15px] font-medium tracking-[0.08em] uppercase transition-opacity disabled:opacity-50 hover:opacity-70"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             Cancel
@@ -307,7 +307,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity disabled:opacity-50 hover:opacity-70"
+            className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.08em] uppercase transition-opacity disabled:opacity-50 hover:opacity-70"
             style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
           >
             {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}

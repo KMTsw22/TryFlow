@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { PreferencesPanel } from "@/components/settings/PreferencesPanel";
 import { ContactInfoForm } from "@/components/settings/ContactInfoForm";
+import { PublicProfileForm } from "@/components/settings/PublicProfileForm";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function SettingsPage() {
@@ -19,7 +20,9 @@ export default async function SettingsPage() {
   const { data: profile } = user
     ? await supabase
         .from("user_profiles")
-        .select("contact_email, contact_phone, contact_linkedin, contact_other, allow_contact")
+        .select(
+          "contact_email, contact_phone, contact_linkedin, contact_other, allow_contact, bio, twitter_url, github_url, website_url, profile_anonymous"
+        )
         .eq("id", user.id)
         .maybeSingle()
     : { data: null };
@@ -37,6 +40,23 @@ export default async function SettingsPage() {
           description="Your public display name and email."
         >
           <ProfileForm initialName={name} email={email} avatarUrl={avatar} />
+        </Section>
+
+        <Section
+          title="Public profile"
+          description="A short bio + social links investors can see when they open your founder page."
+        >
+          {user && (
+            <PublicProfileForm
+              userId={user.id}
+              initialBio={profile?.bio ?? ""}
+              initialLinkedin={profile?.contact_linkedin ?? ""}
+              initialTwitter={profile?.twitter_url ?? ""}
+              initialGithub={profile?.github_url ?? ""}
+              initialWebsite={profile?.website_url ?? ""}
+              initialAnonymous={profile?.profile_anonymous ?? true}
+            />
+          )}
         </Section>
 
         <Section

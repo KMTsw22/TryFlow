@@ -28,7 +28,7 @@ export function ScoreBadge({ score, size = "inline", className }: Props) {
           className
         )}
         style={{ borderColor: `${hex}55`, background: `${hex}12` }}
-        aria-label={score !== null && score !== undefined ? `Viability score ${score} of 100` : "Score pending"}
+        aria-label={score !== null && score !== undefined ? `Signal score ${score} of 100` : "Score pending"}
       >
         <span
           className={cn("font-mono text-base font-bold tabular-nums leading-none", text)}

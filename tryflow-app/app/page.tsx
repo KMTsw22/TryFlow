@@ -7,6 +7,7 @@ import { ParticleBackground } from "@/components/ui/ParticleBackground";
 import { IdeaBubbles } from "@/components/ui/IdeaBubbles";
 import { ScrollSeeds } from "@/components/ui/ScrollSeeds";
 import { Brand } from "@/components/layout/Brand";
+import { LandingTopNav } from "@/components/landing/LandingTopNav";
 
 // ── Hooks ──────────────────────────────────────────────────────────────────
 function useScrolled(threshold = 12) {
@@ -191,7 +192,7 @@ function SparkCard({ card, delay }: { card: typeof TREND_CARDS[0]; delay: number
           {/* Score */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[12px] text-gray-500 uppercase tracking-wider mb-1">Viability</p>
+              <p className="text-[12px] text-gray-500 uppercase tracking-wider mb-1">Signal</p>
               <div className="flex items-center gap-2">
                 <div className="w-20 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
                   <div className="h-full rounded-full transition-all duration-700"
@@ -473,18 +474,21 @@ const CLOUDS = [
   { bottom: 8,  left:  45, w: 460, h: 85,  op: 0.11, blur: 30, p: 0.13 },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────
+// 교수님 피드백 (2026-04-20): "필기체 느낌·끝이 잘린 폰트는 가독성 나쁨, 비즈니스 사이트에
+// 쓰는 폰트로 변경". Caveat(cursive) / Space Mono / DM Serif Display / Bebas Neue 등을 제거하고
+// 앱 내부 디자인 시스템과 통일된 3개 축 (Plus Jakarta Sans · Playfair Display · Oswald) 으로
+// 스타일 사이클을 재구성. 랜딩에서 쓰이던 "아이디어는 여러 모습이다" 의 톤은 유지하되
+// 모든 스타일이 비즈니스 타이포 범위 안에 있도록 묶었다.
 const STYLE_CYCLE = [
-  { fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.06em",  fontSize: "1em",    textTransform: "none"      as const },
-  { fontFamily: "'Playfair Display', serif",       fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "0.01em",   fontSize: "1.05em", textTransform: "none"      as const },
-  { fontFamily: "'Bebas Neue', sans-serif",        fontWeight: 400, fontStyle: "normal"  as const, letterSpacing: "0.12em",   fontSize: "1.15em", textTransform: "uppercase" as const },
-  { fontFamily: "'Space Mono', monospace",         fontWeight: 400, fontStyle: "italic"  as const, letterSpacing: "-0.04em",  fontSize: "0.72em", textTransform: "none"      as const },
-  { fontFamily: "'DM Serif Display', serif",       fontWeight: 400, fontStyle: "normal"  as const, letterSpacing: "-0.02em",  fontSize: "1.1em",  textTransform: "none"      as const },
-  { fontFamily: "'Oswald', sans-serif",            fontWeight: 200, fontStyle: "normal"  as const, letterSpacing: "0.3em",    fontSize: "0.68em", textTransform: "uppercase" as const },
-  { fontFamily: "'Caveat', cursive",               fontWeight: 700, fontStyle: "normal"  as const, letterSpacing: "0.02em",   fontSize: "1.18em", textTransform: "none"      as const },
-  { fontFamily: "'Playfair Display', serif",       fontWeight: 900, fontStyle: "normal"  as const, letterSpacing: "-0.03em",  fontSize: "1.0em",  textTransform: "none"      as const },
-  { fontFamily: "'Oswald', sans-serif",            fontWeight: 700, fontStyle: "normal"  as const, letterSpacing: "0.06em",   fontSize: "1.0em",  textTransform: "none"      as const },
-  { fontFamily: "'Space Mono', monospace",         fontWeight: 700, fontStyle: "normal"  as const, letterSpacing: "-0.05em",  fontSize: "0.78em", textTransform: "none"      as const },
+  { fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 800, fontStyle: "normal" as const, letterSpacing: "-0.04em", fontSize: "1em",    textTransform: "none"      as const },
+  { fontFamily: "'Fraunces', serif",                  fontWeight: 900, fontStyle: "normal" as const, letterSpacing: "-0.03em", fontSize: "1.0em",  textTransform: "none"      as const },
+  { fontFamily: "'Inter', sans-serif",                       fontWeight: 600, fontStyle: "normal" as const, letterSpacing: "0.18em",  fontSize: "0.9em",  textTransform: "uppercase" as const },
+  { fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 500, fontStyle: "normal" as const, letterSpacing: "-0.02em", fontSize: "0.95em", textTransform: "none"      as const },
+  { fontFamily: "'Fraunces', serif",                  fontWeight: 700, fontStyle: "normal" as const, letterSpacing: "-0.02em", fontSize: "1.0em",  textTransform: "none"      as const },
+  { fontFamily: "'Inter', sans-serif",                       fontWeight: 300, fontStyle: "normal" as const, letterSpacing: "0.28em",  fontSize: "0.82em", textTransform: "uppercase" as const },
+  { fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700, fontStyle: "normal" as const, letterSpacing: "-0.03em", fontSize: "1.0em",  textTransform: "none"      as const },
+  { fontFamily: "'Fraunces', serif",                  fontWeight: 900, fontStyle: "normal" as const, letterSpacing: "-0.04em", fontSize: "1.05em", textTransform: "none"      as const },
+  { fontFamily: "'Inter', sans-serif",                       fontWeight: 700, fontStyle: "normal" as const, letterSpacing: "0.1em",   fontSize: "0.92em", textTransform: "none"      as const },
 ];
 
 export default function HomePage() {
@@ -520,16 +524,7 @@ export default function HomePage() {
       }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-[60px]">
           <Brand size="md" color={scrolled ? "#0B1026" : "white"} />
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="text-sm font-medium px-3 py-2 transition-colors duration-300"
-              style={{ color: scrolled ? "#6b7280" : "rgba(255,255,255,0.7)" }}>
-              Log in
-            </Link>
-            <Link href="/signup" className="text-sm font-bold px-4 py-2  transition-all duration-300"
-              style={{ background: scrolled ? "#0B1026" : "white", color: scrolled ? "white" : "#0B1026" }}>
-              Get early access →
-            </Link>
-          </div>
+          <LandingTopNav scrolled={scrolled} />
         </div>
       </nav>
 
@@ -711,11 +706,11 @@ export default function HomePage() {
         {/* Hero content */}
         <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-8">
 
-          {/* Badge */}
+          {/* Badge — 2026-04 포지셔닝: 아이디어 단계 VC-Founder 매칭 */}
           <div className="inline-flex items-center gap-2 border border-indigo-400/30 bg-indigo-500/10 text-indigo-300 text-xs font-semibold px-4 py-1.5 rounded-full mb-8"
             style={{ animation: "fadeInUp 0.5s ease 0.1s both" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
-            Anonymous Founder Idea Signals
+            Where ideas meet investors
           </div>
 
           {/* Headline */}
@@ -759,9 +754,9 @@ export default function HomePage() {
             </span>
           </h1>
 
-          <p className="mt-7 text-center text-[1.05rem] text-gray-400 leading-relaxed max-w-[520px]"
+          <p className="mt-7 text-center text-[1.05rem] text-gray-400 leading-relaxed max-w-[560px]"
             style={{ animation: "fadeInUp 0.6s ease 0.5s both" }}>
-            Submit your startup idea in 2 minutes. AI clusters it, reveals where the market is heading, and gives you a personal insight report — instantly.
+            Submit your idea in 2 minutes. AI scores it across 6 VC-backed axes. If Pro investors see potential, they reach out — <span className="text-gray-200">before the product exists</span>.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 mt-9"
@@ -771,12 +766,23 @@ export default function HomePage() {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link href="/explore" className="inline-flex items-center gap-2 border border-white/15 text-gray-300 font-medium px-7 py-3.5  text-sm hover:border-white/35 hover:text-white hover:bg-white/5 transition-all duration-200">
-              <BarChart3 className="w-4 h-4" /> View live trends
+              <BarChart3 className="w-4 h-4" /> Browse the market
             </Link>
           </div>
 
           <p className="mt-5 text-xs text-gray-600" style={{ animation: "fadeInUp 0.5s ease 0.78s both" }}>
             Free · Anonymous · No account needed
+          </p>
+
+          {/* VC-side positioning — founder 가 메인이지만 투자자 유입도 고려 */}
+          <p className="mt-3 text-xs text-gray-500" style={{ animation: "fadeInUp 0.5s ease 0.88s both" }}>
+            Investor?{" "}
+            <Link
+              href="/pricing"
+              className="text-indigo-300 hover:text-indigo-200 transition-colors underline underline-offset-2"
+            >
+              See Pro access to pre-product deal flow →
+            </Link>
           </p>
 
           {/* Scroll cue */}
@@ -872,8 +878,8 @@ export default function HomePage() {
                 step: "03",
                 title: "Your signal",
                 detail: "lands.",
-                body: "A viability score. Saturation level. Trend direction. A market intelligence snapshot that exists nowhere else — delivered instantly.",
-                extra: ["Viability score", "Rising / Stable / Declining", "Saturation level", "Market snapshot"]
+                body: "A signal score. Saturation level. Trend direction. A market intelligence snapshot that exists nowhere else — delivered instantly.",
+                extra: ["Signal score", "Rising / Stable / Declining", "Saturation level", "Market snapshot"]
               },
             ].map((item, i) => {
               const right = i % 2 === 1;
@@ -985,8 +991,8 @@ export default function HomePage() {
               {
                 label: "02 — Insight Report",
                 title: "A personal signal, just for you.",
-                desc: "Viability score from 0–100. Saturation level: Low / Medium / High. Trend direction: Rising, Stable, or Declining. Delivered in seconds.",
-                detail: "Viability · Saturation · Trend",
+                desc: "Signal score from 0–100. Saturation level: Low / Medium / High. Trend direction: Rising, Stable, or Declining. Delivered in seconds.",
+                detail: "Signal · Saturation · Trend",
               },
               {
                 label: "03 — Trend Dashboard",

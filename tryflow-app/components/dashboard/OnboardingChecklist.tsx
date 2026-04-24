@@ -12,8 +12,8 @@ interface Props {
 
 const STORAGE_KEY = "trywepp_onboarding_v1";
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 type Stored = { dismissed?: boolean; browsedMarket?: boolean };
 
@@ -123,14 +123,14 @@ export function OnboardingChecklist({ hasIdeas, hasReport, firstIdeaId }: Props)
 
       <div className="flex items-center gap-4 mb-6">
         <span
-          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
         >
           Getting Started
         </span>
         <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
         <span
-          className="text-[15px] font-medium tracking-[0.25em] uppercase tabular-nums"
+          className="text-[15px] font-medium tracking-[0.06em] uppercase tabular-nums"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           {completedCount} / 3
@@ -158,7 +158,7 @@ export function OnboardingChecklist({ hasIdeas, hasReport, firstIdeaId }: Props)
                 {s.done ? "✓" : String(i + 1).padStart(2, "0")}
               </span>
               <span
-                className="text-[15px] font-medium tracking-[0.3em] uppercase"
+                className="text-[15px] font-medium tracking-[0.08em] uppercase"
                 style={{ fontFamily: DISPLAY, color: "var(--text-primary)" }}
               >
                 {s.label}
@@ -174,7 +174,7 @@ export function OnboardingChecklist({ hasIdeas, hasReport, firstIdeaId }: Props)
               <Link
                 href={s.cta.href}
                 onClick={s.cta.onClick}
-                className="group inline-flex items-center gap-1.5 text-[14px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70 mt-auto"
+                className="group inline-flex items-center gap-1.5 text-[14px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70 mt-auto"
                 style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
               >
                 {s.cta.label}

@@ -27,8 +27,8 @@ interface Props {
   rangeLabel?: "7d" | "30d" | "all";
 }
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 const HEADER_LABELS: Record<NonNullable<Props["rangeLabel"]>, {
   primary: string;
@@ -122,7 +122,7 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
         }}
       >
         <div
-          className="text-[14px] font-medium tracking-[0.3em] uppercase"
+          className="text-[14px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           Category
@@ -152,13 +152,13 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
           title="Average viability score across scored submissions"
         />
         <div
-          className="text-[14px] font-medium tracking-[0.3em] uppercase"
+          className="text-[14px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           Trend
         </div>
         <div
-          className="text-[14px] font-medium tracking-[0.3em] uppercase"
+          className="text-[14px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           Activity
@@ -311,7 +311,7 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
                       aria-hidden
                     />
                     <span
-                      className="text-[15px] font-medium tracking-[0.2em] uppercase"
+                      className="text-[15px] font-medium tracking-[0.06em] uppercase"
                       style={{
                         fontFamily: DISPLAY,
                         color: "var(--text-secondary)",
@@ -336,7 +336,7 @@ export function CategoryTable({ rows, rangeLabel = "30d" }: Props) {
 
       {noisyAvgPresent && (
         <p
-          className="mt-3 text-[14px] font-medium tracking-[0.25em] uppercase"
+          className="mt-3 text-[14px] font-medium tracking-[0.06em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           * Fewer than 2 scored submissions — may be noisy
@@ -368,7 +368,7 @@ function SortHeader({
       onClick={onClick}
       title={title}
       className={cn(
-        "inline-flex items-center gap-1.5 text-[14px] font-medium tracking-[0.3em] uppercase transition-colors select-none",
+        "inline-flex items-center gap-1.5 text-[14px] font-medium tracking-[0.08em] uppercase transition-colors select-none",
         align === "right" ? "justify-end" : "justify-start",
       )}
       style={{

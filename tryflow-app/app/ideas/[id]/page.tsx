@@ -11,7 +11,7 @@ import { NextStepsCard } from "@/components/ideas/NextStepsCard";
 import { WorkingBreakingBoard } from "@/components/ideas/WorkingBreakingBoard";
 import { OwnerVisibilityCard } from "@/components/ideas/OwnerVisibilityCard";
 import { AnalysisProvider, type AnalysisReport } from "@/components/ideas/AnalysisContext";
-import { AnalysisProgressStrip } from "@/components/ideas/AnalysisProgressStrip";
+import { ReportShell } from "@/components/ideas/ReportShell";
 import { Brand } from "@/components/layout/Brand";
 import { getCategoryTheme, timeAgo } from "@/lib/categories";
 
@@ -45,6 +45,7 @@ interface Idea {
   user_id: string | null;
   stage: string | null;
   is_private: boolean | null;
+  save_count: number | null;
   insight_reports: Report | Report[] | null;
 }
 
@@ -64,11 +65,11 @@ export default async function IdeaReportPage({
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data, error }, { data: aiData }] = await Promise.all([
+  const [{ data, error }, { data: aiData }, { data: savedRow }] = await Promise.all([
     supabase
       .from("idea_submissions")
       .select(`
-        id, category, target_user, description, created_at, user_id, stage, is_private,
+        id, category, target_user, description, created_at, user_id, stage, is_private, save_count,
         insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary, ai_description)
       `)
       .eq("id", id)
@@ -78,6 +79,16 @@ export default async function IdeaReportPage({
       .select("viability_score, summary, analysis, cross_agent_insights, opportunities, risks, next_steps")
       .eq("submission_id", id)
       .maybeSingle(),
+    // 현재 사용자가 이 아이디어를 이미 저장했는지 — 하트 채움 상태 결정.
+    // 비로그인 시엔 빈 결과 → not saved.
+    user
+      ? supabase
+          .from("saved_ideas")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("submission_id", id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   if (error || !data) notFound();
@@ -129,9 +140,9 @@ export default async function IdeaReportPage({
       <div className="flex items-center gap-6">
         <Link
           href="/dashboard"
-          className="text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
           style={{
-            fontFamily: "'Oswald', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             color: "var(--text-tertiary)",
           }}
         >
@@ -139,9 +150,9 @@ export default async function IdeaReportPage({
         </Link>
         <Link
           href="/submit"
-          className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+          className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
           style={{
-            fontFamily: "'Oswald', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             color: "var(--accent)",
           }}
         >
@@ -177,15 +188,21 @@ export default async function IdeaReportPage({
     <AnalysisProvider submissionId={idea.id} initialReport={initialAnalysisReport}>
     <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
       {Navbar}
-      <AnalysisProgressStrip submissionId={idea.id} />
-
+      {/* ReportShell: hides the entire report layout while AI analysis is pending,
+          replacing it with a full-bleed AnalysisLoadingScreen that shows real
+          per-agent progress (교수님 피드백 — 분석된 페이지 형식이 절대 비치지 않게). */}
+      <ReportShell
+        submittedDate={submittedAgo}
+        backHref={isOwnIdea ? "/dashboard" : "/explore"}
+        ideaId={idea.id}
+      >
       <div className="max-w-5xl mx-auto px-6 py-10">
         {/* Breadcrumb / back link */}
         <Link
           href={isOwnIdea ? "/dashboard" : "/explore"}
-          className="inline-flex items-center gap-1.5 text-[15px] font-medium tracking-[0.2em] uppercase mb-10 transition-colors hover:text-[color:var(--text-primary)]"
+          className="inline-flex items-center gap-1.5 text-[15px] font-medium tracking-[0.06em] uppercase mb-10 transition-colors hover:text-[color:var(--text-primary)]"
           style={{
-            fontFamily: "'Oswald', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             color: "var(--text-tertiary)",
           }}
         >
@@ -201,23 +218,44 @@ export default async function IdeaReportPage({
               style={{ background: theme.accent }}
             />
             <span
-              className="text-[15px] font-medium tracking-[0.3em] uppercase"
+              className="text-[15px] font-medium tracking-[0.08em] uppercase"
               style={{
-                fontFamily: "'Oswald', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 color: "var(--text-tertiary)",
               }}
             >
-              {idea.category} · Viability Report
+              {idea.category} · Signal Report
             </span>
           </span>
           <span
             className="flex-1 h-px"
             style={{ background: "var(--t-border-subtle)" }}
           />
+          {/* "Open to contact" — VC(non-owner) 에게 최상단에서 강조. Founder 가
+              연락 허용한 아이디어는 reach out 가능하다는 시그널. */}
+          {!isOwnIdea && submitterProfile?.allow_contact && (
+            <span
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-[0.08em] uppercase shrink-0 px-2 py-0.5"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                color: "var(--signal-success)",
+                background: "rgba(16, 185, 129, 0.10)",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+              }}
+              title="Founder is open to investor contact"
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: "var(--signal-success)" }}
+                aria-hidden
+              />
+              Open to contact
+            </span>
+          )}
           <span
-            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
+            className="text-[15px] font-medium tracking-[0.06em] uppercase shrink-0"
             style={{
-              fontFamily: "'Oswald', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               color: "var(--text-tertiary)",
             }}
           >
@@ -230,7 +268,7 @@ export default async function IdeaReportPage({
         <h1
           className="mb-6"
           style={{
-            fontFamily: "'Playfair Display', serif",
+            fontFamily: "'Fraunces', serif",
             fontWeight: 900,
             fontSize: "clamp(2.5rem, 5vw, 4rem)",
             lineHeight: 1.02,
@@ -250,14 +288,22 @@ export default async function IdeaReportPage({
         </p>
 
         {/* Hero — 2-col verdict + score + strongest/weakest. AI data flows
-            in via AnalysisProvider so the score renders correctly on first
-            paint (no heuristic → AI flash) and swaps in once polling lands. */}
+            in via AnalysisProvider. fallbackScore/Summary are passed as null
+            so the heuristic insight_reports score never leaks into the hero
+            — while AI is pending/failed the hero renders a skeleton, and
+            the AnalysisProgressStrip above carries the status + retry.
+            (교수님 피드백 #3 — "하드코딩 66점 fallback 노출" 차단) */}
         <IdeaHero
-          fallbackScore={report.viability_score}
-          fallbackSummary={report.summary}
+          fallbackScore={null}
+          fallbackSummary={null}
           trendDirection={report.trend_direction}
           saturationLevel={report.saturation_level}
           actionAnchor="next-actions"
+          ideaId={idea.id}
+          isSaved={!!savedRow}
+          isAnonymous={!user}
+          isOwner={isOwnIdea}
+          saveCount={idea.save_count ?? 0}
         />
 
         {/* Original submission — full-width kicker rule, expandable */}
@@ -266,9 +312,9 @@ export default async function IdeaReportPage({
             className="py-3 cursor-pointer list-none flex items-center gap-4 transition-opacity hover:opacity-80"
           >
             <span
-              className="text-[15px] font-medium tracking-[0.35em] uppercase"
+              className="text-[15px] font-medium tracking-[0.08em] uppercase"
               style={{
-                fontFamily: "'Oswald', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 color: "var(--text-tertiary)",
               }}
             >
@@ -279,9 +325,9 @@ export default async function IdeaReportPage({
               style={{ background: "var(--t-border-subtle)" }}
             />
             <span
-              className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase"
+              className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.08em] uppercase"
               style={{
-                fontFamily: "'Oswald', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 color: "var(--text-tertiary)",
               }}
             >
@@ -299,8 +345,8 @@ export default async function IdeaReportPage({
           >
             <div>
               <p
-                className="text-[15px] font-medium tracking-[0.3em] uppercase mb-2"
-                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+                className="text-[15px] font-medium tracking-[0.08em] uppercase mb-2"
+                style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
               >
                 Target user
               </p>
@@ -310,8 +356,8 @@ export default async function IdeaReportPage({
             </div>
             <div>
               <p
-                className="text-[15px] font-medium tracking-[0.3em] uppercase mb-2"
-                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+                className="text-[15px] font-medium tracking-[0.08em] uppercase mb-2"
+                style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
               >
                 Your description
               </p>
@@ -335,8 +381,8 @@ export default async function IdeaReportPage({
             limits agent grid to top-3 with collapse for the rest */}
         <DeepAnalysis
           submissionId={idea.id}
-          fallbackScore={report.viability_score}
-          fallbackSummary={report.summary}
+          fallbackScore={null}
+          fallbackSummary={null}
           trendDirection={report.trend_direction}
           saturationLevel={report.saturation_level}
           similarCount={report.similar_count}
@@ -394,9 +440,9 @@ export default async function IdeaReportPage({
           <div className="flex items-center gap-6">
             <Link
               href="/submit"
-              className="group inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+              className="group inline-flex items-center gap-2 text-[13px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
               style={{
-                fontFamily: "'Oswald', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 color: "var(--text-tertiary)",
               }}
             >
@@ -410,6 +456,7 @@ export default async function IdeaReportPage({
         </div>
 
       </div>
+      </ReportShell>
     </div>
     </AnalysisProvider>
   );

@@ -11,8 +11,8 @@ interface Props {
   hasContactEmail: boolean;
 }
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 export function OwnerVisibilityCard({
   ideaId,
@@ -74,14 +74,14 @@ export function OwnerVisibilityCard({
     <section aria-label="Idea settings" className="mb-14">
       <div className="flex items-center gap-4 mb-8">
         <span
-          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           Settings
         </span>
         <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
         <span
-          className="text-[14px] font-medium tracking-[0.25em] uppercase shrink-0"
+          className="text-[14px] font-medium tracking-[0.06em] uppercase shrink-0"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           Owner only
@@ -107,10 +107,10 @@ export function OwnerVisibilityCard({
           title={allowContact ? "Open to contact" : "Contact off"}
           desc={
             allowContact
-              ? "Pro investors can email you about your ideas."
+              ? "Pro investors can reach out with intro messages. They land in your inbox."
               : "Investors can see your ideas but cannot reach out."
           }
-          meta="Applies to all your ideas"
+          meta={allowContact ? undefined : "Applies to all your ideas"}
           on={allowContact}
           saving={savingContact}
           onToggle={toggleContact}
@@ -128,13 +128,24 @@ export function OwnerVisibilityCard({
                 </Link>{" "}
                 in settings before enabling.
               </>
+            ) : allowContact ? (
+              <span style={{ color: "var(--text-tertiary)" }}>
+                Applies to all your ideas ·{" "}
+                <Link
+                  href="/inbox"
+                  className="underline transition-opacity hover:opacity-70"
+                  style={{ color: "var(--accent)" }}
+                >
+                  View inbox →
+                </Link>
+              </span>
             ) : null
           }
         />
 
         {error && (
           <p
-            className="mt-5 text-[13px] font-medium tracking-[0.2em] uppercase"
+            className="mt-5 text-[13px] font-medium tracking-[0.06em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--signal-danger)" }}
           >
             {error}
@@ -173,7 +184,7 @@ function SettingRow({
     >
       {/* Column 1 — Label */}
       <span
-        className="pt-1 text-[14px] font-medium tracking-[0.3em] uppercase"
+        className="pt-1 text-[14px] font-medium tracking-[0.08em] uppercase"
         style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
       >
         {label}
@@ -201,7 +212,7 @@ function SettingRow({
         </p>
         {meta && (
           <p
-            className="mt-2 text-[12px] font-medium tracking-[0.25em] uppercase"
+            className="mt-2 text-[12px] font-medium tracking-[0.06em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             {meta}

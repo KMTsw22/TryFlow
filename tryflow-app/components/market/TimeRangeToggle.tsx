@@ -33,9 +33,9 @@ export function TimeRangeToggle({ value, onChange, className }: Props) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
-            className="text-[15px] font-medium tracking-[0.25em] uppercase transition-opacity hover:opacity-70"
+            className="text-[15px] font-medium tracking-[0.06em] uppercase transition-opacity hover:opacity-70"
             style={{
-              fontFamily: "'Oswald', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               color: active ? "var(--accent)" : "var(--text-tertiary)",
               borderBottom: active
                 ? "1px solid var(--accent-ring)"

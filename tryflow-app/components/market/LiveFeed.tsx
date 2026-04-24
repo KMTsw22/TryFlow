@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { timeAgo, getCategoryTheme } from "@/lib/categories";
+import { timeAgo } from "@/lib/categories";
 
 export interface LiveFeedItem {
   id: string;
@@ -13,108 +12,97 @@ interface Props {
   items: LiveFeedItem[];
 }
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const DISPLAY = "'Inter', sans-serif";
 
-function truncate(text: string, max: number) {
-  return text.length > max ? text.slice(0, max).trimEnd() + "…" : text;
-}
-
+/**
+ * LiveFeed — 한 줄짜리 "플랫폼 활성화" 인디케이터.
+ *
+ * 2026-04 redesign 3 (옵션 A · 단일 요약줄):
+ *   "Live — N recent · Category A, Category B, Category C · last Xm ago"
+ *
+ * 이전 버전(리스트형)이 공간을 차지하는 데 비해 정보 가치가 낮다는 지적 반영.
+ * 개별 아이템을 보고 싶으면 New This Week (상단) 또는 Market Board 로 유도.
+ * 이 컴포넌트는 순수 pulse — "플랫폼이 살아있다" 는 신호 1줄.
+ */
 export function LiveFeed({ items }: Props) {
   if (!items || items.length === 0) return null;
 
+  // 카테고리별 빈도 → 상위 3개 나열 (사용자 관점에서 "어디에 활동이 몰리는지")
+  const categoryCounts = new Map<string, number>();
+  for (const item of items) {
+    categoryCounts.set(item.category, (categoryCounts.get(item.category) ?? 0) + 1);
+  }
+  const topCategories = [...categoryCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat]) => cat);
+
+  const lastItem = items[0];
+  const lastAgo = lastItem ? timeAgo(lastItem.created_at) : null;
+
   return (
-    <section aria-label="Recent submissions">
-      {/* Editorial kicker */}
-      <div className="flex items-center gap-4 mb-8">
+    <section
+      aria-label="Platform activity indicator"
+      className="flex items-center flex-wrap gap-x-3 gap-y-1 py-3 border-t"
+      style={{ borderColor: "var(--t-border-subtle)" }}
+    >
+      {/* Pulse dot — 살아있다는 시각 신호 */}
+      <span className="relative inline-flex items-center shrink-0" aria-hidden>
         <span
-          className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.35em] uppercase"
-          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-        >
-          <span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "var(--signal-success)" }}
-            aria-hidden
-          />
-          Live Submissions
-        </span>
-        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ background: "var(--signal-success)" }}
+        />
         <span
-          className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
-          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-        >
-          Last {items.length} · newest first
-        </span>
-      </div>
+          className="absolute inline-flex w-1.5 h-1.5 rounded-full animate-ping"
+          style={{ background: "var(--signal-success)", opacity: 0.4 }}
+        />
+      </span>
 
-      <ul
-        className="border-t"
-        style={{ borderColor: "var(--t-border-subtle)" }}
+      {/* Label */}
+      <span
+        className="text-[11px] font-bold tracking-[0.08em] uppercase shrink-0"
+        style={{ fontFamily: DISPLAY, color: "var(--signal-success)" }}
       >
-        {items.map((item) => {
-          const theme = getCategoryTheme(item.category);
-          return (
-            <li
-              key={item.id}
-              className="border-b"
-              style={{ borderColor: "var(--t-border-subtle)" }}
-            >
-              <Link
-                href={`/ideas/${item.id}`}
-                className="grid items-center gap-4 py-2 transition-opacity group hover:opacity-80"
-                style={{
-                  gridTemplateColumns: "140px minmax(0, 1.2fr) minmax(0, 2fr) 90px",
-                }}
-              >
-                {/* Category */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ background: theme.accent }}
-                    aria-hidden
-                  />
-                  <span
-                    className="text-[14px] font-medium tracking-[0.3em] uppercase truncate"
-                    style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-                  >
-                    {item.category}
-                  </span>
-                </div>
+        Live
+      </span>
 
-                {/* Target user */}
-                <p
-                  className="truncate"
-                  style={{
-                    fontFamily: SERIF,
-                    fontWeight: 700,
-                    fontSize: "1.05rem",
-                    letterSpacing: "-0.01em",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  For {item.target_user}
-                </p>
+      {/* Separator */}
+      <span
+        className="text-[11px] shrink-0"
+        style={{ color: "var(--text-tertiary)", opacity: 0.5 }}
+        aria-hidden
+      >
+        ·
+      </span>
 
-                {/* Description */}
-                <p
-                  className="hidden md:block text-[13.5px] leading-[1.5] truncate"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  {truncate(item.description, 100)}
-                </p>
+      {/* Count + copy */}
+      <span
+        className="text-[12.5px] leading-[1.5]"
+        style={{ fontFamily: DISPLAY, color: "var(--text-secondary)" }}
+      >
+        <span className="tabular-nums font-semibold" style={{ color: "var(--text-primary)" }}>
+          {items.length}
+        </span>{" "}
+        recent submission{items.length === 1 ? "" : "s"}
+        {topCategories.length > 0 && (
+          <>
+            {" across "}
+            <span style={{ color: "var(--text-primary)" }}>
+              {topCategories.join(", ")}
+            </span>
+          </>
+        )}
+      </span>
 
-                {/* Time */}
-                <p
-                  className="text-right text-[14px] font-medium tracking-[0.2em] uppercase tabular-nums"
-                  style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
-                >
-                  {timeAgo(item.created_at)}
-                </p>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      {/* Last activity — 시각적 priority 낮게 (오른쪽 밀려서) */}
+      {lastAgo && (
+        <span
+          className="ml-auto text-[11px] font-medium tracking-[0.06em] uppercase tabular-nums shrink-0"
+          style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)", opacity: 0.7 }}
+        >
+          last {lastAgo}
+        </span>
+      )}
     </section>
   );
 }

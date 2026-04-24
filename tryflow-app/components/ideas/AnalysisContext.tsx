@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { AGENT_IDS, type AgentId } from "@/lib/viability";
 
 export interface AnalysisReport {
   viability_score: number;
@@ -22,9 +23,34 @@ export interface AnalysisReport {
 
 export type AnalysisStatus = "ready" | "pending" | "failed";
 
+export type AgentProgressState = "queued" | "running" | "done" | "failed";
+
+export interface AgentProgress {
+  state: AgentProgressState;
+  /** 0, 1, or 2 passes complete (draft / judge — 2026-04 merged skeptic into judge). */
+  passesDone: number;
+  score?: number;
+}
+
+export type StageKey =
+  | "starting"
+  | "gate"
+  | "agents"
+  | "synthesizer"
+  | "complete"
+  | "failed";
+
 interface AnalysisCtxValue {
   report: AnalysisReport | null;
   status: AnalysisStatus;
+  /** Per-agent live progress. Empty until SSE starts emitting. */
+  agentProgress: Record<AgentId, AgentProgress>;
+  /** Coarse pipeline stage for header copy. */
+  currentStage: StageKey;
+  /** Most recently activated agent — used to spotlight on the loading screen. */
+  spotlightAgent: AgentId | null;
+  /** Optional failure hints surfaced from the server (quality gate misses, etc.). */
+  failureHints: string[];
 }
 
 const AnalysisCtx = createContext<AnalysisCtxValue | null>(null);
@@ -35,11 +61,27 @@ interface ProviderProps {
   children: React.ReactNode;
 }
 
+function emptyProgress(): Record<AgentId, AgentProgress> {
+  const map = {} as Record<AgentId, AgentProgress>;
+  for (const id of AGENT_IDS) map[id] = { state: "queued", passesDone: 0 };
+  return map;
+}
+
 /**
- * Centralizes the AI analysis fetch + polling for the idea detail page.
- * Ensures every consumer (hero, next-steps, working/breaking, deep-analysis)
- * shares one source of truth and one loading phase — no duplicate requests,
- * no fragmented spinners, everything transitions in together.
+ * Centralizes the AI analysis fetch + SSE streaming for the idea detail page.
+ *
+ * 2026-04 refactor: replaced 4-second poll with a real SSE stream so the
+ * loading screen can show actual per-agent progress instead of a time-based
+ * simulation (교수님 피드백: "지금 뭘하고 있는지 보여줘").
+ *
+ * Flow:
+ *   - If `initialReport` already exists → status=ready, no network.
+ *   - Otherwise POST to /api/analysis with text/event-stream Accept and parse
+ *     SSE events as they arrive: agent passes, synthesizer phases, complete.
+ *   - On `complete` → setReport + status=ready.
+ *   - On `failed` (other than "already_exists") → status=failed, surface hints.
+ *   - On `failed` with stage=already_exists → fall back to a single GET poll
+ *     for the existing report (analysis was triggered by another tab/request).
  */
 export function AnalysisProvider({
   submissionId,
@@ -50,53 +92,220 @@ export function AnalysisProvider({
   const [status, setStatus] = useState<AnalysisStatus>(
     initialReport ? "ready" : "pending"
   );
+  const [agentProgress, setAgentProgress] = useState<Record<AgentId, AgentProgress>>(
+    emptyProgress
+  );
+  const [currentStage, setCurrentStage] = useState<StageKey>(
+    initialReport ? "complete" : "starting"
+  );
+  const [spotlightAgent, setSpotlightAgent] = useState<AgentId | null>(null);
+  const [failureHints, setFailureHints] = useState<string[]>([]);
+
+  // Guard so we don't open the stream more than once per mount.
+  const startedRef = useRef(false);
 
   useEffect(() => {
     if (initialReport) return;
+    if (startedRef.current) return;
+    startedRef.current = true;
 
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 22; // ~90s at 4s interval
+    const abort = new AbortController();
 
-    async function tick() {
-      if (cancelled) return;
-      attempts += 1;
+    async function fetchExistingReport(): Promise<AnalysisReport | null> {
       try {
-        const res = await fetch(`/api/analysis?submissionId=${submissionId}`);
+        const res = await fetch(`/api/analysis?submissionId=${submissionId}`, {
+          signal: abort.signal,
+        });
         const data = await res.json();
-        if (cancelled) return;
-        if (data.report) {
-          setReport(data.report);
-          setStatus("ready");
-          return;
-        }
+        return data?.report ?? null;
       } catch {
-        /* not ready yet */
-      }
-      if (attempts < MAX_ATTEMPTS) {
-        timer = setTimeout(tick, 4000);
-      } else if (!cancelled) {
-        setStatus("failed");
+        return null;
       }
     }
 
-    tick();
+    async function consume() {
+      try {
+        const res = await fetch("/api/analysis", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+          body: JSON.stringify({ submissionId }),
+          signal: abort.signal,
+        });
+
+        if (!res.ok || !res.body) {
+          // Couldn't even start the stream — fall back to a one-shot poll.
+          const existing = await fetchExistingReport();
+          if (existing) {
+            setReport(existing);
+            setStatus("ready");
+            setCurrentStage("complete");
+          } else {
+            setStatus("failed");
+            setCurrentStage("failed");
+          }
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // SSE events are separated by blank lines. Each event has one or
+          // more `data: …` lines that we concatenate, then JSON-parse.
+          let sepIdx;
+          while ((sepIdx = buffer.indexOf("\n\n")) !== -1) {
+            const raw = buffer.slice(0, sepIdx);
+            buffer = buffer.slice(sepIdx + 2);
+            const dataLines = raw
+              .split("\n")
+              .filter((l) => l.startsWith("data:"))
+              .map((l) => l.slice(5).trimStart());
+            if (dataLines.length === 0) continue;
+            try {
+              const evt = JSON.parse(dataLines.join("\n")) as {
+                event: string;
+                [k: string]: unknown;
+              };
+              handleEvent(evt);
+              if (evt.event === "complete" || evt.event === "failed") {
+                // Server will close after these — stop reading.
+                return;
+              }
+            } catch (parseErr) {
+              console.warn("SSE parse error:", parseErr, raw);
+            }
+          }
+        }
+      } catch (err) {
+        if ((err as { name?: string })?.name === "AbortError") return;
+        console.error("AnalysisProvider stream error:", err);
+        setStatus("failed");
+        setCurrentStage("failed");
+      }
+    }
+
+    function handleEvent(evt: { event: string; [k: string]: unknown }) {
+      switch (evt.event) {
+        case "hard_gate_done":
+          setCurrentStage("gate");
+          break;
+        case "agents_start":
+          setCurrentStage("agents");
+          // Mark all 6 agents as queued (default) — they'll flip to running
+          // as soon as their first pass completes.
+          setAgentProgress(emptyProgress());
+          break;
+        case "agent_pass_done": {
+          const id = evt.id as AgentId;
+          const pass = evt.pass as number;
+          const score = evt.score as number | undefined;
+          setAgentProgress((prev) => ({
+            ...prev,
+            [id]: {
+              state: "running",
+              passesDone: pass,
+              score: score ?? prev[id]?.score,
+            },
+          }));
+          setSpotlightAgent(id);
+          break;
+        }
+        case "agent_done": {
+          const id = evt.id as AgentId;
+          const score = evt.score as number | null | undefined;
+          setAgentProgress((prev) => ({
+            ...prev,
+            [id]: {
+              state: score === null ? "failed" : "done",
+              passesDone: 2,
+              score: typeof score === "number" ? score : prev[id]?.score,
+            },
+          }));
+          break;
+        }
+        case "synthesizer_start":
+        case "synthesizer_draft_done":
+          setCurrentStage("synthesizer");
+          setSpotlightAgent(null);
+          break;
+        case "complete": {
+          const r = evt.report as AnalysisReport | undefined;
+          if (r) {
+            setReport(r);
+            setStatus("ready");
+            setCurrentStage("complete");
+          }
+          break;
+        }
+        case "failed": {
+          const stage = evt.stage as string | undefined;
+          const hints = (evt.hints as string[] | undefined) ?? [];
+          if (stage === "already_exists") {
+            // Another tab/process generated the report. Poll once for it
+            // instead of giving up.
+            fetchExistingReport().then((existing) => {
+              if (existing) {
+                setReport(existing);
+                setStatus("ready");
+                setCurrentStage("complete");
+              } else {
+                setStatus("failed");
+                setCurrentStage("failed");
+              }
+            });
+          } else {
+            setStatus("failed");
+            setCurrentStage("failed");
+            if (hints.length > 0) setFailureHints(hints);
+          }
+          break;
+        }
+      }
+    }
+
+    consume();
+
     return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
+      abort.abort();
     };
   }, [submissionId, initialReport]);
 
-  const value = useMemo(() => ({ report, status }), [report, status]);
+  const value = useMemo<AnalysisCtxValue>(
+    () => ({
+      report,
+      status,
+      agentProgress,
+      currentStage,
+      spotlightAgent,
+      failureHints,
+    }),
+    [report, status, agentProgress, currentStage, spotlightAgent, failureHints]
+  );
 
   return <AnalysisCtx.Provider value={value}>{children}</AnalysisCtx.Provider>;
 }
 
 /**
- * Read the shared AI analysis state. Falls back to `{report: null, status: "pending"}`
- * when no provider is mounted (safe for contexts where analysis isn't relevant).
+ * Read the shared AI analysis state. Falls back to default values when no
+ * provider is mounted (safe for contexts where analysis isn't relevant).
  */
 export function useAnalysis(): AnalysisCtxValue {
-  return useContext(AnalysisCtx) ?? { report: null, status: "pending" };
+  return (
+    useContext(AnalysisCtx) ?? {
+      report: null,
+      status: "pending",
+      agentProgress: emptyProgress(),
+      currentStage: "starting",
+      spotlightAgent: null,
+      failureHints: [],
+    }
+  );
 }

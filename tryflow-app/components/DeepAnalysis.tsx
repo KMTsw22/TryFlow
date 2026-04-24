@@ -9,10 +9,7 @@ import {
   Shield,
   Clock,
   DollarSign,
-  Wrench,
-  Scale,
-  Rocket,
-  Users,
+  Flame,
   AlertTriangle,
   Lightbulb,
   ArrowRight,
@@ -34,14 +31,29 @@ interface AnalysisReport {
   viability_score: number;
   summary: string;
   analysis: {
-    market_size: AgentAnalysis & { tam_estimate?: string; signals?: { tam_estimate?: string; sam_estimate?: string; segment?: string; buyer_type?: string } };
-    competition: AgentAnalysis & { intensity?: string; key_players?: string[]; signals?: { feature_risk?: string; switching_cost?: string; consolidation_trend?: string } };
-    regulation: AgentAnalysis & { risk_level?: string; key_concerns?: string[]; signals?: { key_concerns?: string[]; applicable_regulations?: string[]; compliance_cost?: string; time_to_compliance?: string; tailwind?: string } };
-    technical_difficulty: AgentAnalysis & { level?: string; key_challenges?: string[]; signals?: { core_challenge?: string; integration_complexity?: string; ai_ml_required?: boolean; estimated_mvp_months?: number } };
-    monetization: AgentAnalysis & { models?: string[]; signals?: { recommended_model?: string; estimated_acv?: string; nrr_potential?: string; margin_risk?: string; models?: string[] } };
+    market_size: AgentAnalysis & { signals?: { tam_estimate?: string; sam_estimate?: string; segment?: string; buyer_type?: string; budget_line?: string } };
+    problem_urgency: AgentAnalysis & {
+      pain_severity?: string;
+      painkiller_or_vitamin?: string;
+      signals?: { pain_severity?: string; pain_frequency?: string; current_workaround?: string; workaround_cost?: string; wtp_signal?: string; painkiller_or_vitamin?: string };
+    };
     timing: AgentAnalysis & { signal?: string; signals?: { forcing_function?: string; tech_enabler?: string; buyer_readiness?: string } };
-    defensibility: AgentAnalysis & { moats?: string[]; signals?: { primary_moat?: string; moats?: string[]; time_to_moat?: string; durability?: string } };
-    user_acquisition: AgentAnalysis & { channels?: string[]; estimated_cac?: string; signals?: { primary_channel?: string; channels?: string[]; estimated_cac?: string; sales_cycle?: string; virality_potential?: string } };
+    product: AgentAnalysis & {
+      improvement_magnitude?: string;
+      alternative_anchor?: string;
+      signals?: { alternative_anchor?: string; improvement_dimension?: string; improvement_magnitude?: string; mechanism?: string; build_feasibility_months?: string; copy_risk_12mo?: string };
+    };
+    defensibility: AgentAnalysis & {
+      moats?: string[];
+      competitive_intensity?: string;
+      signals?: { primary_moat?: string; moats?: string[]; time_to_moat?: string; durability?: string; competitive_intensity?: string };
+    };
+    business_model: AgentAnalysis & {
+      revenue_model?: string;
+      primary_channel?: string;
+      estimated_cac?: string;
+      signals?: { revenue_model?: string; estimated_acv?: string; unit_economics_viability?: string; marginal_cost_structure?: string; primary_channel?: string; estimated_cac?: string; sales_cycle?: string; nrr_potential?: string; margin_risk?: string };
+    };
   };
   cross_agent_insights: string[];
   opportunities: string[];
@@ -51,8 +63,12 @@ interface AnalysisReport {
 
 interface DeepAnalysisProps {
   submissionId: string;
-  fallbackScore: number;
-  fallbackSummary: string;
+  // fallbackScore / fallbackSummary are carried for prop compatibility with
+  // IdeaHero but currently unused inside DeepAnalysis — the component reads
+  // from AnalysisContext directly. Typed nullable to match IdeaHero contract
+  // and let the parent pass `null` when no AI data is available yet.
+  fallbackScore: number | null;
+  fallbackSummary: string | null;
   trendDirection: string;
   saturationLevel: string;
   similarCount: number;
@@ -69,7 +85,8 @@ interface DeepAnalysisProps {
 
 // ── Weights & scoring ─────────────────────────────────────────────────────────
 
-// Shared viability scoring (weighted harmonic mean). Server mirror in route.ts.
+// Shared viability scoring (weighted arithmetic mean — 2026-04 refactor from harmonic mean).
+// Server mirror in route.ts.
 import { VIABILITY_WEIGHTS as AGENT_WEIGHTS, computeViabilityScore } from "@/lib/viability";
 
 function calcWeightedScore(analysis: AnalysisReport["analysis"]): number {
@@ -83,18 +100,17 @@ function calcWeightedScore(analysis: AnalysisReport["analysis"]): number {
 
 // ── Agent metadata ────────────────────────────────────────────────────────────
 
+// 2026-04 refactor: 8 axes → 6. Display weights match VIABILITY_WEIGHTS in lib/viability.ts.
 const AGENT_META: Record<
   string,
   { label: string; icon: typeof Target; color: string; bg: string; weight: string }
 > = {
-  market_size:          { label: "Market Size",   icon: Target,      color: "text-blue-400",   bg: "bg-blue-500/10",   weight: "20%" },
-  competition:          { label: "Competition",   icon: Shield,      color: "text-purple-400", bg: "bg-purple-500/10", weight: "15%" },
-  timing:               { label: "Timing",        icon: Clock,       color: "text-orange-400", bg: "bg-orange-500/10", weight: "10%" },
-  monetization:         { label: "Monetization",  icon: DollarSign,  color: "text-emerald-400",bg: "bg-emerald-500/10",weight: "15%" },
-  technical_difficulty: { label: "Technical",     icon: Wrench,      color: "text-red-400",    bg: "bg-red-500/10",    weight: "15%" },
-  regulation:           { label: "Regulation",    icon: Scale,       color: "text-amber-400",  bg: "bg-amber-500/10",  weight: "10%" },
-  defensibility:        { label: "Defensibility", icon: Rocket,      color: "text-indigo-400", bg: "bg-indigo-500/10", weight: "10%" },
-  user_acquisition:     { label: "Acquisition",   icon: Users,       color: "text-teal-400",   bg: "bg-teal-500/10",   weight: "5%"  },
+  market_size:     { label: "Market Size",     icon: Target,        color: "text-blue-400",    bg: "bg-blue-500/10",    weight: "22%" },
+  problem_urgency: { label: "Problem & Urgency", icon: Flame,       color: "text-red-400",     bg: "bg-red-500/10",     weight: "18%" },
+  product:         { label: "Product (10x)",   icon: Sparkles,      color: "text-purple-400",  bg: "bg-purple-500/10",  weight: "18%" },
+  defensibility:   { label: "Moat",            icon: Shield,        color: "text-indigo-400",  bg: "bg-indigo-500/10",  weight: "17%" },
+  business_model:  { label: "Business Model",  icon: DollarSign,    color: "text-emerald-400", bg: "bg-emerald-500/10", weight: "15%" },
+  timing:          { label: "Timing",          icon: Clock,         color: "text-orange-400",  bg: "bg-orange-500/10",  weight: "10%" },
 };
 
 // Real-time progress via SSE. Each step maps to a server-emitted event.
@@ -109,10 +125,8 @@ type AgentCitation = {
 
 type SseEvent =
   | { event: "hard_gate_done"; pass: boolean; hints?: string[] }
-  | { event: "llm_gate_start" }
-  | { event: "llm_gate_done"; pass: boolean; reason?: string; hints?: string[] }
   | { event: "agents_start"; ids: string[] }
-  | { event: "agent_pass_done"; id: string; pass: 1 | 2 | 3; score?: number }
+  | { event: "agent_pass_done"; id: string; pass: 1 | 2; score?: number }
   | {
       event: "agent_done";
       id: string;
@@ -122,7 +136,6 @@ type SseEvent =
     }
   | { event: "synthesizer_start" }
   | { event: "synthesizer_draft_done" }
-  | { event: "synthesizer_critique_done" }
   | { event: "complete"; analysisId: string; viabilityScore: number; report: AnalysisReport }
   | { event: "failed"; stage: string; message: string; hints?: string[] };
 
@@ -199,17 +212,22 @@ function AgentSignals({ agentKey, data }: { agentKey: string; data: AgentAnalysi
 
   switch (agentKey) {
     case "market_size":
-      if (signals.tam_estimate || data.tam_estimate) items.push({ label: "TAM", value: String(signals.tam_estimate || data.tam_estimate) });
+      if (signals.tam_estimate) items.push({ label: "TAM", value: String(signals.tam_estimate) });
       if (signals.sam_estimate) items.push({ label: "SAM", value: String(signals.sam_estimate) });
       if (signals.segment) items.push({ label: "Segment", value: String(signals.segment) });
       if (signals.buyer_type) items.push({ label: "Buyer", value: String(signals.buyer_type) });
+      if (signals.budget_line) items.push({ label: "Budget Line", value: String(signals.budget_line) });
       break;
-    case "competition": {
-      const d = data as AnalysisReport["analysis"]["competition"];
-      if (d.intensity) items.push({ label: "Intensity", value: d.intensity });
-      if (d.key_players?.length) items.push({ label: "Key Players", value: d.key_players.join(", ") });
-      if (signals.switching_cost) items.push({ label: "Switching Cost", value: String(signals.switching_cost) });
-      if (signals.consolidation_trend) items.push({ label: "Consolidation", value: String(signals.consolidation_trend) });
+    case "problem_urgency": {
+      const d = data as AnalysisReport["analysis"]["problem_urgency"];
+      const sev = signals.pain_severity || d.pain_severity;
+      const pkv = signals.painkiller_or_vitamin || d.painkiller_or_vitamin;
+      if (sev) items.push({ label: "Severity", value: String(sev) });
+      if (signals.pain_frequency) items.push({ label: "Frequency", value: String(signals.pain_frequency) });
+      if (pkv) items.push({ label: "Type", value: String(pkv) });
+      if (signals.workaround_cost) items.push({ label: "Workaround Cost", value: String(signals.workaround_cost) });
+      if (signals.wtp_signal) items.push({ label: "WTP Signal", value: String(signals.wtp_signal) });
+      if (signals.current_workaround) items.push({ label: "Today's Workaround", value: String(signals.current_workaround) });
       break;
     }
     case "timing": {
@@ -220,53 +238,43 @@ function AgentSignals({ agentKey, data }: { agentKey: string; data: AgentAnalysi
       if (signals.buyer_readiness) items.push({ label: "Buyer Readiness", value: String(signals.buyer_readiness) });
       break;
     }
-    case "monetization": {
-      const d = data as AnalysisReport["analysis"]["monetization"];
-      const models = d.models || (signals.models as string[] | undefined);
-      if (signals.recommended_model) items.push({ label: "Model", value: String(signals.recommended_model) });
-      else if (models?.length) items.push({ label: "Models", value: models.join(", ") });
-      if (signals.estimated_acv) items.push({ label: "Est. ACV", value: String(signals.estimated_acv) });
-      if (signals.nrr_potential) items.push({ label: "NRR Potential", value: String(signals.nrr_potential) });
-      if (signals.margin_risk) items.push({ label: "Margin Risk", value: String(signals.margin_risk) });
-      break;
-    }
-    case "technical_difficulty": {
-      const d = data as AnalysisReport["analysis"]["technical_difficulty"];
-      if (d.level) items.push({ label: "Level", value: d.level });
-      if (signals.estimated_mvp_months) items.push({ label: "MVP", value: `${signals.estimated_mvp_months}mo` });
-      if (signals.core_challenge) items.push({ label: "Core Challenge", value: String(signals.core_challenge) });
-      if (signals.integration_complexity) items.push({ label: "Integration", value: String(signals.integration_complexity) });
-      if (d.key_challenges?.length) items.push({ label: "Challenges", value: d.key_challenges.join(", ") });
-      break;
-    }
-    case "regulation": {
-      const d = data as AnalysisReport["analysis"]["regulation"];
-      if (d.risk_level) items.push({ label: "Risk Level", value: d.risk_level });
-      if (signals.compliance_cost) items.push({ label: "Compliance Cost", value: String(signals.compliance_cost) });
-      if (signals.time_to_compliance) items.push({ label: "Time to Comply", value: String(signals.time_to_compliance) });
-      if (signals.tailwind) items.push({ label: "Tailwind", value: String(signals.tailwind) });
-      const concerns = d.key_concerns || (signals.key_concerns as string[] | undefined);
-      if (concerns?.length) items.push({ label: "Key Concerns", value: concerns.join(", ") });
+    case "product": {
+      const d = data as AnalysisReport["analysis"]["product"];
+      const mag = signals.improvement_magnitude || d.improvement_magnitude;
+      const alt = signals.alternative_anchor || d.alternative_anchor;
+      if (mag) items.push({ label: "Improvement", value: String(mag) });
+      if (alt) items.push({ label: "vs", value: String(alt) });
+      if (signals.improvement_dimension) items.push({ label: "Dimension", value: String(signals.improvement_dimension) });
+      if (signals.mechanism) items.push({ label: "Mechanism", value: String(signals.mechanism) });
+      if (signals.build_feasibility_months) items.push({ label: "Build Time", value: `${signals.build_feasibility_months}mo` });
+      if (signals.copy_risk_12mo) items.push({ label: "Copy Risk (12mo)", value: String(signals.copy_risk_12mo) });
       break;
     }
     case "defensibility": {
       const d = data as AnalysisReport["analysis"]["defensibility"];
       const moats = d.moats || (signals.moats as string[] | undefined);
+      const intensity = signals.competitive_intensity || d.competitive_intensity;
+      if (intensity) items.push({ label: "Competitive Intensity", value: String(intensity) });
       if (signals.primary_moat) items.push({ label: "Primary Moat", value: String(signals.primary_moat) });
       else if (moats?.length) items.push({ label: "Moats", value: moats.join(", ") });
       if (signals.time_to_moat) items.push({ label: "Time to Moat", value: String(signals.time_to_moat) });
       if (signals.durability) items.push({ label: "Durability", value: String(signals.durability) });
       break;
     }
-    case "user_acquisition": {
-      const d = data as AnalysisReport["analysis"]["user_acquisition"];
-      const channels = d.channels || (signals.channels as string[] | undefined);
-      const cac = d.estimated_cac || (signals.estimated_cac as string | undefined);
-      if (signals.primary_channel) items.push({ label: "Primary Channel", value: String(signals.primary_channel) });
-      else if (channels?.length) items.push({ label: "Channels", value: channels.join(", ") });
-      if (cac) items.push({ label: "Est. CAC", value: cac });
+    case "business_model": {
+      const d = data as AnalysisReport["analysis"]["business_model"];
+      const model = signals.revenue_model || d.revenue_model;
+      const channel = signals.primary_channel || d.primary_channel;
+      const cac = signals.estimated_cac || d.estimated_cac;
+      if (model) items.push({ label: "Model", value: String(model) });
+      if (signals.estimated_acv) items.push({ label: "Est. ACV", value: String(signals.estimated_acv) });
+      if (signals.unit_economics_viability) items.push({ label: "Unit Econ", value: String(signals.unit_economics_viability) });
+      if (signals.marginal_cost_structure) items.push({ label: "Marginal Cost", value: String(signals.marginal_cost_structure) });
+      if (channel) items.push({ label: "Primary Channel", value: String(channel) });
+      if (cac) items.push({ label: "Est. CAC", value: String(cac) });
       if (signals.sales_cycle) items.push({ label: "Sales Cycle", value: String(signals.sales_cycle) });
-      if (signals.virality_potential) items.push({ label: "Virality", value: String(signals.virality_potential) });
+      if (signals.nrr_potential) items.push({ label: "NRR", value: String(signals.nrr_potential) });
+      if (signals.margin_risk) items.push({ label: "Margin Risk", value: String(signals.margin_risk) });
       break;
     }
   }
@@ -317,15 +325,15 @@ function MetricCell({
       style={{ borderColor: "var(--t-border-subtle)" }}
     >
       <p
-        className="text-[15px] font-medium tracking-[0.3em] uppercase mb-3"
-        style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+        className="text-[15px] font-medium tracking-[0.08em] uppercase mb-3"
+        style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
       >
         {label}
       </p>
       <p
         className={`leading-none ${valueColor ?? ""}`}
         style={{
-          fontFamily: "'Playfair Display', serif",
+          fontFamily: "'Fraunces', serif",
           fontWeight: 700,
           fontSize: "1.75rem",
           letterSpacing: "-0.01em",
@@ -336,8 +344,8 @@ function MetricCell({
       </p>
       {hint && (
         <p
-          className="mt-2 text-[15px] font-medium tracking-[0.25em] uppercase"
-          style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+          className="mt-2 text-[15px] font-medium tracking-[0.06em] uppercase"
+          style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
         >
           {hint}
         </p>
@@ -497,7 +505,7 @@ function BreakdownRow({
         <span
           className="shrink-0 tabular-nums leading-none text-right w-7"
           style={{
-            fontFamily: "'Oswald', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 500,
             fontSize: "0.85rem",
             letterSpacing: "0.15em",
@@ -511,7 +519,7 @@ function BreakdownRow({
         <span
           className="shrink-0"
           style={{
-            fontFamily: "'Playfair Display', serif",
+            fontFamily: "'Fraunces', serif",
             fontWeight: 700,
             fontSize: "1rem",
             letterSpacing: "-0.01em",
@@ -537,7 +545,7 @@ function BreakdownRow({
         <span className="flex items-baseline gap-1 shrink-0 tabular-nums" style={{ minWidth: 44 }}>
           <span
             style={{
-              fontFamily: "'Playfair Display', serif",
+              fontFamily: "'Fraunces', serif",
               fontWeight: 900,
               fontSize: "1.1rem",
               letterSpacing: "-0.02em",
@@ -637,7 +645,7 @@ function RowDetail({
             style={{ borderColor: "var(--t-border-bright)" }}
           >
             <p
-              className="text-[11px] font-bold mb-2 tracking-[0.2em] uppercase"
+              className="text-[11px] font-bold mb-2 tracking-[0.06em] uppercase"
               style={{ color: "var(--text-tertiary)" }}
             >
               Evidence · {cits.length}
@@ -713,9 +721,9 @@ export default function DeepAnalysis({
       <section className="mb-14" aria-label="Loading AI deep analysis">
         <div className="flex items-center gap-4 mb-8">
           <span
-            className="text-[15px] font-medium tracking-[0.35em] uppercase"
+            className="text-[15px] font-medium tracking-[0.08em] uppercase"
             style={{
-              fontFamily: "'Oswald', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               color: "var(--text-tertiary)",
               opacity: 0.7,
             }}
@@ -724,14 +732,14 @@ export default function DeepAnalysis({
           </span>
           <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
           <span
-            className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
-            style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+            className="text-[15px] font-medium tracking-[0.06em] uppercase shrink-0"
+            style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
           >
-            8 dimensions
+            6 dimensions
           </span>
         </div>
         <ul className="border-t" style={{ borderColor: "var(--t-border-subtle)" }}>
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 6 }).map((_, i) => (
             <li
               key={i}
               className="flex items-center gap-5 py-4 border-b"
@@ -740,7 +748,7 @@ export default function DeepAnalysis({
               <span
                 className="shrink-0 tabular-nums w-7 text-right"
                 style={{
-                  fontFamily: "'Oswald', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 500,
                   fontSize: "0.85rem",
                   letterSpacing: "0.15em",
@@ -796,26 +804,26 @@ export default function DeepAnalysis({
     return (
       <div className="space-y-4">
 
-        {/* Overall Signal — weighted score from 8 agents. Skipped when a parent hero shows it. */}
+        {/* Overall Signal — weighted score from 6 agents. Skipped when a parent hero shows it. */}
         {!hideOverallSignal && (
           <OverallSignal score={weightedScore} summary={report.summary} trend={trendDirection} saturation={saturationLevel} />
         )}
 
-        {/* 8-agent breakdown — editorial section */}
+        {/* 6-agent breakdown — editorial section */}
         <section className="mb-14">
           <div className="flex items-center gap-4 mb-8">
             <span
-              className="text-[15px] font-medium tracking-[0.35em] uppercase"
-              style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+              className="text-[15px] font-medium tracking-[0.08em] uppercase"
+              style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
             >
               The Agents
             </span>
             <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
             <span
-              className="text-[15px] font-medium tracking-[0.25em] uppercase shrink-0"
-              style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
+              className="text-[15px] font-medium tracking-[0.06em] uppercase shrink-0"
+              style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
             >
-              8 dimensions · ranked
+              6 dimensions · ranked
             </span>
           </div>
 
@@ -838,8 +846,8 @@ export default function DeepAnalysis({
           <section className="mb-14">
             <div className="flex items-center gap-4 mb-8">
               <span
-                className="text-[15px] font-medium tracking-[0.35em] uppercase"
-                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--accent)" }}
+                className="text-[15px] font-medium tracking-[0.08em] uppercase"
+                style={{ fontFamily: "'Inter', sans-serif", color: "var(--accent)" }}
               >
                 Summary View
               </span>
@@ -849,7 +857,7 @@ export default function DeepAnalysis({
               <p
                 className="mb-6 leading-[1.2]"
                 style={{
-                  fontFamily: "'Playfair Display', serif",
+                  fontFamily: "'Fraunces', serif",
                   fontStyle: "italic",
                   fontWeight: 400,
                   fontSize: "1.5rem",
@@ -867,8 +875,8 @@ export default function DeepAnalysis({
               </p>
               <a
                 href="/pricing"
-                className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
-                style={{ fontFamily: "'Oswald', sans-serif", color: "var(--accent)" }}
+                className="inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
+                style={{ fontFamily: "'Inter', sans-serif", color: "var(--accent)" }}
               >
                 Upgrade to Plus
                 <ArrowRight className="w-3 h-3" strokeWidth={1.75} />

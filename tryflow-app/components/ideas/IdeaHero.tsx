@@ -6,19 +6,34 @@ import {
   Radar,
   PolarGrid,
   PolarAngleAxis,
+  PolarRadiusAxis,
   ResponsiveContainer,
 } from "recharts";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useAnalysis } from "./AnalysisContext";
+import { HeartButton } from "./HeartButton";
 
 // ── Types ──────────────────────────────────────────────────────────────────
+// fallbackScore / fallbackSummary are nullable: parent passes null when no
+// AI-grade data is available yet. In that case we render skeleton/error UI
+// instead of leaking the heuristic insight score (교수님 피드백 #3).
 interface Props {
-  fallbackScore: number;
-  fallbackSummary: string;
+  fallbackScore: number | null;
+  fallbackSummary: string | null;
   trendDirection: string;
   saturationLevel: string;
   actionAnchor?: string;
+  /** Idea ID — required when heart button is shown. */
+  ideaId?: string;
+  /** Initial saved (heart-filled) state for the current viewer. */
+  isSaved?: boolean;
+  /** True for logged-out viewers — heart click redirects to /login. */
+  isAnonymous?: boolean;
+  /** True when the viewer is the idea's owner — shows save count badge. */
+  isOwner?: boolean;
+  /** Total times this idea has been saved. Only displayed when isOwner=true. */
+  saveCount?: number;
 }
 
 interface AgentResult {
@@ -26,15 +41,14 @@ interface AgentResult {
   assessment?: string;
 }
 
+// 2026-04 refactor: 8 axes → 6. See decisions/evaluation-axes-rationale.md.
 interface Analysis {
   market_size?: AgentResult;
-  competition?: AgentResult;
+  problem_urgency?: AgentResult;
   timing?: AgentResult;
-  monetization?: AgentResult;
-  technical_difficulty?: AgentResult;
-  regulation?: AgentResult;
+  product?: AgentResult;
   defensibility?: AgentResult;
-  user_acquisition?: AgentResult;
+  business_model?: AgentResult;
 }
 
 interface ApiReport {
@@ -45,24 +59,20 @@ interface ApiReport {
 
 const AGENT_LABEL: Record<keyof Analysis, string> = {
   market_size: "Market",
-  competition: "Competition",
+  problem_urgency: "Problem",
   timing: "Timing",
-  monetization: "Revenue",
-  technical_difficulty: "Technical",
-  regulation: "Regulation",
+  product: "Product",
   defensibility: "Moat",
-  user_acquisition: "Acquisition",
+  business_model: "Model",
 };
 
 const AGENT_LABEL_FULL: Record<keyof Analysis, string> = {
   market_size: "Market size",
-  competition: "Competition",
+  problem_urgency: "Problem & urgency",
   timing: "Timing",
-  monetization: "Monetization",
-  technical_difficulty: "Technical",
-  regulation: "Regulation",
-  defensibility: "Defensibility",
-  user_acquisition: "Acquisition",
+  product: "Product (10x)",
+  defensibility: "Moat & defensibility",
+  business_model: "Business model",
 };
 
 function getVerdict(
@@ -97,8 +107,8 @@ function getVerdict(
   return { label: "Weak signal — explore adjacent angles", tone: "danger" };
 }
 
-const SERIF = "'Playfair Display', serif";
-const DISPLAY = "'Oswald', sans-serif";
+const SERIF = "'Fraunces', serif";
+const DISPLAY = "'Inter', sans-serif";
 
 // ── Component ──────────────────────────────────────────────────────────────
 export function IdeaHero({
@@ -107,24 +117,39 @@ export function IdeaHero({
   trendDirection,
   saturationLevel,
   actionAnchor = "next-actions",
+  ideaId,
+  isSaved = false,
+  isAnonymous = false,
+  isOwner = false,
+  saveCount = 0,
 }: Props) {
   const { isDark } = useTheme();
   const { report, status } = useAnalysis();
   const isPending = status === "pending";
+  const isFailed = status === "failed";
 
-  const score = report?.viability_score ?? fallbackScore;
-  const summary = report?.summary ?? fallbackSummary;
-  const verdict = getVerdict(score, trendDirection, saturationLevel);
+  // Prefer AI-graded score; fall back to the (nullable) heuristic only when
+  // the parent explicitly passes one. When score is null → we render skeleton/
+  // error instead of a fake number.
+  const score: number | null = report?.viability_score ?? fallbackScore;
+  const summary: string | null = report?.summary ?? fallbackSummary;
+  const hasScore = typeof score === "number";
+  // verdict/scoreHex only make sense when we have a real number. Guarded here
+  // so downstream render code can stay simple.
+  const verdict = hasScore
+    ? getVerdict(score, trendDirection, saturationLevel)
+    : null;
   // The big numeric score follows the project-wide threshold convention so
   // the same score displays the same color everywhere (dashboard cards,
   // detail hero, deep-analysis ring, compare, etc).
   //   ≥70 → success, ≥50 → warning, <50 → danger
-  const scoreHex =
-    score >= 70
-      ? "var(--signal-success)"
-      : score >= 50
-      ? "var(--signal-warning)"
-      : "var(--signal-danger)";
+  const scoreHex = !hasScore
+    ? "var(--text-tertiary)"
+    : score >= 70
+    ? "var(--signal-success)"
+    : score >= 50
+    ? "var(--signal-warning)"
+    : "var(--signal-danger)";
   // Verdict label (italic quote) keeps its contextual phrasing — a 49 in a
   // low-saturation rising market reads differently than a 49 in a crowded
   // declining market — but the score color itself stays consistent with the
@@ -165,19 +190,43 @@ export function IdeaHero({
         borderTop: "1px solid var(--t-border-subtle)",
         borderBottom: "1px solid var(--t-border-subtle)",
       }}
-      aria-label="Viability verdict"
+      aria-label="Signal verdict"
     >
       {/* Kicker rule */}
       <div className="flex items-center gap-4 mb-8">
         <span
-          className="text-[15px] font-medium tracking-[0.35em] uppercase"
+          className="text-[15px] font-medium tracking-[0.08em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           The Verdict
         </span>
         <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+
+        {/* Owner-only save count — "N VCs saved this" 동기부여 신호 */}
+        {isOwner && saveCount > 0 && (
+          <span
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium tracking-[0.06em] uppercase shrink-0"
+            style={{ fontFamily: DISPLAY, color: "#ef4444" }}
+            title="Number of users who saved your idea"
+          >
+            <Heart className="w-3.5 h-3.5" fill="currentColor" strokeWidth={1.5} />
+            {saveCount} saved
+          </span>
+        )}
+
+        {/* Heart toggle — visible to non-owners (and to owner without count badge) */}
+        {ideaId && !isOwner && (
+          <HeartButton
+            ideaId={ideaId}
+            initialSaved={isSaved}
+            isAnonymous={isAnonymous}
+            variant="ghost"
+            size="md"
+          />
+        )}
+
         <span
-          className="text-[15px] font-medium tracking-[0.25em] uppercase"
+          className="text-[15px] font-medium tracking-[0.06em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           {trendDirection} · {saturationLevel} saturation
@@ -186,10 +235,13 @@ export function IdeaHero({
 
       {/* Top grid — Score+verdict (left) | Radar (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,auto)] gap-x-12 gap-y-10 items-center mb-8">
-        {/* Left — score + verdict + summary (fully skeletonized while pending
-            so the heuristic placeholder never competes with the final AI result) */}
+        {/* Left — score + verdict + summary.
+            Skeletonized not only while pending but also when the analysis
+            failed or no real score is available, so the heuristic fallback
+            never leaks into the hero (교수님 피드백 #3). The top-of-page
+            AnalysisProgressStrip carries the retry CTA in failed state. */}
         <div className="min-w-0">
-          {isPending ? (
+          {(isPending || isFailed || !hasScore) ? (
             <>
               <div className="flex items-baseline gap-3 mb-6">
                 <span
@@ -202,7 +254,7 @@ export function IdeaHero({
                   aria-label="Score loading"
                 />
                 <span
-                  className="pb-2 text-sm font-medium tracking-[0.3em] uppercase"
+                  className="pb-2 text-sm font-medium tracking-[0.08em] uppercase"
                   style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)", opacity: 0.6 }}
                 >
                   / 100
@@ -249,26 +301,28 @@ export function IdeaHero({
                   {score}
                 </span>
                 <span
-                  className="pb-2 text-sm font-medium tracking-[0.3em] uppercase"
+                  className="pb-2 text-sm font-medium tracking-[0.08em] uppercase"
                   style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
                 >
                   / 100
                 </span>
               </div>
 
-              <p
-                className="leading-[1.15] mb-5"
-                style={{
-                  fontFamily: SERIF,
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  fontSize: "clamp(1.35rem, 2.4vw, 2rem)",
-                  letterSpacing: "-0.01em",
-                  color: "var(--text-primary)",
-                }}
-              >
-                &ldquo;{verdict.label}.&rdquo;
-              </p>
+              {verdict && (
+                <p
+                  className="leading-[1.15] mb-5"
+                  style={{
+                    fontFamily: SERIF,
+                    fontStyle: "italic",
+                    fontWeight: 400,
+                    fontSize: "clamp(1.35rem, 2.4vw, 2rem)",
+                    letterSpacing: "-0.01em",
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  &ldquo;{verdict.label}.&rdquo;
+                </p>
+              )}
 
               <p
                 className="text-[14.5px] leading-[1.75]"
@@ -284,12 +338,22 @@ export function IdeaHero({
         {radarData.length > 0 && (
           <div
             className="hidden lg:block w-[300px] h-[260px] shrink-0"
-            aria-label="Balance across 8 analysis dimensions"
+            aria-label="Balance across 6 analysis dimensions"
           >
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={radarData} outerRadius="68%" margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                 <PolarGrid
                   stroke={isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.22)"}
+                />
+                {/* Fix: recharts auto-scales radius to dataMax by default,
+                    which made an 85점 chart look as "full" as a 40점 chart
+                    (교수님 피드백 #1). Pinning the domain to [0, 100] makes
+                    the polygon area reflect the actual 0-100 score. */}
+                <PolarRadiusAxis
+                  angle={90}
+                  domain={[0, 100]}
+                  axisLine={false}
+                  tick={false}
                 />
                 <PolarAngleAxis
                   dataKey="subject"
@@ -326,7 +390,7 @@ export function IdeaHero({
         <div className="flex justify-end pt-4">
           <a
             href={`#${actionAnchor}`}
-            className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.3em] uppercase transition-opacity hover:opacity-70"
+            className="group inline-flex items-center gap-2 text-[15px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
             style={{ fontFamily: DISPLAY, color: "var(--accent)" }}
           >
             View next actions
@@ -368,7 +432,7 @@ function DimensionRow({
       style={{ borderColor: "var(--t-border-subtle)" }}
     >
       <span
-        className="text-[15px] font-medium tracking-[0.3em] uppercase shrink-0 w-36"
+        className="text-[15px] font-medium tracking-[0.08em] uppercase shrink-0 w-36"
         style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
       >
         {label}
@@ -420,7 +484,7 @@ function DimensionRow({
         </span>
         {!loading && (
           <span
-            className="text-[14px] font-medium tracking-[0.2em] uppercase"
+            className="text-[14px] font-medium tracking-[0.06em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             /100

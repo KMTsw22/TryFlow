@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Heart } from "lucide-react";
 import { getCategoryTheme, timeAgo } from "@/lib/categories";
+import { CompareButton } from "@/components/compare/CompareButton";
 import type { TrendDirection } from "@/components/ui/TrendLabel";
 import type { IdeaStatus } from "@/components/ui/StatusBadge";
 
@@ -18,6 +19,8 @@ export interface IdeaGridItem {
   trend_direction: TrendDirection | null;
   saturation_level?: string | null;
   status: IdeaStatus;
+  /** Total times this (own) idea has been saved by other users. */
+  save_count?: number;
 }
 
 type SortKey = "viability_score" | "created_at" | "category";
@@ -105,7 +108,7 @@ export function IdeaGrid({ items, highlightId }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sorted.map((item) => (
           <MyIdeaCard
             key={item.id}
@@ -153,25 +156,30 @@ function MyIdeaCard({
           {item.category}
         </span>
 
-        <div className="flex items-baseline gap-1 shrink-0">
-          <span
-            className="tabular-nums leading-none"
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontWeight: 900,
-              fontSize: "1.75rem",
-              letterSpacing: "-0.02em",
-              color,
-            }}
-          >
-            {scoreStr}
-          </span>
-          <span
-            className="text-[13px] font-medium tracking-[0.15em] uppercase"
-            style={{ fontFamily: "'Oswald', sans-serif", color: "var(--text-tertiary)" }}
-          >
-            /100
-          </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* 본인 아이디어끼리 비교 — Plus 플랜 핵심 가치. 하트는 자기 것 저장이
+              어색해서 제외, Compare 만 추가. */}
+          <CompareButton ideaId={item.id} variant="icon" size="sm" />
+          <div className="flex items-baseline gap-1 ml-1">
+            <span
+              className="tabular-nums leading-none"
+              style={{
+                fontFamily: "'Fraunces', serif",
+                fontWeight: 900,
+                fontSize: "1.75rem",
+                letterSpacing: "-0.02em",
+                color,
+              }}
+            >
+              {scoreStr}
+            </span>
+            <span
+              className="text-[13px] font-medium tracking-[0.04em] uppercase"
+              style={{ fontFamily: "'Inter', sans-serif", color: "var(--text-tertiary)" }}
+            >
+              /100
+            </span>
+          </div>
         </div>
       </div>
 
@@ -204,18 +212,32 @@ function MyIdeaCard({
           {stage && <span className="mx-1.5 opacity-50">·</span>}
           {stage}
         </span>
-        <span
-          className="font-medium tracking-wider uppercase text-[10px] shrink-0 ml-3"
-          style={{
-            color:
-              item.status === "private"
-                ? "var(--text-tertiary)"
-                : item.status === "analyzing"
-                ? "var(--signal-warning)"
-                : "var(--text-secondary)",
-          }}
-        >
-          {STATUS_LABEL[item.status]}
+        <span className="flex items-center gap-2.5 shrink-0 ml-3">
+          {/* Save count — only meaningful on own ideas (this card is owner-only).
+              Shown when ≥1 to avoid cluttering with "0 saved". */}
+          {item.save_count !== undefined && item.save_count > 0 && (
+            <span
+              className="inline-flex items-center gap-0.5 text-[11px] font-medium tabular-nums"
+              style={{ color: "#ef4444" }}
+              title={`${item.save_count} ${item.save_count === 1 ? "person" : "people"} saved this`}
+            >
+              <Heart className="w-3 h-3" fill="currentColor" strokeWidth={1.5} />
+              {item.save_count}
+            </span>
+          )}
+          <span
+            className="font-medium tracking-wider uppercase text-[10px]"
+            style={{
+              color:
+                item.status === "private"
+                  ? "var(--text-tertiary)"
+                  : item.status === "analyzing"
+                  ? "var(--signal-warning)"
+                  : "var(--text-secondary)",
+            }}
+          >
+            {STATUS_LABEL[item.status]}
+          </span>
         </span>
       </div>
     </Link>

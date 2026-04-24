@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Lock, EyeOff, Globe, Sparkles, RefreshCw, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
 import { Brand } from "@/components/layout/Brand";
 
 const IDEA_STAGES = [
@@ -27,7 +26,55 @@ const CATEGORIES = [
   "Hardware",
 ];
 
-const STEPS = ["Category", "Target user", "Description"];
+// 2026-04: 6개 evaluation axes 각각에 대해 1 질문씩.
+// 의도적으로 구체성 강제하는 질문 설계 — GPT 가 generic answer 생성하기 어려움.
+const AXIS_QUESTIONS = [
+  {
+    key: "axis_market",
+    label: "Market",
+    question: "Who feels this pain right now, and how many of them are there?",
+    placeholder:
+      "ex) B2B healthcare ops teams at 200–2000 employee hospitals — about 5,000 in US",
+  },
+  {
+    key: "axis_problem",
+    label: "Problem",
+    question: "What is the user doing today instead, and why is that broken?",
+    placeholder:
+      "ex) They use Excel + 3 SaaS tools and copy-paste between them — costs ~5h/week per person, errors compound at month-end",
+  },
+  {
+    key: "axis_timing",
+    label: "Timing",
+    question: "Why now? What changed in the last 12–24 months that makes this possible?",
+    placeholder:
+      "ex) GPT-4 made medical chart parsing affordable; 2024 CMS rule mandates structured billing data by Q3 2026",
+  },
+  {
+    key: "axis_product",
+    label: "Product",
+    question: "What does the product actually do? Describe the core flow in one paragraph.",
+    placeholder:
+      "ex) User uploads a chart PDF → 30s parse → highlights billing codes → 1-click export to Epic EMR with audit trail",
+  },
+  {
+    key: "axis_defensibility",
+    label: "Defensibility",
+    question: "What makes this hard to copy 12 months in?",
+    placeholder:
+      "ex) Proprietary dataset of 50k labeled charts; Epic integration requires their cert (6mo); switching cost: re-training the AI on new data",
+  },
+  {
+    key: "axis_business_model",
+    label: "Business model",
+    question: "Who pays, how much, and why is it worth it to them?",
+    placeholder:
+      "ex) Hospital billing teams pay $500/seat/month. Replaces $5K/mo manual coder. ROI in <1 month.",
+  },
+] as const;
+
+const AXIS_MIN = 30;
+const AXIS_MAX = 500;
 
 const INPUT_CLASS =
   "w-full border h-10 px-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]";
@@ -37,18 +84,27 @@ const INPUT_STYLE: React.CSSProperties = {
   color: "var(--text-primary)",
 };
 
+type AxisAnswers = Record<typeof AXIS_QUESTIONS[number]["key"], string>;
+const emptyAxisAnswers: AxisAnswers = {
+  axis_market: "",
+  axis_problem: "",
+  axis_timing: "",
+  axis_product: "",
+  axis_defensibility: "",
+  axis_business_model: "",
+};
+
 export default function SubmitPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromId = searchParams.get("from");
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
-    category: "",
-    target_user: "",
-    description: "",
-    is_private: false,
-    stage: "",
-  });
+
+  const [category, setCategory] = useState("");
+  const [targetUser, setTargetUser] = useState("");
+  const [axes, setAxes] = useState<AxisAnswers>(emptyAxisAnswers);
+  const [stage, setStage] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [canPrivate, setCanPrivate] = useState(false);
@@ -60,13 +116,11 @@ export default function SubmitPage() {
     contact_linkedin: "",
     contact_other: "",
   });
-  // Iterate mode — when ?from=<id> is present, prefill from the original idea
   const [iteratingFrom, setIteratingFrom] = useState<{
     id: string;
     target_user: string;
     category: string;
   } | null>(null);
-  const [prefilling, setPrefilling] = useState(!!fromId);
 
   useEffect(() => {
     const supabase = createClient();
@@ -92,8 +146,7 @@ export default function SubmitPage() {
     })();
   }, []);
 
-  // Iterate prefill — when ?from=<id> is passed, load the original idea
-  // and prefill category/target/description/stage so the user can edit.
+  // Iterate prefill — when ?from=<id> is passed, load original idea + axes
   useEffect(() => {
     if (!fromId) return;
     const supabase = createClient();
@@ -101,20 +154,23 @@ export default function SubmitPage() {
       try {
         const { data, error: err } = await supabase
           .from("idea_submissions")
-          .select("id, category, target_user, description, stage")
+          .select(
+            "id, category, target_user, stage, axis_market, axis_problem, axis_timing, axis_product, axis_defensibility, axis_business_model"
+          )
           .eq("id", fromId)
           .single();
-        if (err || !data) {
-          setPrefilling(false);
-          return;
-        }
-        setForm((f) => ({
-          ...f,
-          category: data.category ?? f.category,
-          target_user: data.target_user ?? f.target_user,
-          description: data.description ?? f.description,
-          stage: data.stage ?? f.stage,
-        }));
+        if (err || !data) return;
+        setCategory(data.category ?? "");
+        setTargetUser(data.target_user ?? "");
+        setStage(data.stage ?? "");
+        setAxes({
+          axis_market: data.axis_market ?? "",
+          axis_problem: data.axis_problem ?? "",
+          axis_timing: data.axis_timing ?? "",
+          axis_product: data.axis_product ?? "",
+          axis_defensibility: data.axis_defensibility ?? "",
+          axis_business_model: data.axis_business_model ?? "",
+        });
         setIteratingFrom({
           id: data.id,
           target_user: data.target_user ?? "",
@@ -122,8 +178,6 @@ export default function SubmitPage() {
         });
       } catch {
         /* ignore */
-      } finally {
-        setPrefilling(false);
       }
     })();
   }, [fromId]);
@@ -133,22 +187,20 @@ export default function SubmitPage() {
     router.replace("/submit");
   };
 
-  const canNext = () => {
-    if (step === 0) return form.category !== "";
-    if (step === 1) return form.target_user.trim().length >= 5;
-    if (step === 2) return form.description.trim().length >= 30;
-    return false;
+  const updateAxis = (key: keyof AxisAnswers, value: string) => {
+    setAxes((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleNext = () => {
-    if (step < 2) { setStep(step + 1); return; }
-    handleSubmit();
-  };
+  // Validation — all 6 axes have minimum chars, category + target set
+  const axesFilled = AXIS_QUESTIONS.every((q) => axes[q.key].trim().length >= AXIS_MIN);
+  const canSubmit =
+    category !== "" && targetUser.trim().length >= 5 && axesFilled && !loading;
 
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
     try {
+      // Persist contact prefs first (not blocking for failure)
       if (userId) {
         const supabase = createClient();
         await supabase
@@ -163,18 +215,31 @@ export default function SubmitPage() {
           .eq("id", userId);
       }
 
+      // Concat axes into a single description for backwards-compat with code paths
+      // that read `description` directly (cards, market feed, old analysis fallback).
+      const description = AXIS_QUESTIONS.map(
+        (q) => `${q.label}: ${axes[q.key].trim()}`
+      ).join("\n\n");
+
       const res = await fetch("/api/ideas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, stage: form.stage || null }),
+        body: JSON.stringify({
+          category,
+          target_user: targetUser,
+          description,
+          stage: stage || null,
+          is_private: isPrivate,
+          axes, // server stores into axis_* columns
+        }),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error || "Something went wrong"); setLoading(false); return; }
-      // Full navigation so we escape the Next.js router cache. Using router.push
-      // has shown intermittent cases where a previously-viewed idea page is
-      // served instead of the freshly-created submissionId.
+      if (!res.ok) {
+        setError(json.error || "Something went wrong");
+        setLoading(false);
+        return;
+      }
       window.location.assign(`/ideas/${json.submissionId}`);
-      return;
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);
@@ -183,7 +248,6 @@ export default function SubmitPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "var(--page-bg)" }}>
-      {/* Navbar — system-aligned */}
       <nav
         className="flex items-center justify-between px-6 h-[60px] border-b"
         style={{ background: "var(--nav-bg)", borderColor: "var(--t-border)" }}
@@ -198,12 +262,11 @@ export default function SubmitPage() {
         </div>
       </nav>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-14">
-        <div className="w-full max-w-xl">
-          {/* Iterating banner — visible when ?from=<id> prefills */}
+      <div className="flex-1 px-4 py-12">
+        <div className="w-full max-w-2xl mx-auto">
           {iteratingFrom && (
             <div
-              className="flex items-start gap-3 p-3.5 mb-5 border"
+              className="flex items-start gap-3 p-3.5 mb-6 border"
               style={{
                 background: "var(--accent-soft)",
                 borderColor: "var(--accent-ring)",
@@ -220,10 +283,7 @@ export default function SubmitPage() {
                 >
                   Iterating from a previous idea
                 </p>
-                <p
-                  className="text-sm mt-0.5 truncate"
-                  style={{ color: "var(--text-primary)" }}
-                >
+                <p className="text-sm mt-0.5 truncate" style={{ color: "var(--text-primary)" }}>
                   For {iteratingFrom.target_user} · {iteratingFrom.category}
                 </p>
                 <p
@@ -245,7 +305,6 @@ export default function SubmitPage() {
             </div>
           )}
 
-          {/* Header */}
           <div className="mb-8">
             <h1
               className="text-2xl font-bold tracking-tight"
@@ -254,63 +313,11 @@ export default function SubmitPage() {
               {iteratingFrom ? "Refine your idea" : "Submit your idea"}
             </h1>
             <p className="text-sm mt-1.5" style={{ color: "var(--text-secondary)" }}>
-              {iteratingFrom
-                ? "Adjust what needs sharpening. Submitting creates a new insight report."
-                : "Get an instant AI insight report. Takes about 2 minutes."}
+              Answer six short questions — one per evaluation axis. Be specific. Concrete details
+              score higher than polished prose.
             </p>
           </div>
 
-          {/* Progress — 3 segmented steps */}
-          <div
-            className="flex items-center border overflow-hidden mb-6"
-            style={{
-              background: "var(--card-bg)",
-              borderColor: "var(--t-border-card)",
-            }}
-          >
-            {STEPS.map((s, i) => {
-              const done = i < step;
-              const active = i === step;
-              return (
-                <div
-                  key={s}
-                  className={cn(
-                    "flex-1 px-4 py-2.5 text-xs font-semibold flex items-center gap-2 transition-colors",
-                    i < STEPS.length - 1 && "border-r"
-                  )}
-                  style={{
-                    borderColor: "var(--t-border-subtle)",
-                    background: active ? "var(--accent-soft)" : "transparent",
-                    color: active
-                      ? "var(--accent)"
-                      : done
-                        ? "var(--text-primary)"
-                        : "var(--text-tertiary)",
-                  }}
-                >
-                  <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[12px] font-bold shrink-0 transition-all"
-                    style={{
-                      background: active
-                        ? "var(--accent)"
-                        : done
-                          ? "var(--text-primary)"
-                          : "transparent",
-                      color: active || done ? "#ffffff" : "var(--text-tertiary)",
-                      border: !active && !done
-                        ? "1px solid var(--t-border-bright)"
-                        : "none",
-                    }}
-                  >
-                    {done ? "✓" : i + 1}
-                  </span>
-                  <span className="truncate">{s}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Card — uses surface-1 (adapts to theme) */}
           <div
             className="border p-7"
             style={{
@@ -318,352 +325,292 @@ export default function SubmitPage() {
               borderColor: "var(--t-border-card)",
             }}
           >
-            {/* Step 0: Category */}
-            {step === 0 && (
-              <div>
-                <h2
-                  className="text-base font-semibold mb-1"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  What category fits your idea?
-                </h2>
-                <p className="text-sm mb-5" style={{ color: "var(--text-secondary)" }}>
-                  Determines which ideas yours gets compared to.
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {CATEGORIES.map((cat) => {
-                    const active = form.category === cat;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => setForm({ ...form, category: cat })}
-                        className="text-left px-3 py-2.5 border text-sm font-medium transition-colors"
-                        style={{
-                          background: active ? "var(--accent-soft)" : "var(--input-bg)",
-                          borderColor: active ? "var(--accent-ring)" : "var(--t-border-card)",
-                          color: active ? "var(--accent)" : "var(--text-secondary)",
-                        }}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Step 1: Target user */}
-            {step === 1 && (
-              <div>
-                <h2
-                  className="text-base font-semibold mb-1"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  Who is this for?
-                </h2>
-                <p className="text-sm mb-5" style={{ color: "var(--text-secondary)" }}>
-                  Describe your target user in one sentence.
-                </p>
-                <div className="space-y-2">
-                  {[
-                    "Early-stage startup founders",
-                    "Freelance designers and developers",
-                    "SMB owners without in-house tech",
-                    "College students managing coursework",
-                  ].map((example) => {
-                    const active = form.target_user === example;
-                    return (
-                      <button
-                        key={example}
-                        onClick={() => setForm({ ...form, target_user: example })}
-                        className="w-full text-left px-3 py-2.5 border text-sm transition-colors"
-                        style={{
-                          background: active ? "var(--accent-soft)" : "var(--input-bg)",
-                          borderColor: active ? "var(--accent-ring)" : "var(--t-border-card)",
-                          color: active ? "var(--accent)" : "var(--text-secondary)",
-                          fontWeight: active ? 600 : 400,
-                        }}
-                      >
-                        {example}
-                      </button>
-                    );
-                  })}
-                  <input
-                    type="text"
-                    value={form.target_user}
-                    onChange={(e) => setForm({ ...form, target_user: e.target.value })}
-                    placeholder="Or write your own…"
-                    className={INPUT_CLASS + " mt-2"}
-                    style={INPUT_STYLE}
-                  />
-                  {form.target_user.length > 0 && form.target_user.trim().length < 5 && (
-                    <p className="text-xs font-medium mt-2" style={{ color: "var(--signal-warning)" }}>
-                      Need at least 5 characters — you have {form.target_user.trim().length}.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Description + stage + visibility + contact */}
-            {step === 2 && (
-              <div>
-                <h2
-                  className="text-base font-semibold mb-1"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  Describe your idea
-                </h2>
-                <p className="text-sm mb-5" style={{ color: "var(--text-secondary)" }}>
-                  Brief and clear. What does it do? What problem does it solve?
-                </p>
-
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="e.g. A tool that automatically generates API docs from code comments, targeted at solo developers who hate writing documentation…"
-                  rows={6}
-                  className="w-full border px-3 py-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)] resize-none leading-relaxed"
-                  style={INPUT_STYLE}
-                />
-                <div className="flex justify-between mt-2">
-                  <span
-                    className="text-xs font-medium"
-                    style={{
-                      color:
-                        form.description.length === 0
-                          ? "var(--text-tertiary)"
-                          : form.description.length >= 30
-                            ? "var(--signal-success)"
-                            : "var(--signal-warning)",
-                    }}
-                  >
-                    {form.description.length === 0
-                      ? "Min 30 characters"
-                      : form.description.length >= 30
-                        ? "Looks good"
-                        : `Need ${30 - form.description.length} more characters`}
-                  </span>
-                  <span
-                    className="text-xs font-mono tabular-nums"
-                    style={{ color: "var(--text-tertiary)" }}
-                  >
-                    {form.description.length}
-                  </span>
-                </div>
-
-                {/* Stage chips */}
-                <Section
-                  label="Stage of development"
-                  optional
-                  helper="Helps benchmark your idea against similar-stage submissions."
-                >
-                  <div className="grid grid-cols-2 gap-2">
-                    {IDEA_STAGES.map((s) => {
-                      const active = form.stage === s.value;
-                      return (
-                        <button
-                          key={s.value}
-                          type="button"
-                          onClick={() => setForm({ ...form, stage: active ? "" : s.value })}
-                          className="text-left px-3 py-2 border text-sm transition-colors"
-                          style={{
-                            background: active ? "var(--accent-soft)" : "var(--input-bg)",
-                            borderColor: active ? "var(--accent-ring)" : "var(--t-border-card)",
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className="w-1.5 h-1.5 rounded-full shrink-0"
-                              style={{ background: s.color }}
-                            />
-                            <span
-                              className="font-semibold text-xs"
-                              style={{
-                                color: active ? "var(--text-primary)" : "var(--text-secondary)",
-                              }}
-                            >
-                              {s.label}
-                            </span>
-                          </div>
-                          <p
-                            className="text-[13px] mt-0.5 ml-3.5"
-                            style={{ color: "var(--text-tertiary)" }}
-                          >
-                            {s.sub}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </Section>
-
-                {/* Visibility */}
-                {canPrivate ? (
-                  <Section label="Visibility">
-                    <div className="grid grid-cols-2 gap-2">
-                      <VisibilityCard
-                        icon={<Globe className="w-3.5 h-3.5" />}
-                        title="Public"
-                        desc="Appears in Market feed and contributes to trends."
-                        active={!form.is_private}
-                        onClick={() => setForm({ ...form, is_private: false })}
-                      />
-                      <VisibilityCard
-                        icon={<EyeOff className="w-3.5 h-3.5" />}
-                        title="Private"
-                        desc="Only you can see it. Hidden from feed."
-                        active={form.is_private}
-                        onClick={() => setForm({ ...form, is_private: true })}
-                      />
-                    </div>
-                  </Section>
-                ) : (
-                  <div
-                    className="mt-5 flex items-start gap-3 p-3 border"
-                    style={{
-                      background: "var(--input-bg)",
-                      borderColor: "var(--t-border-card)",
-                    }}
-                  >
-                    <Sparkles
-                      className="w-4 h-4 mt-0.5 shrink-0"
-                      style={{ color: "var(--accent)" }}
-                    />
-                    <div className="flex-1">
-                      <p
-                        className="text-xs font-semibold"
-                        style={{ color: "var(--text-primary)" }}
-                      >
-                        Want to upload privately?
-                      </p>
-                      <p
-                        className="text-[13px] mt-0.5 leading-relaxed"
-                        style={{ color: "var(--text-secondary)" }}
-                      >
-                        <Link
-                          href="/pricing"
-                          className="font-medium hover:underline"
-                          style={{ color: "var(--accent)" }}
-                        >
-                          Upgrade to Plus
-                        </Link>{" "}
-                        to keep ideas hidden from the public feed.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Contact info */}
-                {userId && (
-                  <Section
-                    label="Contact info"
-                    optional
-                    helper="Let Pro investors reach out about this idea."
-                  >
-                    <div
-                      className="border p-4 space-y-3"
+            {/* Category */}
+            <FieldGroup label="Category" required>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {CATEGORIES.map((cat) => {
+                  const active = category === cat;
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategory(cat)}
+                      className="text-left px-3 py-2.5 border text-sm font-medium transition-colors"
                       style={{
-                        background: "var(--input-bg)",
-                        borderColor: "var(--t-border-card)",
+                        background: active ? "var(--accent-soft)" : "var(--input-bg)",
+                        borderColor: active ? "var(--accent-ring)" : "var(--t-border-card)",
+                        color: active ? "var(--accent)" : "var(--text-secondary)",
                       }}
                     >
-                      <label className="flex items-center gap-3 cursor-pointer select-none">
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={contact.allow_contact}
-                          onClick={() =>
-                            setContact({ ...contact, allow_contact: !contact.allow_contact })
-                          }
-                          className="w-9 h-5 rounded-full transition-colors shrink-0 relative"
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </FieldGroup>
+
+            {/* Target user */}
+            <FieldGroup
+              label="Target user"
+              required
+              helper="Who specifically will use this? One short sentence."
+            >
+              <input
+                type="text"
+                value={targetUser}
+                onChange={(e) => setTargetUser(e.target.value)}
+                placeholder="ex) Solo developers shipping side projects on weekends"
+                className={INPUT_CLASS}
+                style={INPUT_STYLE}
+              />
+              {targetUser.length > 0 && targetUser.trim().length < 5 && (
+                <p
+                  className="text-xs font-medium mt-1.5"
+                  style={{ color: "var(--signal-warning)" }}
+                >
+                  At least 5 characters.
+                </p>
+              )}
+            </FieldGroup>
+
+            {/* 6 axis questions — single page, sectioned */}
+            <div
+              className="mt-8 pt-6 border-t"
+              style={{ borderColor: "var(--t-border-subtle)" }}
+            >
+              <p
+                className="text-[11px] font-bold tracking-[0.14em] uppercase mb-1"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                Six axes
+              </p>
+              <p className="text-sm mb-1" style={{ color: "var(--text-secondary)" }}>
+                Each question maps to one of the six axes our AI scores against. Be concrete —
+                names, numbers, real workflows beat abstractions.
+              </p>
+              <p
+                className="text-[12px] mb-6 leading-relaxed"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                Min {AXIS_MIN} / Max {AXIS_MAX} characters per answer.
+              </p>
+
+              {AXIS_QUESTIONS.map((q, i) => (
+                <AxisField
+                  key={q.key}
+                  index={i + 1}
+                  label={q.label}
+                  question={q.question}
+                  placeholder={q.placeholder}
+                  value={axes[q.key]}
+                  onChange={(v) => updateAxis(q.key, v)}
+                />
+              ))}
+            </div>
+
+            {/* Stage */}
+            <FieldGroup
+              label="Stage of development"
+              optional
+              helper="Helps benchmark your idea against similar-stage submissions."
+              spacing="lg"
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {IDEA_STAGES.map((s) => {
+                  const active = stage === s.value;
+                  return (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => setStage(active ? "" : s.value)}
+                      className="text-left px-3 py-2 border text-sm transition-colors"
+                      style={{
+                        background: active ? "var(--accent-soft)" : "var(--input-bg)",
+                        borderColor: active ? "var(--accent-ring)" : "var(--t-border-card)",
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ background: s.color }}
+                        />
+                        <span
+                          className="font-semibold text-xs"
                           style={{
-                            background: contact.allow_contact
-                              ? "var(--accent)"
-                              : "var(--t-border-bright)",
+                            color: active ? "var(--text-primary)" : "var(--text-secondary)",
                           }}
                         >
-                          <span
-                            className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
-                              contact.allow_contact ? "left-4" : "left-0.5"
-                            }`}
-                          />
-                        </button>
-                        <span
-                          className="text-xs font-medium"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          Allow others to contact me about this idea
+                          {s.label}
                         </span>
-                      </label>
+                      </div>
+                      <p
+                        className="text-[13px] mt-0.5 ml-3.5"
+                        style={{ color: "var(--text-tertiary)" }}
+                      >
+                        {s.sub}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </FieldGroup>
 
-                      {contact.allow_contact && (
-                        <div className="space-y-2.5 pt-1">
-                          {[
-                            { key: "contact_email",    label: "Email",    type: "email", placeholder: "you@example.com" },
-                            { key: "contact_phone",    label: "Phone",    type: "tel",   placeholder: "+1 (555) 000-0000", optional: true },
-                            { key: "contact_linkedin", label: "LinkedIn", type: "url",   placeholder: "https://linkedin.com/in/yourname", optional: true },
-                            { key: "contact_other",    label: "Other",    type: "text",  placeholder: "Twitter, Telegram, website…", optional: true },
-                          ].map((f) => (
-                            <div key={f.key}>
-                              <label
-                                className="block text-[13px] font-semibold mb-1"
-                                style={{ color: "var(--text-secondary)" }}
-                              >
-                                {f.label}
-                                {f.optional && (
-                                  <span
-                                    className="ml-1.5 font-normal"
-                                    style={{ color: "var(--text-tertiary)" }}
-                                  >
-                                    (optional)
-                                  </span>
-                                )}
-                              </label>
-                              <input
-                                type={f.type}
-                                value={contact[f.key as keyof typeof contact] as string}
-                                onChange={(e) =>
-                                  setContact({ ...contact, [f.key]: e.target.value })
-                                }
-                                placeholder={f.placeholder}
-                                className="w-full border h-9 px-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
-                                style={INPUT_STYLE}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </Section>
-                )}
-
-                {error && (
+            {/* Visibility */}
+            {canPrivate ? (
+              <FieldGroup label="Visibility">
+                <div className="grid grid-cols-2 gap-2">
+                  <VisibilityCard
+                    icon={<Globe className="w-3.5 h-3.5" />}
+                    title="Public"
+                    desc="Appears in Market feed and contributes to trends."
+                    active={!isPrivate}
+                    onClick={() => setIsPrivate(false)}
+                  />
+                  <VisibilityCard
+                    icon={<EyeOff className="w-3.5 h-3.5" />}
+                    title="Private"
+                    desc="Only you can see it. Hidden from feed."
+                    active={isPrivate}
+                    onClick={() => setIsPrivate(true)}
+                  />
+                </div>
+              </FieldGroup>
+            ) : (
+              <div
+                className="mt-6 flex items-start gap-3 p-3 border"
+                style={{
+                  background: "var(--input-bg)",
+                  borderColor: "var(--t-border-card)",
+                }}
+              >
+                <Sparkles
+                  className="w-4 h-4 mt-0.5 shrink-0"
+                  style={{ color: "var(--accent)" }}
+                />
+                <div className="flex-1">
                   <p
-                    className="mt-4 text-xs font-medium"
-                    style={{ color: "var(--signal-danger)" }}
+                    className="text-xs font-semibold"
+                    style={{ color: "var(--text-primary)" }}
                   >
-                    {error}
+                    Want to upload privately?
                   </p>
-                )}
+                  <p
+                    className="text-[13px] mt-0.5 leading-relaxed"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    <Link
+                      href="/pricing"
+                      className="font-medium hover:underline"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      Upgrade to Plus
+                    </Link>{" "}
+                    to keep ideas hidden from the public feed.
+                  </p>
+                </div>
               </div>
             )}
 
-            {/* Navigation */}
-            <div className="flex items-center justify-between mt-7">
-              <button
-                onClick={() => setStep(Math.max(0, step - 1))}
-                className={cn(
-                  "text-sm transition-colors px-2 py-1",
-                  step === 0 && "invisible"
-                )}
-                style={{ color: "var(--text-tertiary)" }}
+            {/* Contact info */}
+            {userId && (
+              <FieldGroup
+                label="Contact info"
+                optional
+                helper="Let Pro investors reach out about this idea."
               >
-                ← Back
-              </button>
+                <div
+                  className="border p-4 space-y-3"
+                  style={{
+                    background: "var(--input-bg)",
+                    borderColor: "var(--t-border-card)",
+                  }}
+                >
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={contact.allow_contact}
+                      onClick={() =>
+                        setContact({ ...contact, allow_contact: !contact.allow_contact })
+                      }
+                      className="w-9 h-5 rounded-full transition-colors shrink-0 relative"
+                      style={{
+                        background: contact.allow_contact
+                          ? "var(--accent)"
+                          : "var(--t-border-bright)",
+                      }}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                          contact.allow_contact ? "left-4" : "left-0.5"
+                        }`}
+                      />
+                    </button>
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      Allow others to contact me about this idea
+                    </span>
+                  </label>
+
+                  {contact.allow_contact && (
+                    <div className="space-y-2.5 pt-1">
+                      {[
+                        { key: "contact_email",    label: "Email",    type: "email", placeholder: "you@example.com" },
+                        { key: "contact_phone",    label: "Phone",    type: "tel",   placeholder: "+1 (555) 000-0000", optional: true },
+                        { key: "contact_linkedin", label: "LinkedIn", type: "url",   placeholder: "https://linkedin.com/in/yourname", optional: true },
+                        { key: "contact_other",    label: "Other",    type: "text",  placeholder: "Twitter, Telegram, website…", optional: true },
+                      ].map((f) => (
+                        <div key={f.key}>
+                          <label
+                            className="block text-[13px] font-semibold mb-1"
+                            style={{ color: "var(--text-secondary)" }}
+                          >
+                            {f.label}
+                            {f.optional && (
+                              <span
+                                className="ml-1.5 font-normal"
+                                style={{ color: "var(--text-tertiary)" }}
+                              >
+                                (optional)
+                              </span>
+                            )}
+                          </label>
+                          <input
+                            type={f.type}
+                            value={contact[f.key as keyof typeof contact] as string}
+                            onChange={(e) =>
+                              setContact({ ...contact, [f.key]: e.target.value })
+                            }
+                            placeholder={f.placeholder}
+                            className="w-full border h-9 px-3 text-sm outline-none transition-colors focus:border-[color:var(--accent)]"
+                            style={INPUT_STYLE}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FieldGroup>
+            )}
+
+            {error && (
+              <p
+                className="mt-5 text-xs font-medium"
+                style={{ color: "var(--signal-danger)" }}
+              >
+                {error}
+              </p>
+            )}
+
+            {/* Submit */}
+            <div className="flex items-center justify-end mt-8 pt-6 border-t"
+              style={{ borderColor: "var(--t-border-subtle)" }}>
               <button
-                onClick={handleNext}
-                disabled={!canNext() || loading}
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
                 className="inline-flex items-center gap-1.5 h-10 px-5 text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110"
                 style={{ background: "var(--accent)" }}
               >
@@ -672,13 +619,9 @@ export default function SubmitPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Analyzing…
                   </>
-                ) : step === 2 ? (
-                  <>
-                    Get my insight report <ArrowRight className="w-4 h-4" />
-                  </>
                 ) : (
                   <>
-                    Next <ArrowRight className="w-4 h-4" />
+                    Get my insight report <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
@@ -699,19 +642,23 @@ export default function SubmitPage() {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function Section({
+function FieldGroup({
   label,
+  required,
   optional,
   helper,
   children,
+  spacing = "md",
 }: {
   label: string;
+  required?: boolean;
   optional?: boolean;
   helper?: string;
   children: React.ReactNode;
+  spacing?: "md" | "lg";
 }) {
   return (
-    <div className="mt-6">
+    <div className={spacing === "lg" ? "mt-8" : "mt-6 first:mt-0"}>
       <div className="mb-2">
         <span
           className="text-xs font-semibold tracking-wider uppercase"
@@ -726,6 +673,14 @@ function Section({
               (optional)
             </span>
           )}
+          {required && (
+            <span
+              className="ml-1.5 font-normal normal-case"
+              style={{ color: "var(--signal-danger)" }}
+            >
+              *
+            </span>
+          )}
         </span>
         {helper && (
           <p
@@ -737,6 +692,77 @@ function Section({
         )}
       </div>
       {children}
+    </div>
+  );
+}
+
+function AxisField({
+  index,
+  label,
+  question,
+  placeholder,
+  value,
+  onChange,
+}: {
+  index: number;
+  label: string;
+  question: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const len = value.length;
+  const meets = len >= AXIS_MIN;
+  const over = len > AXIS_MAX;
+  const counterColor = over
+    ? "var(--signal-danger)"
+    : meets
+    ? "var(--signal-success)"
+    : "var(--text-tertiary)";
+
+  return (
+    <div className="mb-5">
+      <div className="flex items-baseline justify-between gap-3 mb-1.5">
+        <label className="block text-[13px] font-semibold">
+          <span
+            className="inline-flex items-center gap-2"
+            style={{ color: "var(--text-primary)" }}
+          >
+            <span
+              className="inline-flex items-center justify-center w-5 h-5 text-[11px] font-bold tabular-nums"
+              style={{
+                background: "var(--accent-soft)",
+                color: "var(--accent)",
+                borderRadius: "9999px",
+              }}
+            >
+              {index}
+            </span>
+            <span className="uppercase tracking-[0.08em] text-[11.5px]">{label}</span>
+          </span>
+        </label>
+        <span
+          className="text-[11px] tabular-nums shrink-0"
+          style={{ color: counterColor }}
+        >
+          {len}/{AXIS_MAX}
+        </span>
+      </div>
+      <p
+        className="text-[13.5px] leading-[1.5] mb-2"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        {question}
+      </p>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={3}
+        maxLength={AXIS_MAX + 50}
+        className="w-full border px-3 py-2.5 text-sm outline-none transition-colors focus:border-[color:var(--accent)] resize-none leading-relaxed"
+        style={INPUT_STYLE}
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 /**
- * Shared glossary for the 8 AI-analysis dimensions.
+ * Shared glossary for the 6 AI-analysis dimensions.
  * Used by compare page radar, IdeaHero radar, and deep-analysis cards
  * so every surface explains the same thing the same way.
  *
  * Keys match the analysis JSON (agent IDs from the multi-agent orchestrator).
+ * 2026-04 refactor: 8 axes → 6 axes. See decisions/evaluation-axes-rationale.md.
  */
 
 export interface DimensionMeta {
@@ -20,59 +21,45 @@ export interface DimensionMeta {
 export const DIMENSION_META: Record<string, DimensionMeta> = {
   market_size: {
     short: "Market",
-    full: "Market Size",
+    full: "Market Size & Quality",
     description:
-      "How big the addressable market is. Considers total potential users, buyer segments, and spend pools.",
-    highMeans: "Large, well-defined market with room to grow.",
+      "How big the addressable market is and whether it has the shape VCs want — large spend pools, growing, and with a beachhead you can dominate first.",
+    highMeans: "Large, well-defined market with a winnable beachhead and room to expand.",
   },
-  competition: {
-    short: "Competition",
-    full: "Competition",
+  problem_urgency: {
+    short: "Problem",
+    full: "Problem & Urgency",
     description:
-      "The intensity and shape of the competitive landscape — who else is playing here and how entrenched they are.",
-    highMeans: "Weak or fragmented competition, or a real gap you can own.",
+      "How painful and frequent the problem is for the target user — the 'hair on fire' test. A big market with mild pain still fails.",
+    highMeans: "Acute, frequent pain users will pay to stop right now.",
   },
   timing: {
     short: "Timing",
-    full: "Market Timing",
+    full: "Why Now / Timing",
     description:
-      "Whether the market is ready now. Looks at tech enablers, buyer readiness, and forcing functions.",
-    highMeans: "Right moment — demand is real and the window is open.",
+      "Why this moment is right. Looks at tech enablers, regulatory shifts, behavior changes, and the forcing functions that open the window.",
+    highMeans: "A real inflection — couldn't be built 3 years ago, shouldn't wait 3 more.",
   },
-  monetization: {
-    short: "Revenue",
-    full: "Monetization",
+  product: {
+    short: "Product",
+    full: "Product (10x Solution)",
     description:
-      "How you'll make money. Evaluates pricing power, willingness to pay, and unit-economics potential.",
-    highMeans: "Clear path to revenue with healthy margins.",
-  },
-  technical_difficulty: {
-    short: "Technical",
-    full: "Technical Difficulty",
-    description:
-      "Build complexity and technical risk. Considers MVP effort, integration difficulty, and engineering depth needed.",
-    highMeans: "Feasible to build — or hard enough to deter copycats.",
-  },
-  regulation: {
-    short: "Regulation",
-    full: "Regulation",
-    description:
-      "Legal and compliance burden. Includes industry rules, data privacy, licensing, and policy risk.",
-    highMeans: "Low regulatory friction — you can ship without a legal team.",
+      "Whether the solution is meaningfully better than alternatives — ideally 10x on the dimension users care most about, not incremental polish.",
+    highMeans: "Dramatically better than the status quo on a metric users actually rank by.",
   },
   defensibility: {
     short: "Moat",
-    full: "Defensibility",
+    full: "Moat & Defensibility",
     description:
-      "How hard it is for a competitor to copy you once you've proven the market. Looks at moats, switching costs, and network effects.",
-    highMeans: "Durable advantages that compound as you grow.",
+      "How hard it is for a competitor to catch up once you prove the market. Looks at network effects, switching costs, data advantages, and competitive intensity.",
+    highMeans: "Durable advantages (network effects, data, switching costs) that compound with scale.",
   },
-  user_acquisition: {
-    short: "Acquisition",
-    full: "User Acquisition",
+  business_model: {
+    short: "Model",
+    full: "Business Model & Unit Economics",
     description:
-      "How efficiently you can reach and convert your target user. Considers channels, CAC, and virality potential.",
-    highMeans: "Clear, low-cost path to your first 1,000 users.",
+      "How value is captured. Evaluates pricing power, unit economics (CAC vs LTV potential), margin structure, scalability, and the path to distribution.",
+    highMeans: "Scalable economics — healthy margins, a viable CAC/LTV story, and a clear GTM channel.",
   },
 };
 

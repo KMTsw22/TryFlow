@@ -104,8 +104,17 @@
     @apply antialiased;
     background: var(--page-bg);
     color: #f1f5f9;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
+    /* cv11 = single-storey 'a' (cleaner at small sizes), ss01 = stylistic set
+       for tabular alignment. Standard Inter usage in dashboards. */
+    font-feature-settings: "cv11", "ss01";
     transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  /* tabular-nums utility for score / metric components — Inter has built-in
+     tabular figures, this just exposes them. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   html:not(.dark) body {
