@@ -74,3 +74,30 @@ You are evaluating the **defensibility** of a fintech idea.
 - **20-39**: Weak moat. Primarily UX advantage or marketing spend. No regulatory barriers, minimal switching costs, no data network effects. Example: a budgeting app with nice design but no proprietary data advantage, competing with free bank features.
 
 - **0-19**: No moat. Commodity financial product, no regulatory advantage, trivial switching costs. Any neobank or mega-fintech can replicate. Example: a basic payment splitting app or expense tracker.
+
+## Calibration Anchors
+
+Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range.**
+
+**Score ~10 — "UI 예쁜 가계부 앱, 오픈뱅킹 연동, 무료"**
+데이터 누적 없음 (거래 내역은 은행 서버에 있음), 네트워크 효과 없음, 규제 장벽 없음, 스위칭 비용 없음. 브랜드 아무것도 없음. 뱅크샐러드, 토스가 동일 기능 무료 제공. 주말에 복제 가능. No moat of any kind.
+
+**Score ~25 — "BNPL 앱, 기존 신용카드 가맹점 네트워크 연동"**
+카드 네트워크 외부에서 접근 → Visa/Mastercard merchant 를 재활용하지만 해당 네트워크 자체는 소유 못 함. 독자 가맹점 계약 없으면 switching cost = 0 (merchant 가 Affirm 대신 Klarna 쓰면 그만). 신용 모델이 proprietary 하지 않으면 risk model = FICO 의존 → commodity. 규제 취득 (money transmitter) 은 있지만 경쟁자도 동일하게 가능.
+
+**Score ~52 — "HR/급여 플랫폼 연동 earned wage access 서비스 (ADP, 더존 파트너십)"**
+스위칭 비용 = 고용주의 HR 소프트웨어 교체 마찰. Integration depth 中 수준. 직원이 개인적으로 직접 이탈하기 어려움 (고용주 계정에 묶임). 하지만 HR 벤더 자체가 동일 기능 내장 시 즉시 대체됨 (ADP 자체 earned wage access 출시 가능). Moderate switching cost + partner dependency risk.
+
+**Score ~68 — "AI 기반 대출 심사, 대안 데이터 2년치 누적 (배달 이력, 임대 납부 등), 승인율 +35%"**
+2년치 데이터 누적 = 후발 복제 어려움 (데이터가 없으면 모델 못 만듦). 승인율 개선이 증명될수록 데이터 → 고객 → 더 많은 데이터 flywheel. 하지만 규제 라이센스 (대부업, 여신업) 는 시간이 걸릴 뿐 복제 가능. 모델 특허 없으면 알고리즘 구조 자체는 공개될 수 있음. Data flywheel 있지만 regulatory moat 없어 한계.
+
+**Score ~88 — "은행업 인허가 보유 디지털 뱅크 (직접 예금 수취, 대출, 결제 가능)"**
+Banking charter = 1-3년 + $10-50M 자본 요건. 후발주자가 동일 규제를 통과하는 데 동일한 시간과 비용 필요 → 진입 장벽이 시간 자산. 여기에 primary account 스위칭 비용 (자동이체 20개 변경 = 평균 10시간) + 데이터 flywheel (거래 → 리스크 모델 → 더 좋은 금리 → 더 많은 고객) 복합. SoFi, Varo 가 이 경로로 moat 쌓는 중.
+
+## Platform Stats Handling
+
+- `similar_count` High + Fintech → 선점자가 이미 regulatory moat 형성 중. 후발주자가 동일 라이센스 없으면 defensibility 심각하게 낮아짐 (−8 to −12)
+- `trend_direction` Rising + 규제 변화 카테고리 → 규제 선취 player 에게 유리한 timing. 먼저 라이센스 취득하면 moat window 열려있음 (+3 to +5)
+- `similar_count` very low + 신규 규제 기반 → 규제 자체가 진입장벽 역할. 라이센스 선점 시 moat 가능 (+5 to +8)
+- Fintech 의 핵심 moat 체크리스트: (1) 규제 라이센스 보유 여부, (2) primary account 지위 가능성, (3) 거래 데이터 flywheel 구조 — 이 3가지 없으면 상한 50대
+- **Synapse 교훈**: BaaS 미들웨어 만으로는 regulatory moat 없음. 파트너 은행 의존 = 단일 실패 지점 → 라이센스 독립성 평가 중요

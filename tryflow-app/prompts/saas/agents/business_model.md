@@ -78,8 +78,8 @@ Evaluate whether this idea can generate **sustainable, scalable revenue** — wi
 
 Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range.**
 
-**Score ~10 — "익명 메시지 보드, 광고 없음, 구독 없음, PLG 도 없음"**
-수익 모델 부재 + GTM 부재 + 구조적 실패. ACV $0, margin 에서 서버비 차감시 계속 마이너스. Yik Yak / Whisper 패턴으로 망한 카테고리. 어떻게 scale 해도 수익 음수. CAC 측정 자체가 무의미 (왜냐면 paying user 개념이 없음).
+**Score ~10 — "개발자용 코드 포매팅 API SaaS — rate limit 없는 무료 플랜만 존재, 유료 전환 계획 없음"**
+수익 모델 자체 부재. ACV $0, 트래픽 증가 = 인프라 비용 증가로 적자 심화. Enterprise tier 없음, 구독 플랜 없음. PLG 도 불가 — free 가 이미 unlimited 라 upgrade trigger 없음. GTM 없음, 기업 예산 사이클 없음. CAC 측정 자체가 무의미 (paying user 개념이 없음). "나중에 enterprise 기능 추가" 는 검증 없는 가정 — SaaS 구조적 실패의 전형.
 
 **Score ~25 — "Free Chrome extension that helps developers format JSON, with $5/mo pro tier"**
 ACV ceiling ~$60/yr, 개인 지불, 기업 예산 없음. Margin 은 괜찮지만 absolute revenue per user 너무 작음. PLG 자연스러우나 conversion 을 올려도 venture scale 불가. 무료 대체재 범람. GTM 은 developer community 로 가능하지만 LTV 가 낮아 유료 paid 도 돌리면 바로 CAC > LTV. Sub-venture 비즈니스.

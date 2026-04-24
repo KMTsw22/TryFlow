@@ -34,8 +34,8 @@ Evaluate TAM, SAM, and realistic SOM for this idea.
 
 Pick the anchor closest in shape to the idea, then adjust ±10 based on specifics. **Use the full 5-95 range — don't avoid the low end (5-15) for ideas that genuinely deserve it.**
 
-**Score ~10 — "AI 챗봇 친구앱, 외로운 청소년 대상, 무료 + 캐릭터 스킨만 유료"**
-TAM 사실상 무의미. 청소년은 지불 의향 zero, 부모 카드는 결제 막힘. Character.ai/Replika 가 이미 카테고리 먹음 + Character.ai 자살 소송으로 시장 자체가 toxic. $50M 도 안 되는 niche 에 무료 모델로 들어감. 진지한 buyer 없음.
+**Score ~10 — "국내 전통시장 개별 점포 전용 재고 관리 SaaS (전국 대상 약 200개 점포), 월 $9 구독"**
+Bottom-up TAM: 200개 점포 × $108/yr = $21,600 — 시장 자체가 존재하지 않는 수준. Buyer 는 디지털 툴 WTP 사실상 zero (무료 엑셀·수기 장부 대비 체감 가치 없음). 지리적 SAM 추가 제한, 확장 가능한 인접 세그먼트 없음. 100% 점유해도 연매출 $21K — venture scale 수학 성립 불가.
 
 **Score ~30 — "Scheduling tool for independent piano teachers in Korea"**
 TAM is small (~$20-50M globally, <$10M Korea). Buyers are solo practitioners with tight budgets and existing free alternatives (Google Calendar). No obvious path to a $100M ARR business. Adjacent expansions (tutors, coaches) exist but fragmented, each small.
@@ -56,10 +56,11 @@ TAM is large ($15B+ APM/observability), growing 20%+ YoY, with an established bu
   "agent": "market_size",
   "score": 0-100,
   "assessment": "2-3 sentence analysis grounded in specific data points",
-  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: market sizing methodology, target segment dynamics, buyer willingness to pay, growth trajectory, adjacent market opportunities, and key assumptions behind the estimate.",
+  "detailed_assessment": "7-9 sentence in-depth analysis. Cover: bottom-up TAM calculation (target company count × ACV), SAM filters applied (geography, company size, tech readiness), SOM and realistic capture in 3-5 years, target segment dynamics, buyer willingness to pay, growth trajectory, adjacent market opportunities, and key assumptions behind the estimate.",
   "signals": {
     "tam_estimate": "string — e.g. '$5-10B'",
     "sam_estimate": "string",
+    "som_estimate": "string — realistic 3-5 year capture, e.g. '$50-200M ARR'",
     "segment": "SMB" | "Mid-market" | "Enterprise" | "Mixed",
     "buyer_type": "string — who signs the check",
     "budget_line": "Exists" | "Emerging" | "None"

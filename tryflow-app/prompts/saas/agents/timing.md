@@ -55,8 +55,8 @@ Determine if the timing is right — too early, right on time, or too late.
 
 Pick the anchor closest in shape, then adjust ±10. **Use the full 5-95 range — don't avoid the low end (5-15) for ideas that genuinely deserve it.**
 
-**Score ~10 — "MySpace 스타일 소셜 네트워크 — 음악 재생 가능한 HTML 커스터마이징 프로필"**
-2008년에 끝난 시장. 카테고리 자체가 commoditized 후 사라짐. 지금 들어가는 건 forcing function 의 정반대 — 사용자가 떠난 이유가 시장에 그대로 잔존. 신기술 enabler 도, 새 buyer 행동도, 규제 변화도 없음.
+**Score ~10 — "기업용 HTML 이메일 뉴스레터 에디터 SaaS (AI 없음, Mailchimp 유사 기능)"**
+2010년대 중반에 consolidation 완료된 카테고리. Mailchimp, Klaviyo, Brevo 가 무료 tier 로 SMB 시장을 cover — 후발주자 유료 진입 불가. 새 forcing function 없음 (규제 변화, 플랫폼 이동, 기술 shift 어느 것도 없음). Incumbent 이 오히려 AI 기능을 무료 tier 에 추가하는 중 → 진입 장벽이 더 높아지는 추세. "Too late" 의 정수.
 
 **Score ~30 — "B2B voice-agent platform for field service dispatch"**
 Voice AI is credible now, but buyer readiness in field service dispatch is early — most mid-market operators are still digitizing paper workflows. Budget line for "AI voice agents" doesn't exist yet; founders would need to educate the market. No strong forcing function — buyers are curious but not urgent. Right direction, 12-18 months too early.
