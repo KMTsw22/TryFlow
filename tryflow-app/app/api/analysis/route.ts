@@ -29,47 +29,6 @@ function buildAgentSearchQuery(
   return `${desc} ${target} ${hint}`.slice(0, 380);
 }
 
-// Moat-aware product adjustment — smooth sigmoid across the entire defensibility range.
-// 2026-04: applies to `product` (10x solution) instead of `technical_difficulty`.
-// Principle: a 10x product claim only counts if you can keep being 10x — without a
-// moat, the advantage gets copied. Discount the product score when defensibility is low.
-//
-//   credit = 1 / (1 + exp(-k × (def - midpoint)))
-//   credit = max(credit, floor)
-//   product_adjusted = product_raw × credit
-//
-// Parameters chosen so that:
-//   def ≈ 40 → credit 0.50 (midpoint, half discount)
-//   def ≥ 60 → credit ≥ 0.92 (minor discount — strong-moat 10x products untouched)
-//   def ≤ 25 → credit ≤ 0.20 (heavy discount — "10x but anyone can copy" territory)
-//
-// Sigmoid is the standard smoothed-threshold function in ML / statistics / control theory.
-const MOAT_MIDPOINT = 40;
-const MOAT_STEEPNESS = 0.12;
-const MOAT_CREDIT_FLOOR = 0.15;
-
-function applyCrossAxisCaps(
-  agentResults: Record<string, { score?: number } & Record<string, unknown>>
-): void {
-  const product = agentResults.product;
-  const def = agentResults.defensibility;
-  if (!product || !def) return;
-  const productScore = product.score;
-  const defScore = def.score;
-  if (typeof productScore !== "number" || typeof defScore !== "number") return;
-
-  const rawCredit = 1 / (1 + Math.exp(-MOAT_STEEPNESS * (defScore - MOAT_MIDPOINT)));
-  const credit = Math.max(rawCredit, MOAT_CREDIT_FLOOR);
-  const adjusted = Math.round(productScore * credit);
-
-  if (adjusted !== productScore) {
-    console.log(
-      `[moat-credit] product ${productScore} → ${adjusted} (defensibility ${defScore}, credit ${credit.toFixed(3)})`
-    );
-    product.score = adjusted;
-  }
-}
-
 // Hard quality gate: reject obviously garbage inputs before spending LLM budget.
 // Returns `ok: true` if input passes; otherwise returns a list of concrete hints.
 type QualityGateResult = { ok: true } | { ok: false; hints: string[] };
@@ -298,7 +257,7 @@ function validateCitations(
 }
 
 type AgentPassCallback = (
-  pass: 1 | 2,
+  pass: 1 | 2 | 3,
   info: { score?: number }
 ) => void;
 
@@ -364,15 +323,36 @@ async function runAgent(
       score: typeof draft.score === "number" ? draft.score : undefined,
     });
 
-    // 2026-04 속도 개선 #1 — Skeptic 단계 흡수.
-    // 기존: Draft → Skeptic → Judge (3 LLM calls per agent).
-    // 새로: Draft → Judge (2 LLM calls per agent). Judge 프롬프트가 Step 1
-    //       에서 내부 회의적 비판을 수행한 뒤 Step 2 에서 최종 reconcile.
+    // Pass 2 — Calibrator (구 Skeptic). 낙관 과장 + 보수적 과소평가 양방향 보정.
+    const calibratorSystemPrompt = await loadFile("prompts/agent_skeptic.md");
+    const calibratorInput = {
+      idea: input,
+      evidence: evidenceForLater.map((r) => ({ url: r.url, title: r.title, content: r.content })),
+      draft,
+    };
+    const calibratorResp = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      max_tokens: 1024,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: calibratorSystemPrompt },
+        { role: "user", content: JSON.stringify(calibratorInput, null, 2) },
+      ],
+    });
+    tlog("calibrator llm done");
+    const calibrator = JSON.parse(calibratorResp.choices[0]?.message?.content ?? "{}") as Record<string, unknown>;
+    onPassDone?.(2, {
+      score: typeof calibrator.suggested_score === "number" ? calibrator.suggested_score : undefined,
+    });
+
+    // Pass 3 — Judge. Draft + Calibrator + evidence 종합해서 최종 확정.
     const judgeSystemPrompt = await loadFile("prompts/agent_judge.md");
     const judgeInput = {
       idea: input,
       evidence: evidenceForLater.map((r) => ({ url: r.url, title: r.title, content: r.content })),
       draft,
+      calibrator,
     };
     const judgeResp = await client.chat.completions.create({
       model: "gpt-4o-mini",
@@ -399,7 +379,7 @@ async function runAgent(
     if (typeof final.score !== "number" && typeof draft.score === "number") {
       final.score = draft.score;
     }
-    onPassDone?.(2, {
+    onPassDone?.(3, {
       score: typeof final.score === "number" ? final.score : undefined,
     });
 
@@ -450,7 +430,7 @@ async function runSynthesizer(
 type AnalysisEvent =
   | { event: "hard_gate_done"; pass: boolean; hints?: string[] }
   | { event: "agents_start"; ids: AgentId[] }
-  | { event: "agent_pass_done"; id: AgentId; pass: 1 | 2; score?: number }
+  | { event: "agent_pass_done"; id: AgentId; pass: 1 | 2 | 3; score?: number }
   | {
       event: "agent_done";
       id: AgentId;
@@ -681,7 +661,7 @@ async function* runAnalysisStream(
 
     // Unified queue for both per-pass events and final agent-done events.
     type AgentQueueItem =
-      | { kind: "pass"; agentId: AgentId; pass: 1 | 2; score?: number }
+      | { kind: "pass"; agentId: AgentId; pass: 1 | 2 | 3; score?: number }
       | { kind: "done"; response: AgentResponse };
 
     const queue: AgentQueueItem[] = [];
@@ -756,11 +736,6 @@ async function* runAnalysisStream(
     for (const r of agentResponses) {
       agentResults[r.agentId] = (r.result ?? {}) as { score?: number } & Record<string, unknown>;
     }
-
-    // Cross-axis cap: trivially-easy builds without defensibility aren't a technical strength.
-    // If tech score is high (easy to build) AND defensibility is low (nothing to defend),
-    // the "easy build" signal is actually a commodity red flag — cap it to 50.
-    applyCrossAxisCaps(agentResults);
 
     tlog("all agents done, starting synthesizer");
     // 2026-04 속도 개선: Synthesizer critique 단계 제거.
