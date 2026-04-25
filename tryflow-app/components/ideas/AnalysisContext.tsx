@@ -227,7 +227,7 @@ export function AnalysisProvider({
             ...prev,
             [id]: {
               state: score === null ? "failed" : "done",
-              passesDone: 2,
+              passesDone: 3,
               score: typeof score === "number" ? score : prev[id]?.score,
             },
           }));

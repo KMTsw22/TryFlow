@@ -126,7 +126,7 @@ type AgentCitation = {
 type SseEvent =
   | { event: "hard_gate_done"; pass: boolean; hints?: string[] }
   | { event: "agents_start"; ids: string[] }
-  | { event: "agent_pass_done"; id: string; pass: 1 | 2; score?: number }
+  | { event: "agent_pass_done"; id: string; pass: 1 | 2 | 3; score?: number }
   | {
       event: "agent_done";
       id: string;

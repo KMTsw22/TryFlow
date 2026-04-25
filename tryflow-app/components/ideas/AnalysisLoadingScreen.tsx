@@ -509,7 +509,7 @@ function AgentCard({
       : state === "failed"
       ? "Failed"
       : state === "running"
-      ? `Pass ${Math.max(passesDone, 1)} of 2`
+      ? `Pass ${Math.max(passesDone, 1)} of 3`
       : "Queued";
 
   const Icon =
