@@ -115,7 +115,9 @@ export function AnalysisLoadingScreen({
       ? 8
       : 3;
   const elapsedMs = Date.now() - startedAt.current;
-  const timeBoost = Math.min(2, (tick * 0.05) % 3); // never more than +2 nudge
+  // Saturating nudge — grows 0 → 2 over ~10s then stays. (Was modulo, which
+  // cycled 0-2 and made the bar drop back down — visible bug.)
+  const timeBoost = Math.min(2, tick * 0.05);
   const pct = status === "ready" ? 100 : Math.min(95, eventPct + timeBoost);
 
   const failed = status === "failed";
@@ -564,9 +566,9 @@ function AgentCard({
         >
           {meta?.description ?? ""}
         </p>
-        {/* 2-pass dots (2026-04: Skeptic 을 Judge 에 흡수해서 3→2 passes) */}
+        {/* 3-pass dots — Draft · Calibrator · Judge */}
         <div className="flex items-center gap-1 mt-2">
-          {[1, 2].map((p) => {
+          {[1, 2, 3].map((p) => {
             const filled = passesDone >= p;
             const passColor =
               state === "done"
@@ -589,7 +591,7 @@ function AgentCard({
             className="ml-1.5 text-[10px] tracking-[0.06em] uppercase tabular-nums"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
-            draft · judge
+            draft · calibrator · judge
           </span>
         </div>
       </div>

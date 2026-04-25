@@ -18,6 +18,39 @@ const AGENT_SEARCH_HINT: Record<AgentId, string> = {
   business_model: "pricing revenue model benchmark ACV CAC channel go-to-market",
 };
 
+// Walled-garden domains: Tavily가 인덱싱하지만 일반 사용자는 로그인/지역 벽으로
+// 접근 못 하는 경우 많음. Citation으로 노출되면 "찾을 수 없다" 경험을 줌 → 제외.
+const TAVILY_EXCLUDED_DOMAINS = [
+  "linkedin.com",
+  "facebook.com",
+  "instagram.com",
+  "x.com",
+  "twitter.com",
+];
+
+const BLOCKED_HOSTS = new Set([
+  "linkedin.com",
+  "www.linkedin.com",
+  "facebook.com",
+  "www.facebook.com",
+  "m.facebook.com",
+  "instagram.com",
+  "www.instagram.com",
+  "x.com",
+  "www.x.com",
+  "twitter.com",
+  "www.twitter.com",
+  "mobile.twitter.com",
+]);
+
+function isBlockedUrl(url: string): boolean {
+  try {
+    return BLOCKED_HOSTS.has(new URL(url).hostname);
+  } catch {
+    return true;
+  }
+}
+
 function buildAgentSearchQuery(
   agentId: AgentId,
   input: { category: string; description: string; target_user: string }
@@ -280,12 +313,14 @@ async function runAgent(
     // 새로: Tavily 는 background 로 fire, Draft 는 evidence 없이 즉시 시작.
     //       Judge 단계에서 evidence 를 최종 반영. agent 당 2-3초 단축.
     const tavilyPromise: Promise<{ results: TavilyResult[] } | null> = hasTavilyKey()
-      ? tavilySearch({ query: buildAgentSearchQuery(agentId, input), maxResults: 5 }).then(
-          (r) => {
-            tlog(`tavily done (${r?.results?.length ?? 0} results)`);
-            return r ?? null;
-          }
-        )
+      ? tavilySearch({
+          query: buildAgentSearchQuery(agentId, input),
+          maxResults: 5,
+          excludeDomains: TAVILY_EXCLUDED_DOMAINS,
+        }).then((r) => {
+          tlog(`tavily done (${r?.results?.length ?? 0} results)`);
+          return r ?? null;
+        })
       : Promise.resolve(null);
 
     const draftPromise = client.chat.completions.create({
@@ -312,8 +347,9 @@ async function runAgent(
     let evidenceForLater: TavilyResult[] = [];
     let allowedUrls = new Set<string>();
     if (searchRes?.results) {
-      evidenceForLater = searchRes.results;
-      allowedUrls = new Set(searchRes.results.map((r) => r.url));
+      // 이중 안전망: Tavily가 exclude_domains를 무시한 결과까지 host 단에서 한 번 더 필터.
+      evidenceForLater = searchRes.results.filter((r) => !isBlockedUrl(r.url));
+      allowedUrls = new Set(evidenceForLater.map((r) => r.url));
     }
     // Draft didn't see evidence → any citation in draft is hallucinated. Drop it;
     // Judge will build citations from the (now available) evidence.

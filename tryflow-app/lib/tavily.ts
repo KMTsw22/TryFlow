@@ -23,6 +23,7 @@ type TavilySearchOptions = {
   maxResults?: number;
   searchDepth?: "basic" | "advanced";
   includeDomains?: string[];
+  excludeDomains?: string[];
 };
 
 const TAVILY_ENDPOINT = "https://api.tavily.com/search";
@@ -49,6 +50,9 @@ export async function tavilySearch(
         include_answer: false,
         ...(opts.includeDomains && opts.includeDomains.length > 0
           ? { include_domains: opts.includeDomains }
+          : {}),
+        ...(opts.excludeDomains && opts.excludeDomains.length > 0
+          ? { exclude_domains: opts.excludeDomains }
           : {}),
       }),
       signal: AbortSignal.timeout(10_000),
