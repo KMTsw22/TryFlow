@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, RefreshCw, Loader2, CheckCircle2, Circle } from "lucide-react";
@@ -84,17 +84,10 @@ export function AnalysisLoadingScreen({
     useAnalysis();
   const [retrying, setRetrying] = useState(false);
 
-  // ── Smooth time-based progress for visual continuity ───────────────────────
-  // Real per-agent state comes from SSE; the bar's pixel-smooth motion is
-  // interpolated so it doesn't jitter between events. Capped at 95 until ready.
-  const startedAt = useRef<number>(Date.now());
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    if (status !== "pending") return;
-    const id = setInterval(() => setTick((t) => t + 1), 250);
-    return () => clearInterval(id);
-  }, [status]);
-
+  // ── Progress bar pct ───────────────────────────────────────────────────────
+  // 폴링이 매초 들어오므로 tick interval 로 cosmetic drift 를 줄 필요 없음.
+  // 단계/완료수 변할 때만 pct 가 점프하고, CSS transition (duration-500) 이
+  // 부드럽게 보간. (이전엔 250ms tick 이 화면을 톡톡 끊는 느낌으로 만들었음.)
   const doneCount = AGENT_IDS.filter(
     (id) => agentProgress[id]?.state === "done"
   ).length;
@@ -102,8 +95,6 @@ export function AnalysisLoadingScreen({
     (id) => agentProgress[id]?.state === "running"
   ).length;
 
-  // Real progress (event-driven) takes priority; time fills the gap between
-  // events so the bar always advances slightly.
   const eventPct =
     currentStage === "complete"
       ? 100
@@ -114,11 +105,7 @@ export function AnalysisLoadingScreen({
       : currentStage === "gate"
       ? 8
       : 3;
-  const elapsedMs = Date.now() - startedAt.current;
-  // Saturating nudge — grows 0 → 2 over ~10s then stays. (Was modulo, which
-  // cycled 0-2 and made the bar drop back down — visible bug.)
-  const timeBoost = Math.min(2, tick * 0.05);
-  const pct = status === "ready" ? 100 : Math.min(95, eventPct + timeBoost);
+  const pct = status === "ready" ? 100 : Math.min(95, eventPct);
 
   const failed = status === "failed";
   // Hints from the LLM quality gate mean the input was rejected for being too
@@ -361,7 +348,6 @@ export function AnalysisLoadingScreen({
                   key={id}
                   agentId={id}
                   progress={agentProgress[id]}
-                  isSpotlight={spotlightAgent === id}
                 />
               ))}
             </ul>
@@ -486,11 +472,9 @@ const STAGE_LABEL: Record<string, string> = {
 function AgentCard({
   agentId,
   progress,
-  isSpotlight,
 }: {
   agentId: AgentId;
   progress: { state: string; passesDone: number; score?: number } | undefined;
-  isSpotlight: boolean;
 }) {
   const meta = DIMENSION_META[agentId];
   const state = progress?.state ?? "queued";
@@ -517,15 +501,17 @@ function AgentCard({
   const Icon =
     state === "done" ? CheckCircle2 : state === "running" ? Loader2 : Circle;
 
+  // 테두리는 항상 동일 — spotlight 가 1초 폴링마다 카드 사이를 옮겨다니면서
+  // transition-colors 로 border 가 페이드하면 6장이 차례로 톡톡 깜박이는 느낌이
+  // 났음. "지금 분석 중인 축" 은 위 spotlight 섹션이 이미 강조하고 있으므로,
+  // 카드는 상태(queued/running/done)만 시각적으로 구분.
   return (
     <li
-      className="flex items-start gap-4 p-4 border transition-colors"
+      className="flex items-start gap-4 p-4 border transition-opacity"
       style={{
-        background: isSpotlight ? "var(--accent-soft)" : "var(--card-bg)",
-        borderColor: isSpotlight
-          ? "var(--accent-ring)"
-          : "var(--t-border-card)",
-        opacity: state === "queued" && !isSpotlight ? 0.55 : 1,
+        background: "var(--card-bg)",
+        borderColor: "var(--t-border-card)",
+        opacity: state === "queued" ? 0.55 : 1,
       }}
     >
       <span

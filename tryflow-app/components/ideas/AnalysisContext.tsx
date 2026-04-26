@@ -215,9 +215,34 @@ export function AnalysisProvider({
                   }
                 : { state: "queued", passesDone: 0 };
             }
-            setAgentProgress(ap);
+            // 변동 없는 폴링은 skip — 매초 새 객체로 setState 하면 reference 가
+            // 바뀌어서 자식 6장이 전부 매초 re-render → "톡톡 끊기는" 느낌의 원인.
+            setAgentProgress((prev) => {
+              for (const id of AGENT_IDS) {
+                const a = prev[id];
+                const b = ap[id];
+                if (
+                  a.state !== b.state ||
+                  a.passesDone !== b.passesDone ||
+                  a.score !== b.score
+                ) {
+                  return ap;
+                }
+              }
+              return prev;
+            });
             setSpotlightAgent((p.spotlightAgent as AgentId | null) ?? null);
-            if (p.hints && p.hints.length > 0) setFailureHints(p.hints);
+            if (p.hints && p.hints.length > 0) {
+              setFailureHints((prev) => {
+                if (
+                  prev.length === p.hints!.length &&
+                  prev.every((h, i) => h === p.hints![i])
+                ) {
+                  return prev;
+                }
+                return p.hints!;
+              });
+            }
             // completed/failed 는 startAnalysis 가 최종 처리. 폴링은 그냥 종료.
             if (p.completed || p.failed) return;
           }
