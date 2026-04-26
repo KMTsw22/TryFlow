@@ -68,20 +68,21 @@ function emptyProgress(): Record<AgentId, AgentProgress> {
 }
 
 /**
- * Centralizes the AI analysis fetch + SSE streaming for the idea detail page.
+ * Centralizes the AI analysis fetch + progress polling for the idea detail page.
  *
- * 2026-04 refactor: replaced 4-second poll with a real SSE stream so the
- * loading screen can show actual per-agent progress instead of a time-based
- * simulation (교수님 피드백: "지금 뭘하고 있는지 보여줘").
+ * 2026-04 refactor: dropped SSE in favor of POST(JSON) + GET-progress polling.
+ * 이유: Next.js 16 dev (turbopack) 환경에서 ReadableStream 응답이 실시간으로
+ * flush 되지 않아 진행률 게이지가 끝까지 5% 에 머물다 결과만 갑자기 떴음.
+ * 폴링 방식은 transport 버퍼링 영향 안 받고 dev/prod 동일하게 동작.
  *
  * Flow:
  *   - If `initialReport` already exists → status=ready, no network.
- *   - Otherwise POST to /api/analysis with text/event-stream Accept and parse
- *     SSE events as they arrive: agent passes, synthesizer phases, complete.
- *   - On `complete` → setReport + status=ready.
- *   - On `failed` (other than "already_exists") → status=failed, surface hints.
- *   - On `failed` with stage=already_exists → fall back to a single GET poll
- *     for the existing report (analysis was triggered by another tab/request).
+ *   - Otherwise POST /api/analysis (JSON 모드) — 서버는 30초쯤 LLM 돌리고
+ *     완료된 보고서를 응답에 담아 반환. 그 동안 module-scope PROGRESS_MAP 에
+ *     단계/agent 진행률 기록함.
+ *   - 동시에 1초마다 GET /api/analysis?action=progress 폴링해서 UI 업데이트.
+ *   - POST 가 끝나면 report 세팅 + status=ready (폴링도 자동 종료).
+ *   - already_exists/실패는 동일하게 처리.
  */
 export function AnalysisProvider({
   submissionId,
@@ -102,15 +103,12 @@ export function AnalysisProvider({
   const [failureHints, setFailureHints] = useState<string[]>([]);
 
   // 2026-04 fix: React strict mode (dev) 의 이중 mount 에 의해 첫 fetch 가 즉시
-  // abort 되고 재시작이 안 되는 버그 수정. 과거엔 startedRef 로 2번째 mount 를
-  // 막았는데, 첫 fetch 가 cleanup 에서 abort 되어 아무 것도 안 됐음.
-  //
-  // 해결: setTimeout 으로 debounce. 첫 mount 는 타이머 세팅만, strict mode
-  // cleanup 이 타이머 clear. 두 번째 mount 에서 새 타이머가 실제 fetch 를 쏨.
-  // Production 에서는 한 번만 mount → 50ms 지연 후 정상 실행.
+  // abort 되고 재시작이 안 되는 버그 수정. setTimeout debounce — 첫 mount 는
+  // 타이머만 세팅, cleanup 이 clear. 두 번째 mount 에서 실제 fetch.
   useEffect(() => {
     if (initialReport) return;
 
+    let cancelled = false;
     const abort = new AbortController();
 
     async function fetchExistingReport(): Promise<AnalysisReport | null> {
@@ -125,21 +123,32 @@ export function AnalysisProvider({
       }
     }
 
-    async function consume() {
+    // POST 한 번 — 서버가 분석을 끝까지 돌리고 최종 결과를 응답에 담아 반환.
+    // 30초쯤 걸리지만 그 동안 progress 폴링이 UI 를 갱신함.
+    async function startAnalysis() {
       try {
         const res = await fetch("/api/analysis", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "text/event-stream",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ submissionId }),
           signal: abort.signal,
         });
+        if (cancelled) return;
 
-        if (!res.ok || !res.body) {
-          // Couldn't even start the stream — fall back to a one-shot poll.
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+
+        if (res.ok && data?.report) {
+          setReport(data.report as AnalysisReport);
+          setStatus("ready");
+          setCurrentStage("complete");
+          return;
+        }
+
+        // 409 already_exists — 다른 탭/요청이 분석을 이미 만들었음. GET 으로 가져옴.
+        if (res.status === 409 || data?.stage === "already_exists") {
           const existing = await fetchExistingReport();
+          if (cancelled) return;
           if (existing) {
             setReport(existing);
             setStatus("ready");
@@ -151,133 +160,82 @@ export function AnalysisProvider({
           return;
         }
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          // SSE events are separated by blank lines. Each event has one or
-          // more `data: …` lines that we concatenate, then JSON-parse.
-          let sepIdx;
-          while ((sepIdx = buffer.indexOf("\n\n")) !== -1) {
-            const raw = buffer.slice(0, sepIdx);
-            buffer = buffer.slice(sepIdx + 2);
-            const dataLines = raw
-              .split("\n")
-              .filter((l) => l.startsWith("data:"))
-              .map((l) => l.slice(5).trimStart());
-            if (dataLines.length === 0) continue;
-            try {
-              const evt = JSON.parse(dataLines.join("\n")) as {
-                event: string;
-                [k: string]: unknown;
-              };
-              handleEvent(evt);
-              if (evt.event === "complete" || evt.event === "failed") {
-                // Server will close after these — stop reading.
-                return;
-              }
-            } catch (parseErr) {
-              console.warn("SSE parse error:", parseErr, raw);
-            }
-          }
-        }
+        // 422 hard_gate / 500 등 — 실패 상태로 전환, hints 노출.
+        setStatus("failed");
+        setCurrentStage("failed");
+        const hints = (data?.hints as string[] | undefined) ?? [];
+        if (hints.length > 0) setFailureHints(hints);
       } catch (err) {
         if ((err as { name?: string })?.name === "AbortError") return;
-        console.error("AnalysisProvider stream error:", err);
+        if (cancelled) return;
+        console.error("AnalysisProvider POST error:", err);
         setStatus("failed");
         setCurrentStage("failed");
       }
     }
 
-    function handleEvent(evt: { event: string; [k: string]: unknown }) {
-      switch (evt.event) {
-        case "hard_gate_done":
-          setCurrentStage("gate");
-          break;
-        case "agents_start":
-          setCurrentStage("agents");
-          // Mark all 6 agents as queued (default) — they'll flip to running
-          // as soon as their first pass completes.
-          setAgentProgress(emptyProgress());
-          break;
-        case "agent_pass_done": {
-          const id = evt.id as AgentId;
-          const pass = evt.pass as number;
-          const score = evt.score as number | undefined;
-          setAgentProgress((prev) => ({
-            ...prev,
-            [id]: {
-              state: "running",
-              passesDone: pass,
-              score: score ?? prev[id]?.score,
-            },
-          }));
-          setSpotlightAgent(id);
-          break;
-        }
-        case "agent_done": {
-          const id = evt.id as AgentId;
-          const score = evt.score as number | null | undefined;
-          setAgentProgress((prev) => ({
-            ...prev,
-            [id]: {
-              state: score === null ? "failed" : "done",
-              passesDone: 3,
-              score: typeof score === "number" ? score : prev[id]?.score,
-            },
-          }));
-          break;
-        }
-        case "synthesizer_start":
-        case "synthesizer_draft_done":
-          setCurrentStage("synthesizer");
-          setSpotlightAgent(null);
-          break;
-        case "complete": {
-          const r = evt.report as AnalysisReport | undefined;
-          if (r) {
-            setReport(r);
-            setStatus("ready");
-            setCurrentStage("complete");
+    // 1초마다 진행 상태 폴링. POST 가 끝나면 cancelled=true 또는 폴링이
+    // completed/failed 를 받고 자체 종료.
+    type ProgressResponse = {
+      progress: {
+        stage: StageKey;
+        agentProgress: Record<string, { state: string; passesDone: number; score?: number }>;
+        spotlightAgent: string | null;
+        hints?: string[];
+        completed: boolean;
+        failed: boolean;
+      } | null;
+    };
+
+    async function pollProgress() {
+      // 첫 호출은 약간 지연 — POST 가 PROGRESS_MAP 채울 시간 확보.
+      await new Promise<void>((r) => setTimeout(r, 600));
+      while (!cancelled) {
+        try {
+          const res = await fetch(
+            `/api/analysis?action=progress&submissionId=${submissionId}`,
+            { signal: abort.signal, cache: "no-store" }
+          );
+          if (cancelled) return;
+          const data = (await res.json().catch(() => null)) as ProgressResponse | null;
+          if (cancelled) return;
+
+          const p = data?.progress;
+          if (p) {
+            setCurrentStage(p.stage);
+            // agentProgress 키 보정 — 서버는 string 키, 클라는 AgentId 키.
+            const ap = {} as Record<AgentId, AgentProgress>;
+            for (const id of AGENT_IDS) {
+              const sv = p.agentProgress[id];
+              ap[id] = sv
+                ? {
+                    state: (sv.state as AgentProgress["state"]) ?? "queued",
+                    passesDone: sv.passesDone ?? 0,
+                    score: sv.score,
+                  }
+                : { state: "queued", passesDone: 0 };
+            }
+            setAgentProgress(ap);
+            setSpotlightAgent((p.spotlightAgent as AgentId | null) ?? null);
+            if (p.hints && p.hints.length > 0) setFailureHints(p.hints);
+            // completed/failed 는 startAnalysis 가 최종 처리. 폴링은 그냥 종료.
+            if (p.completed || p.failed) return;
           }
-          break;
+        } catch (err) {
+          if ((err as { name?: string })?.name === "AbortError") return;
+          // 네트워크 일시적 오류는 무시하고 다음 tick 시도.
         }
-        case "failed": {
-          const stage = evt.stage as string | undefined;
-          const hints = (evt.hints as string[] | undefined) ?? [];
-          if (stage === "already_exists") {
-            // Another tab/process generated the report. Poll once for it
-            // instead of giving up.
-            fetchExistingReport().then((existing) => {
-              if (existing) {
-                setReport(existing);
-                setStatus("ready");
-                setCurrentStage("complete");
-              } else {
-                setStatus("failed");
-                setCurrentStage("failed");
-              }
-            });
-          } else {
-            setStatus("failed");
-            setCurrentStage("failed");
-            if (hints.length > 0) setFailureHints(hints);
-          }
-          break;
-        }
+        await new Promise<void>((r) => setTimeout(r, 1_000));
       }
     }
 
-    // Debounce 로 strict mode 이중 mount 회피 — 첫 mount 의 cleanup 이 타이머
-    // 를 clear 하고, 재 mount 에서 새 타이머가 실제 실행함.
-    const timer = setTimeout(() => consume(), 50);
+    const timer = setTimeout(() => {
+      startAnalysis();
+      pollProgress();
+    }, 50);
 
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       abort.abort();
     };

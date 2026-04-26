@@ -174,6 +174,89 @@ const PROMPT_CACHE = new Map<string, string>();
 // 이미 저장된 row 를 가져와서 즉시 complete 이벤트만 emit 하게 함.
 const ACTIVE_ANALYSES = new Map<string, Promise<void>>();
 
+// 2026-04 turbopack 우회: SSE 가 dev 환경에 따라 버퍼링되는 케이스 회피.
+// runAnalysisStream 이 yield 할 때마다 여기에 progress 를 기록 → 클라이언트는
+// `GET /api/analysis?action=progress&submissionId=...` 폴링으로 실시간 상태 조회.
+// 메모리 누수 방지: 완료/실패 후 PROGRESS_TTL_MS 가 지나면 다음 호출에서 청소.
+type ProgressSnapshot = {
+  stage: "starting" | "gate" | "agents" | "synthesizer" | "complete" | "failed";
+  agentProgress: Record<string, { state: string; passesDone: number; score?: number }>;
+  spotlightAgent: string | null;
+  hints?: string[];
+  completed: boolean;
+  failed: boolean;
+  updatedAt: number;
+};
+const PROGRESS_MAP = new Map<string, ProgressSnapshot>();
+const PROGRESS_TTL_MS = 5 * 60_000;
+
+function defaultProgress(): ProgressSnapshot {
+  const ap: Record<string, { state: string; passesDone: number }> = {};
+  for (const id of AGENT_IDS) ap[id] = { state: "queued", passesDone: 0 };
+  return {
+    stage: "starting",
+    agentProgress: ap,
+    spotlightAgent: null,
+    completed: false,
+    failed: false,
+    updatedAt: Date.now(),
+  };
+}
+
+function updateProgress(submissionId: string, evt: AnalysisEvent): void {
+  const cur = PROGRESS_MAP.get(submissionId) ?? defaultProgress();
+  switch (evt.event) {
+    case "hard_gate_done":
+      cur.stage = "gate";
+      break;
+    case "agents_start":
+      cur.stage = "agents";
+      for (const id of AGENT_IDS) cur.agentProgress[id] = { state: "queued", passesDone: 0 };
+      cur.spotlightAgent = null;
+      break;
+    case "agent_pass_done":
+      cur.agentProgress[evt.id] = {
+        state: "running",
+        passesDone: evt.pass,
+        score: evt.score ?? cur.agentProgress[evt.id]?.score,
+      };
+      cur.spotlightAgent = evt.id;
+      break;
+    case "agent_done":
+      cur.agentProgress[evt.id] = {
+        state: evt.score === null ? "failed" : "done",
+        passesDone: 3,
+        score: typeof evt.score === "number" ? evt.score : cur.agentProgress[evt.id]?.score,
+      };
+      break;
+    case "synthesizer_start":
+    case "synthesizer_draft_done":
+      cur.stage = "synthesizer";
+      cur.spotlightAgent = null;
+      break;
+    case "complete":
+      cur.stage = "complete";
+      cur.completed = true;
+      break;
+    case "failed":
+      cur.stage = "failed";
+      cur.failed = true;
+      cur.hints = evt.hints;
+      break;
+  }
+  cur.updatedAt = Date.now();
+  PROGRESS_MAP.set(submissionId, cur);
+}
+
+function cleanupProgress(): void {
+  const now = Date.now();
+  for (const [id, snap] of PROGRESS_MAP) {
+    if ((snap.completed || snap.failed) && now - snap.updatedAt > PROGRESS_TTL_MS) {
+      PROGRESS_MAP.delete(id);
+    }
+  }
+}
+
 async function loadFile(filePath: string): Promise<string> {
   const cached = PROMPT_CACHE.get(filePath);
   if (cached !== undefined) return cached;
@@ -932,6 +1015,7 @@ export async function POST(req: NextRequest) {
 
         try {
           for await (const evt of runAnalysisStream(submissionId!)) {
+            updateProgress(submissionId!, evt);
             if (closed) break;
             safeEnqueue(encoder.encode(sseEncode(evt)));
           }
@@ -975,6 +1059,7 @@ export async function POST(req: NextRequest) {
     let failedEvent: Extract<AnalysisEvent, { event: "failed" }> | null = null;
 
     for await (const evt of runAnalysisStream(submissionId)) {
+      updateProgress(submissionId, evt);
       if (evt.event === "complete") completeEvent = evt;
       else if (evt.event === "failed") failedEvent = evt;
     }
@@ -1023,8 +1108,19 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const submissionId = req.nextUrl.searchParams.get("submissionId");
+    const action = req.nextUrl.searchParams.get("action");
     if (!submissionId) {
       return NextResponse.json({ error: "Missing submissionId" }, { status: 400 });
+    }
+
+    // 폴링용 진행 상태 — turbopack/SSE 버퍼링 우회. 클라이언트가 1초마다 호출.
+    if (action === "progress") {
+      cleanupProgress();
+      const progress = PROGRESS_MAP.get(submissionId) ?? null;
+      return NextResponse.json(
+        { progress },
+        { headers: { "Cache-Control": "no-store" } }
+      );
     }
 
     const supabase = await createClient();
