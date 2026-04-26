@@ -7,6 +7,16 @@ import path from "path";
 import { tavilySearch, hasTavilyKey, type TavilyResult } from "@/lib/tavily";
 import { AGENT_IDS, computeViabilityScore, type AgentId } from "@/lib/viability";
 
+// SSE 라이브 진행률을 위해 Vercel 함수 응답이 버퍼링되지 않도록 명시적으로 설정.
+// dynamic="force-dynamic" 미설정 시 일부 layer 가 응답 전체를 모았다가 flush 해서
+// 클라이언트가 모든 이벤트를 마지막에 한꺼번에 받음 → 진행률 게이지가 3% 에서 100%
+// 로 점프하는 버그 원인.
+// fs.readFile 사용으로 nodejs 런타임 명시. Pro plan 에선 maxDuration 300 까지 허용.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const maxDuration = 300;
+
 // Per-agent search query hints. Appended to a trimmed description.
 // 2026-04: 8 axes → 6. See decisions/evaluation-axes-rationale.md.
 const AGENT_SEARCH_HINT: Record<AgentId, string> = {
@@ -908,6 +918,18 @@ export async function POST(req: NextRequest) {
           }
         };
 
+        // 즉시 첫 byte 를 보내서 프록시·브라우저의 stream 인식 트리거.
+        // 일부 layer 는 첫 chunk 도착 전엔 buffering mode 로 동작.
+        // SSE 주석 (`:` prefix) 은 이벤트로 파싱되지 않으므로 클라이언트 영향 없음.
+        safeEnqueue(encoder.encode(": stream-open\n\n"));
+
+        // 긴 LLM 호출 (15-30초) 중 이벤트 공백을 채우기 위해 주기적 ping.
+        // Vercel/Cloudflare 같은 프록시가 idle 응답을 끊거나 buffer flush 안 하는
+        // 케이스 대비. 클라이언트는 `:` 주석을 무시하므로 안전.
+        const ping = setInterval(() => {
+          safeEnqueue(encoder.encode(`: ping ${Date.now()}\n\n`));
+        }, 5_000);
+
         try {
           for await (const evt of runAnalysisStream(submissionId!)) {
             if (closed) break;
@@ -923,6 +945,7 @@ export async function POST(req: NextRequest) {
             );
           }
         } finally {
+          clearInterval(ping);
           if (!closed) {
             try {
               controller.close();
