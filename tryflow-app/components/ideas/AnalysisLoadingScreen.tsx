@@ -249,6 +249,11 @@ export function AnalysisLoadingScreen({
                   : currentStage === "gate"
                   ? "Quality check"
                   : "Starting"}
+                <span className="loading-dots" aria-hidden>
+                  <span>.</span>
+                  <span>.</span>
+                  <span>.</span>
+                </span>
               </span>
               <span
                 className="text-[12px] font-mono tabular-nums"
@@ -451,6 +456,34 @@ export function AnalysisLoadingScreen({
           }
           to {
             transform: translateX(-50%) rotate(360deg);
+          }
+        }
+        /* "...” 점 세 개가 차례로 fade-in/out — "아직 작동 중" 시그널.
+           1.4s 사이클. 각 점은 0.2s 씩 delay 둬서 좌→우로 흐르듯 나타남. */
+        .loading-dots {
+          display: inline-block;
+          margin-left: 2px;
+          letter-spacing: 0.15em;
+        }
+        .loading-dots > span {
+          display: inline-block;
+          opacity: 0;
+          animation: loading-dots-blink 1.4s infinite both;
+        }
+        .loading-dots > span:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+        .loading-dots > span:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+        @keyframes loading-dots-blink {
+          0%,
+          60%,
+          100% {
+            opacity: 0;
+          }
+          30% {
+            opacity: 1;
           }
         }
       `}</style>
