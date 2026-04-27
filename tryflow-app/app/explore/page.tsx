@@ -32,24 +32,35 @@ export default async function ExplorePage() {
 
   const { data: allRows } = await supabase
     .from("idea_submissions")
-    .select("category, created_at, insight_reports (viability_score)")
+    .select(
+      "category, created_at, insight_reports (viability_score), analysis_reports (viability_score)"
+    )
     .eq("is_private", false);
+
+  type ScoreRel =
+    | { viability_score: number | null }
+    | { viability_score: number | null }[]
+    | null;
 
   type Row = {
     category: string;
     created_at: string;
-    insight_reports:
-      | { viability_score: number | null }
-      | { viability_score: number | null }[]
-      | null;
+    insight_reports: ScoreRel;
+    analysis_reports: ScoreRel;
   };
   const rows = (allRows ?? []) as unknown as Row[];
 
+  function relScore(rel: ScoreRel): number | null {
+    if (!rel) return null;
+    if (Array.isArray(rel)) return rel[0]?.viability_score ?? null;
+    return rel.viability_score ?? null;
+  }
+
+  // AI 점수가 있으면 그것을 우선, 없으면 휴리스틱 insight_reports 점수.
+  // 상세 페이지(IdeaHero)와 동일한 우선순위 — 카드/시그널/Market 평균 모두
+  // 같은 숫자를 보게 해 점수 불일치 (교수님 피드백 #3) 차단.
   function pickScore(r: Row): number | null {
-    const ir = r.insight_reports;
-    if (!ir) return null;
-    if (Array.isArray(ir)) return ir[0]?.viability_score ?? null;
-    return ir.viability_score ?? null;
+    return relScore(r.analysis_reports) ?? relScore(r.insight_reports);
   }
 
   const now = new Date();
@@ -113,6 +124,10 @@ export default async function ExplorePage() {
           trend_direction: string | null;
           summary: string | null;
         }>;
+    analysis_reports:
+      | { viability_score: number | null }
+      | { viability_score: number | null }[]
+      | null;
   };
 
   let newThisWeekItems: IdeaCardData[] = [];
@@ -123,7 +138,8 @@ export default async function ExplorePage() {
       .from("idea_submissions")
       .select(`
         id, category, target_user, description, created_at, stage, save_count,
-        insight_reports (viability_score, saturation_level, trend_direction, summary)
+        insight_reports (viability_score, saturation_level, trend_direction, summary),
+        analysis_reports (viability_score)
       `)
       .eq("is_private", false)
       .neq("user_id", user.id)
@@ -136,6 +152,11 @@ export default async function ExplorePage() {
       const r = Array.isArray(i.insight_reports)
         ? i.insight_reports[0] ?? null
         : i.insight_reports;
+      const ai = Array.isArray(i.analysis_reports)
+        ? i.analysis_reports[0] ?? null
+        : i.analysis_reports;
+      // AI 점수가 있으면 그것을 우선 — 상세 페이지(IdeaHero)와 동일.
+      const score = ai?.viability_score ?? r?.viability_score ?? null;
       return {
         id: i.id,
         category: i.category,
@@ -143,7 +164,7 @@ export default async function ExplorePage() {
         description: i.description,
         created_at: i.created_at,
         stage: i.stage,
-        viability_score: r?.viability_score ?? null,
+        viability_score: score,
         trend_direction: r?.trend_direction ?? null,
         saturation_level: r?.saturation_level ?? null,
         summary: r?.summary ?? null,

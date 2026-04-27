@@ -63,6 +63,10 @@ interface Idea {
   description: string;
   created_at: string;
   insight_reports: Report | Report[] | null;
+  analysis_reports:
+    | { viability_score: number | null }
+    | { viability_score: number | null }[]
+    | null;
 }
 
 type Plan = "free" | "plus" | "pro";
@@ -90,10 +94,33 @@ const CATEGORIES = [
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────
+// AI 점수가 있으면 그것을 우선 — 상세 페이지(IdeaHero)와 동일한 우선순위라
+// 카드/Compare/상세에서 모두 같은 숫자가 보이게 한다.
 function getReport(idea: Idea): Report | null {
-  if (!idea.insight_reports) return null;
-  if (Array.isArray(idea.insight_reports)) return idea.insight_reports[0] ?? null;
-  return idea.insight_reports;
+  const baseRel = idea.insight_reports;
+  const base = !baseRel
+    ? null
+    : Array.isArray(baseRel)
+    ? baseRel[0] ?? null
+    : baseRel;
+
+  const aiRel = idea.analysis_reports;
+  const ai = !aiRel ? null : Array.isArray(aiRel) ? aiRel[0] ?? null : aiRel;
+  const aiScore =
+    typeof ai?.viability_score === "number" ? ai.viability_score : null;
+
+  if (aiScore === null) return base;
+  if (!base) {
+    // AI 점수만 있는 경우(휴리스틱 미생성) — 다른 필드는 미정으로 둔다.
+    return {
+      viability_score: aiScore,
+      saturation_level: "",
+      trend_direction: "",
+      similar_count: 0,
+      summary: "",
+    };
+  }
+  return { ...base, viability_score: aiScore };
 }
 
 function timeAgo(iso: string): string {

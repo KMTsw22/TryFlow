@@ -18,6 +18,11 @@ interface ProfileRow {
   profile_anonymous: boolean | null;
 }
 
+type ScoreRel =
+  | { viability_score: number | null }
+  | { viability_score: number | null }[]
+  | null;
+
 interface IdeaRow {
   id: string;
   category: string;
@@ -25,7 +30,8 @@ interface IdeaRow {
   description: string;
   created_at: string;
   is_private: boolean | null;
-  insight_reports: { viability_score: number | null } | { viability_score: number | null }[] | null;
+  insight_reports: ScoreRel;
+  analysis_reports: ScoreRel;
 }
 
 /**
@@ -61,7 +67,7 @@ export default async function PublicProfilePage(props: {
   const { data: rawIdeas } = await supabase
     .from("idea_submissions")
     .select(
-      "id, category, target_user, description, created_at, is_private, insight_reports (viability_score)"
+      "id, category, target_user, description, created_at, is_private, insight_reports (viability_score), analysis_reports (viability_score)"
     )
     .eq("user_id", id)
     .eq("is_private", false)
@@ -271,11 +277,15 @@ function IdeaRowItem({ idea }: { idea: IdeaRow }) {
   );
 }
 
+function relScore(rel: ScoreRel): number | null {
+  if (!rel) return null;
+  if (Array.isArray(rel)) return rel[0]?.viability_score ?? null;
+  return rel.viability_score ?? null;
+}
+
+// AI 점수가 있으면 그것을 우선 — 상세 페이지(IdeaHero)와 동일한 우선순위.
 function pickScore(idea: IdeaRow): number | null {
-  const ir = idea.insight_reports;
-  if (!ir) return null;
-  if (Array.isArray(ir)) return ir[0]?.viability_score ?? null;
-  return ir.viability_score ?? null;
+  return relScore(idea.analysis_reports) ?? relScore(idea.insight_reports);
 }
 
 function scoreColor(score: number | null): string {

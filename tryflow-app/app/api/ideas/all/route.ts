@@ -14,7 +14,8 @@ export async function GET() {
       .from("idea_submissions")
       .select(`
         id, category, target_user, description, created_at, user_id,
-        insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary, analysis)
+        insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary, analysis),
+        analysis_reports (viability_score)
       `)
       .eq("is_private", false)
       .order("created_at", { ascending: false })
@@ -25,7 +26,8 @@ export async function GET() {
         .from("idea_submissions")
         .select(`
           id, category, target_user, description, created_at, user_id,
-          insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
+          insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary),
+          analysis_reports (viability_score)
         `)
         .eq("is_private", false)
         .order("created_at", { ascending: false })

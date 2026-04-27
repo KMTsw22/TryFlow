@@ -381,7 +381,8 @@ export async function GET() {
       .from("idea_submissions")
       .select(`
         id, category, target_user, description, created_at, user_id,
-        insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary)
+        insight_reports (viability_score, saturation_level, trend_direction, similar_count, summary),
+        analysis_reports (viability_score)
       `)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
