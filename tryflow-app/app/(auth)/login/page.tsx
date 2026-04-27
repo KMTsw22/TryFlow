@@ -1,18 +1,49 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Brand } from "@/components/layout/Brand";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [guestLoading, setGuestLoading] = useState(false);
+  const [guestError, setGuestError] = useState<string | null>(null);
+
   const handleGoogleLogin = async () => {
     const supabase = createClient();
+    const next = searchParams?.get("next");
+    const callback = `${location.origin}/auth/callback${
+      next ? `?next=${encodeURIComponent(next)}` : ""
+    }`;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-      },
+      options: { redirectTo: callback },
     });
+  };
+
+  // Anonymous (guest) sign-in — Supabase 대시보드에서 "Allow anonymous sign-ins" 가
+  // 켜져 있어야 동작 (꺼진 상태면 422 unprocessable_entity 반환).
+  // 권한은 free 플랜과 동일 — handle_new_user 트리거가 user_profiles row 를
+  // plan='free' 로 생성. 이메일은 빈 문자열로 저장됨.
+  const handleGuestLogin = async () => {
+    setGuestLoading(true);
+    setGuestError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) {
+      setGuestError(
+        error.message ||
+          "Guest sign-in is unavailable. Please use Google instead."
+      );
+      setGuestLoading(false);
+      return;
+    }
+    const next = searchParams?.get("next") ?? "/dashboard";
+    router.push(next);
+    router.refresh();
   };
 
   return (
@@ -47,6 +78,48 @@ export default function LoginPage() {
             </svg>
             Continue with Google
           </button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5" aria-hidden>
+            <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+            <span
+              className="text-[10.5px] font-medium tracking-[0.14em] uppercase"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              or
+            </span>
+            <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          </div>
+
+          <button
+            onClick={handleGuestLogin}
+            disabled={guestLoading}
+            className="w-full flex items-center justify-center gap-3 border font-semibold px-6 py-3 transition-colors text-sm hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              borderColor: "var(--t-border-card)",
+              background: "transparent",
+              color: "var(--text-secondary)",
+            }}
+          >
+            {guestLoading ? "Signing in…" : "Continue as guest"}
+          </button>
+
+          {guestError && (
+            <p
+              role="alert"
+              className="text-xs text-center mt-3"
+              style={{ color: "var(--signal-danger)" }}
+            >
+              {guestError}
+            </p>
+          )}
+
+          <p
+            className="text-[11px] text-center mt-3 leading-relaxed"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            No email required. You can link a Google account later to keep your ideas.
+          </p>
 
           <p className="text-xs text-center mt-6 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
             By signing in, you agree to our{" "}
