@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState, useMemo } from "react";
+import { Fragment, useEffect, useRef, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -856,6 +856,21 @@ export default function ComparePage() {
         setLoading(false);
       }
     })();
+  }, []);
+
+  // 비교를 한 번이라도 본 뒤 페이지를 떠나면 트레이 자동 비움.
+  // 떠도는 칩이 다른 페이지(특히 /dashboard) 상단에 계속 거슬리는 문제 해결.
+  // 비교 안 하고 그냥 둘러보다 떠나는 경우엔 유지 — 다음 방문 시 이어서 작업.
+  const wasComparingRef = useRef(false);
+  const trayRef = useRef(tray);
+  trayRef.current = tray;
+  useEffect(() => {
+    if (comparing) wasComparingRef.current = true;
+  }, [comparing]);
+  useEffect(() => {
+    return () => {
+      if (wasComparingRef.current) trayRef.current.clear();
+    };
   }, []);
 
   async function startCompare() {
