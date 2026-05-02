@@ -16,6 +16,8 @@ interface ProfileRow {
   github_url: string | null;
   website_url: string | null;
   profile_anonymous: boolean | null;
+  intro_video_url: string | null;
+  intro_video_duration_seconds: number | null;
 }
 
 type ScoreRel =
@@ -53,7 +55,7 @@ export default async function PublicProfilePage(props: {
   const { data: rawProfile } = await supabase
     .from("user_profiles")
     .select(
-      "id, full_name, bio, contact_linkedin, twitter_url, github_url, website_url, profile_anonymous"
+      "id, full_name, bio, contact_linkedin, twitter_url, github_url, website_url, profile_anonymous, intro_video_url, intro_video_duration_seconds"
     )
     .eq("id", id)
     .maybeSingle();
@@ -162,6 +164,21 @@ export default async function PublicProfilePage(props: {
                     {label}
                   </a>
                 ))}
+              </div>
+            )}
+
+            {profile.intro_video_url && (
+              <div
+                className="mt-8 border overflow-hidden max-w-2xl"
+                style={{ borderColor: "var(--t-border-card)", background: "#000" }}
+              >
+                <video
+                  src={profile.intro_video_url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full"
+                />
               </div>
             )}
           </>

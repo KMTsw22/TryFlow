@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Lock, EyeOff, Globe, Sparkles, RefreshCw, X } from "lucide-react";
+import { ArrowRight, Lock, EyeOff, Globe, Sparkles, RefreshCw, X, Upload, FileText, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Brand } from "@/components/layout/Brand";
 
@@ -122,6 +122,11 @@ export default function SubmitPage() {
     category: string;
   } | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState("");
+  const [prefilled, setPrefilled] = useState(false);
+
   useEffect(() => {
     const supabase = createClient();
     (async () => {
@@ -189,6 +194,55 @@ export default function SubmitPage() {
 
   const updateAxis = (key: keyof AxisAnswers, value: string) => {
     setAxes((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleFilePick = async (file: File) => {
+    setExtractError("");
+    const name = file.name.toLowerCase();
+    const isPdf = name.endsWith(".pdf");
+    const isMd = name.endsWith(".md") || name.endsWith(".markdown");
+    if (!isPdf && !isMd) {
+      setExtractError("Only .pdf and .md files are supported.");
+      return;
+    }
+    const limit = isPdf ? 10 * 1024 * 1024 : 1 * 1024 * 1024;
+    if (file.size > limit) {
+      setExtractError(
+        `File too large. Max ${isPdf ? "10MB" : "1MB"} for ${isPdf ? "PDF" : "Markdown"}.`
+      );
+      return;
+    }
+
+    setExtracting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/extract-axes", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) {
+        setExtractError(json.error || "Could not extract from this file.");
+        return;
+      }
+      const incoming = json.axes as Partial<AxisAnswers> | undefined;
+      if (!incoming) {
+        setExtractError("AI returned no answers. Try a different file.");
+        return;
+      }
+      setAxes((prev) => {
+        const next = { ...prev };
+        for (const q of AXIS_QUESTIONS) {
+          const v = incoming[q.key];
+          if (typeof v === "string" && v.trim().length > 0) next[q.key] = v;
+        }
+        return next;
+      });
+      setPrefilled(true);
+    } catch {
+      setExtractError("Network error while uploading.");
+    } finally {
+      setExtracting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   // Validation — all 6 axes have minimum chars, category + target set
@@ -389,11 +443,112 @@ export default function SubmitPage() {
                 names, numbers, real workflows beat abstractions.
               </p>
               <p
-                className="text-[12px] mb-6 leading-relaxed"
+                className="text-[12px] mb-4 leading-relaxed"
                 style={{ color: "var(--text-tertiary)" }}
               >
                 Min {AXIS_MIN} / Max {AXIS_MAX} characters per answer.
               </p>
+
+              {/* Optional file upload — AI drafts answers from a deck/memo */}
+              <div
+                className="mb-5 border p-4"
+                style={{
+                  background: "var(--input-bg)",
+                  borderColor: "var(--t-border-card)",
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <Sparkles
+                    className="w-4 h-4 mt-0.5 shrink-0"
+                    style={{ color: "var(--accent)" }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-xs font-semibold"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      Have a deck or memo? Let AI draft the six answers.
+                    </p>
+                    <p
+                      className="text-[12.5px] mt-0.5 leading-relaxed"
+                      style={{ color: "var(--text-tertiary)" }}
+                    >
+                      Upload PDF (≤10MB) or Markdown (≤1MB). You&apos;ll review and edit before submitting.
+                    </p>
+                    <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.md,.markdown"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleFilePick(f);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={extracting}
+                        className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: "var(--card-bg, var(--input-bg))",
+                          borderColor: "var(--t-border-card)",
+                          color: "var(--text-primary)",
+                        }}
+                      >
+                        {extracting ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Extracting…
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-3.5 h-3.5" />
+                            Upload file
+                          </>
+                        )}
+                      </button>
+                      <span
+                        className="text-[11.5px]"
+                        style={{ color: "var(--text-tertiary)" }}
+                      >
+                        .pdf · .md
+                      </span>
+                    </div>
+                    {extractError && (
+                      <p
+                        className="text-[12px] mt-2 font-medium"
+                        style={{ color: "var(--signal-danger)" }}
+                      >
+                        {extractError}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {prefilled && (
+                <div
+                  className="flex items-start gap-2.5 p-3 mb-5 border"
+                  style={{
+                    background: "var(--accent-soft)",
+                    borderColor: "var(--accent-ring)",
+                  }}
+                >
+                  <FileText
+                    className="w-4 h-4 mt-0.5 shrink-0"
+                    style={{ color: "var(--accent)" }}
+                  />
+                  <p
+                    className="text-[12.5px] leading-relaxed"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    AI drafted these answers from your file. <strong>Review every one</strong> and rewrite in your own words —
+                    the score only means something if the details are real.
+                  </p>
+                </div>
+              )}
 
               {AXIS_QUESTIONS.map((q, i) => (
                 <AxisField
@@ -711,14 +866,16 @@ function AxisField({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const len = value.length;
+  const len = value.trim().length;
   const meets = len >= AXIS_MIN;
-  const over = len > AXIS_MAX;
-  const counterColor = over
+  const over = value.length > AXIS_MAX;
+  const belowMin = !meets;
+  const counterColor = over || belowMin
     ? "var(--signal-danger)"
-    : meets
-    ? "var(--signal-success)"
-    : "var(--text-tertiary)";
+    : "var(--signal-success)";
+  const textareaStyle: React.CSSProperties = belowMin
+    ? { ...INPUT_STYLE, borderColor: "var(--signal-danger)", color: "var(--signal-danger)" }
+    : INPUT_STYLE;
 
   return (
     <div className="mb-5">
@@ -761,8 +918,16 @@ function AxisField({
         rows={3}
         maxLength={AXIS_MAX + 50}
         className="w-full border px-3 py-2.5 text-sm outline-none transition-colors focus:border-[color:var(--accent)] resize-none leading-relaxed"
-        style={INPUT_STYLE}
+        style={textareaStyle}
       />
+      {belowMin && (
+        <p
+          className="text-[11px] font-medium mt-1"
+          style={{ color: "var(--signal-danger)" }}
+        >
+          최소 {AXIS_MIN}자 이상 입력해 주세요. ({len}/{AXIS_MIN})
+        </p>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { ProfileForm } from "@/components/settings/ProfileForm";
 import { PreferencesPanel } from "@/components/settings/PreferencesPanel";
 import { ContactInfoForm } from "@/components/settings/ContactInfoForm";
 import { PublicProfileForm } from "@/components/settings/PublicProfileForm";
+import { IntroVideoUploader } from "@/components/settings/IntroVideoUploader";
 import { PageHeader } from "@/components/ui/PageHeader";
 
 export default async function SettingsPage() {
@@ -21,7 +22,7 @@ export default async function SettingsPage() {
     ? await supabase
         .from("user_profiles")
         .select(
-          "contact_email, contact_phone, contact_linkedin, contact_other, allow_contact, bio, twitter_url, github_url, website_url, profile_anonymous"
+          "contact_email, contact_phone, contact_linkedin, contact_other, allow_contact, bio, twitter_url, github_url, website_url, profile_anonymous, intro_video_url, intro_video_duration_seconds"
         )
         .eq("id", user.id)
         .maybeSingle()
@@ -55,6 +56,19 @@ export default async function SettingsPage() {
               initialGithub={profile?.github_url ?? ""}
               initialWebsite={profile?.website_url ?? ""}
               initialAnonymous={profile?.profile_anonymous ?? true}
+            />
+          )}
+        </Section>
+
+        <Section
+          title="Intro video"
+          description="A 100-second self-introduction shown at the top of your public founder page."
+        >
+          {user && (
+            <IntroVideoUploader
+              userId={user.id}
+              initialUrl={profile?.intro_video_url ?? null}
+              initialDuration={profile?.intro_video_duration_seconds ?? null}
             />
           )}
         </Section>
