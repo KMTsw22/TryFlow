@@ -866,10 +866,10 @@ function AxisField({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const len = value.trim().length;
-  const meets = len >= AXIS_MIN;
-  const over = value.length > AXIS_MAX;
-  const belowMin = !meets;
+  const len = value.length;
+  const trimmedLen = value.trim().length;
+  const belowMin = trimmedLen < AXIS_MIN;
+  const over = len > AXIS_MAX;
   const counterColor = over || belowMin
     ? "var(--signal-danger)"
     : "var(--signal-success)";
@@ -925,7 +925,7 @@ function AxisField({
           className="text-[11px] font-medium mt-1"
           style={{ color: "var(--signal-danger)" }}
         >
-          최소 {AXIS_MIN}자 이상 입력해 주세요. ({len}/{AXIS_MIN})
+          최소 {AXIS_MIN}자 이상 입력해 주세요. ({trimmedLen}/{AXIS_MIN})
         </p>
       )}
     </div>
