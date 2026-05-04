@@ -107,6 +107,7 @@ export default function SubmitPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
   const [canPrivate, setCanPrivate] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [contact, setContact] = useState({
@@ -251,6 +252,10 @@ export default function SubmitPage() {
     category !== "" && targetUser.trim().length >= 5 && axesFilled && !loading;
 
   const handleSubmit = async () => {
+    if (!canSubmit) {
+      setAttemptedSubmit(true);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -559,6 +564,7 @@ export default function SubmitPage() {
                   placeholder={q.placeholder}
                   value={axes[q.key]}
                   onChange={(v) => updateAxis(q.key, v)}
+                  showError={attemptedSubmit}
                 />
               ))}
             </div>
@@ -765,8 +771,9 @@ export default function SubmitPage() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={!canSubmit}
-                className="inline-flex items-center gap-1.5 h-10 px-5 text-sm font-semibold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110"
+                disabled={loading}
+                aria-disabled={!canSubmit}
+                className="inline-flex items-center gap-1.5 h-10 px-5 text-sm font-semibold text-white transition-all hover:brightness-110 disabled:cursor-not-allowed aria-disabled:opacity-40"
                 style={{ background: "var(--accent)" }}
               >
                 {loading ? (
@@ -858,6 +865,7 @@ function AxisField({
   placeholder,
   value,
   onChange,
+  showError,
 }: {
   index: number;
   label: string;
@@ -865,15 +873,17 @@ function AxisField({
   placeholder: string;
   value: string;
   onChange: (v: string) => void;
+  showError: boolean;
 }) {
   const len = value.length;
   const trimmedLen = value.trim().length;
   const belowMin = trimmedLen < AXIS_MIN;
   const over = len > AXIS_MAX;
-  const counterColor = over || belowMin
+  const showBelowMinError = showError && belowMin;
+  const counterColor = over || showBelowMinError
     ? "var(--signal-danger)"
     : "var(--signal-success)";
-  const textareaStyle: React.CSSProperties = belowMin
+  const textareaStyle: React.CSSProperties = showBelowMinError
     ? { ...INPUT_STYLE, borderColor: "var(--signal-danger)", color: "var(--signal-danger)" }
     : INPUT_STYLE;
 
@@ -920,7 +930,7 @@ function AxisField({
         className="w-full border px-3 py-2.5 text-sm outline-none transition-colors focus:border-[color:var(--accent)] resize-none leading-relaxed"
         style={textareaStyle}
       />
-      {belowMin && (
+      {showBelowMinError && (
         <p
           className="text-[11px] font-medium mt-1"
           style={{ color: "var(--signal-danger)" }}
