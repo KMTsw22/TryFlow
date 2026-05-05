@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
 import DeepAnalysis from "@/components/DeepAnalysis";
-import { ContactSection } from "@/components/vc/ContactSection";
 import { PendingReportView } from "@/components/ideas/PendingReportView";
 import { IdeaHero } from "@/components/ideas/IdeaHero";
 import { IdeaActionDock } from "@/components/ideas/IdeaActionDock";
@@ -391,18 +390,6 @@ export default async function IdeaReportPage({
           hideNextSteps
           hideInsightsBlock
         />
-
-        {/* Contact section — only renders for Pro viewers on others' ideas */}
-        {!isOwnIdea && (
-          <div id="contact">
-            <ContactSection
-              ideaId={idea.id}
-              category={idea.category}
-              canContact={canContact}
-              isSubscriber={isPro}
-            />
-          </div>
-        )}
 
         {/* Action dock — "Decide what to do with this idea", placed after the
             report so the reader has full context before choosing. */}

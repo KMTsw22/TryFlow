@@ -29,8 +29,7 @@ const SIZE_TOKENS: Record<
 
 /**
  * Canonical brand mark used in every page header and auth surface.
- * Renders `/logo.png` next to "Try.Wepp" in Playfair Display Black
- * and links back to the landing page by default.
+ * Renders the Fastlane wordmark.
  */
 export function Brand({
   size = "md",
@@ -43,7 +42,7 @@ export function Brand({
 
   const inner = (
     <span className={cn("inline-flex items-center", tokens.gap, className)}>
-      <img src="/logo.png" className={cn(tokens.icon, "shrink-0")} alt="Try.Wepp" />
+      <img src="/logo.png" className={cn(tokens.icon, "shrink-0")} alt="Fastlane" />
       <span
         style={{
           fontFamily: "'Fraunces', serif",
@@ -53,7 +52,7 @@ export function Brand({
           color: color ?? "var(--text-primary)",
         }}
       >
-        Try.Wepp
+        Fastlane
       </span>
     </span>
   );
@@ -63,7 +62,7 @@ export function Brand({
   return (
     <Link
       href={href}
-      aria-label="Try.Wepp — go to home"
+      aria-label="Fastlane — 홈으로"
       className="inline-flex items-center transition-opacity hover:opacity-80"
     >
       {inner}

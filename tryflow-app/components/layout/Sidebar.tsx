@@ -4,117 +4,65 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  LayoutDashboard,
-  BarChart3,
-  Settings,
-  LogOut,
   Plus,
-  LogIn,
   Home,
-  Sparkles,
   Tag,
-  Heart,
+  Trophy,
+  ClipboardList,
+  Gavel,
+  FilePlus,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 type NavItem = {
   label: string;
   icon: typeof Home;
   href: string;
-  /** 메뉴 라벨 옆에 작은 숫자 뱃지 (예: Inbox 미읽음). 0 이면 숨김. */
   badgeCount?: number;
 };
 type NavSection = { id: string; title: string; items: NavItem[] };
 
-const GUEST_SECTIONS: NavSection[] = [
+// Fastlane 데모 단계: 로그인 없이 누구나 들어와서 데모 동선만 확인.
+// nav 는 mock 기반 데모 페이지만 노출 (실제 DB 의존 페이지는 발표 후 정리).
+const DEMO_SECTIONS: NavSection[] = [
   {
-    id: "main",
-    title: "",
+    id: "workspace",
+    title: "데모",
     items: [
-      { label: "Home",    icon: Home, href: "/" },
-      { label: "Pricing", icon: Tag,  href: "/pricing" },
+      { label: "홈", icon: Home, href: "/" },
+      { label: "내 대회", icon: Trophy, href: "/competitions" },
+      { label: "새 대회", icon: FilePlus, href: "/competitions/new" },
     ],
+  },
+  {
+    id: "judge",
+    title: "심사",
+    items: [
+      { label: "심사 큐", icon: Gavel, href: "/competitions" },
+      { label: "검토 대기", icon: ClipboardList, href: "/competitions/demo-2026-spring" },
+    ],
+  },
+  {
+    id: "info",
+    title: "안내",
+    items: [{ label: "요금제", icon: Tag, href: "/pricing" }],
   },
 ];
 
-// 2026-04 IA — role-aware:
-//   Founder (Free/Plus): build 중심. My Ideas 가 홈, Market 은 아래쪽에.
-//   Investor (Pro):       discover 중심. Market 이 홈, My Ideas 는 보조로만.
-// Compare: 사이드바 제거 (액션은 카드 [+] + 트레이 담당)
-// Inbox: 사이드바에서 제거됨 (Gmail 통일). /inbox 페이지 자체는 유지되나 nav 에서 진입 불가.
-function buildAuthSections(role: "founder" | "investor"): NavSection[] {
-  if (role === "investor") {
-    return [
-      {
-        id: "discover",
-        title: "Discover",
-        items: [
-          { label: "Market", icon: BarChart3, href: "/explore" },
-          { label: "Watchlist", icon: Heart, href: "/watchlist" },
-        ],
-      },
-      {
-        id: "mywork",
-        title: "My Work",
-        items: [
-          { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
-        ],
-      },
-      {
-        id: "account",
-        title: "Account",
-        items: [{ label: "Settings", icon: Settings, href: "/settings" }],
-      },
-    ];
-  }
-
-  // Founder: 빌드 중심. My Ideas 가 워크벤치. Market 은 참고 surface.
-  return [
-    {
-      id: "workspace",
-      title: "Workspace",
-      items: [
-        { label: "My Ideas", icon: LayoutDashboard, href: "/dashboard" },
-        { label: "Watchlist", icon: Heart, href: "/watchlist" },
-      ],
-    },
-    {
-      id: "research",
-      title: "Research",
-      items: [{ label: "Market", icon: BarChart3, href: "/explore" }],
-    },
-    {
-      id: "account",
-      title: "Account",
-      items: [{ label: "Settings", icon: Settings, href: "/settings" }],
-    },
-  ];
-}
-
 interface Props {
-  isLoggedIn: boolean;
+  /** 데모 단계라 인증 정보는 받기만 하고 무시 — 모든 사용자에게 동일 nav 노출. */
+  isLoggedIn?: boolean;
   plan?: string | null;
-  /** 'founder' (Free/Plus) or 'investor' (Pro). Drives nav order and emphasis. */
-  role?: "founder" | "investor";
+  role?: "organizer" | "judge";
 }
 
-export function Sidebar({
-  isLoggedIn,
-  plan,
-  role = "founder",
-}: Props) {
+export function Sidebar(_props: Props) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
 
-  const SECTIONS = isLoggedIn ? buildAuthSections(role) : GUEST_SECTIONS;
-
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
+  const SECTIONS = DEMO_SECTIONS;
 
   return (
     <aside
@@ -136,10 +84,10 @@ export function Sidebar({
       >
         <Link
           href="/"
-          aria-label="Try.Wepp — go to home"
+          aria-label="Fastlane — 홈으로"
           className="flex items-center gap-2.5"
         >
-          <img src="/logo.png" className="w-7 h-7 shrink-0" alt="Try.Wepp" />
+          <img src="/logo.png" className="w-7 h-7 shrink-0" alt="Fastlane" />
           <span
             className={cn(
               "whitespace-nowrap transition-all duration-150",
@@ -153,7 +101,7 @@ export function Sidebar({
               color: "var(--text-primary)",
             }}
           >
-            Try.Wepp
+            Fastlane
           </span>
         </Link>
       </div>
@@ -165,10 +113,13 @@ export function Sidebar({
             {section.title && (
               <div
                 className={cn(
-                  "px-3 mb-1.5 text-[12px] font-semibold tracking-widest uppercase transition-all duration-150 overflow-hidden whitespace-nowrap",
-                  expanded ? "opacity-100 h-4 delay-75" : "opacity-0 h-0"
+                  "px-3 mb-2 text-[10px] font-bold uppercase transition-all duration-150 overflow-hidden whitespace-nowrap",
+                  expanded ? "opacity-100 h-3 delay-75" : "opacity-0 h-0"
                 )}
-                style={{ color: "var(--text-tertiary)" }}
+                style={{
+                  color: "var(--text-tertiary)",
+                  letterSpacing: "0.18em",
+                }}
               >
                 {section.title}
               </div>
@@ -184,7 +135,7 @@ export function Sidebar({
                     href={href}
                     title={!expanded ? `${label}${showBadge ? ` (${badgeCount})` : ""}` : undefined}
                     className={cn(
-                      "relative flex items-center gap-3 px-3 h-9 text-sm font-medium transition-colors whitespace-nowrap rounded-sm",
+                      "relative flex items-center gap-3 px-3 h-9 text-[13px] font-medium transition-colors whitespace-nowrap",
                       active && "text-[color:var(--text-primary)]",
                       !active && "hover:bg-[color:var(--t-border-subtle)]"
                     )}
@@ -193,6 +144,14 @@ export function Sidebar({
                       color: active ? "var(--text-primary)" : "var(--text-secondary)",
                     }}
                   >
+                    {/* active 일 때 좌측 vertical accent — 카드/리더보드와 일관된 시그니처 */}
+                    {active && (
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-1.5 bottom-1.5 w-[2px]"
+                        style={{ background: "var(--accent)" }}
+                      />
+                    )}
                     <span className="relative shrink-0">
                       <Icon
                         className="w-4 h-4"
@@ -200,7 +159,6 @@ export function Sidebar({
                           color: active ? "var(--accent)" : "var(--text-tertiary)",
                         }}
                       />
-                      {/* Collapsed 상태에서 작은 dot 으로 badge 표시 */}
                       {showBadge && !expanded && (
                         <span
                           className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full"
@@ -217,7 +175,6 @@ export function Sidebar({
                     >
                       {label}
                     </span>
-                    {/* Expanded 상태에서 숫자 badge */}
                     {showBadge && (
                       <span
                         className={cn(
@@ -243,112 +200,49 @@ export function Sidebar({
         ))}
       </nav>
 
-      {/* Bottom */}
+      {/* Bottom — 데모 단계: 새 대회 만들기 CTA + 테마 토글만 노출. */}
       <div
         className="px-2 pb-4 pt-3 space-y-1.5 shrink-0"
         style={{ borderTop: "1px solid var(--t-border)" }}
       >
-        {isLoggedIn ? (
-          <>
-            {/* Primary CTA — Submit idea */}
-            <Link
-              href="/submit"
-              title={!expanded ? "Submit idea" : undefined}
-              className={cn(
-                "flex items-center h-9 text-sm font-semibold text-white transition-all overflow-hidden hover:brightness-110",
-                expanded ? "justify-start gap-2 px-3" : "justify-center"
-              )}
-              style={{ background: "var(--accent)" }}
-            >
-              <Plus className="w-4 h-4 shrink-0" />
-              <span
-                className={cn(
-                  "whitespace-nowrap transition-all duration-150",
-                  expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
-                )}
-              >
-                Submit idea
-              </span>
-            </Link>
-
-            {/* Upgrade to Pro — subtle, only for non-Pro */}
-            {plan !== "pro" && (
-              <Link
-                href="/pricing"
-                title={!expanded ? "Upgrade to Pro" : undefined}
-                className={cn(
-                  "flex items-center gap-3 px-3 h-9 text-sm font-medium transition-colors whitespace-nowrap rounded-sm border",
-                  "hover:bg-[color:var(--accent-soft)]"
-                )}
-                style={{
-                  borderColor: "var(--accent-ring)",
-                  color: "var(--accent)",
-                }}
-              >
-                <Sparkles className="w-4 h-4 shrink-0" />
-                <span
-                  className={cn(
-                    "flex-1 transition-all duration-150",
-                    expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
-                  )}
-                >
-                  Upgrade
-                </span>
-                <span
-                  className={cn(
-                    "text-[12px] font-bold uppercase tracking-widest transition-all duration-150",
-                    expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
-                  )}
-                  style={{ color: "var(--text-tertiary)" }}
-                >
-                  Pro
-                </span>
-              </Link>
+        <Link
+          href="/competitions/new"
+          title={!expanded ? "새 대회" : undefined}
+          className={cn(
+            "flex items-center h-9 text-sm font-semibold text-white transition-all overflow-hidden hover:brightness-110",
+            expanded ? "justify-start gap-2 px-3" : "justify-center"
+          )}
+          style={{ background: "var(--accent)" }}
+        >
+          <Plus className="w-4 h-4 shrink-0" />
+          <span
+            className={cn(
+              "whitespace-nowrap transition-all duration-150",
+              expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
             )}
+          >
+            새 대회
+          </span>
+        </Link>
 
-            <ThemeToggle expanded={expanded} />
+        <Link
+          href="/"
+          title={!expanded ? "랜딩으로" : undefined}
+          className="flex items-center gap-3 px-3 h-9 text-sm font-medium transition-colors whitespace-nowrap rounded-sm hover:bg-[color:var(--t-border-subtle)]"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          <Sparkles className="w-4 h-4 shrink-0" />
+          <span
+            className={cn(
+              "transition-all duration-150",
+              expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
+            )}
+          >
+            랜딩으로
+          </span>
+        </Link>
 
-            <button
-              onClick={handleLogout}
-              title={!expanded ? "Logout" : undefined}
-              className="flex items-center gap-3 px-3 h-9 text-sm font-medium transition-colors w-full whitespace-nowrap rounded-sm hover:bg-[color:var(--t-border-subtle)]"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              <LogOut className="w-4 h-4 shrink-0" />
-              <span
-                className={cn(
-                  "transition-all duration-150",
-                  expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
-                )}
-              >
-                Logout
-              </span>
-            </button>
-          </>
-        ) : (
-          <>
-            <ThemeToggle expanded={expanded} />
-            <Link
-              href="/login"
-              title={!expanded ? "Log in" : undefined}
-              className="flex items-center gap-3 px-3 h-9 text-sm font-semibold transition-colors whitespace-nowrap rounded-sm"
-              style={{
-                background: "var(--accent-soft)",
-                color: "var(--accent)",
-              }}
-            >
-              <LogIn className="w-4 h-4 shrink-0" />
-              <span
-                className={cn(
-                  "transition-all duration-150",
-                  expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
-                )}
-              >
-                Log in
-              </span>
-            </Link>
-          </>
-        )}
+        <ThemeToggle expanded={expanded} />
       </div>
     </aside>
   );

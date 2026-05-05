@@ -57,9 +57,25 @@
     --accent-ring:  rgba(99, 102, 241, 0.25);
 
     /* ── Semantic (score / trend only) ───────────────── */
-    --signal-success: #10b981;
-    --signal-warning: #f59e0b;
-    --signal-danger:  #ef4444;
+    /* 2026-05 톤다운: 형광 채도를 낮추고 신뢰감 톤으로. */
+    --signal-success: #059669;
+    --signal-warning: #b45309;
+    --signal-danger:  #be123c;
+
+    /* σ 플래그 전용 색 — 경고가 아니라 “주목 필요” 톤. */
+    --signal-attention:      #b45309;
+    --signal-attention-soft: rgba(180, 83, 9, 0.08);
+    --signal-attention-ring: rgba(180, 83, 9, 0.22);
+
+    /* 점수 등급 calm 톤 (배경/링 등 area fill 용) */
+    --score-strong-soft: rgba(5, 150, 105, 0.10);
+    --score-mid-soft:    rgba(180, 83, 9, 0.10);
+    --score-weak-soft:   rgba(190, 18, 60, 0.10);
+
+    /* 등수 podium 톤 — 1/2/3등 accent. */
+    --rank-gold:   #b8860b;
+    --rank-silver: #71717a;
+    --rank-bronze: #a16207;
   }
 
   html.dark {
@@ -94,6 +110,23 @@
     --accent:       #818cf8;
     --accent-soft:  rgba(129, 140, 248, 0.10);
     --accent-ring:  rgba(129, 140, 248, 0.28);
+
+    /* Semantic — dark variant 채도 약간 올려 가독성 확보 */
+    --signal-success: #34d399;
+    --signal-warning: #fbbf24;
+    --signal-danger:  #fb7185;
+
+    --signal-attention:      #fbbf24;
+    --signal-attention-soft: rgba(251, 191, 36, 0.10);
+    --signal-attention-ring: rgba(251, 191, 36, 0.30);
+
+    --score-strong-soft: rgba(52, 211, 153, 0.10);
+    --score-mid-soft:    rgba(251, 191, 36, 0.10);
+    --score-weak-soft:   rgba(251, 113, 133, 0.10);
+
+    --rank-gold:   #d4a82a;
+    --rank-silver: #a1a1aa;
+    --rank-bronze: #c08552;
   }
 
   * {
@@ -104,11 +137,31 @@
     @apply antialiased;
     background: var(--page-bg);
     color: #f1f5f9;
-    font-family: 'Inter', system-ui, sans-serif;
-    /* cv11 = single-storey 'a' (cleaner at small sizes), ss01 = stylistic set
-       for tabular alignment. Standard Inter usage in dashboards. */
-    font-feature-settings: "cv11", "ss01";
+    /* 2026-05 Korean-first 타이포 시스템:
+       Pretendard 가 한글·영문·숫자 모두 처리. Inter 는 폴백.
+       Fraunces 는 display/serif 한정 (Brand wordmark, 큰 점수, 인용구).
+       → 한글 텍스트가 화면의 80% 인 한국형 SaaS 에서 가장 자연스러운 스택. */
+    font-family: 'Pretendard Variable', 'Pretendard', 'Inter',
+                 system-ui, -apple-system, 'Apple SD Gothic Neo',
+                 'Malgun Gothic', sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    /* 한글 행간은 라틴보다 약간 여유 — 1.55 글로벌 베이스. */
+    line-height: 1.55;
     transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  /* Pretendard 글꼴은 한글에 letter-spacing 음수가 어울리지 않음.
+     Fraunces 가 강제로 음수 트래킹을 받으니, 한글 표시에는 이를 무력화한다.
+     클래스 .ko-display 에 한해 적용 — Fraunces 가 display 로 사용되는 큰 글자. */
+  .ko-display {
+    font-family: 'Pretendard Variable', 'Pretendard', system-ui, sans-serif;
+    letter-spacing: -0.01em; /* 한글에 자연스러운 미세 트래킹 */
+  }
+
+  .num-display {
+    font-family: 'Fraunces', 'Pretendard Variable', serif;
+    font-feature-settings: "tnum", "ss01";
+    font-variant-numeric: tabular-nums;
   }
 
   /* tabular-nums utility for score / metric components — Inter has built-in

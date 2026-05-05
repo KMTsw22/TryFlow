@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Fastlane 데모 단계: 로그인 게이트를 모두 제거. 누구나 데모 동선에 진입 가능.
+// Supabase 세션 갱신만 유지 (있으면 쓰고, 없으면 게스트로 진행).
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -25,59 +27,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session (must call getUser)
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const pathname = request.nextUrl.pathname;
-
-  // Protect dashboard routes — redirect to /login if not authenticated
-  const isDashboardRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/analytics") ||
-    pathname.startsWith("/settings");
-
-  if (isDashboardRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // Redirect authenticated users away from /login to their role-appropriate home.
-  // 2026-04 identity split: Pro(investor) → Market, else → Dashboard.
-  if (pathname === "/login" && user) {
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("plan")
-      .eq("id", user.id)
-      .maybeSingle();
-    const url = request.nextUrl.clone();
-    url.pathname = profile?.plan === "pro" ? "/explore" : "/dashboard";
-    return NextResponse.redirect(url);
-  }
-
-  // /explore 접근 정책 (2026-04 paywall softening):
-  //   /explore           → 모든 로그인 유저. 페이지 안에서 teaser + muted 패턴.
-  //   /explore/[cat]/... → Pro 전용. Free/Plus 는 /pricing 으로.
-  if (pathname.startsWith("/explore")) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("next", pathname);
-      return NextResponse.redirect(url);
-    }
-    if (pathname !== "/explore") {
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("plan")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (profile?.plan !== "pro") {
-        const url = request.nextUrl.clone();
-        url.pathname = "/pricing";
-        return NextResponse.redirect(url);
-      }
-    }
-  }
+  // 세션 갱신만 호출. 결과는 쓰지 않음 (게이트 제거).
+  await supabase.auth.getUser();
 
   return supabaseResponse;
 }

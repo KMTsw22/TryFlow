@@ -14,7 +14,7 @@ export function ThemeToggle({ expanded }: Props) {
   return (
     <button
       onClick={toggle}
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
       className="flex items-center gap-3 px-3 h-9 text-sm font-medium transition-colors whitespace-nowrap rounded-sm w-full hover:bg-[color:var(--t-border-subtle)]"
       style={{ color: "var(--text-tertiary)" }}
     >
@@ -26,7 +26,7 @@ export function ThemeToggle({ expanded }: Props) {
         "transition-all duration-150",
         expanded ? "opacity-100 delay-75" : "opacity-0 w-0"
       )}>
-        {isDark ? "Light mode" : "Dark mode"}
+        {isDark ? "라이트 모드" : "다크 모드"}
       </span>
     </button>
   );
