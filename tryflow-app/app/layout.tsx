@@ -12,12 +12,12 @@ import { ToastProvider } from "@/components/ui/Toast";
 export const metadata: Metadata = {
   title: "Fastlane — AI 기반 창업 평가 플랫폼",
   description:
-    "정부 사업·창업 경진대회의 1차 평가를 AI가 공정하게. 주최 측이 평가표를 입력하면 AI가 다중 실행 + 평균/표준편차로 점수를 산출하고, 분산 큰 항목은 인간 심사위원에게 넘깁니다.",
+    "정부 사업·창업 경진대회의 1차 평가를 AI가 공정하게. 주최 측이 평가표를 입력하면 AI가 다중 실행 + 평균/표준편차로 점수를 산출하고, 분산 큰 항목은 심사위원에게 넘깁니다.",
 };
 
 // Runs before React hydrates. Applies saved theme early to prevent a flash
 // of the wrong theme (FOUC). Kept tiny and never throws.
-const FOUC_SCRIPT = `(function(){try{var t=localStorage.getItem('fastlane_theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
+const FOUC_SCRIPT = `(function(){try{var t=localStorage.getItem('fastlane_theme')||'light';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
 export default async function RootLayout({
   children,

@@ -5,7 +5,7 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { useAnalysis } from "./AnalysisContext";
 
 const DISPLAY = "'Inter', sans-serif";
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 // Rough per-agent time budget so the bar feels like it's doing something.
 // Real backend doesn't stream progress, so this is a time-based simulation

@@ -16,7 +16,7 @@ interface Props {
   position?: "first" | "middle" | "last";
 }
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 const ACCENT_BY_TYPE: Record<SignalType, string> = {

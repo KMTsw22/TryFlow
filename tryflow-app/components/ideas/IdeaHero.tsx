@@ -107,7 +107,7 @@ function getVerdict(
   return { label: "Weak signal — explore adjacent angles", tone: "danger" };
 }
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 // ── Component ──────────────────────────────────────────────────────────────

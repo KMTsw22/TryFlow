@@ -11,7 +11,7 @@ interface Props {
   hasContactEmail: boolean;
 }
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 export function OwnerVisibilityCard({

@@ -7,7 +7,7 @@ import type { TrendDirection } from "@/components/ui/TrendLabel";
 import type { IdeaStatus } from "@/components/ui/StatusBadge";
 import { getCategoryTheme, timeAgo } from "@/lib/categories";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 interface Report {

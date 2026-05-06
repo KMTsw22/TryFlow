@@ -21,7 +21,7 @@ import { RefreshCw, ArrowLeft, Loader2 } from "lucide-react";
  */
 
 const DISPLAY = "'Inter', sans-serif";
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 const POLL_INTERVAL_MS = 5000;
 const GIVE_UP_AFTER_MS = 90_000;

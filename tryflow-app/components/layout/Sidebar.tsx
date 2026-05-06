@@ -24,6 +24,30 @@ type NavItem = {
 };
 type NavSection = { id: string; title: string; items: NavItem[] };
 
+// 가장 길게 매칭되는 단 하나의 nav 항목 인덱스를 결정.
+// 같은 href를 가진 항목이 여러 개여도 첫 번째만 active 로 잡혀 시각적 충돌 방지.
+function findActiveItemKey(
+  pathname: string,
+  sections: NavSection[],
+): string | null {
+  let best: { key: string; len: number } | null = null;
+  for (const section of sections) {
+    for (let i = 0; i < section.items.length; i++) {
+      const item = section.items[i];
+      const matches =
+        item.href === "/"
+          ? pathname === "/"
+          : pathname === item.href || pathname.startsWith(item.href + "/");
+      if (!matches) continue;
+      const len = item.href.length;
+      if (best === null || len > best.len) {
+        best = { key: `${section.id}:${i}`, len };
+      }
+    }
+  }
+  return best?.key ?? null;
+}
+
 // Fastlane 데모 단계: 로그인 없이 누구나 들어와서 데모 동선만 확인.
 // nav 는 mock 기반 데모 페이지만 노출 (실제 DB 의존 페이지는 발표 후 정리).
 const DEMO_SECTIONS: NavSection[] = [
@@ -63,6 +87,7 @@ export function Sidebar(_props: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const SECTIONS = DEMO_SECTIONS;
+  const activeKey = findActiveItemKey(pathname, SECTIONS);
 
   return (
     <aside
@@ -125,17 +150,18 @@ export function Sidebar(_props: Props) {
               </div>
             )}
             <div className="space-y-0.5">
-              {section.items.map(({ label, icon: Icon, href, badgeCount }) => {
-                const active =
-                  pathname === href || (href !== "/" && pathname.startsWith(href));
+              {section.items.map(({ label, icon: Icon, href, badgeCount }, itemIdx) => {
+                const active = activeKey === `${section.id}:${itemIdx}`;
                 const showBadge = typeof badgeCount === "number" && badgeCount > 0;
                 return (
                   <Link
-                    key={href}
+                    key={`${section.id}:${itemIdx}`}
                     href={href}
                     title={!expanded ? `${label}${showBadge ? ` (${badgeCount})` : ""}` : undefined}
                     className={cn(
                       "relative flex items-center gap-3 px-3 h-9 text-[13px] font-medium transition-colors whitespace-nowrap",
+                      // 키보드 탭 사용자에게는 focus ring 유지, 마우스 클릭 후엔 안 보이도록.
+                      "focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-[color:var(--accent)] focus-visible:-outline-offset-2",
                       active && "text-[color:var(--text-primary)]",
                       !active && "hover:bg-[color:var(--t-border-subtle)]"
                     )}

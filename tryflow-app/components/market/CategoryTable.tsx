@@ -27,7 +27,7 @@ interface Props {
   rangeLabel?: "7d" | "30d" | "all";
 }
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 const HEADER_LABELS: Record<NonNullable<Props["rangeLabel"]>, {

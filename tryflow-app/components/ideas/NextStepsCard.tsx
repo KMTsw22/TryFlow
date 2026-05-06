@@ -3,7 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { useAnalysis } from "./AnalysisContext";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 /**

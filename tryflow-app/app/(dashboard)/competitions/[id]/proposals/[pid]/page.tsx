@@ -12,7 +12,7 @@ import { findProposal } from "@/lib/fastlane/mock";
 import { AxisScoreBar } from "@/components/fastlane/AxisScoreBar";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 function scoreColor(score: number) {
   if (score >= 75) return "var(--signal-success)";
@@ -51,36 +51,32 @@ export default async function ProposalDetailPage({
         리더보드
       </Link>
 
-      {/* 메타 */}
-      <p
-        className="text-[12px] font-bold uppercase mb-3"
-        style={{ color: "var(--accent)", letterSpacing: "0.16em" }}
-      >
-        {competition.name}
-      </p>
-
-      {/* 제목 */}
+      {/* 사무톤 페이지 헤더 */}
       <h1
-        className="ko-display mb-3"
+        className="mb-2"
         style={{
-          fontFamily: SERIF,
-          fontWeight: 800,
-          fontSize: "clamp(2rem, 4vw, 2.8rem)",
-          lineHeight: 1.1,
+          fontWeight: 700,
+          fontSize: "1.625rem",
+          lineHeight: 1.3,
           color: "var(--text-primary)",
+          letterSpacing: "-0.01em",
         }}
       >
         {proposal.title}
       </h1>
-      <p
-        className="text-[13.5px] mb-2"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
+      <div
+        className="flex items-center gap-3 mb-5 text-[12.5px] flex-wrap"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
       >
-        제안 팀 · {proposal.team}
-      </p>
+        <span style={{ color: "var(--accent)", fontWeight: 600 }}>
+          {competition.name}
+        </span>
+        <span style={{ color: "var(--t-border-bright)" }}>·</span>
+        <span>제안 팀 {proposal.team}</span>
+      </div>
       <p
-        className="text-[15px] leading-[1.8] mb-12 max-w-xl"
-        style={{ color: "var(--text-secondary)" }}
+        className="text-[13.5px] leading-[1.85] mb-12 max-w-xl"
+        style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
         {proposal.summary}
       </p>
@@ -102,50 +98,51 @@ export default async function ProposalDetailPage({
               </p>
               <div className="flex items-baseline gap-2">
                 <span
-                  className="num-display tabular-nums leading-[0.85]"
+                  className="tabular-nums leading-[0.95]"
                   style={{
-                    fontWeight: 800,
-                    fontSize: "clamp(4.5rem, 8vw, 6.5rem)",
-                    letterSpacing: "-0.05em",
+                    fontWeight: 700,
+                    fontSize: "clamp(3rem, 5.6vw, 4rem)",
+                    letterSpacing: "-0.03em",
                     color: scoreColor(score.composite),
                   }}
                 >
                   {score.composite}
                 </span>
                 <span
-                  className="text-[13px] font-medium"
-                  style={{ color: "var(--text-tertiary)", letterSpacing: "0.08em" }}
+                  className="text-[13px] font-medium tabular-nums"
+                  style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
                 >
                   / 100
                 </span>
               </div>
             </div>
 
-            {/* 한 줄 verdict */}
-            <div className="md:pb-4 md:border-l md:pl-10" style={{ borderColor: "var(--t-border-subtle)" }}>
+            {/* 한 줄 verdict — 사무톤 단정 진술 */}
+            <div className="md:pb-2 md:border-l md:pl-10" style={{ borderColor: "var(--t-border-subtle)" }}>
               <p
-                className="text-[10.5px] font-bold uppercase mb-2.5"
+                className="text-[10.5px] font-bold uppercase mb-2"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
               >
                 참고 의견
               </p>
               <p
-                className="ko-display leading-[1.2] mb-3"
+                className="mb-2"
                 style={{
-                  fontFamily: SERIF,
-                  fontStyle: "italic",
-                  fontSize: "clamp(1.4rem, 2.6vw, 1.9rem)",
-                  letterSpacing: "-0.01em",
+                  fontWeight: 600,
+                  fontSize: "clamp(1.05rem, 1.8vw, 1.25rem)",
+                  lineHeight: 1.45,
+                  letterSpacing: "-0.005em",
                   color: "var(--text-primary)",
+                  wordBreak: "keep-all",
                 }}
               >
-                “{verdict(score.composite)}.”
+                {verdict(score.composite)}.
               </p>
               <p
-                className="text-[12px]"
+                className="text-[11.5px]"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
               >
-                {score.runs}회 실행 평균 · 최종 결정은 인간 심사위원의 권한입니다.
+                {score.runs}회 실행 평균 · 최종 결정은 심사위원의 권한입니다.
               </p>
             </div>
 
@@ -202,13 +199,12 @@ export default async function ProposalDetailPage({
         <section className="mb-14">
           <div className="flex items-center gap-4 mb-2">
             <h2
-              className="ko-display"
               style={{
-                fontFamily: SERIF,
-                fontWeight: 800,
-                fontSize: "1.5rem",
-                lineHeight: 1.15,
+                fontWeight: 700,
+                fontSize: "1.125rem",
+                lineHeight: 1.4,
                 color: "var(--text-primary)",
+                letterSpacing: "-0.005em",
               }}
             >
               항목별 평가

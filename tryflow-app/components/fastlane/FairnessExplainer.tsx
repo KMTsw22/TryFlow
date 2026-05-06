@@ -7,7 +7,7 @@
 
 import { Lock, Repeat, AlertTriangle } from "lucide-react";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 const STEPS = [
   {
@@ -23,7 +23,7 @@ const STEPS = [
   {
     icon: AlertTriangle,
     title: "분산 플래그",
-    body: "표준편차가 임계값을 넘는 항목은 ‘검토 권고’ 로 표시. AI 가 흔들리는 영역은 사람에게 넘깁니다.",
+    body: "표준편차가 임계값을 넘는 항목은 ‘검토 권고’로 표시. AI가 흔들리는 영역은 사람에게 넘깁니다.",
   },
 ];
 
@@ -59,7 +59,7 @@ export function FairnessExplainer({ compact = false }: { compact?: boolean }) {
           className="text-[12.5px] leading-[1.7]"
           style={{ color: "var(--text-tertiary)" }}
         >
-          AI 는 1차 스코어링까지. 최종 심사 권한은 항상 인간 심사위원에게 있습니다.
+          AI는 1차 스코어링까지. 최종 심사 권한은 항상 심사위원에게 있습니다.
         </p>
       </div>
 

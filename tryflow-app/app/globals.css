@@ -23,38 +23,41 @@
     --radius: 0.5rem;
 
     /* ── Light mode theme vars ─────────────────────────── */
-    --page-bg: #f1f5f9;
-    --sidebar-bg: #ffffff;
-    --nav-bg: rgba(255,255,255,0.95);
-    --card-bg: rgba(0,0,0,0.025);
-    --input-bg: rgba(0,0,0,0.04);
-    --t-border: rgba(0,0,0,0.12);
-    --t-border-card: rgba(0,0,0,0.14);
-    --t-border-bright: rgba(0,0,0,0.18);
-    --t-input-border: rgba(0,0,0,0.18);
-    --t-border-subtle: rgba(0,0,0,0.08);
-    --chart-grid: rgba(0,0,0,0.12);
-    --chart-tick: rgba(0,0,0,0.62);
-    --gradient-navy: linear-gradient(180deg, #eef2ff 0%, #f0f4ff 100%);
+    /* 2026-05 한국 사무 SaaS 톤: 화이트 페이퍼 베이스 + slate 그레이 + 진한 네이비 강조.
+       정부24·토스Biz·더존 류의 단정한 사무 SaaS 톤이 베이스다. */
+    --page-bg: #FAFAFA;
+    --sidebar-bg: #FFFFFF;
+    --nav-bg: rgba(255,255,255,0.96);
+    --card-bg: #FFFFFF;
+    --input-bg: #FFFFFF;
+    --t-border: #E5E7EB;
+    --t-border-card: #E5E7EB;
+    --t-border-bright: #D1D5DB;
+    --t-input-border: #D1D5DB;
+    --t-border-subtle: #F3F4F6;
+    --chart-grid: #E5E7EB;
+    --chart-tick: #64748B;
+    --gradient-navy: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
 
     /* ── Surface hierarchy (new, layered depth) ──────── */
-    --surface-0: #fafafa;   /* page background */
-    --surface-1: #ffffff;   /* cards, primary containers */
-    --surface-2: #f4f4f5;   /* elevated surfaces, hover */
-    --surface-3: #ffffff;   /* modals, popovers (with shadow) */
+    --surface-0: #FAFAFA;   /* page background */
+    --surface-1: #FFFFFF;   /* cards, primary containers */
+    --surface-2: #F4F4F5;   /* elevated surfaces, hover */
+    --surface-3: #FFFFFF;   /* modals, popovers (with shadow) */
 
-    /* ── Text hierarchy (new) ────────────────────────── */
-    /* Labels/meta should read as confidently as body text on light bg.
-       Hierarchy is conveyed via font size/weight/case — NOT via gray tint.
-       All tiers near-black: contrast on #f1f5f9 is 14:1+ for every tier. */
-    --text-primary:   #000000;
-    --text-secondary: #0a0a0b;
-    --text-tertiary:  #27272a;
+    /* ── Text hierarchy ──────────────────────────────── */
+    /* 사무톤은 검정-순백 대비보다 slate 위주가 더 단정. 본문 가독성은
+       contrast 11:1+ 로 충분. 라벨/메타는 폰트 사이즈·weight 로 위계 표현. */
+    --text-primary:   #0F172A;  /* slate-900 */
+    --text-secondary: #334155;  /* slate-700 */
+    --text-tertiary:  #64748B;  /* slate-500 */
 
     /* ── Accent (single source of truth) ─────────────── */
-    --accent:       #6366f1;
-    --accent-soft:  rgba(99, 102, 241, 0.08);
-    --accent-ring:  rgba(99, 102, 241, 0.25);
+    /* 사무 SaaS 강조 = 진한 네이비. 한 가지 강조색으로 페이지 전반의
+       포커스 위치를 통제 (CTA, active state, 강조 라벨 등). */
+    --accent:       #1E3A8A;
+    --accent-soft:  rgba(30, 58, 138, 0.06);
+    --accent-ring:  rgba(30, 58, 138, 0.24);
 
     /* ── Semantic (score / trend only) ───────────────── */
     /* 2026-05 톤다운: 형광 채도를 낮추고 신뢰감 톤으로. */
@@ -136,7 +139,7 @@
   body {
     @apply antialiased;
     background: var(--page-bg);
-    color: #f1f5f9;
+    color: var(--text-primary);
     /* 2026-05 Korean-first 타이포 시스템:
        Pretendard 가 한글·영문·숫자 모두 처리. Inter 는 폴백.
        Fraunces 는 display/serif 한정 (Brand wordmark, 큰 점수, 인용구).
@@ -158,9 +161,11 @@
     letter-spacing: -0.01em; /* 한글에 자연스러운 미세 트래킹 */
   }
 
+  /* 점수/숫자 디스플레이. 사무 SaaS 톤에선 점수도 sans tabular 가 단정하다.
+     Brand wordmark 만 Fraunces serif 로 남겨 브랜드 포인트로 사용. */
   .num-display {
-    font-family: 'Fraunces', 'Pretendard Variable', serif;
-    font-feature-settings: "tnum", "ss01";
+    font-family: 'Pretendard Variable', 'Pretendard', system-ui, sans-serif;
+    font-feature-settings: "tnum";
     font-variant-numeric: tabular-nums;
   }
 
@@ -170,9 +175,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  html:not(.dark) body {
-    color: #0f172a;
-  }
 }
 
 @layer utilities {

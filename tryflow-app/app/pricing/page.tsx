@@ -3,7 +3,7 @@ import { Shield } from "lucide-react";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { Brand } from "@/components/layout/Brand";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 // Fastlane (2026-05) 요금제. 한국 운영기관·대학·액셀러레이터를 타겟으로
@@ -96,37 +96,28 @@ export default function PricingPage() {
         </Link>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-16">
-        <div className="flex items-center gap-4 mb-8 max-w-3xl mx-auto">
-          <span
-            className="text-[11.5px] font-medium tracking-[0.16em] uppercase"
-            style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
+      <div className="max-w-5xl mx-auto px-6 py-14">
+        <div className="text-center mb-12">
+          <h1
+            className="mb-3"
+            style={{
+              fontWeight: 700,
+              fontSize: "1.875rem",
+              lineHeight: 1.3,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.015em",
+            }}
           >
             요금제
-          </span>
-          <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
+          </h1>
+          <p
+            className="text-[14px] leading-[1.8] max-w-xl mx-auto"
+            style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
+          >
+            무료 플랜으로 평가표 입력부터 분산 플래그까지 전 기능을 체험할 수 있습니다.
+            정부 사업·대규모 공모전은 기관 플랜으로 문의 주세요.
+          </p>
         </div>
-
-        <h1
-          className="text-center mb-4 mx-auto max-w-3xl leading-[1.03]"
-          style={{
-            fontFamily: SERIF,
-            fontWeight: 900,
-            fontSize: "clamp(2.5rem, 5.5vw, 4rem)",
-            letterSpacing: "-0.035em",
-            color: "var(--text-primary)",
-          }}
-        >
-          평가 규모에 맞춰<br />
-          <span style={{ color: "var(--text-tertiary)" }}>고르세요.</span>
-        </h1>
-        <p
-          className="text-center text-[16px] leading-[1.7] mb-14 max-w-xl mx-auto"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          무료 플랜으로 평가표 입력부터 분산 플래그까지 전 기능을 체험할 수 있습니다.
-          정부 사업·대규모 공모전은 기관 플랜으로 문의 주세요.
-        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
           {PLANS.map((plan) => (

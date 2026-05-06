@@ -15,7 +15,7 @@ import { ScoreChip } from "@/components/fastlane/ScoreChip";
 import { FairnessBadge } from "@/components/fastlane/FairnessBadge";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 function rankAccent(rank: number): { bg: string; fg: string } | null {
   if (rank === 1) return { bg: "rgba(184, 134, 11, 0.10)", fg: "var(--rank-gold)" };
@@ -63,36 +63,29 @@ export default async function CompetitionDetailPage({
         대회 목록
       </Link>
 
-      {/* Kicker rule */}
-      <div className="flex items-center gap-4 mb-5">
-        <span
-          className="text-[12px] font-bold uppercase"
-          style={{ color: "var(--accent)", letterSpacing: "0.16em" }}
-        >
-          {competition.organizer}
-        </span>
-        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
-        <span
-          className="text-[12px] font-medium tabular-nums"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.08em" }}
-        >
-          마감 D-{dDay}
-        </span>
-      </div>
-
-      {/* H1 — 한글이라 ko-display 클래스 */}
+      {/* 사무톤 페이지 헤더: 제목 + 메타 한 줄 */}
       <h1
-        className="ko-display mb-6"
+        className="mb-2"
         style={{
-          fontFamily: SERIF,
-          fontWeight: 800,
-          fontSize: "clamp(2.4rem, 4.8vw, 3.6rem)",
-          lineHeight: 1.05,
+          fontWeight: 700,
+          fontSize: "1.75rem",
+          lineHeight: 1.3,
           color: "var(--text-primary)",
+          letterSpacing: "-0.01em",
         }}
       >
         {competition.name}
       </h1>
+      <div
+        className="flex items-center gap-3 mb-8 text-[12.5px] tabular-nums flex-wrap"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
+      >
+        <span style={{ color: "var(--accent)", fontWeight: 600 }}>
+          {competition.organizer}
+        </span>
+        <span style={{ color: "var(--t-border-bright)" }}>·</span>
+        <span>마감 D-{dDay}</span>
+      </div>
 
       {/* 메타 strip — 4개 통계 카드. 인포메이션 디자인의 “기능적 헤더”. */}
       <div
@@ -132,24 +125,23 @@ export default async function CompetitionDetailPage({
       <section className="mb-16">
         <div className="flex items-end justify-between mb-5">
           <div>
-            <p
-              className="text-[11.5px] font-bold uppercase mb-1.5"
-              style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
-            >
-              AI 1차 평가
-            </p>
             <h2
-              className="ko-display"
               style={{
-                fontFamily: SERIF,
-                fontWeight: 800,
-                fontSize: "clamp(1.6rem, 2.6vw, 2rem)",
-                lineHeight: 1.15,
+                fontWeight: 700,
+                fontSize: "1.125rem",
+                lineHeight: 1.4,
                 color: "var(--text-primary)",
+                letterSpacing: "-0.005em",
               }}
             >
               종합 점수 순위
             </h2>
+            <p
+              className="mt-1 text-[12px] font-medium"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
+            >
+              AI 1차 평가
+            </p>
           </div>
           <p
             className="text-[12px] tabular-nums hidden md:block"
@@ -387,7 +379,7 @@ export default async function CompetitionDetailPage({
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
         >
           σ (시그마) = 동일 제안서를 5회 실행한 결과의 표준편차. 임계값을 넘는 항목은
-          AI 의 평가가 흔들린다는 의미이므로 인간 심사위원의 검토를 권합니다.
+          AI의 평가가 흔들린다는 의미이므로 심사위원의 검토를 권합니다.
         </p>
       </section>
 

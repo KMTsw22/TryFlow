@@ -10,7 +10,8 @@ import Link from "next/link";
 import { ArrowRight, Plus, Trophy } from "lucide-react";
 import { MOCK_COMPETITIONS } from "@/lib/fastlane/mock";
 
-const SERIF = "'Fraunces', serif";
+// 사무톤: 디스플레이도 sans 통일. 변수명은 기존 사용처 호환을 위해 유지.
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 function daysUntil(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
@@ -31,58 +32,47 @@ export default function CompetitionsPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 pt-10 pb-24">
-      {/* Kicker */}
-      <div className="flex items-center gap-4 mb-5">
-        <span
-          className="text-[12px] font-bold uppercase"
-          style={{ color: "var(--accent)", letterSpacing: "0.16em" }}
-        >
-          내 대회
-        </span>
-        <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
-        <span
-          className="text-[12px] tabular-nums"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
-        >
-          {competitions.length}건 운영 중
-        </span>
-      </div>
-
-      {/* H1 + CTA */}
-      <div className="flex items-end justify-between gap-8 mb-4 flex-wrap">
-        <h1
-          className="ko-display"
-          style={{
-            fontFamily: SERIF,
-            fontWeight: 800,
-            fontSize: "clamp(2.4rem, 5vw, 3.6rem)",
-            lineHeight: 1.05,
-            color: "var(--text-primary)",
-          }}
-        >
-          평가, 빠르게.
-        </h1>
+      {/* 사무 SaaS 페이지 헤더 — 제목 + 부제 + 우측 primary CTA. */}
+      <div className="flex items-start justify-between gap-8 mb-3 flex-wrap">
+        <div>
+          <h1
+            style={{
+              fontWeight: 700,
+              fontSize: "1.625rem",
+              lineHeight: 1.3,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            내 대회
+          </h1>
+          <p
+            className="mt-1 text-[12.5px] tabular-nums"
+            style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
+          >
+            {competitions.length}건 운영 중
+          </p>
+        </div>
         <Link
           href="/competitions/new"
-          className="group inline-flex items-center gap-2 px-5 h-11 text-[13px] font-bold transition-all hover:brightness-110"
+          className="group inline-flex items-center gap-2 px-4 h-10 text-[13px] font-semibold transition-colors hover:brightness-110"
           style={{
             background: "var(--accent)",
             color: "#fff",
-            letterSpacing: "0.04em",
+            letterSpacing: "0.01em",
           }}
         >
-          <Plus className="w-4 h-4" />
-          새 대회 + 평가표
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
+          새 대회
         </Link>
       </div>
 
       <p
-        className="text-[15px] leading-[1.75] mb-10 max-w-xl"
-        style={{ color: "var(--text-secondary)" }}
+        className="text-[13.5px] leading-[1.8] mb-10 max-w-xl"
+        style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
-        주최 측이 평가표를 입력하면 AI 가 1차 스코어링을 합니다. 동일 제안서를
-        5회 실행해 평균과 표준편차로 점수를 산출하고, 분산이 큰 항목은 인간
+        주최 측이 평가표를 입력하면 AI가 1차 스코어링을 합니다. 동일 제안서를
+        5회 실행해 평균과 표준편차로 점수를 산출하고, 분산이 큰 항목은
         심사위원에게 넘깁니다.
       </p>
 

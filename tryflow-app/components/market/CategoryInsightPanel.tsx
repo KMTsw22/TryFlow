@@ -13,7 +13,7 @@ import { ArrowRight, TrendingUp, TrendingDown, Minus } from "lucide-react";
  * flagged as "어떻게든 도움 되겠지" noise by the professor.
  */
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 export interface TopIdeaRow {

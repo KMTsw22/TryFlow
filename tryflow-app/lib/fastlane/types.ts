@@ -77,5 +77,5 @@ export interface Competition {
   proposals: Proposal[];
 }
 
-/** 분산 플래그 임계값. 이 값을 넘으면 인간 심사위원 검토가 필요하다. */
+/** 분산 플래그 임계값. 이 값을 넘으면 심사위원 검토가 필요하다. */
 export const STDDEV_REVIEW_THRESHOLD = 8;

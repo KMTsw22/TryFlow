@@ -23,7 +23,7 @@ import {
 import { BUILTIN_TEMPLATE } from "@/lib/fastlane/mock";
 import type { Criterion } from "@/lib/fastlane/types";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 // 카드 좌측 vertical accent line 의 사이클 색상. 시각적으로 항목 구분.
 const ACCENT_CYCLE = [
@@ -108,29 +108,28 @@ export default function NewCompetitionPage() {
         대회 목록
       </Link>
 
-      <p
-        className="text-[12px] font-bold uppercase mb-3"
-        style={{ color: "var(--accent)", letterSpacing: "0.16em" }}
-      >
-        새 대회 · 평가표 정의
-      </p>
       <h1
-        className="ko-display mb-4"
         style={{
-          fontFamily: SERIF,
-          fontWeight: 800,
-          fontSize: "clamp(2.2rem, 4.4vw, 3rem)",
-          lineHeight: 1.05,
+          fontWeight: 700,
+          fontSize: "1.625rem",
+          lineHeight: 1.3,
           color: "var(--text-primary)",
+          letterSpacing: "-0.01em",
         }}
       >
-        평가표를<br />직접 정의하세요.
+        새 대회
       </h1>
       <p
-        className="text-[15px] leading-[1.75] mb-14 max-w-xl"
-        style={{ color: "var(--text-secondary)" }}
+        className="mt-1 text-[12.5px]"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
       >
-        AI 는 주최 측이 적은 기준 그대로 채점합니다. 6축 기본 템플릿에서 출발하거나,
+        평가표 정의
+      </p>
+      <p
+        className="text-[13.5px] leading-[1.8] mt-4 mb-12 max-w-xl"
+        style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
+      >
+        AI는 주최 측이 적은 기준 그대로 채점합니다. 6축 기본 템플릿에서 출발하거나,
         직접 항목을 추가해 가중치를 조정할 수 있습니다.
       </p>
 
@@ -266,7 +265,7 @@ export default function NewCompetitionPage() {
                         onChange={(e) =>
                           updateCriterion(c.id, { description: e.target.value })
                         }
-                        placeholder="채점 기준 설명. AI 가 이 텍스트를 그대로 평가 프롬프트에 사용합니다."
+                        placeholder="채점 기준 설명. AI가 이 텍스트를 그대로 평가 프롬프트에 사용합니다."
                         rows={2}
                         className="w-full px-2 py-1.5 text-[13px] leading-[1.65] outline-none border-b resize-none bg-transparent transition-colors focus:border-b-[color:var(--accent)]"
                         style={{
@@ -408,13 +407,12 @@ function Section({
             {step}
           </p>
           <h2
-            className="ko-display"
             style={{
-              fontFamily: SERIF,
-              fontWeight: 800,
-              fontSize: "1.5rem",
-              lineHeight: 1.15,
+              fontWeight: 700,
+              fontSize: "1.125rem",
+              lineHeight: 1.4,
               color: "var(--text-primary)",
+              letterSpacing: "-0.005em",
             }}
           >
             {title}

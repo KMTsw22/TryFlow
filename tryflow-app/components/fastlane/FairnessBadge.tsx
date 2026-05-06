@@ -13,7 +13,7 @@ export function FairnessBadge({ stddev, compact = false }: Props) {
     return (
       <span
         className="inline-flex items-center gap-1 px-1.5 h-[18px] tabular-nums"
-        title={`표준편차 ${stddev.toFixed(1)} — 인간 심사위원 검토 권고`}
+        title={`표준편차 ${stddev.toFixed(1)} — 심사위원 검토 권고`}
         style={{
           background: "var(--signal-attention-soft)",
           color: "var(--signal-attention)",

@@ -12,7 +12,7 @@ interface Props {
 
 const STORAGE_KEY = "trywepp_onboarding_v1";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 type Stored = { dismissed?: boolean; browsedMarket?: boolean };

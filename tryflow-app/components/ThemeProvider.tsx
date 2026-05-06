@@ -11,16 +11,19 @@ interface ThemeCtxValue {
 }
 
 const ThemeCtx = createContext<ThemeCtxValue>({
-  theme: "dark",
-  isDark: true,
+  theme: "light",
+  isDark: false,
   toggle: () => {},
 });
 
+// FOUC 스크립트(layout.tsx)와 같은 키를 사용해야 토글 결과가 새로고침 후에도 유지됨.
+const STORAGE_KEY = "fastlane_theme";
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const stored = (localStorage.getItem("trywepp_theme") as Theme | null) || "dark";
+    const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null) || "light";
     setTheme(stored);
     if (stored === "dark") document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
@@ -29,7 +32,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggle = () => {
     setTheme((prev) => {
       const next: Theme = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("trywepp_theme", next);
+      localStorage.setItem(STORAGE_KEY, next);
       if (next === "dark") document.documentElement.classList.add("dark");
       else document.documentElement.classList.remove("dark");
       return next;

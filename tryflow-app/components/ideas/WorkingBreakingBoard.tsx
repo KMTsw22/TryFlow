@@ -5,7 +5,7 @@ import { useAnalysis } from "./AnalysisContext";
 
 type Signal = { text: string; source: "opportunity" | "cross" | "risk" };
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 /**

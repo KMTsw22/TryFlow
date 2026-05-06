@@ -22,7 +22,7 @@ import { createClient } from "@/lib/supabase/client";
  */
 
 const DISPLAY = "'Inter', sans-serif";
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const MIN_SLOTS = 2;
 
 interface IdeaPreview {

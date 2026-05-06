@@ -4,7 +4,7 @@ import { ArrowRight, Heart } from "lucide-react";
 import { IdeaCard, type IdeaCardData } from "@/components/ideas/IdeaCard";
 import { getCategoryTheme } from "@/lib/categories";
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 /**

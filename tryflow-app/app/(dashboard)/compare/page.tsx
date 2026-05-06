@@ -18,7 +18,7 @@ import {
 } from "recharts";
 
 // ── Typography tokens ───────────────────────────────────────────────────
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 // ── Slot accents ────────────────────────────────────────────────────────

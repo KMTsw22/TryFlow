@@ -28,7 +28,7 @@ import { DIMENSION_META } from "@/lib/dimensions";
  */
 
 const DISPLAY = "'Inter', sans-serif";
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 // 1차 출처 인용. F 중간판의 핵심 근거 노출.
 // See decisions/evaluation-axes-rationale.md for full citations.

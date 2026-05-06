@@ -15,7 +15,7 @@ interface Props {
   id?: string;
 }
 
-const SERIF = "'Fraunces', serif";
+const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const DISPLAY = "'Inter', sans-serif";
 
 type SecondaryAction = {
