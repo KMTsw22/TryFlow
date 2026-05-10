@@ -7,13 +7,24 @@ interface Props {
   scrolled: boolean;
   /** 아날로그 랜딩(책상 톤)과 맞춘 색·그림자 */
   analog?: boolean;
+  /** 에디토리얼 히어로: 스크롤 전 흰 링크, 이후 잉크 */
+  editorial?: boolean;
 }
 
-export function LandingTopNav({ scrolled: _scrolled, analog }: Props) {
-  const ink = analog ? "#1a1814" : "#000000";
+export function LandingTopNav({
+  scrolled,
+  analog,
+  editorial,
+}: Props) {
+  const onHero = Boolean(editorial && !scrolled);
+  const ink = onHero
+    ? "rgba(255,255,255,0.9)"
+    : analog
+      ? "#1a1814"
+      : "#000000";
   /** 기본: 공문용 남청(#2a4a72). analog: 책상 랜딩용 뮤트 블루 */
-  const blue = analog ? "#3d4f62" : "#2a4a72";
-  const paper = analog ? "#fffef8" : "#FFFFFF";
+  const blue = onHero ? "transparent" : analog ? "#3d4f62" : "#2a4a72";
+  const paper = onHero ? "rgba(255,255,255,0.95)" : analog ? "#fffef8" : "#FFFFFF";
 
   return (
     <div className="flex items-center gap-1 md:gap-2">
@@ -34,16 +45,24 @@ export function LandingTopNav({ scrolled: _scrolled, analog }: Props) {
         </Link>
       </div>
 
-      <Link
-        href="/competitions"
-        className={`text-[12.5px] font-bold px-4 h-9 inline-flex items-center gap-1.5 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2a4a72] ${
-          analog ? "shadow-[2px_3px_0_rgba(0,0,0,0.1)]" : "border border-black"
-        }`}
+        <Link
+          href="/competitions"
+          className={`text-[12.5px] font-bold px-4 h-9 inline-flex items-center gap-1.5 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2a4a72] ${
+            onHero
+              ? "border border-white/80"
+              : analog
+                ? "shadow-[2px_3px_0_rgba(0,0,0,0.1)]"
+                : "border border-black"
+          }`}
         style={{
-          background: blue,
+          background: onHero ? "transparent" : blue,
           color: paper,
           letterSpacing: "0.08em",
-          borderColor: analog ? "rgba(45,42,40,0.25)" : blue,
+          borderColor: onHero
+            ? "rgba(255,255,255,0.75)"
+            : analog
+              ? "rgba(45,42,40,0.25)"
+              : blue,
           borderWidth: 1,
           borderStyle: "solid",
           borderRadius: analog ? 2 : undefined,

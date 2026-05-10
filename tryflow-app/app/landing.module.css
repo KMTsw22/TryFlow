@@ -1,0 +1,728 @@
+/* 에디토리얼 랜딩 — 크림 바탕, 넓은 여백, 교차 레이아웃 */
+
+.landingRoot {
+  --cream: #f4f2ec;
+  --cream-deep: #ebe7de;
+  --cream-muted: #e4e0d6;
+  --ink: #1c1b18;
+  --ink-soft: #3d3a35;
+  --olive: #3d5246;
+  --olive-light: #5a6e62;
+  --lane-accent: #b24c28;
+  --lane-accent-soft: rgba(178, 76, 40, 0.22);
+  --white: #ffffff;
+  /* 밝은 영역 모눈종이 — 큰 칸 */
+  --graph-cell-large: 2.5rem;
+  --graph-line: rgba(32, 30, 26, 0.072);
+  --graph-line-muted: rgba(32, 30, 26, 0.08);
+  min-height: 100vh;
+  background-color: var(--cream);
+  background-image:
+    linear-gradient(var(--graph-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph-line) 1px, transparent 1px);
+  background-size: var(--graph-cell-large) var(--graph-cell-large);
+  color: var(--ink);
+  font-family: "Pretendard Variable", Pretendard, -apple-system, sans-serif;
+  /* 한글 단어(어절) 단위 줄바꿈 — 음절 중간 끊김 완화 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* ── 고정 내비 ── */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem clamp(1.25rem, 4vw, 3rem);
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.navTransparent {
+  background: transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.navSolid {
+  background-color: rgba(244, 242, 236, 0.94);
+  background-image:
+    linear-gradient(var(--graph-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph-line) 1px, transparent 1px);
+  background-size: var(--graph-cell-large) var(--graph-cell-large);
+  border-bottom: 1px solid rgba(28, 27, 24, 0.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 0 rgba(28, 27, 24, 0.04);
+}
+
+.navInner {
+  width: 100%;
+  max-width: 90rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* ── 히어로 ── */
+.hero {
+  position: relative;
+  min-height: min(92vh, 52rem);
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(5rem, 14vh, 8rem) clamp(1.25rem, 5vw, 4rem)
+    clamp(2.5rem, 6vh, 4rem);
+}
+
+.heroMedia {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.heroImg {
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+.heroImgKraft {
+  object-position: center 48%;
+  filter: saturate(0.9) contrast(1.04) brightness(0.97);
+}
+
+.heroScrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      108deg,
+      rgba(12, 12, 10, 0.08) 0%,
+      rgba(12, 12, 10, 0.02) 38%,
+      transparent 52%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(12, 12, 10, 0.22) 0%,
+      rgba(12, 12, 10, 0.42) 52%,
+      rgba(12, 12, 10, 0.66) 100%
+    );
+}
+
+.heroContent {
+  position: relative;
+  z-index: 2;
+  max-width: min(40rem, 94vw);
+  margin-left: 0;
+  margin-right: auto;
+  padding-left: clamp(0.15rem, 1.2vw, 0.75rem);
+  border-left: 3px solid rgba(255, 255, 255, 0.55);
+}
+
+@media (max-width: 767px) {
+  .heroContent {
+    max-width: 100%;
+    border-left-width: 2px;
+  }
+}
+
+.heroQuote {
+  margin: 0;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(1.35rem, 3.8vw, 2.05rem);
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--white);
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* 히어로 인용: 앞줄 크게 · 뒷줄 살짝 작게 */
+.heroLineLoud {
+  font-size: clamp(1.42rem, 4.1vw, 2.28rem);
+  font-weight: 600;
+  line-height: 1.38;
+  letter-spacing: -0.03em;
+}
+
+.heroLineQuiet {
+  font-size: clamp(1.05rem, 2.65vw, 1.52rem);
+  font-weight: 500;
+  line-height: 1.58;
+  letter-spacing: -0.02em;
+  opacity: 0.93;
+}
+
+.heroAttribution {
+  margin: 1.15rem 0 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 500;
+}
+
+/* 스크롤 저니 직후 — 다크 배경 인용 */
+.introAfterJourney {
+  position: relative;
+  padding: clamp(3.25rem, 11vh, 5.75rem) clamp(1.25rem, 5vw, 4rem);
+  background: #232428;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.introInner {
+  position: relative;
+  z-index: 1;
+  max-width: min(40rem, 94vw);
+  margin: 0 auto;
+  padding-inline: clamp(0.5rem, 2vw, 1rem);
+}
+
+.introQuote {
+  margin: 0;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(1.22rem, 3.15vw, 1.95rem);
+  font-weight: 500;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.35);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 인용 등: 의도한 위치에서만 다음 줄로 */
+.introRun {
+  display: block;
+  margin-top: 0.32em;
+}
+
+.introLineLoud {
+  font-size: clamp(1.32rem, 3.6vw, 2.12rem);
+  font-weight: 600;
+  line-height: 1.46;
+  letter-spacing: -0.03em;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.introLineQuiet {
+  font-size: clamp(1.05rem, 2.5vw, 1.42rem);
+  font-weight: 500;
+  line-height: 1.72;
+  letter-spacing: -0.02em;
+  color: rgba(232, 230, 226, 0.78);
+}
+
+.introQuote > .introLineQuiet {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+/* ── 라벨 · 본문 ── */
+.kicker {
+  display: block;
+  margin: 0 0 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--olive);
+}
+
+.prose {
+  margin: 0;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(1.02rem, 1.9vw, 1.125rem);
+  line-height: 1.85;
+  color: var(--ink-soft);
+  max-width: 36rem;
+}
+
+.proseStrong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.linkMore {
+  display: inline-block;
+  margin-top: 1.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--olive);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.linkMore:hover {
+  color: var(--olive-light);
+  border-bottom-color: var(--olive-light);
+}
+
+/* ── 교차 섹션 ── */
+.section {
+  padding: clamp(4rem, 12vw, 8rem) clamp(1.25rem, 5vw, 4rem);
+  position: relative;
+}
+
+/* 본문 섹션 중 일부에만 옅은 톤(페이지에서 sectionTint 병기) */
+.sectionTint {
+  background-color: rgba(228, 224, 214, 0.35);
+}
+
+.sectionInner {
+  max-width: 90rem;
+  margin: 0 auto;
+}
+
+.split {
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+}
+
+.splitText {
+  min-width: 0;
+}
+
+.splitText .kicker {
+  font-family: "Pretendard Variable", Pretendard, sans-serif;
+  font-size: clamp(0.68rem, 1vw, 0.76rem);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--ink);
+  border-left: 3px solid var(--lane-accent);
+  padding-left: 1rem;
+  margin-left: -0.125rem;
+  text-transform: none;
+}
+
+/* 이미지 옆 본문: 크기 단계 (리드 → 본문 → 보조) */
+.splitProse {
+  margin: 0;
+  max-width: 36rem;
+}
+
+.splitLead {
+  display: block;
+  margin: 0 0 0.75rem;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(1.38rem, 2.65vw, 1.92rem);
+  font-weight: 600;
+  line-height: 1.42;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.splitMid {
+  display: block;
+  margin: 0 0 0.55rem;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(0.98rem, 1.65vw, 1.1rem);
+  line-height: 1.88;
+  color: var(--ink-soft);
+}
+
+.splitFine {
+  display: block;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(0.84rem, 1.35vw, 0.93rem);
+  line-height: 1.78;
+  letter-spacing: 0.02em;
+  color: rgba(61, 58, 53, 0.78);
+}
+
+.splitMid .proseStrong,
+.splitFine .proseStrong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+@media (min-width: 900px) {
+  .split {
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+    gap: clamp(1.75rem, 4.5vw, 3.5rem);
+    align-items: start;
+  }
+
+  .splitReverse {
+    grid-template-columns: minmax(0, 0.56fr) minmax(0, 0.44fr);
+  }
+
+  .splitReverse .splitText {
+    order: 2;
+  }
+
+  .splitReverse .splitFigure {
+    order: 1;
+  }
+
+  .split:not(.splitReverse) .splitFigure {
+    transform: translateX(-2.5%);
+  }
+
+  .splitReverse .splitFigure {
+    transform: translateX(3%);
+  }
+}
+
+.splitFigure {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  max-height: min(32rem, 70vh);
+  margin: 0 auto;
+  width: 100%;
+  max-width: 28rem;
+}
+
+/* 가로형 플로차트(검증 절 등) — 하단 라벨이 잘리지 않도록 세로 여유 */
+.splitFigureFlow {
+  aspect-ratio: 16 / 11;
+  max-width: min(38rem, 100%);
+  max-height: min(30rem, 76vh);
+}
+
+@media (min-width: 900px) {
+  .splitFigure {
+    max-width: none;
+    margin: 0;
+  }
+}
+
+.splitImg {
+  object-fit: cover;
+  border-radius: 1px;
+  box-shadow:
+    0 1px 0 rgba(28, 27, 24, 0.06),
+    0 18px 40px -28px rgba(28, 27, 24, 0.35);
+}
+
+.splitImgRoad {
+  object-position: center 48%;
+}
+
+.splitImgRoadPov {
+  object-position: center 58%;
+}
+
+.splitImgAiFolder {
+  object-position: center center;
+}
+
+.splitImgFlowchart {
+  object-fit: cover;
+  object-position: center bottom;
+}
+
+/* ── 통계 세 칸 ── */
+.statBand {
+  padding: clamp(3.5rem, 8vw, 5.5rem) clamp(1.25rem, 5vw, 4rem);
+  background-color: var(--cream-muted);
+  background-image:
+    linear-gradient(var(--graph-line-muted) 1px, transparent 1px),
+    linear-gradient(90deg, var(--graph-line-muted) 1px, transparent 1px);
+  background-size: var(--graph-cell-large) var(--graph-cell-large);
+  border-top: 1px solid rgba(28, 27, 24, 0.07);
+  border-bottom: 1px solid rgba(28, 27, 24, 0.07);
+}
+
+.statBandInner {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.statGrid {
+  display: grid;
+  gap: clamp(1.75rem, 4vw, 2.75rem);
+  width: 100%;
+  min-width: 0;
+  text-align: start;
+}
+
+@media (min-width: 720px) {
+  .statGrid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.85fr) minmax(0, 1fr);
+    align-items: start;
+    column-gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .statGrid > div:nth-child(2) {
+    border-left: 1px solid rgba(28, 27, 24, 0.08);
+    border-right: 1px solid rgba(28, 27, 24, 0.08);
+    padding-inline: clamp(1rem, 3vw, 2rem);
+    text-align: center;
+  }
+
+  .statGrid > div:nth-child(3) {
+    text-align: end;
+  }
+}
+
+@media (max-width: 719px) {
+  .statGrid {
+    text-align: center;
+  }
+}
+
+.statValue {
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(2rem, 4.5vw, 2.75rem);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.statLabel {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--olive);
+  font-weight: 600;
+}
+
+.statNote {
+  margin-top: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.58;
+}
+
+/* ── 어두운 풀폭 밴드 (배경 이미지 없음) ── */
+.darkBand {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(4rem, 10vw, 6.5rem) clamp(1.25rem, 5vw, 4rem);
+  text-align: center;
+  color: var(--white);
+  background: #232428;
+}
+
+.darkInner {
+  position: relative;
+  z-index: 1;
+  max-width: 38rem;
+  margin: 0;
+  margin-left: clamp(1rem, 8vw, 5.5rem);
+  margin-right: auto;
+  text-align: left;
+}
+
+@media (max-width: 767px) {
+  .darkInner {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    max-width: 34rem;
+  }
+}
+
+.darkHeading {
+  margin: 0 0 clamp(0.85rem, 2vw, 1.15rem);
+  line-height: 0;
+}
+
+.darkRoadMark {
+  margin-top: 0;
+}
+
+.darkProse {
+  margin: 0 auto;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  line-height: 1.86;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.darkLead {
+  display: block;
+  margin: 0 0 0.85rem;
+  font-size: clamp(1.2rem, 2.35vw, 1.45rem);
+  font-weight: 600;
+  line-height: 1.58;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.darkRest {
+  display: block;
+  font-size: clamp(0.95rem, 1.75vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.86;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.darkStrong {
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ── 본문 단독 블록 (이미지 없는 구간) ── */
+.proseBlock {
+  max-width: 42rem;
+  margin: 0;
+  margin-left: clamp(0rem, 5vw, 4rem);
+  margin-right: auto;
+  text-align: left;
+}
+
+.proseBlock .kicker {
+  font-family: "Pretendard Variable", Pretendard, sans-serif;
+  font-size: clamp(0.68rem, 1vw, 0.76rem);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--ink);
+  border-left: 3px solid var(--lane-accent);
+  padding-left: 1rem;
+  margin-left: -0.125rem;
+  text-transform: none;
+}
+
+@media (max-width: 767px) {
+  .proseBlock {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+    max-width: 36rem;
+  }
+}
+
+.proseBlock .prose {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 접근 섹션: 중간·작은 두 톤 */
+.proseBlockLead {
+  margin: 0 0 0.65rem;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(1.12rem, 2vw, 1.22rem);
+  line-height: 1.84;
+  color: var(--ink);
+  max-width: 34rem;
+}
+
+.proseBlockFine {
+  margin: 0;
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  font-size: clamp(0.9rem, 1.5vw, 0.98rem);
+  line-height: 1.82;
+  color: rgba(61, 58, 53, 0.8);
+  max-width: 32rem;
+}
+
+/* ── CTA ── */
+.ctaSection {
+  padding: clamp(4rem, 10vw, 6rem) clamp(1.25rem, 5vw, 4rem);
+  text-align: left;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.ctaSection .kicker {
+  font-family: "Pretendard Variable", Pretendard, sans-serif;
+  font-size: clamp(0.68rem, 1vw, 0.76rem);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--ink);
+  border-left: 3px solid var(--lane-accent);
+  padding-left: 1rem;
+  margin-left: -0.125rem;
+  text-transform: none;
+}
+
+@media (min-width: 768px) {
+  .ctaSection {
+    padding-left: clamp(2rem, 8vw, 5rem);
+  }
+}
+
+.ctaProse {
+  font-family: "Noto Serif KR", Batang, Georgia, serif;
+  line-height: 1.82;
+  color: var(--ink-soft);
+  max-width: 30rem;
+  margin: 0;
+  text-align: left;
+}
+
+.ctaProseLoud {
+  font-size: clamp(1.05rem, 1.9vw, 1.18rem);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ctaProseSoft {
+  font-size: clamp(0.92rem, 1.45vw, 1.02rem);
+  font-weight: 500;
+  color: rgba(61, 58, 53, 0.82);
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1.75rem;
+}
+
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--cream);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ctaBtn:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.ctaBtnGhost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.ctaBtnGhost:hover {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+/* ── 푸터 ── */
+.footer {
+  padding: 2rem clamp(1.25rem, 5vw, 4rem) 3rem;
+  border-top: 1px solid rgba(28, 27, 24, 0.08);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.footerInner {
+  max-width: 90rem;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
