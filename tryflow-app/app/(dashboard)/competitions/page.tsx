@@ -5,20 +5,74 @@
 //     검토 권고가 있으면 amber dot + 카운트로 시선 끌기.
 //   - 우측 큰 D-day 숫자 — 마감 임박 (D-7 이하) 시 rose tint.
 //   - hover: 카드가 살짝 떠오르는 게 아니라 좌측 vertical accent 가 자라남 (calm).
+//
+// 데이터: 로그인 시 본인이 운영하는 competitions 테이블 데이터를 표시.
+// 비로그인 시엔 demo mock 으로 fallback (로그인 유도 배너 포함).
 
 import Link from "next/link";
-import { ArrowRight, Plus, Trophy } from "lucide-react";
+import { ArrowRight, LogIn, Plus, Trophy } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import {
+  rowToCompetition,
+  type CompetitionRow,
+  type ProposalRow,
+} from "@/lib/fastlane/db";
+import { rowToProposal } from "@/lib/fastlane/db";
 import { MOCK_COMPETITIONS } from "@/lib/fastlane/mock";
+import type { Competition } from "@/lib/fastlane/types";
 
-// 사무톤: 디스플레이도 sans 통일. 변수명은 기존 사용처 호환을 위해 유지.
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 function daysUntil(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
 }
 
-export default function CompetitionsPage() {
-  const competitions = MOCK_COMPETITIONS;
+async function loadUserCompetitions(): Promise<{ competitions: Competition[]; isAuthenticated: boolean }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { competitions: [], isAuthenticated: false };
+
+  const { data: rows } = await supabase
+    .from("competitions")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const competitionRows = (rows ?? []) as CompetitionRow[];
+  const ids = competitionRows.map((c) => c.id);
+  const proposalRows: ProposalRow[] = [];
+  if (ids.length > 0) {
+    const { data: pRows } = await supabase
+      .from("proposals")
+      .select("*")
+      .in("competition_id", ids);
+    proposalRows.push(...((pRows ?? []) as ProposalRow[]));
+  }
+
+  const proposalsByComp = new Map<string, ProposalRow[]>();
+  for (const p of proposalRows) {
+    const arr = proposalsByComp.get(p.competition_id) ?? [];
+    arr.push(p);
+    proposalsByComp.set(p.competition_id, arr);
+  }
+
+  const competitions = competitionRows.map((row) =>
+    rowToCompetition(
+      row,
+      (proposalsByComp.get(row.id) ?? []).map((r) => rowToProposal(r))
+    )
+  );
+
+  return { competitions, isAuthenticated: true };
+}
+
+export default async function CompetitionsPage() {
+  const { competitions: userCompetitions, isAuthenticated } = await loadUserCompetitions();
+
+  // 로그인 + 본인 대회 있으면 그것만 표시. 그 외엔 demo mock 으로 미리보기.
+  const useDemoFallback = !isAuthenticated || userCompetitions.length === 0;
+  const competitions = useDemoFallback ? MOCK_COMPETITIONS : userCompetitions;
+
   const totalProposals = competitions.reduce((s, c) => s + c.proposals.length, 0);
   const totalReview = competitions.reduce(
     (sum, c) =>
@@ -50,7 +104,9 @@ export default function CompetitionsPage() {
             className="mt-1 text-[12.5px] tabular-nums"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
           >
-            {competitions.length}건 운영 중
+            {useDemoFallback
+              ? `${MOCK_COMPETITIONS.length}건 데모 표시 중`
+              : `${competitions.length}건 운영 중`}
           </p>
         </div>
         <Link
@@ -71,10 +127,60 @@ export default function CompetitionsPage() {
         className="text-[13.5px] leading-[1.8] mb-10 max-w-xl"
         style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
-        주최 측이 평가표를 입력하면 AI가 1차 스코어링을 합니다. 동일 제안서를
-        5회 실행해 평균과 표준편차로 점수를 산출하고, 분산이 큰 항목은
-        심사위원에게 넘깁니다.
+        창업·미술·글쓰기·과학·디자인 등 어떤 대회든 평가표를 입력하면 AI가
+        도메인 특화 rubric을 자동 생성해 1차 채점합니다. 항목마다
+        Draft → Skeptic → Judge 3-Pass 검증으로 점수를 산출하고, 의견이
+        갈리는 항목은 심사위원에게 넘깁니다.
       </p>
+
+      {/* 비로그인 안내 — 데모 데이터 표시 중임을 알림 */}
+      {!isAuthenticated && (
+        <div
+          className="flex items-start gap-3 px-5 py-4 mb-10"
+          style={{
+            background: "var(--accent-soft)",
+            border: "1px solid var(--accent-ring)",
+          }}
+        >
+          <LogIn
+            className="w-4 h-4 mt-0.5 shrink-0"
+            style={{ color: "var(--accent)" }}
+            strokeWidth={2.2}
+          />
+          <div className="text-[13px] leading-[1.7]" style={{ color: "var(--text-secondary)" }}>
+            아래는 미리보기 샘플입니다.{" "}
+            <Link
+              href="/login"
+              className="font-semibold underline-offset-2 hover:underline"
+              style={{ color: "var(--accent)" }}
+            >
+              로그인
+            </Link>{" "}
+            하면 본인이 운영하는 대회만 표시됩니다.
+          </div>
+        </div>
+      )}
+
+      {isAuthenticated && userCompetitions.length === 0 && (
+        <div
+          className="flex items-start gap-3 px-5 py-4 mb-10"
+          style={{
+            background: "var(--surface-2)",
+            border: "1px solid var(--t-border-subtle)",
+          }}
+        >
+          <Trophy
+            className="w-4 h-4 mt-0.5 shrink-0"
+            style={{ color: "var(--text-tertiary)" }}
+            strokeWidth={2.2}
+          />
+          <div className="text-[13px] leading-[1.7]" style={{ color: "var(--text-secondary)" }}>
+            아직 운영 중인 대회가 없어 데모 샘플을 보여드립니다. 우측{" "}
+            <span style={{ fontWeight: 600 }}>새 대회</span> 버튼으로 첫 평가표를
+            만들어보세요.
+          </div>
+        </div>
+      )}
 
       {/* 통계 strip */}
       <div
@@ -82,7 +188,7 @@ export default function CompetitionsPage() {
         style={{ borderColor: "var(--t-border-subtle)" }}
       >
         <Stat label="운영 중 대회" value={`${competitions.length}`} />
-        <Stat label="누적 제안서" value={`${totalProposals}`} />
+        <Stat label="누적 출품" value={`${totalProposals}`} />
         <Stat
           label="검토 권고"
           value={`${totalReview}`}
@@ -171,7 +277,7 @@ export default function CompetitionsPage() {
                   </span>
                   <span style={{ color: "var(--t-border-bright)" }}>·</span>
                   <span>
-                    제안서{" "}
+                    출품{" "}
                     <span
                       className="tabular-nums"
                       style={{
@@ -181,6 +287,7 @@ export default function CompetitionsPage() {
                     >
                       {proposalCount}
                     </span>
+                    건
                   </span>
                   {reviewCount > 0 && (
                     <>

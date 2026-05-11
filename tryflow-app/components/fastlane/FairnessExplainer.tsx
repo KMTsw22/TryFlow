@@ -5,25 +5,25 @@
 //   - 좌측에 큰 라벨, 우측에 3-step 카드. editorial column layout.
 //   - 카드는 절제된 — 색은 accent 한 톤만. 아이콘은 작고 텍스트는 분명하게.
 
-import { Lock, Repeat, AlertTriangle } from "lucide-react";
+import { FileText, Scale, AlertTriangle } from "lucide-react";
 
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
 const STEPS = [
   {
-    icon: Lock,
-    title: "결정성 고정",
-    body: "temperature 0, seed 고정. 같은 입력에 가능한 한 같은 답이 나오도록 호출 자체를 결정적으로 만듭니다.",
+    icon: FileText,
+    title: "도메인 특화 rubric",
+    body: "대회 생성 시 주최자의 평가 항목과 주제로부터 항목별 채점 기준(점수 가이드 + Calibration Anchors)을 AI가 미리 생성해 DB에 고정. 모든 출품작이 동일한 잣대로 채점됩니다.",
   },
   {
-    icon: Repeat,
-    title: "다중 실행 평균",
-    body: "동일 제안서를 5회 병렬 실행. 평균을 점수로, 표준편차로 변동성을 측정합니다.",
+    icon: Scale,
+    title: "3-Pass 검증",
+    body: "각 항목마다 Draft (낙관 초안) → Skeptic (양방향 보정) → Judge (가중 평균 확정) 3 단계 agent를 거칩니다. 단일 호출의 즉흥성을 구조적으로 흡수합니다.",
   },
   {
     icon: AlertTriangle,
-    title: "분산 플래그",
-    body: "표준편차가 임계값을 넘는 항목은 ‘검토 권고’로 표시. AI가 흔들리는 영역은 사람에게 넘깁니다.",
+    title: "분기점 플래그",
+    body: "Draft·Skeptic·Judge 의견이 갈리는 항목은 ‘검토 권고’로 표시. AI가 흔들리는 영역은 심사위원에게 넘깁니다.",
   },
 ];
 

@@ -9,11 +9,65 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Calendar, Users, FileText } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Users, FileText, Plus } from "lucide-react";
 import { findCompetition } from "@/lib/fastlane/mock";
+import { createClient } from "@/lib/supabase/server";
+import {
+  rowToCompetition,
+  rowToProposal,
+  type CompetitionRow,
+  type ProposalRow,
+} from "@/lib/fastlane/db";
+import type { Competition } from "@/lib/fastlane/types";
 import { ScoreChip } from "@/components/fastlane/ScoreChip";
 import { FairnessBadge } from "@/components/fastlane/FairnessBadge";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
+import { RubricStatusBanner } from "@/components/fastlane/RubricStatusBanner";
+import { CriterionRubricCard } from "@/components/fastlane/CriterionRubricCard";
+
+// uuid v4 모양인지 — DB 조회를 시도할지 결정.
+function looksLikeUuid(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+async function loadCompetition(id: string): Promise<{
+  competition: Competition | null;
+  isOwner: boolean;
+  isMock: boolean;
+  rubricError: string | null;
+}> {
+  // demo mock id 는 DB 조회 안 하고 바로 mock.
+  if (!looksLikeUuid(id)) {
+    const mock = findCompetition(id);
+    return { competition: mock, isOwner: false, isMock: !!mock, rubricError: null };
+  }
+
+  const supabase = await createClient();
+  const { data: comp } = await supabase
+    .from("competitions")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (!comp) return { competition: null, isOwner: false, isMock: false, rubricError: null };
+
+  const { data: propRows } = await supabase
+    .from("proposals")
+    .select("*")
+    .eq("competition_id", id)
+    .order("created_at", { ascending: false });
+
+  const proposals = ((propRows ?? []) as ProposalRow[]).map((r) => rowToProposal(r));
+  const competition = rowToCompetition(comp as CompetitionRow, proposals);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const isOwner = !!user && user.id === (comp as CompetitionRow).user_id;
+  return {
+    competition,
+    isOwner,
+    isMock: false,
+    rubricError: (comp as CompetitionRow).rubric_error ?? null,
+  };
+}
 
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
@@ -30,10 +84,13 @@ export default async function CompetitionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const competition = findCompetition(id);
+  const { competition, isMock, isOwner, rubricError } = await loadCompetition(id);
   if (!competition) notFound();
 
   const { template, proposals } = competition;
+  const rubricsGenerated = template.criteria.filter(
+    (c) => !!c.rubricMd && c.rubricMd.trim().length > 0
+  ).length;
 
   const ranked = [...proposals].sort((a, b) => {
     const sa = a.score?.composite ?? -1;
@@ -64,18 +121,33 @@ export default async function CompetitionDetailPage({
       </Link>
 
       {/* 사무톤 페이지 헤더: 제목 + 메타 한 줄 */}
-      <h1
-        className="mb-2"
-        style={{
-          fontWeight: 700,
-          fontSize: "1.75rem",
-          lineHeight: 1.3,
-          color: "var(--text-primary)",
-          letterSpacing: "-0.01em",
-        }}
-      >
-        {competition.name}
-      </h1>
+      <div className="flex items-start justify-between gap-6 mb-2 flex-wrap">
+        <h1
+          style={{
+            fontWeight: 700,
+            fontSize: "1.75rem",
+            lineHeight: 1.3,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {competition.name}
+        </h1>
+        {!isMock && (
+          <Link
+            href={`/competitions/${competition.id}/proposals/new`}
+            className="inline-flex items-center gap-2 px-4 h-10 text-[13px] font-semibold transition-colors hover:brightness-110"
+            style={{
+              background: "var(--accent)",
+              color: "#fff",
+              letterSpacing: "0.01em",
+            }}
+          >
+            <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
+            출품 제출
+          </Link>
+        )}
+      </div>
       <div
         className="flex items-center gap-3 mb-8 text-[12.5px] tabular-nums flex-wrap"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
@@ -83,9 +155,27 @@ export default async function CompetitionDetailPage({
         <span style={{ color: "var(--accent)", fontWeight: 600 }}>
           {competition.organizer}
         </span>
+        {competition.theme && (
+          <>
+            <span style={{ color: "var(--t-border-bright)" }}>·</span>
+            <span style={{ fontWeight: 500 }}>{competition.theme}</span>
+          </>
+        )}
         <span style={{ color: "var(--t-border-bright)" }}>·</span>
         <span>마감 D-{dDay}</span>
       </div>
+
+      {/* Rubric 자동 생성 상태 — DB 대회만. mock 은 status 무관. */}
+      {!isMock && (
+        <RubricStatusBanner
+          competitionId={competition.id}
+          status={competition.rubricStatus}
+          error={rubricError}
+          isOwner={isOwner}
+          generatedCount={rubricsGenerated}
+          totalCount={template.criteria.length}
+        />
+      )}
 
       {/* 메타 strip — 4개 통계 카드. 인포메이션 디자인의 “기능적 헤더”. */}
       <div
@@ -121,6 +211,44 @@ export default async function CompetitionDetailPage({
         />
       </div>
 
+      {/* 평가 항목별 rubric — DB 대회만. mock 은 rubric 없음. */}
+      {!isMock && (
+        <section className="mb-16">
+          <div className="flex items-end justify-between mb-5 gap-4 flex-wrap">
+            <div>
+              <h2
+                style={{
+                  fontWeight: 700,
+                  fontSize: "1.125rem",
+                  lineHeight: 1.4,
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                평가표
+              </h2>
+              <p
+                className="mt-1 text-[12px] font-medium"
+                style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
+              >
+                항목별 채점 기준 · {rubricsGenerated}/{template.criteria.length} rubric 생성됨
+              </p>
+            </div>
+            <p
+              className="text-[12px] tabular-nums"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
+            >
+              모든 제안서가 동일한 rubric 으로 채점됩니다
+            </p>
+          </div>
+          <div className="space-y-3">
+            {template.criteria.map((c, i) => (
+              <CriterionRubricCard key={c.id} criterion={c} index={i} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 리더보드 */}
       <section className="mb-16">
         <div className="flex items-end justify-between mb-5">
@@ -147,7 +275,7 @@ export default async function CompetitionDetailPage({
             className="text-[12px] tabular-nums hidden md:block"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
           >
-            5회 실행 평균 · σ 표준편차 · 임계값 초과 시 검토 권고
+            3-Pass (Draft·Skeptic·Judge) · σ 분기점 분산 · 임계값 초과 시 검토 권고
           </p>
         </div>
 
@@ -170,7 +298,7 @@ export default async function CompetitionDetailPage({
                 <Th width={56} align="center">
                   순위
                 </Th>
-                <Th align="left">제안서</Th>
+                <Th align="left">출품작</Th>
                 <Th width={92} align="right">
                   종합
                 </Th>
@@ -364,7 +492,7 @@ export default async function CompetitionDetailPage({
                         color: "var(--text-tertiary)",
                       }}
                     >
-                      아직 제출된 제안서가 없습니다.
+                      아직 제출된 출품작이 없습니다.
                     </p>
                   </td>
                 </tr>
@@ -378,8 +506,8 @@ export default async function CompetitionDetailPage({
           className="mt-4 text-[11.5px] leading-[1.65]"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
         >
-          σ (시그마) = 동일 제안서를 5회 실행한 결과의 표준편차. 임계값을 넘는 항목은
-          AI의 평가가 흔들린다는 의미이므로 심사위원의 검토를 권합니다.
+          σ (시그마) = Draft·Skeptic·Judge 세 agent 점수의 표준편차. 임계값을 넘는 항목은
+          AI 의 평가가 흔들린다는 의미이므로 심사위원의 검토를 권합니다.
         </p>
       </section>
 

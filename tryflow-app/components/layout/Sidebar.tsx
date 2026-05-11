@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Plus,
   Home,
@@ -20,9 +20,14 @@ type NavItem = {
   label: string;
   icon: typeof Home;
   href: string;
-  badgeCount?: number;
+  badgeKey?: "totalCompetitions" | "pendingReviewItems";
 };
 type NavSection = { id: string; title: string; items: NavItem[] };
+
+interface SidebarStats {
+  totalCompetitions: number;
+  pendingReviewItems: number;
+}
 
 // 가장 길게 매칭되는 단 하나의 nav 항목 인덱스를 결정.
 // 같은 href를 가진 항목이 여러 개여도 첫 번째만 active 로 잡혀 시각적 충돌 방지.
@@ -48,15 +53,21 @@ function findActiveItemKey(
   return best?.key ?? null;
 }
 
-// Fastlane 데모 단계: 로그인 없이 누구나 들어와서 데모 동선만 확인.
-// nav 는 mock 기반 데모 페이지만 노출 (실제 DB 의존 페이지는 발표 후 정리).
-const DEMO_SECTIONS: NavSection[] = [
+// nav 구조 — badgeKey 가 있으면 /api/competitions/stats 결과로 카운트 표시.
+// '검토 대기' 는 별도 페이지가 없고 분산 큰 항목이 있는 대회로 안내하는 의미라
+// /competitions 로 동일하게 보내되 badge 로만 차별화.
+const SECTIONS: NavSection[] = [
   {
     id: "workspace",
-    title: "데모",
+    title: "워크스페이스",
     items: [
       { label: "홈", icon: Home, href: "/" },
-      { label: "내 대회", icon: Trophy, href: "/competitions" },
+      {
+        label: "내 대회",
+        icon: Trophy,
+        href: "/competitions",
+        badgeKey: "totalCompetitions",
+      },
       { label: "새 대회", icon: FilePlus, href: "/competitions/new" },
     ],
   },
@@ -65,7 +76,12 @@ const DEMO_SECTIONS: NavSection[] = [
     title: "심사",
     items: [
       { label: "심사 큐", icon: Gavel, href: "/competitions" },
-      { label: "검토 대기", icon: ClipboardList, href: "/competitions/demo-2026-spring" },
+      {
+        label: "검토 대기",
+        icon: ClipboardList,
+        href: "/competitions",
+        badgeKey: "pendingReviewItems",
+      },
     ],
   },
   {
@@ -85,8 +101,32 @@ interface Props {
 export function Sidebar(_props: Props) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
+  const [stats, setStats] = useState<SidebarStats>({
+    totalCompetitions: 0,
+    pendingReviewItems: 0,
+  });
 
-  const SECTIONS = DEMO_SECTIONS;
+  // pathname 이 /competitions 영역에서 바뀌면 stats 재조회 — 새 대회 만들거나
+  // 평가가 끝나서 검토 권고 수가 변할 수 있으므로.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/competitions/stats", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: SidebarStats | null) => {
+        if (cancelled || !data) return;
+        setStats({
+          totalCompetitions: data.totalCompetitions ?? 0,
+          pendingReviewItems: data.pendingReviewItems ?? 0,
+        });
+      })
+      .catch(() => {
+        /* 무시 — 사이드바 뱃지가 없어도 nav 자체는 동작 */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
   const activeKey = findActiveItemKey(pathname, SECTIONS);
 
   return (
@@ -150,9 +190,10 @@ export function Sidebar(_props: Props) {
               </div>
             )}
             <div className="space-y-0.5">
-              {section.items.map(({ label, icon: Icon, href, badgeCount }, itemIdx) => {
+              {section.items.map(({ label, icon: Icon, href, badgeKey }, itemIdx) => {
                 const active = activeKey === `${section.id}:${itemIdx}`;
-                const showBadge = typeof badgeCount === "number" && badgeCount > 0;
+                const badgeCount = badgeKey ? stats[badgeKey] : 0;
+                const showBadge = badgeCount > 0;
                 return (
                   <Link
                     key={`${section.id}:${itemIdx}`}

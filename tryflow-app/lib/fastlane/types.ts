@@ -13,6 +13,15 @@ export interface Criterion {
   weight: number;
   /** 주최 측이 적은 채점 기준 설명. */
   description: string;
+  /**
+   * 대회 생성 시점에 AI 가 자동 생성한 평가 rubric markdown.
+   * (테마 + criterion 정의를 받아 도메인 지식, scoring guide,
+   *  calibration anchors 가 들어간 한국어 가이드 문서를 만든 결과.)
+   *
+   * 채점 시 이 텍스트가 그대로 system prompt 로 사용된다.
+   * 수동 생성 전이거나 실패한 경우 undefined.
+   */
+  rubricMd?: string;
 }
 
 /** 평가 기준 템플릿 (한 대회의 평가표 한 벌). */
@@ -24,16 +33,16 @@ export interface CriteriaTemplate {
   criteria: Criterion[];
 }
 
-/** 한 평가 항목에 대한 AI 다중 실행 결과. */
+/** 한 평가 항목에 대한 AI 3-Pass 검증 결과 (Draft → Skeptic → Judge). */
 export interface AxisScore {
   criterionId: string;
-  /** N회 실행 평균 (0~100). */
+  /** Judge 최종 점수 (0~100). */
   mean: number;
-  /** 표준편차. 임계값 초과 시 검토 필요 플래그. */
+  /** Draft·Skeptic·Judge 세 점수의 표준편차. 임계값 초과 시 검토 필요 플래그. */
   stddev: number;
   /** 검토 필요 여부 — stddev > threshold 일 때 true. */
   needsReview: boolean;
-  /** AI 가 적은 한 줄 사유 (대표 실행 1회 기준). */
+  /** Judge 의 한 줄 assessment 요약. */
   reasoning?: string;
 }
 
@@ -44,7 +53,7 @@ export interface ProposalScore {
   composite: number;
   /** 항목별 점수. */
   axes: AxisScore[];
-  /** 다중 실행 횟수 (N=5 기본). */
+  /** 축당 거친 pass 수 (3-Pass 파이프라인에서 3). */
   runs: number;
 }
 
@@ -63,16 +72,27 @@ export interface Proposal {
   score?: ProposalScore;
 }
 
+/** Rubric 자동 생성 진행 상태. */
+export type RubricStatus = "pending" | "generating" | "ready" | "failed";
+
 /** 대회 (평가 관리자가 운영하는 단위). */
 export interface Competition {
   id: string;
   name: string;
   /** 주최 기관. */
   organizer: string;
+  /**
+   * 대회의 도메인/주제 — rubric 자동 생성에 컨텍스트로 사용.
+   * ex) "농업·스마트팜", "에듀테크 - 초중등 교육", "헬스케어 - 정신건강".
+   * 비어 있으면 일반 startup 평가 기준으로 fallback.
+   */
+  theme: string;
   /** 모집 마감 (ISO). */
   deadline: string;
   /** 사용하는 평가 기준. */
   template: CriteriaTemplate;
+  /** Rubric 자동 생성 상태. */
+  rubricStatus: RubricStatus;
   /** 제출된 제안서들. */
   proposals: Proposal[];
 }

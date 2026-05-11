@@ -192,8 +192,8 @@ export default function HomePage() {
               wordBreak: "keep-all",
             }}
           >
-            정부 사업·창업 경진대회의 1차 평가를 AI가 대신합니다. 동일 제안서를
-            5회 실행해 평균과 표준편차로 점수를 산출하고, 분산이 큰 항목은{" "}
+            각종 대회·공모전의 1차 평가를 AI가 대신합니다. 항목마다 Draft → Skeptic →
+            Judge 3-Pass 검증으로 점수와 분기점을 산출하고, 의견이 갈리는 항목은{" "}
             <span style={{ color: TONE.textPrimary, fontWeight: 600 }}>
               심사위원에게 넘깁니다
             </span>
@@ -257,17 +257,17 @@ export default function HomePage() {
             {
               num: "2만",
               unit: "건+",
-              body: "한 회 창업 경진대회 지원서 규모. 사람 손으로 1차 평가하면 공정성 시비가 따라온다.",
+              body: "한 회 대형 공모전·경진대회 출품 규모. 사람 손으로 1차 평가하면 공정성 시비가 따라온다.",
             },
             {
-              num: "5회",
-              unit: "실행",
-              body: "동일 제안서를 다중 실행하고 평균·표준편차로 점수의 신뢰 구간을 정량화.",
+              num: "3",
+              unit: "PASS",
+              body: "Draft → Skeptic → Judge. 단일 LLM 호출의 즉흥성을 3 단계로 흡수, 같은 잣대로 채점.",
             },
             {
               num: "σ↑",
               unit: "검토",
-              body: "표준편차가 임계값을 넘는 항목은 심사위원에게 자동 회부.",
+              body: "3 agent 의견이 갈리는 항목은 ‘검토 권고’로 표시 — 심사위원에게 자동 회부.",
             },
           ].map((s, i) => (
             <div
@@ -331,18 +331,18 @@ export default function HomePage() {
           {[
             {
               step: "01",
-              title: "주최 측이 평가표 입력",
-              body: "항목명, 가중치, 채점 설명을 입력. 6축 기본 템플릿에서 출발해도 되고, 정부사업 공고에서 평가표를 옮겨 적어도 된다.",
+              title: "주최 측이 평가표 + 주제 입력",
+              body: "항목명, 가중치, 채점 설명에 더해 대회 주제(예: '환경 사진 공모전')를 입력. AI가 항목마다 도메인 특화 rubric (점수 가이드 + Calibration Anchors)을 자동 생성해 DB에 고정.",
             },
             {
               step: "02",
-              title: "지원자가 제안서 제출",
-              body: "주최 측이 정의한 항목에 따라 답변을 작성. AI는 주최 측이 적은 채점 기준 그대로 평가한다.",
+              title: "출품자가 작품 제출",
+              body: "주최 측이 정의한 항목에 따라 본문을 작성. 모든 출품작이 동일한 rubric 으로 채점되어 잣대 일관성 보장.",
             },
             {
               step: "03",
-              title: "AI 1차 평가 + 분산 플래그",
-              body: "동일 제안서를 5회 병렬 실행. 평균을 점수로, 표준편차로 변동성을 측정. 분산 큰 항목은 심사위원 검토 권고.",
+              title: "3-Pass 검증 + 분기점 플래그",
+              body: "각 항목마다 Draft → Skeptic → Judge 3 단계 agent 가 채점. 3 의견이 갈리는 항목은 ‘검토 권고’로 표시되어 심사위원에게 회부.",
             },
           ].map((it, idx) => (
             <div
@@ -406,17 +406,17 @@ export default function HomePage() {
           {[
             {
               icon: Lock,
-              title: "결정성 고정",
-              body: "temperature 0, seed 고정. 같은 입력에는 가능한 한 같은 답이 나오도록 호출 자체를 결정적으로.",
+              title: "도메인 특화 rubric",
+              body: "대회 생성 시 주제·항목으로부터 채점 기준(점수 가이드 + Calibration Anchors)을 미리 생성해 고정. 모든 출품작이 같은 잣대.",
             },
             {
               icon: Repeat,
-              title: "다중 실행 평균",
-              body: "동일 제안서를 5회 병렬 실행. 평균을 점수로, 표준편차로 변동성을 측정.",
+              title: "3-Pass 검증",
+              body: "Draft (낙관 초안) → Skeptic (양방향 보정) → Judge (가중 평균 + anchor 검증) 3 단계. 단일 호출의 즉흥성을 구조적으로 흡수.",
             },
             {
               icon: AlertTriangle,
-              title: "분산 플래그",
+              title: "분기점 플래그",
               body: "표준편차가 임계값을 넘는 항목은 ‘검토 권고’. AI가 흔들리는 영역은 사람에게.",
             },
           ].map((s, i) => (

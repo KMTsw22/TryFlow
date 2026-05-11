@@ -18,7 +18,7 @@ const PLANS = [
     features: [
       "월 30건 제안서 평가",
       "기본 6축 평가표 템플릿",
-      "AI 다중 실행 (3회)",
+      "AI 3-Pass 검증",
       "분산 플래그 표시",
     ],
     locked: [
@@ -40,7 +40,7 @@ const PLANS = [
     features: [
       "월 1,000건 제안서 평가",
       "맞춤 평가표 무제한",
-      "AI 다중 실행 (5회)",
+      "AI 3-Pass 검증 (Draft·Skeptic·Judge)",
       "심사위원 초대 · 협업",
       "분산 플래그 자동 회부",
       "리포트 PDF 내보내기",

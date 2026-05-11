@@ -9,8 +9,105 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { findProposal } from "@/lib/fastlane/mock";
+import { createClient } from "@/lib/supabase/server";
+import {
+  rowToCompetition,
+  rowToProposal,
+  type CompetitionRow,
+  type ProposalRow,
+} from "@/lib/fastlane/db";
+import type { Competition, Proposal } from "@/lib/fastlane/types";
 import { AxisScoreBar } from "@/components/fastlane/AxisScoreBar";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
+import { EvaluationStatusCard } from "@/components/fastlane/EvaluationStatusCard";
+import { MarkdownReport } from "@/components/fastlane/MarkdownReport";
+
+function looksLikeUuid(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+type AxisReportsMap = Record<string, { markdown: string; generatedAt?: string }>;
+
+async function loadProposalContext(
+  competitionId: string,
+  proposalId: string
+): Promise<{
+  competition: Competition;
+  proposal: Proposal;
+  evaluationStatus: "pending" | "running" | "done" | "failed";
+  evaluationError: string | null;
+  reportMd: string | null;
+  axisReports: AxisReportsMap;
+} | null> {
+  // mock fallback — demo 인 경우.
+  if (!looksLikeUuid(competitionId)) {
+    const found = findProposal(competitionId, proposalId);
+    if (!found) return null;
+    return {
+      competition: found.competition,
+      proposal: found.proposal,
+      evaluationStatus: found.proposal.score ? "done" : "pending",
+      evaluationError: null,
+      reportMd: null,
+      axisReports: {},
+    };
+  }
+
+  const supabase = await createClient();
+  const { data: compRow } = await supabase
+    .from("competitions")
+    .select("*")
+    .eq("id", competitionId)
+    .single();
+  if (!compRow) return null;
+
+  const { data: propRow } = await supabase
+    .from("proposals")
+    .select("*")
+    .eq("id", proposalId)
+    .eq("competition_id", competitionId)
+    .single();
+  if (!propRow) return null;
+
+  const row = propRow as ProposalRow;
+  const proposal = rowToProposal(row);
+  const competition = rowToCompetition(compRow as CompetitionRow, [proposal]);
+  const status = row.evaluation_status as
+    | "pending"
+    | "running"
+    | "done"
+    | "failed";
+
+  // axis_reports jsonb 를 안전하게 파싱.
+  const axisReports: AxisReportsMap = {};
+  if (row.axis_reports && typeof row.axis_reports === "object") {
+    for (const [key, val] of Object.entries(row.axis_reports as Record<string, unknown>)) {
+      if (val && typeof val === "object") {
+        const r = val as Record<string, unknown>;
+        const md = typeof r.markdown === "string" ? r.markdown : "";
+        if (md.trim().length > 0) {
+          axisReports[key] = {
+            markdown: md,
+            generatedAt:
+              typeof r.generatedAt === "string" ? r.generatedAt : undefined,
+          };
+        }
+      }
+    }
+  }
+
+  return {
+    competition,
+    proposal,
+    evaluationStatus: status,
+    evaluationError: row.evaluation_error,
+    reportMd:
+      typeof row.evaluation_report_md === "string" && row.evaluation_report_md.trim().length > 0
+        ? row.evaluation_report_md
+        : null,
+    axisReports,
+  };
+}
 
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
@@ -33,10 +130,10 @@ export default async function ProposalDetailPage({
   params: Promise<{ id: string; pid: string }>;
 }) {
   const { id, pid } = await params;
-  const found = findProposal(id, pid);
-  if (!found) notFound();
+  const ctx = await loadProposalContext(id, pid);
+  if (!ctx) notFound();
 
-  const { competition, proposal } = found;
+  const { competition, proposal, evaluationStatus, evaluationError, reportMd, axisReports } = ctx;
   const score = proposal.score;
   const reviewAxes = score?.axes.filter((a) => a.needsReview) ?? [];
 
@@ -71,8 +168,12 @@ export default async function ProposalDetailPage({
         <span style={{ color: "var(--accent)", fontWeight: 600 }}>
           {competition.name}
         </span>
-        <span style={{ color: "var(--t-border-bright)" }}>·</span>
-        <span>제안 팀 {proposal.team}</span>
+        {proposal.team && (
+          <>
+            <span style={{ color: "var(--t-border-bright)" }}>·</span>
+            <span>출품 {proposal.team}</span>
+          </>
+        )}
       </div>
       <p
         className="text-[13.5px] leading-[1.85] mb-12 max-w-xl"
@@ -80,6 +181,14 @@ export default async function ProposalDetailPage({
       >
         {proposal.summary}
       </p>
+
+      {/* 평가 진행 중 또는 실패 상태 — score 가 없을 때만 표시. */}
+      {!score && evaluationStatus !== "done" && (
+        <EvaluationStatusCard
+          status={evaluationStatus}
+          error={evaluationError}
+        />
+      )}
 
       {/* Hero — 종합 점수 */}
       {score && (
@@ -142,7 +251,7 @@ export default async function ProposalDetailPage({
                 className="text-[11.5px]"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
               >
-                {score.runs}회 실행 평균 · 최종 결정은 심사위원의 권한입니다.
+                Draft → Skeptic → Judge 3-Pass 검증 · 최종 결정은 심사위원의 권한입니다.
               </p>
             </div>
 
@@ -186,7 +295,7 @@ export default async function ProposalDetailPage({
                   </span>
                 </p>
                 <p className="text-[11.5px] mt-1" style={{ color: "var(--text-tertiary)" }}>
-                  AI 분산이 임계값을 초과
+                  Draft·Skeptic·Judge 의견 분산이 임계값을 초과
                 </p>
               </div>
             )}
@@ -214,7 +323,7 @@ export default async function ProposalDetailPage({
             className="text-[12.5px] mb-4"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
           >
-            5회 실행 평균 ± 표준편차. 임계값 초과 시 검토 권고.
+            3-Pass (Draft → Skeptic → Judge) 검증 · σ = 세 agent 점수 표준편차. 임계값 초과 시 검토 권고.
           </p>
 
           <div className="border-t" style={{ borderColor: "var(--t-border-subtle)" }}>
@@ -231,6 +340,7 @@ export default async function ProposalDetailPage({
                     axis={axis}
                     criterionName={c.name}
                     weight={c.weight}
+                    axisMarkdown={axisReports[c.id]?.markdown}
                   />
                   <p
                     className="pb-3.5 -mt-2 text-[12px] leading-[1.65]"
@@ -242,6 +352,45 @@ export default async function ProposalDetailPage({
               );
             })}
           </div>
+        </section>
+      )}
+
+      {/* AI 종합 평가 리포트 — synthesizer 가 생성한 markdown.
+          항목별 평가는 위에서 score chart 로 보여주고, 여기는 서사형 분석. */}
+      {reportMd && (
+        <section
+          className="mb-14 px-7 py-8"
+          style={{
+            background: "var(--surface-1)",
+            border: "1px solid var(--t-border-subtle)",
+          }}
+        >
+          <div className="flex items-baseline justify-between mb-2 gap-4 flex-wrap">
+            <h2
+              style={{
+                fontWeight: 700,
+                fontSize: "1.125rem",
+                lineHeight: 1.4,
+                color: "var(--text-primary)",
+                letterSpacing: "-0.005em",
+              }}
+            >
+              AI 심층 평가 리포트
+            </h2>
+            <p
+              className="text-[10.5px] font-bold uppercase"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+            >
+              심사위원 검토용
+            </p>
+          </div>
+          <p
+            className="text-[12.5px] mb-6"
+            style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
+          >
+            3-Pass 검증 결과를 종합하여 항목별 심층 분석 후 통합 작성.
+          </p>
+          <MarkdownReport source={reportMd} />
         </section>
       )}
 

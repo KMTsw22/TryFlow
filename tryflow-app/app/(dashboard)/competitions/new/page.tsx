@@ -22,6 +22,14 @@ import {
 } from "lucide-react";
 import { BUILTIN_TEMPLATE } from "@/lib/fastlane/mock";
 import type { Criterion } from "@/lib/fastlane/types";
+import { useToast } from "@/components/ui/Toast";
+
+// 기본 마감일 = 오늘 + 30일. <input type="date"> 가 받는 YYYY-MM-DD 포맷.
+function defaultDeadline(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().slice(0, 10);
+}
 
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
@@ -50,11 +58,15 @@ function newCriterion(): Criterion {
 
 export default function NewCompetitionPage() {
   const router = useRouter();
+  const { show: toast } = useToast();
   const [name, setName] = useState("");
   const [organizer, setOrganizer] = useState("");
-  const [criteria, setCriteria] = useState<Criterion[]>(
-    BUILTIN_TEMPLATE.criteria.map((c) => ({ ...c }))
-  );
+  const [theme, setTheme] = useState("");
+  const [deadline, setDeadline] = useState(defaultDeadline());
+  const [submitting, setSubmitting] = useState(false);
+  // 일반 대회 (미술, 글쓰기, 과학, 창업, ...) 전부 지원하므로 기본값은 비어있음.
+  // 창업 6축 preset 은 옆 버튼으로 명시적으로 불러와야 함.
+  const [criteria, setCriteria] = useState<Criterion[]>([]);
 
   const totalWeight = useMemo(
     () => criteria.reduce((s, c) => s + c.weight, 0),
@@ -84,17 +96,76 @@ export default function NewCompetitionPage() {
     setCriteria((prev) => prev.map((c) => ({ ...c, weight: equal })));
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return alert("대회명을 입력해주세요.");
+    if (submitting) return;
+    if (!name.trim()) return toast({ message: "대회명을 입력해주세요.", tone: "danger" });
     if (criteria.length === 0)
-      return alert("평가 항목을 1개 이상 추가해주세요.");
+      return toast({ message: "평가 항목을 1개 이상 추가해주세요.", tone: "danger" });
     if (!weightOk)
-      return alert(`가중치 합이 100% 가 되어야 합니다. (현재 ${totalPct}%)`);
+      return toast({
+        message: `가중치 합이 100% 가 되어야 합니다. (현재 ${totalPct}%)`,
+        tone: "danger",
+      });
     if (criteria.some((c) => !c.name.trim()))
-      return alert("모든 항목의 이름을 입력해주세요.");
-    alert("평가표가 저장되었습니다. (데모: 실제 DB 저장은 백엔드 연동 후)");
-    router.push("/competitions");
+      return toast({ message: "모든 항목의 이름을 입력해주세요.", tone: "danger" });
+    if (!theme.trim())
+      return toast({
+        message: "주제를 입력해주세요. AI rubric 생성에 사용됩니다.",
+        tone: "danger",
+      });
+    if (!deadline) return toast({ message: "마감일을 선택해주세요.", tone: "danger" });
+
+    setSubmitting(true);
+    try {
+      // <input type="date"> 는 시간이 비므로 그날 23:59:59 로 채워서 전송.
+      const deadlineIso = new Date(`${deadline}T23:59:59`).toISOString();
+      const res = await fetch("/api/competitions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          organizer: organizer.trim(),
+          theme: theme.trim(),
+          deadline: deadlineIso,
+          template: {
+            id: `custom-${Date.now()}`,
+            name: name.trim(),
+            isBuiltin: false,
+            criteria: criteria.map((c) => ({
+              ...c,
+              name: c.name.trim(),
+              description: c.description.trim(),
+            })),
+          },
+        }),
+      });
+
+      if (res.status === 401) {
+        toast({ message: "로그인이 필요합니다.", tone: "danger" });
+        router.push("/login");
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast({
+          message: data?.error ?? "대회 생성에 실패했습니다.",
+          tone: "danger",
+        });
+        return;
+      }
+
+      toast({ message: "대회가 생성되었습니다.", tone: "success" });
+      const newId = data?.competition?.id;
+      router.push(newId ? `/competitions/${newId}` : "/competitions");
+      router.refresh();
+    } catch (err) {
+      console.error("create competition", err);
+      toast({ message: "네트워크 오류가 발생했습니다.", tone: "danger" });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -129,8 +200,10 @@ export default function NewCompetitionPage() {
         className="text-[13.5px] leading-[1.8] mt-4 mb-12 max-w-xl"
         style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
-        AI는 주최 측이 적은 기준 그대로 채점합니다. 6축 기본 템플릿에서 출발하거나,
-        직접 항목을 추가해 가중치를 조정할 수 있습니다.
+        대회를 만들면 입력한 주제와 평가 항목으로부터 AI가 항목별 채점 rubric
+        (도메인 지식 + 점수 가이드 + calibration anchors) 을 자동 생성해
+        DB에 저장합니다. 이후 모든 제안서는 이 동일한 rubric으로 채점되어
+        일관성이 보장됩니다.
       </p>
 
       <form onSubmit={handleSave} className="space-y-14">
@@ -149,6 +222,39 @@ export default function NewCompetitionPage() {
                 value={organizer}
                 onChange={(e) => setOrganizer(e.target.value)}
                 placeholder="예: 중소벤처기업부 · 창업진흥원"
+              />
+            </Field>
+            <Field
+              label="주제 / 도메인"
+              required
+              hint="rubric 자동 생성에 사용"
+            >
+              <BareInput
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                placeholder="예: 환경 사진 공모전, 청소년 단편소설, 고등 화학 경진대회, 핀테크 SaaS"
+              />
+              <p
+                className="mt-2 text-[11.5px] leading-[1.65]"
+                style={{ color: "var(--text-tertiary)" }}
+              >
+                창업·미술·사진·글쓰기·과학·디자인·해커톤 등 어떤 분야든 OK. 구체적일수록
+                도메인 특화된 rubric이 생성됩니다 — "헬스케어" 보다는 "헬스케어 - 만성질환
+                환자 모니터링", "그림" 보다는 "수채화 풍경 공모전 - 도시" 처럼.
+              </p>
+            </Field>
+            <Field label="제출 마감" required>
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                min={new Date().toISOString().slice(0, 10)}
+                className="w-full bg-transparent outline-none border-b py-2.5 text-[15px] tabular-nums transition-colors focus:border-b-[color:var(--accent)]"
+                style={{
+                  color: "var(--text-primary)",
+                  borderColor: "var(--t-border-subtle)",
+                  colorScheme: "light dark",
+                }}
               />
             </Field>
           </FieldStack>
@@ -174,9 +280,10 @@ export default function NewCompetitionPage() {
                 background: "var(--accent-soft)",
                 letterSpacing: "0.04em",
               }}
+              title="시장성·문제 절박성·제품 우수성·차별화·수익 모델·시장 타이밍"
             >
               <Sparkles className="w-3 h-3" />
-              기본 6축 불러오기
+              창업 6축 예시 불러오기
             </button>
             <button
               type="button"
@@ -256,7 +363,7 @@ export default function NewCompetitionPage() {
                           onChange={(e) =>
                             updateCriterion(c.id, { name: e.target.value })
                           }
-                          placeholder="항목명 (예: 시장성)"
+                          placeholder="항목명 (예: 독창성, 완성도, 표현력, 시장성)"
                           large
                         />
                       </div>
@@ -265,7 +372,7 @@ export default function NewCompetitionPage() {
                         onChange={(e) =>
                           updateCriterion(c.id, { description: e.target.value })
                         }
-                        placeholder="채점 기준 설명. AI가 이 텍스트를 그대로 평가 프롬프트에 사용합니다."
+                        placeholder="채점 기준 한 줄 설명. AI가 이 텍스트로 rubric을 자동 생성합니다."
                         rows={2}
                         className="w-full px-2 py-1.5 text-[13px] leading-[1.65] outline-none border-b resize-none bg-transparent transition-colors focus:border-b-[color:var(--accent)]"
                         style={{
@@ -367,14 +474,15 @@ export default function NewCompetitionPage() {
             </Link>
             <button
               type="submit"
-              className="px-7 h-11 inline-flex items-center gap-2 text-[13.5px] font-bold transition-all hover:brightness-110"
+              disabled={submitting}
+              className="px-7 h-11 inline-flex items-center gap-2 text-[13.5px] font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{
                 background: "var(--accent)",
                 color: "#fff",
                 letterSpacing: "0.04em",
               }}
             >
-              대회 만들기
+              {submitting ? "저장 중…" : "대회 만들기"}
             </button>
           </div>
         </div>

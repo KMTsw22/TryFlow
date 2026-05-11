@@ -86,8 +86,10 @@ export const DEMO_COMPETITION: Competition = {
   id: "demo-2026-spring",
   name: "2026 모두의 창업경진대회 (봄)",
   organizer: "중소벤처기업부 · 창업진흥원",
+  theme: "일반 창업 — 다양한 분야 통합",
   deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
   template: KOSME_TEMPLATE,
+  rubricStatus: "ready",
   proposals: [
     buildProposal(
       "p1",
@@ -219,8 +221,10 @@ export const MOCK_COMPETITIONS: Competition[] = [
     id: "demo-edu-2026",
     name: "에듀테크 챌린지 2026",
     organizer: "한국교육개발원",
+    theme: "에듀테크 - 초중등 교육",
     deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     template: BUILTIN_TEMPLATE,
+    rubricStatus: "ready",
     proposals: [],
   },
 ];
