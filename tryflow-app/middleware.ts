@@ -4,11 +4,19 @@ import { NextResponse, type NextRequest } from "next/server";
 // Fastlane 데모 단계: 로그인 게이트를 모두 제거. 누구나 데모 동선에 진입 가능.
 // Supabase 세션 갱신만 유지 (있으면 쓰고, 없으면 게스트로 진행).
 export async function middleware(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // 로컬에서 .env 없이 랜딩만 볼 때 createServerClient 가 깨지면
+  // Link 클라이언트 네비게이션이 조용히 실패할 수 있음 → 세션 갱신 생략.
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {

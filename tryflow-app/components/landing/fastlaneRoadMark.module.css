@@ -1,0 +1,198 @@
+/* FAST LANE — Chakra Petch + 4열 차선 (도로형 긴 대시) */
+
+.wrap {
+  position: relative;
+  display: inline-block;
+  margin-top: clamp(0.5rem, 2vh, 1.25rem);
+  line-height: 0;
+  z-index: 1;
+}
+
+.wrap.hero {
+  margin-top: 0;
+}
+
+.onPhoto {
+  --mark-fg: rgba(255, 255, 255, 0.97);
+  --mark-lane-yellow: #e8cf4a;
+}
+
+.onPaper {
+  --mark-fg: var(--ink, #1c1b18);
+  --mark-lane-yellow: #7a6318;
+}
+
+.mark {
+  /* 노란 세로선: 점선·실선 동일 두께(--lane-center-w) */
+  --lane-dash-paint: 1.2rem;
+  --lane-dash-gap: 1rem;
+  --lane-center-w: 8px;
+  /* 양끝 회색 가장자리선(숄더) 두께 — 마크 전체 높이로 배경에 깔림 */
+  --shoulder-w: 5px;
+
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: clamp(5.5rem, 16vw, 10rem);
+  width: min(92vw, 22.5rem);
+  margin: 0 auto;
+  color: var(--mark-fg);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  will-change: transform;
+}
+
+.wrap.onPhoto .mark {
+  --shoulder-color: rgba(168, 170, 180, 0.72);
+  background-image:
+    linear-gradient(
+      90deg,
+      var(--shoulder-color) 0,
+      var(--shoulder-color) var(--shoulder-w),
+      transparent var(--shoulder-w)
+    ),
+    linear-gradient(
+      90deg,
+      transparent calc(100% - var(--shoulder-w)),
+      var(--shoulder-color) calc(100% - var(--shoulder-w)),
+      var(--shoulder-color) 100%
+    );
+  background-repeat: no-repeat;
+}
+
+.wrap.onPaper .mark {
+  --shoulder-color: rgba(90, 88, 80, 0.45);
+  background-image:
+    linear-gradient(
+      90deg,
+      var(--shoulder-color) 0,
+      var(--shoulder-color) var(--shoulder-w),
+      transparent var(--shoulder-w)
+    ),
+    linear-gradient(
+      90deg,
+      transparent calc(100% - var(--shoulder-w)),
+      var(--shoulder-color) calc(100% - var(--shoulder-w)),
+      var(--shoulder-color) 100%
+    );
+  background-repeat: no-repeat;
+}
+
+.col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0.08em 0.12em;
+  box-sizing: border-box;
+}
+
+.colPair {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  min-height: clamp(4.75rem, 15vw, 9rem);
+}
+
+.mark span {
+  position: relative;
+  z-index: 1;
+}
+
+/* F|A, S|N 사이: 긴 대시 점선 (배경 그라데이션) */
+.col:nth-child(1),
+.col:nth-child(3) {
+  position: relative;
+  border-right: none;
+}
+
+.col:nth-child(1)::after,
+.col:nth-child(3)::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: var(--lane-center-w);
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 1px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--mark-lane-yellow) 0 var(--lane-dash-paint),
+    transparent var(--lane-dash-paint)
+      calc(var(--lane-dash-paint) + var(--lane-dash-gap))
+  );
+}
+
+.col:nth-child(2) {
+  border-right: var(--lane-center-w) solid var(--mark-lane-yellow);
+}
+
+.colA {
+  justify-content: center;
+}
+
+.pairTop,
+.pairBot {
+  display: block;
+  font-size: clamp(1.75rem, 6.8vw, 4.25rem);
+  line-height: 0.9;
+}
+
+.letterA {
+  font-size: clamp(3rem, 12.5vw, 7.25rem);
+  line-height: 0.78;
+}
+
+.hero .mark {
+  --lane-dash-paint: 2.6rem;
+  --lane-dash-gap: 2.1rem;
+  --lane-center-w: 11px;
+  --shoulder-w: 7px;
+
+  width: min(calc(100vw - 1.25rem), 76rem);
+  /* 히어로: 차선·숄더가 검은 배경 세로 전체와 이어지도록 */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.hero .colPair {
+  min-height: clamp(9rem, 30vw, 18rem);
+}
+
+.hero .pairTop,
+.hero .pairBot {
+  font-size: clamp(2.65rem, 10.5vw, 7.5rem);
+}
+
+.hero .letterA {
+  font-size: clamp(4.6rem, 19vw, 14rem);
+}
+
+.compact .mark {
+  --lane-dash-paint: 0.78rem;
+  --lane-dash-gap: 0.62rem;
+  --lane-center-w: 5px;
+  --shoulder-w: 3px;
+
+  width: min(72vw, 14rem);
+  min-height: clamp(4.75rem, 13vw, 8rem);
+}
+
+.compact .pairTop,
+.compact .pairBot {
+  font-size: clamp(1.1rem, 4.2vw, 2.15rem);
+}
+
+.compact .letterA {
+  font-size: clamp(1.85rem, 7vw, 3.65rem);
+}
+
+.compact .colPair {
+  min-height: clamp(3.2rem, 10vw, 6rem);
+}

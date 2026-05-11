@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { ArrowRight, X, GitCompare } from "lucide-react";
@@ -39,24 +39,33 @@ export function CompareTray() {
   const router = useRouter();
   const pathname = usePathname();
   const [previews, setPreviews] = useState<Record<string, IdeaPreview>>({});
+  /** 최신 previews — effect 의존성에 넣지 않고 missing 계산만 할 때 사용 (무한 루프 방지). */
+  const previewsRef = useRef(previews);
+  previewsRef.current = previews;
 
   // Fetch lightweight previews for selected ideas. Only fields we need to
   // render the chip (category + target_user). One round-trip per id change.
+  //
+  // 주의: `previews`를 effect deps에 넣으면, DB가 빈 배열을 주거나(RLS/삭제된 ID)
+  // 일부 id만 반환될 때 missing이 영원히 비지 않아 setState가 무한 반복될 수 있음.
   useEffect(() => {
     if (!isHydrated || ids.length === 0) return;
-    const missing = ids.filter((id) => !previews[id]);
+    const missing = ids.filter((id) => !previewsRef.current[id]);
     if (missing.length === 0) return;
 
-    const supabase = createClient();
-    (async () => {
-      const { data } = await supabase
-        .from("idea_submissions")
-        .select("id, category, target_user")
-        .in("id", missing);
-      if (data) {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("idea_submissions")
+          .select("id, category, target_user")
+          .in("id", missing);
+        if (cancelled) return;
         setPreviews((prev) => {
           const next = { ...prev };
-          for (const row of data) {
+          for (const row of data ?? []) {
             if (typeof row.id === "string") {
               next[row.id] = {
                 id: row.id,
@@ -65,11 +74,40 @@ export function CompareTray() {
               };
             }
           }
+          // 요청한 id 중 응답에 없는 것: 더 이상 refetch 하지 않도록 스텁으로 채움
+          for (const id of missing) {
+            if (!next[id]) {
+              next[id] = {
+                id,
+                category: "",
+                target_user: "정보를 불러올 수 없음",
+              };
+            }
+          }
+          return next;
+        });
+      } catch {
+        if (cancelled) return;
+        setPreviews((prev) => {
+          const next = { ...prev };
+          for (const id of missing) {
+            if (!next[id]) {
+              next[id] = {
+                id,
+                category: "",
+                target_user: "정보를 불러올 수 없음",
+              };
+            }
+          }
           return next;
         });
       }
     })();
-  }, [ids, isHydrated, previews]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ids, isHydrated]);
 
   // Don't render server-side or pre-hydration to avoid hydration mismatch
   // (the empty default differs from the real localStorage state).
