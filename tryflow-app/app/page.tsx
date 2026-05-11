@@ -1,593 +1,268 @@
 "use client";
 
-// Fastlane 랜딩.
-//
-// 디자인 톤 (2026-05): 한국식 사무 SaaS.
-//   - 라이트 베이스 (#FAFAFA / #FFFFFF) + Pretendard sans + 직각 모서리.
-//   - 강조는 단 하나의 진한 네이비. 그라디언트/글로우 일절 사용 X.
-//   - 정보 밀도는 사무 문서처럼 단정하고, 라벨은 한국어 행정 톤.
-//   - 디스플레이 폰트도 sans 로 통일. Brand wordmark 만 serif (정체성 keep).
-
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Lock, Repeat, AlertTriangle } from "lucide-react";
 import { Brand } from "@/components/layout/Brand";
+import { FastlaneRoadMark } from "@/components/landing/FastlaneRoadMark";
+import { LandingHeroJourney } from "@/components/landing/LandingHeroJourney";
 import { LandingTopNav } from "@/components/landing/LandingTopNav";
+import s from "./landing.module.css";
 
-const ROTATING = ["공정하게.", "투명하게.", "결정 가능하게.", "검증 가능하게."];
-const LONGEST_ROTATING = ROTATING.reduce((a, b) => (b.length > a.length ? b : a));
-
-// 사무톤 팔레트 — 페이지 내 단일 출처로 일관성 유지.
-const TONE = {
-  bg: "#FAFAFA",
-  bgRaised: "#FFFFFF",
-  bgInfo: "#F5F6F8",
-  border: "#E5E7EB",
-  borderStrong: "#D1D5DB",
-  textPrimary: "#0F172A",
-  textSecondary: "#334155",
-  textTertiary: "#64748B",
-  textMuted: "#94A3B8",
-  accent: "#1E3A8A",
-  accentSoft: "#EEF2FA",
-};
-
-function useScrolled(threshold = 12) {
+function useScrolled(threshold = 48) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > threshold);
+    fn();
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, [threshold]);
   return scrolled;
 }
 
+/** 누적 절 — 레트로 데스크톱(지원자 폴더) 화면 */
+const IMG_DESK = "/landing/story-desk.png";
+/** 병목 절 — 파란 바탕, 지원자 폴더와 검토 알림 대화상자 */
+const IMG_BOTTLENECK = "/landing/story-bottleneck-review.png";
+/** 검증 절 — AI 검증기(LLM) 플로차트 일러스트 */
+const IMG_AI_VERIFY_FLOW = "/landing/story-ai-validator-flow.png";
+
 export default function HomePage() {
   const scrolled = useScrolled();
-  const [rotIdx, setRotIdx] = useState(0);
-  const [animState, setAnimState] = useState<"in" | "out">("in");
-
-  useEffect(() => {
-    const cycle = setInterval(() => {
-      setAnimState("out");
-      setTimeout(() => {
-        setRotIdx((i) => (i + 1) % ROTATING.length);
-        setAnimState("in");
-      }, 240);
-    }, 2400);
-    return () => clearInterval(cycle);
-  }, []);
 
   return (
-    <div
-      className="min-h-screen overflow-x-hidden"
-      style={{ background: TONE.bg, color: TONE.textPrimary }}
-    >
-      {/* Navbar */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-200"
-        style={{
-          background: scrolled ? "rgba(255,255,255,0.96)" : TONE.bg,
-          backdropFilter: scrolled ? "blur(8px)" : "none",
-          borderBottom: `1px solid ${scrolled ? TONE.border : "transparent"}`,
-        }}
+    <div className={s.landingRoot}>
+      <header
+        className={`${s.nav} ${scrolled ? s.navSolid : s.navTransparent}`}
       >
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-[60px]">
-          <Brand size="md" color={TONE.textPrimary} />
-          <LandingTopNav scrolled={scrolled} />
+        <div className={s.navInner}>
+          <Brand
+            size="md"
+            color={scrolled ? "#1c1b18" : "#ffffff"}
+            className="drop-shadow-sm"
+          />
+          <LandingTopNav scrolled={scrolled} editorial />
         </div>
-      </nav>
+      </header>
 
-      {/* Hero */}
-      <section className="relative flex flex-col items-center justify-center px-6 pt-32 pb-24">
-        {/* 미세 dot grid — 사무용 페이퍼 느낌 */}
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-[0.5] pointer-events-none"
-          style={{
-            backgroundImage:
-              `radial-gradient(circle, ${TONE.borderStrong} 0.6px, transparent 0.6px)`,
-            backgroundSize: "24px 24px",
-            maskImage:
-              "linear-gradient(to bottom, black 0%, black 70%, transparent 100%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, black 0%, black 70%, transparent 100%)",
-          }}
-        />
+      <LandingHeroJourney />
 
-        <div className="relative max-w-4xl mx-auto text-center">
-          {/* 행정 라벨 */}
-          <div
-            className="inline-flex items-center gap-2 mb-8 px-3 py-1"
-            style={{
-              background: TONE.bgRaised,
-              border: `1px solid ${TONE.border}`,
-              animation: "fadeInUp 0.6s ease both",
-            }}
-          >
-            <span
-              className="w-1 h-1"
-              style={{ background: TONE.accent }}
-              aria-hidden
-            />
-            <span
-              className="text-[11px] font-semibold"
-              style={{
-                color: TONE.textSecondary,
-                letterSpacing: "0.14em",
-              }}
-            >
-              AI 1차 평가 · 전문가 최종 심사
+      <section className={s.introAfterJourney} aria-label="소개">
+        <div className={s.introInner}>
+          <blockquote className={s.introQuote}>
+            <span className={s.introLineLoud}>
+              접수가 늘수록, 같은 문장을 사람의 눈만으로 같은 속도로
             </span>
-          </div>
-
-          {/* H1 — 사무 sans 디스플레이. */}
-          <h1
-            className="ko-display"
-            style={{
-              fontWeight: 800,
-              fontSize: "clamp(2rem, 4.4vw, 3.6rem)",
-              lineHeight: 1.18,
-              color: TONE.textPrimary,
-              letterSpacing: "-0.025em",
-              wordBreak: "keep-all",
-            }}
-          >
-            <span
-              className="block"
-              style={{ animation: "fadeInUp 0.8s ease 0.1s both" }}
-            >
-              2만 건의 지원서를
+            <span className={`${s.introLineLoud} ${s.introRun}`}>
+              두 번 읽는 일은 사실상 어렵습니다.
             </span>
-            <span
-              className="block mt-1"
-              style={{ animation: "fadeInUp 0.8s ease 0.25s both" }}
-            >
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "baseline",
-                  columnGap: "0.32em",
-                }}
-              >
-                <span>AI가</span>
-                <span
-                  style={{ position: "relative", display: "inline-block" }}
-                >
-                  <span
-                    aria-hidden
-                    style={{ visibility: "hidden", whiteSpace: "nowrap" }}
-                  >
-                    {LONGEST_ROTATING}
-                  </span>
-                  <span
-                    key={rotIdx}
-                    style={{
-                      position: "absolute",
-                      left: 0,
-                      top: 0,
-                      whiteSpace: "nowrap",
-                      color: TONE.accent,
-                      opacity: animState === "in" ? 1 : 0,
-                      transform:
-                        animState === "in"
-                          ? "translateY(0)"
-                          : "translateY(-4px)",
-                      transition:
-                        "opacity 220ms ease, transform 220ms cubic-bezier(0.4,0,0.2,1)",
-                    }}
-                  >
-                    {ROTATING[rotIdx]}
-                  </span>
-                </span>
+            <span className={s.introLineQuiet}>
+              Fastlane은 1차를 빠른 차선처럼 통과시키되, LLM을 고정된 입력·조건·반복에
+              묶어 나중에 설명할 수 있는 검증으로 바꿉니다.
+            </span>
+          </blockquote>
+        </div>
+      </section>
+
+      <section
+        className={`${s.section} ${s.sectionTint}`}
+        aria-labelledby="archive-heading"
+      >
+        <div className={s.sectionInner}>
+          <div className={s.split}>
+            <div className={s.splitText}>
+              <span className={s.kicker} id="archive-heading">
+                누적
               </span>
-            </span>
-          </h1>
-
-          <p
-            className="mt-6 mx-auto max-w-[640px] text-[15px] md:text-[16px] leading-[1.85]"
-            style={{
-              color: TONE.textSecondary,
-              animation: "fadeInUp 0.8s ease 0.45s both",
-              wordBreak: "keep-all",
-            }}
-          >
-            각종 대회·공모전의 1차 평가를 AI가 대신합니다. 항목마다 Draft → Skeptic →
-            Judge 3-Pass 검증으로 점수와 분기점을 산출하고, 의견이 갈리는 항목은{" "}
-            <span style={{ color: TONE.textPrimary, fontWeight: 600 }}>
-              심사위원에게 넘깁니다
-            </span>
-            .
-          </p>
-
-          <div
-            className="flex flex-wrap items-center justify-center gap-2 mt-9"
-            style={{ animation: "fadeInUp 0.8s ease 0.6s both" }}
-          >
-            <Link
-              href="/competitions"
-              className="group inline-flex items-center gap-2 px-6 h-11 text-[13.5px] font-semibold transition-colors"
-              style={{
-                background: TONE.accent,
-                color: "#fff",
-                letterSpacing: "0.02em",
-              }}
-            >
-              데모 영상 보기
-              <ArrowRight
-                className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
-                strokeWidth={2.4}
+              <p className={s.splitProse}>
+                <span className={s.splitLead}>
+                  쌓이는 서류는 &lsquo;보관&rsquo;이 아니라, 비교·재확인이 필요한
+                  검토 묶음이 한꺼번에 들어옵니다.
+                </span>
+                <span className={s.splitMid}>
+                  인원이 늘수록 같은 항목도 읽히는 방식이 갈라지고, 그 차이를
+                  나중에 증명하기는 어려워집니다.
+                </span>
+              </p>
+            </div>
+            <div className={s.splitFigure}>
+              <Image
+                src={IMG_DESK}
+                alt="레트로 CRT 화면에 지원자별 노란 폴더가 가득한 바탕화면 — 마우스 커서가 폴더 위에 올라가 있음"
+                fill
+                sizes="(max-width: 900px) 100vw, 45vw"
+                className={`${s.splitImg} ${s.splitImgAiFolder}`}
               />
-            </Link>
-            <Link
-              href="/competitions/new"
-              className="inline-flex items-center gap-2 px-6 h-11 text-[13.5px] font-semibold transition-colors"
-              style={{
-                color: TONE.textPrimary,
-                background: TONE.bgRaised,
-                border: `1px solid ${TONE.borderStrong}`,
-                letterSpacing: "0.02em",
-              }}
-            >
-              평가표 만들어보기
-            </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 시장 신호 */}
-      <Section
-        heading="한국 시장의 숙제"
-        sub={
-          <>
-            2만 팀이 들어오면,
-            <br />
-            사람은 다 못 본다.
-          </>
-        }
-      >
-        <div
-          className="grid grid-cols-1 md:grid-cols-3"
-          style={{
-            background: TONE.bgRaised,
-            border: `1px solid ${TONE.border}`,
-          }}
-        >
-          {[
-            {
-              num: "2만",
-              unit: "건+",
-              body: "한 회 대형 공모전·경진대회 출품 규모. 사람 손으로 1차 평가하면 공정성 시비가 따라온다.",
-            },
-            {
-              num: "3",
-              unit: "PASS",
-              body: "Draft → Skeptic → Judge. 단일 LLM 호출의 즉흥성을 3 단계로 흡수, 같은 잣대로 채점.",
-            },
-            {
-              num: "σ↑",
-              unit: "검토",
-              body: "3 agent 의견이 갈리는 항목은 ‘검토 권고’로 표시 — 심사위원에게 자동 회부.",
-            },
-          ].map((s, i) => (
-            <div
-              key={s.body}
-              className="p-8"
-              style={{
-                borderRight:
-                  i < 2 ? `1px solid ${TONE.border}` : "none",
-              }}
-            >
-              <div className="flex items-baseline gap-2 mb-4">
-                <span
-                  className="tabular-nums"
-                  style={{
-                    fontWeight: 700,
-                    fontSize: "2.1rem",
-                    letterSpacing: "-0.03em",
-                    color: TONE.textPrimary,
-                  }}
-                >
-                  {s.num}
+      <section className={s.section} aria-labelledby="field-heading">
+        <div className={s.sectionInner}>
+          <div className={`${s.split} ${s.splitReverse}`}>
+            <div className={s.splitFigure}>
+              <Image
+                src={IMG_BOTTLENECK}
+                alt="파란 레트로 바탕화면에 지원자 폴더가 가득하고, 중앙에 다른 검토자와 의견이 다르다는 검토 알림 창이 떠 있는 화면"
+                fill
+                sizes="(max-width: 900px) 100vw, 45vw"
+                className={`${s.splitImg} ${s.splitImgAiFolder}`}
+              />
+            </div>
+            <div className={s.splitText}>
+              <span className={s.kicker} id="field-heading">
+                병목
+              </span>
+              <p className={s.splitProse}>
+                <span className={s.splitLead}>
+                  1차가 두꺼워질수록{" "}
+                  <span className={s.proseStrong}>
+                    같은 기준으로 읽었다는 근거
+                  </span>
+                  는 흔들립니다.
                 </span>
-                <span
-                  className="text-[11px] font-semibold uppercase"
-                  style={{
-                    color: TONE.textMuted,
-                    letterSpacing: "0.16em",
-                  }}
-                >
-                  {s.unit}
+                <span className={s.splitMid}>
+                  남겨야 할 것은 감이 아니라 같은 조건의 반복 기록입니다. AI가 1차
+                  스코어링·형식 검증을 맡고, 위원은 판단할 지점만 남깁니다.
                 </span>
-              </div>
-              <p
-                className="text-[13.5px] leading-[1.8]"
-                style={{ color: TONE.textSecondary, wordBreak: "keep-all" }}
-              >
-                {s.body}
               </p>
+              <Link href="/competitions" className={s.linkMore}>
+                데모 보기 →
+              </Link>
             </div>
-          ))}
+          </div>
         </div>
-      </Section>
+      </section>
 
-      {/* 평가 흐름 — 사무 문서식 step 표 */}
-      <Section
-        heading="평가 흐름"
-        sub={
-          <>
-            평가표를 받고,
-            <br />
-            점수를 돌려준다.
-          </>
-        }
-      >
-        <div
-          style={{
-            background: TONE.bgRaised,
-            border: `1px solid ${TONE.border}`,
-          }}
-        >
-          {[
-            {
-              step: "01",
-              title: "주최 측이 평가표 + 주제 입력",
-              body: "항목명, 가중치, 채점 설명에 더해 대회 주제(예: '환경 사진 공모전')를 입력. AI가 항목마다 도메인 특화 rubric (점수 가이드 + Calibration Anchors)을 자동 생성해 DB에 고정.",
-            },
-            {
-              step: "02",
-              title: "출품자가 작품 제출",
-              body: "주최 측이 정의한 항목에 따라 본문을 작성. 모든 출품작이 동일한 rubric 으로 채점되어 잣대 일관성 보장.",
-            },
-            {
-              step: "03",
-              title: "3-Pass 검증 + 분기점 플래그",
-              body: "각 항목마다 Draft → Skeptic → Judge 3 단계 agent 가 채점. 3 의견이 갈리는 항목은 ‘검토 권고’로 표시되어 심사위원에게 회부.",
-            },
-          ].map((it, idx) => (
-            <div
-              key={it.step}
-              className="grid grid-cols-1 md:grid-cols-[100px_1fr] gap-x-8 gap-y-2 px-8 py-7"
-              style={{
-                borderTop:
-                  idx > 0 ? `1px solid ${TONE.border}` : "none",
-              }}
-            >
-              <div>
-                <span
-                  className="tabular-nums"
-                  style={{
-                    fontWeight: 700,
-                    fontSize: "1.25rem",
-                    letterSpacing: "0.04em",
-                    color: TONE.accent,
-                  }}
-                >
-                  {it.step}
+      <section className={s.section} aria-labelledby="verify-heading">
+        <div className={s.sectionInner}>
+          <div className={s.split}>
+            <div className={s.splitText}>
+              <span className={s.kicker} id="verify-heading">
+                검증
+              </span>
+              <p className={s.splitProse}>
+                <span className={s.splitLead}>
+                  AI는 인상이 아니라, 절차에 넣는 검증기입니다.
                 </span>
-              </div>
-              <div>
-                <h3
-                  className="mb-2"
-                  style={{
-                    fontWeight: 700,
-                    fontSize: "1.05rem",
-                    lineHeight: 1.4,
-                    color: TONE.textPrimary,
-                    wordBreak: "keep-all",
-                  }}
-                >
-                  {it.title}
-                </h3>
-                <p
-                  className="text-[13.5px] leading-[1.85] max-w-2xl"
-                  style={{ color: TONE.textSecondary, wordBreak: "keep-all" }}
-                >
-                  {it.body}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* 공정성 3장치 */}
-      <Section
-        heading="심사 절차 표준"
-        sub={
-          <>
-            LLM의 비결정성을
-            <br />
-            3단계로 흡수한다.
-          </>
-        }
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            {
-              icon: Lock,
-              title: "도메인 특화 rubric",
-              body: "대회 생성 시 주제·항목으로부터 채점 기준(점수 가이드 + Calibration Anchors)을 미리 생성해 고정. 모든 출품작이 같은 잣대.",
-            },
-            {
-              icon: Repeat,
-              title: "3-Pass 검증",
-              body: "Draft (낙관 초안) → Skeptic (양방향 보정) → Judge (가중 평균 + anchor 검증) 3 단계. 단일 호출의 즉흥성을 구조적으로 흡수.",
-            },
-            {
-              icon: AlertTriangle,
-              title: "분기점 플래그",
-              body: "표준편차가 임계값을 넘는 항목은 ‘검토 권고’. AI가 흔들리는 영역은 사람에게.",
-            },
-          ].map((s, i) => (
-            <div
-              key={s.title}
-              className="p-7"
-              style={{
-                background: TONE.bgRaised,
-                border: `1px solid ${TONE.border}`,
-              }}
-            >
-              <div className="flex items-center gap-2.5 mb-5">
-                <span
-                  className="text-[10.5px] tabular-nums font-bold"
-                  style={{
-                    color: TONE.textMuted,
-                    letterSpacing: "0.16em",
-                  }}
-                >
-                  0{i + 1}
+                <span className={s.splitMid}>
+                  모델·프롬프트·실행을 고정하고{" "}
+                  <span className={s.proseStrong}>같은 출품을 같은 조건으로 여러 번</span>{" "}
+                  돌립니다. 점수와 분산을 함께 남깁니다.
                 </span>
-                <span
-                  className="flex-1 h-px"
-                  style={{ background: TONE.border }}
-                />
-                <s.icon
-                  className="w-3.5 h-3.5"
-                  style={{ color: TONE.accent }}
-                  strokeWidth={2}
-                />
-              </div>
-              <h4
-                className="mb-2"
-                style={{
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  lineHeight: 1.4,
-                  color: TONE.textPrimary,
-                  wordBreak: "keep-all",
-                }}
-              >
-                {s.title}
-              </h4>
-              <p
-                className="text-[13px] leading-[1.85]"
-                style={{ color: TONE.textSecondary, wordBreak: "keep-all" }}
-              >
-                {s.body}
               </p>
+              <Link href="/competitions/new" className={s.linkMore}>
+                평가표 작성 →
+              </Link>
             </div>
-          ))}
+            <div className={`${s.splitFigure} ${s.splitFigureFlow}`}>
+              <Image
+                src={IMG_AI_VERIFY_FLOW}
+                alt="지원서·고정 프롬프트·실행 설정이 다회차로 AI 검증기(LLM)에 들어가 점수와 데이터 분산으로 이어지는 흐름도"
+                fill
+                sizes="(max-width: 900px) 100vw, 45vw"
+                className={`${s.splitImg} ${s.splitImgFlowchart}`}
+              />
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div
-          className="mt-8 px-5 py-4"
-          style={{
-            background: TONE.accentSoft,
-            borderLeft: `3px solid ${TONE.accent}`,
-          }}
-        >
-          <p
-            className="text-[13px] leading-[1.75] max-w-2xl"
-            style={{ color: TONE.textSecondary, wordBreak: "keep-all" }}
-          >
-            <span style={{ color: TONE.textPrimary, fontWeight: 600 }}>
-              안내.
-            </span>{" "}
-            AI는 1차 스코어링까지만 담당합니다. 최종 심사 권한은 항상
-            심사위원에게 있습니다.
+      <section
+        className={`${s.section} ${s.sectionTint}`}
+        aria-labelledby="approach-heading"
+      >
+        <div className={s.sectionInner}>
+          <div className={s.proseBlock}>
+            <span className={s.kicker} id="approach-heading">
+              절차
+            </span>
+            <p className={s.proseBlockLead}>
+              평가표 업로드 → 1차 제출 → AI 스코어링. 분산이 기준을 넘을 때만 위원
+              검토를 권합니다.
+            </p>
+            <p className={s.proseBlockFine}>
+              최종 선정과 책임은 위원에게 있습니다. 화면·일정은 시범 운영에 따라
+              달라질 수 있습니다.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className={s.statBand} aria-label="시범 수치">
+        <div className={s.statBandInner}>
+          <div className={s.statGrid}>
+            <div>
+              <div className={s.statValue}>2만+</div>
+              <div className={s.statLabel}>공모 1차 접수</div>
+              <p className={s.statNote}>단일 공모전 기준 예시 규모입니다.</p>
+            </div>
+            <div>
+              <div className={s.statValue}>5</div>
+              <div className={s.statLabel}>고정 조건 실행</div>
+              <p className={s.statNote}>동일 출품·설정 병렬 실행 횟수 예시</p>
+            </div>
+            <div>
+              <div className={s.statValue}>σ</div>
+              <div className={s.statLabel}>분산·회부</div>
+              <p className={s.statNote}>임계 초과 시 위원 검토로 연결</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={s.darkBand} aria-labelledby="fastlane-heading">
+        <div className={s.darkInner}>
+          <h2 className={s.darkHeading} id="fastlane-heading">
+            <FastlaneRoadMark
+              variant="onPhoto"
+              size="compact"
+              className={s.darkRoadMark}
+              aria-label="Fastlane"
+            />
+          </h2>
+          <p className={s.darkProse}>
+            <span className={s.darkLead}>
+              대량의 1차 서류는 책상이 아니라{" "}
+              <strong className={s.darkStrong}>차선이 나뉜 통로</strong>를 지나야
+              합니다.
+            </span>
+            <span className={s.darkRest}>
+              LLM은 추진력이지만 스스로 멈추지 않습니다. 실행·반복·분산으로 묶을
+              때만 패스트레인은 빠르게 통과시키되 기록을 남깁니다.
+            </span>
           </p>
         </div>
-      </Section>
+      </section>
 
-      {/* 최종 CTA */}
-      <section
-        className="py-24 px-6 text-center"
-        style={{ borderTop: `1px solid ${TONE.border}` }}
-      >
-        <div className="max-w-3xl mx-auto">
-          <h2
-            className="mb-8"
-            style={{
-              fontWeight: 800,
-              fontSize: "clamp(1.8rem, 3.6vw, 2.6rem)",
-              lineHeight: 1.2,
-              color: TONE.textPrimary,
-              letterSpacing: "-0.025em",
-              wordBreak: "keep-all",
-            }}
-          >
-            평가, 빠르게.{" "}
-            <span style={{ color: TONE.textTertiary }}>
-              그리고 공정하게.
-            </span>
-          </h2>
-          <Link
-            href="/competitions"
-            className="group inline-flex items-center gap-2 px-7 h-12 font-semibold text-[14px] transition-colors"
-            style={{
-              background: TONE.accent,
-              color: "#fff",
-              letterSpacing: "0.02em",
-            }}
-          >
-            데모 대회 들어가기
-            <ArrowRight
-              className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
-              strokeWidth={2.4}
-            />
+      <section className={s.ctaSection} aria-labelledby="cta-heading">
+        <span className={s.kicker} id="cta-heading">
+          다음 단계
+        </span>
+        <p className={s.ctaProse}>
+          <span className={s.ctaProseLoud}>데모로 열어 보거나,</span>{" "}
+          <span className={s.ctaProseSoft}>평가표·요금제를 확인하세요.</span>
+        </p>
+        <div className={s.ctaRow}>
+          <Link href="/competitions" className={s.ctaBtn}>
+            데모
+          </Link>
+          <Link href="/competitions/new" className={`${s.ctaBtn} ${s.ctaBtnGhost}`}>
+            평가표
+          </Link>
+          <Link href="/pricing" className={`${s.ctaBtn} ${s.ctaBtnGhost}`}>
+            요금제
           </Link>
         </div>
       </section>
 
-      <footer
-        className="py-8 px-6"
-        style={{ borderTop: `1px solid ${TONE.border}` }}
-      >
-        <div className="max-w-6xl mx-auto flex items-center justify-between flex-wrap gap-3">
-          <Brand size="sm" color={TONE.textPrimary} />
-          <p
-            className="text-[11.5px]"
-            style={{ color: TONE.textMuted, letterSpacing: "0.04em" }}
-          >
-            © 2026 Fastlane · 한국형 AI 평가 플랫폼
-          </p>
+      <footer className={s.footer}>
+        <div className={s.footerInner}>
+          <Brand size="sm" color="#3d3a35" />
+          <span>© 2026 Fastlane</span>
         </div>
       </footer>
     </div>
-  );
-}
-
-// ── 섹션 wrapper ──────────────────────────────────────────────────
-function Section({
-  heading,
-  sub,
-  children,
-}: {
-  heading: string;
-  sub: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      className="py-20 px-6"
-      style={{ borderTop: `1px solid ${TONE.border}` }}
-    >
-      <div className="max-w-6xl mx-auto">
-        <p
-          className="text-[11px] font-bold uppercase mb-4"
-          style={{
-            color: TONE.accent,
-            letterSpacing: "0.18em",
-          }}
-        >
-          {heading}
-        </p>
-        <h2
-          className="mb-12"
-          style={{
-            fontWeight: 800,
-            fontSize: "clamp(1.6rem, 3vw, 2.4rem)",
-            lineHeight: 1.25,
-            color: TONE.textPrimary,
-            letterSpacing: "-0.02em",
-            wordBreak: "keep-all",
-          }}
-        >
-          {sub}
-        </h2>
-        {children}
-      </div>
-    </section>
   );
 }
