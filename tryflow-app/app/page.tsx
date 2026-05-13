@@ -88,7 +88,7 @@ export default function HomePage() {
             <div className={s.splitFigure}>
               <Image
                 src={IMG_DESK}
-                alt="레트로 CRT 화면에 지원자별 노란 폴더가 가득한 바탕화면 — 마우스 커서가 폴더 위에 올라가 있음"
+                alt="레트로 바탕화면에 지원자별 노란 폴더가 흩어져 있고, 중앙에 지원자 모음 2 폴더 더미 위로 마우스 커서가 올라가 있음"
                 fill
                 sizes="(max-width: 900px) 100vw, 45vw"
                 className={`${s.splitImg} ${s.splitImgAiFolder}`}
