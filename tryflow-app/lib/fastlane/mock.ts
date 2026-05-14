@@ -51,25 +51,67 @@ export const GAME_TEMPLATE: CriteriaTemplate = {
 };
 
 /**
- * 문학 (단편소설) 대회 7항목 preset.
- * 출처: fastlane/prompts/literature/ 의 단편소설 채점 7항목 (각 10점 만점).
+ * 문학 출품 7축 (범용) preset — 단편소설·시나리오 공통.
+ * 출처: fastlane/prompts/literature/ (00_목차.md 및 01–07 축 파일, 축당 10점·70점 만점 체계).
  *
  * 각 criterion id 는 prompts/literature/ 파일명 (확장자 제외) 과 일치 —
  * 정적 rubric 로딩 시 직접 매핑.
  */
 export const LITERATURE_TEMPLATE: CriteriaTemplate = {
   id: "builtin-literature-7axis",
-  name: "단편소설 채점 7항목",
+  name: "문학 출품 7축 (범용)",
   isBuiltin: true,
   competitionType: "literature",
   criteria: [
-    { id: "01_structural_integrity", name: "1. 구조 완결성", weight: 0.16, description: "발단–전개–절정–결말(또는 이에 준하는 서사 호)이 독자가 따라갈 수 있게 연결되어 있고, '여기서 끊겼다'는 느낌 없이 작품 안에서 이야기가 성립하는가." },
-    { id: "07_ending_quality", name: "7. 결말 완성도", weight: 0.15, description: "이야기가 열린 결말이든 닫힌 결말이든, 작품이 약속한 읽기에 대해 의도적으로 마무리되는가(휘발·도주·난제가 아닌)." },
-    { id: "05_character_specificity", name: "5. 캐릭터 구체성", weight: 0.15, description: "인물의 행동·말·선택이 심리·동기·상황과 맞물려, 독자가 '이 사람은 이런 사람'이라고 구체적 윤곽을 잡을 수 있는가." },
-    { id: "06_narrative_density", name: "6. 서사 밀도", weight: 0.14, description: "불필요한 반복·설명·장면 없이, 등장하는 사건·묘사·대사가 서사의 긴장·주제·캐릭터에 기여하는가." },
-    { id: "03_theme_clarity", name: "3. 주제 명료성", weight: 0.14, description: "작품이 무엇에 대해 이야기하는지(정서·윤리·인식의 변화·사회적 질문 등)를 독자가 텍스트만으로 추출·재구성할 수 있는가." },
-    { id: "04_style_consistency", name: "4. 문체 일관성", weight: 0.13, description: "서술 시점(1인칭/3인칭/전지 등), 어조(격식·구어·냉소 등), 문장 리듬이 작품 전체에서 의도적으로 유지되거나, 바뀔 때 규칙이 있는가." },
-    { id: "02_genre_fit", name: "2. 장르 적합성", weight: 0.13, description: "공모 요강에 적힌 장르 정의(예: SF, 판타지, 미스터리, 리얼리즘 등)와 작품이 약속한 읽기 경험이 맞는가." },
+    {
+      id: "01_구조_서사_완결성",
+      name: "1. 구조·서사 완결성",
+      weight: 1 / 7,
+      description:
+        "내용과 형식이 긴밀히 연관된 하나의 서사 호로 읽히는가. 총체적 수용이 가능할 만큼 시간·인과·갈등이 배열되었는가. 창작 결과로서 완결감이 있는가.",
+    },
+    {
+      id: "02_장르_갈래_맥락",
+      name: "2. 장르·갈래·맥락",
+      weight: 1 / 7,
+      description:
+        "요강이 정한 장르·갈래 약속과 맥락(작가·독자·사회·문화·문학사) 단서가 정렬되었는가.",
+    },
+    {
+      id: "03_주제_가치_문제의식",
+      name: "3. 주제·가치·문제의식",
+      weight: 1 / 7,
+      description:
+        "가치·윤리·주제의식이 서사의 선택·결과로 추출·토의 가능한가. 자아 성찰·타자 이해로 이어질 여지가 있는가.",
+    },
+    {
+      id: "04_형상화_형식_일관성",
+      name: "4. 형상화·형식의 일관성",
+      weight: 1 / 7,
+      description:
+        "형식 선택(시점·어조·호흡 / 씬·지시)이 내용·정서선과 맞물리는지, 전반에서 일관되는가.",
+    },
+    {
+      id: "05_인물_대화_소통",
+      name: "5. 인물·대화(소통)",
+      weight: 1 / 7,
+      description:
+        "공감·비판·창의적 감상과 문학 소통에 인물·말하기가 기여하는가. 타자 이해가 가능한가.",
+    },
+    {
+      id: "06_서사_장면_밀도",
+      name: "6. 서사·장면 밀도",
+      weight: 1 / 7,
+      description:
+        "불필요한 분절·나열 없이 사건·장면이 의미에 누적되는가. 해석·비평으로 넘길 디테일이 있는가.",
+    },
+    {
+      id: "07_갈등_완결_마무리",
+      name: "7. 갈등·완결·마무리",
+      weight: 1 / 7,
+      description:
+        "긴장이 구체적 장애로 설계되고, 결말이 앞선 질문·모티프에 응답하는가. 책임 있는 마무리인가.",
+    },
   ],
 };
 

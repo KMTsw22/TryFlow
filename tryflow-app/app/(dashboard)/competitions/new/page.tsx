@@ -31,7 +31,12 @@ import { useToast } from "@/components/ui/Toast";
 const COMPETITION_TYPES: { value: CompetitionType; label: string; description: string; available: boolean }[] = [
   { value: "game", label: "게임", description: "재미·디자인·혁신성 등 9축 preset 제공", available: true },
   { value: "finance", label: "금융", description: "기획안·보고서·PT 산출물별 9기준 + 금융지식 엔진", available: true },
-  { value: "literature", label: "문학", description: "단편소설 채점 7항목 (구조·문체·캐릭터·서사·결말)", available: true },
+  {
+    value: "literature",
+    label: "문학",
+    description: "문학 출품 7축 (구조·장르·주제·형식·인물·밀도·갈등/마무리)",
+    available: true,
+  },
 ];
 
 // 기본 마감일 = 오늘 + 30일. <input type="date"> 가 받는 YYYY-MM-DD 포맷.

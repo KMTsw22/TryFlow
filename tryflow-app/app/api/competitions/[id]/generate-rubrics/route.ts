@@ -169,6 +169,7 @@ export async function POST(
 // 현재 지원:
 //   - game: fastlane/prompts/game/{fun,game_design,...}.md
 //   - finance: fastlane/prompts/finance/{A1_problem_validity,...}.md
+//   - literature: fastlane/prompts/literature/{01_구조_서사_완결성,...}.md
 //
 // 파일이 없으면 null 반환 → 호출자가 AI fallback 결정.
 //
