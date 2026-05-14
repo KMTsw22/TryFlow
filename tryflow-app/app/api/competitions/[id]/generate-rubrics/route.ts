@@ -74,14 +74,25 @@ export async function POST(
 
   try {
     const systemPrompt = await readFile(
-      path.join(process.cwd(), "prompts_competition/rubric_generator.md"),
+      path.join(process.cwd(), "fastlane/prompts/shared/rubric_generator.md"),
       "utf-8"
     );
 
     // 항목별 병렬 생성. 한 항목 실패 시 그 항목만 빈 결과 — UI 가 표시 + 재시도 가능.
+    //
+    // 2026-05-14: competitionType 이 있는 대회는 먼저 정적 rubric 파일을 시도한다.
+    //   - fastlane/prompts/{competitionType}/{criterion.id}.md 존재 시 그 내용을 그대로 사용
+    //   - 없으면 AI rubric_generator 로 fallback
+    // 게임 9축 + 금융 9기준처럼 미리 작성된 도메인 prompt 가 있는 경우 OpenAI 호출
+    // 비용·지연 0 + 일관성 보장.
+    const competitionType = competition.template.competitionType;
     const generated = await Promise.all(
       competition.template.criteria.map(async (c) => {
         try {
+          const staticRubric = await tryLoadStaticRubric(competitionType, c.id);
+          if (staticRubric) {
+            return { criterion: c, rubric: staticRubric, source: "static" as const };
+          }
           const rubric = await generateRubric(
             openai,
             systemPrompt,
@@ -89,10 +100,10 @@ export async function POST(
             competition.theme,
             c
           );
-          return { criterion: c, rubric };
+          return { criterion: c, rubric, source: "ai" as const };
         } catch (err) {
           console.error(`[generate-rubrics] axis ${c.id} failed`, err);
-          return { criterion: c, rubric: "" };
+          return { criterion: c, rubric: "", source: "failed" as const };
         }
       })
     );
@@ -127,10 +138,14 @@ export async function POST(
       .eq("id", id);
     if (updErr) throw updErr;
 
+    const staticCount = generated.filter((g) => g.source === "static").length;
+    const aiCount = generated.filter((g) => g.source === "ai").length;
+
     return NextResponse.json({
       ok: allOk,
       generated: successCount,
       total: totalCount,
+      sources: { static: staticCount, ai: aiCount, failed: totalCount - successCount },
     });
   } catch (err) {
     console.error("[generate-rubrics] failed", err);
@@ -143,6 +158,47 @@ export async function POST(
       })
       .eq("id", id);
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+// ── 정적 rubric 로딩 ───────────────────────────────────────
+//
+// competitionType 이 지정된 대회는 fastlane/prompts/{type}/{criterionId}.md 를
+// 먼저 확인한다. 미리 작성된 도메인 prompt 가 있으면 OpenAI 호출 없이 그대로 사용.
+//
+// 현재 지원:
+//   - game: fastlane/prompts/game/{fun,game_design,...}.md
+//   - finance: fastlane/prompts/finance/{A1_problem_validity,...}.md
+//
+// 파일이 없으면 null 반환 → 호출자가 AI fallback 결정.
+//
+// 보안: criterionId 가 사용자 입력에서 유래하므로 path traversal 차단.
+// '/', '\\', '..' 포함된 id 는 거부. 단편소설 항목명이 한글이므로 Unicode letter 허용.
+
+async function tryLoadStaticRubric(
+  competitionType: string | undefined,
+  criterionId: string
+): Promise<string | null> {
+  if (!competitionType) return null;
+  // path traversal 방어 — Unicode letter/number + '_' + '-' 만 허용
+  // (한글 파일명 지원: 01_구조_완결성, A1_problem_validity, fun 모두 통과).
+  // 경로 구분자(/, \) 와 점(.) 명시적 배제.
+  if (!/^[\p{L}\p{N}_\-]+$/u.test(criterionId)) return null;
+  if (criterionId.includes("..") || criterionId.includes("/") || criterionId.includes("\\")) return null;
+  if (!/^[a-z]+$/.test(competitionType)) return null;
+
+  const filePath = path.join(
+    process.cwd(),
+    "fastlane/prompts",
+    competitionType,
+    `${criterionId}.md`
+  );
+  try {
+    const content = await readFile(filePath, "utf-8");
+    return content.trim().length > 0 ? content : null;
+  } catch {
+    // ENOENT 등 — 정적 파일 없음. AI fallback 이 처리.
+    return null;
   }
 }
 

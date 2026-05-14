@@ -24,12 +24,32 @@ export interface Criterion {
   rubricMd?: string;
 }
 
+/**
+ * 대회 종류 — 2026-05 피벗으로 도입.
+ * 각 종류마다 도메인 특화 axis 프롬프트와 preset 평가표를 가진다.
+ *   - game: 게임 대회 (9축 — fastlane/prompts/game/agents/*.md)
+ *   - literature: 문학·글쓰기 공모전 (TBD)
+ *   - finance: 금융·핀테크 대회 (TBD)
+ */
+export type CompetitionType = "game" | "literature" | "finance";
+
+export const COMPETITION_TYPE_LABELS: Record<CompetitionType, string> = {
+  game: "게임",
+  literature: "문학",
+  finance: "금융",
+};
+
 /** 평가 기준 템플릿 (한 대회의 평가표 한 벌). */
 export interface CriteriaTemplate {
   id: string;
   name: string;
   /** 6축 기본 템플릿인지 표시 — 데모 때 "기본 템플릿" 라벨 보여주기 위함. */
   isBuiltin: boolean;
+  /**
+   * 대회 종류 — 이 종류에 맞는 axis 프롬프트가 fastlane/prompts/{type}/ 에서
+   * 로드된다. 없으면 일반(generic) rubric_generator fallback.
+   */
+  competitionType?: CompetitionType;
   criteria: Criterion[];
 }
 

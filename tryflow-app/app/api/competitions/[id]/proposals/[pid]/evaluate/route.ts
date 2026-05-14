@@ -769,7 +769,7 @@ async function runSynthesizer(
 
 async function loadPrompt(relativePath: string): Promise<string> {
   return readFile(
-    path.join(process.cwd(), "prompts_competition", relativePath),
+    path.join(process.cwd(), "fastlane/prompts/shared", relativePath),
     "utf-8"
   );
 }

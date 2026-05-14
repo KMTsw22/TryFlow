@@ -26,6 +26,94 @@ export const BUILTIN_TEMPLATE: CriteriaTemplate = {
   ],
 };
 
+/**
+ * 게임 대회 9축 preset.
+ * 근거 문서: decisions/game-evaluation-axes-rationale.md
+ * 출처: Ludum Dare, IGF (Independent Games Festival), 대한민국 게임대상.
+ * 그래픽·오디오·Polish 는 텍스트 기반 AI 평가 한계로 본심 인간 심사에 위임.
+ */
+export const GAME_TEMPLATE: CriteriaTemplate = {
+  id: "builtin-game-9axis",
+  name: "게임 대회 9축",
+  isBuiltin: true,
+  competitionType: "game",
+  criteria: [
+    { id: "fun", name: "재미", weight: 0.16, description: "핵심 루프의 만족도, 피드백 품질, 'one more turn' pull. LD Fun + 게임대상 작품성 근거." },
+    { id: "game_design", name: "게임 디자인", weight: 0.14, description: "메커닉·레벨·난이도 밸런스의 craft. IGF Excellence in Design 근거." },
+    { id: "innovation", name: "혁신성", weight: 0.13, description: "새 조합·primitive·perspective. LD Innovation + 게임대상 창작성." },
+    { id: "narrative", name: "스토리텔링", weight: 0.10, description: "시나리오·플롯·캐릭터·대사·ludonarrative 통합. IGF Narrative." },
+    { id: "mood", name: "분위기·몰입감", weight: 0.10, description: "정서적 일관성과 세계관 몰입도. LD Mood." },
+    { id: "theme", name: "테마 적합성", weight: 0.10, description: "대회 주제와의 통합 깊이 (L1 직역 ~ L4 전복). LD Theme." },
+    { id: "scope", name: "범위·실현 가능성", weight: 0.10, description: "팀 규모·기간 대비 컨셉 적정성. GDC Postmortems." },
+    { id: "dev_process", name: "개발 프로세스·QA 계획", weight: 0.09, description: "테스트 계획·플랫폼 호환·리스크 관리. SWEBOK QA Planning + 게임대상 운영 안정성." },
+    { id: "marketability", name: "시장성", weight: 0.08, description: "타겟 audience·BM·플랫폼 적합성·retention. 게임대상 대중성." },
+  ],
+};
+
+/**
+ * 문학 (단편소설) 대회 7항목 preset.
+ * 출처: fastlane/prompts/literature/ 의 단편소설 채점 7항목 (각 10점 만점).
+ *
+ * 각 criterion id 는 prompts/literature/ 파일명 (확장자 제외) 과 일치 —
+ * 정적 rubric 로딩 시 직접 매핑.
+ */
+export const LITERATURE_TEMPLATE: CriteriaTemplate = {
+  id: "builtin-literature-7axis",
+  name: "단편소설 채점 7항목",
+  isBuiltin: true,
+  competitionType: "literature",
+  criteria: [
+    { id: "01_구조_완결성", name: "1. 구조 완결성", weight: 0.16, description: "발단–전개–절정–결말(또는 이에 준하는 서사 호)이 독자가 따라갈 수 있게 연결되어 있고, '여기서 끊겼다'는 느낌 없이 작품 안에서 이야기가 성립하는가." },
+    { id: "07_결말_완성도", name: "7. 결말 완성도", weight: 0.15, description: "이야기가 열린 결말이든 닫힌 결말이든, 작품이 약속한 읽기에 대해 의도적으로 마무리되는가(휘발·도주·난제가 아닌)." },
+    { id: "05_캐릭터_구체성", name: "5. 캐릭터 구체성", weight: 0.15, description: "인물의 행동·말·선택이 심리·동기·상황과 맞물려, 독자가 '이 사람은 이런 사람'이라고 구체적 윤곽을 잡을 수 있는가." },
+    { id: "06_서사_밀도", name: "6. 서사 밀도", weight: 0.14, description: "불필요한 반복·설명·장면 없이, 등장하는 사건·묘사·대사가 서사의 긴장·주제·캐릭터에 기여하는가." },
+    { id: "03_주제_명료성", name: "3. 주제 명료성", weight: 0.14, description: "작품이 무엇에 대해 이야기하는지(정서·윤리·인식의 변화·사회적 질문 등)를 독자가 텍스트만으로 추출·재구성할 수 있는가." },
+    { id: "04_문체_일관성", name: "4. 문체 일관성", weight: 0.13, description: "서술 시점(1인칭/3인칭/전지 등), 어조(격식·구어·냉소 등), 문장 리듬이 작품 전체에서 의도적으로 유지되거나, 바뀔 때 규칙이 있는가." },
+    { id: "02_장르_적합성", name: "2. 장르 적합성", weight: 0.13, description: "공모 요강에 적힌 장르 정의(예: SF, 판타지, 미스터리, 리얼리즘 등)와 작품이 약속한 읽기 경험이 맞는가." },
+  ],
+};
+
+/**
+ * 금융 대회 9기준 preset.
+ * 출처: fastlane/prompts/finance/ 의 산출물 유형(A/B/C) × 기준(1/2/3) 시스템.
+ *
+ *  - 그룹 A (기획안/제안서): A1·A2·A3 — 금감원·DB IFC·FSI 공모 트랙
+ *  - 그룹 B (분석보고서/논문): B1·B2·B3 — 한국은행·DB IFC·FSI 결과보고서
+ *  - 그룹 C (발표자료/PT): C1·C2·C3 — 전 대회 본선 PT + 금감원 PPT
+ *  - 공유 엔진: core_financial_knowledge_engine.md (6레이어 × 5메커니즘)
+ *
+ * 기본 가중치는 9기준 균등 분포에 가깝게 설정.
+ * 산출물 유형이 정해지면 (예: 한국은행 통화정책 = B 보고서 + C PT 만),
+ * 미사용 기준 가중치를 0 으로 조정하고 가중치 재분배 (integration_logic §4.2).
+ *
+ * 각 criterion id 는 prompts/finance/ 파일명 (확장자 제외) 과 일치 — 향후
+ * 정적 rubric 로딩 시 직접 매핑.
+ */
+export const FINANCE_TEMPLATE: CriteriaTemplate = {
+  id: "builtin-finance-9axis",
+  name: "금융 대회 9기준 (A·B·C 산출물)",
+  isBuiltin: true,
+  competitionType: "finance",
+  criteria: [
+    { id: "A1_problem_validity", name: "A1 — 금융 문제의 실재성", weight: 0.12, description: "산출물 그룹 A (기획안/제안서). 제안서가 짚은 금융 문제가 시장 데이터·규제 현실로 뒷받침되는 실재 사각지대인지 검증. 가공의 문제 위에 세운 제안은 솔루션이 화려해도 통과 불가." },
+    { id: "A2_mechanism_soundness", name: "A2 — 솔루션의 금융 메커니즘 정합성", weight: 0.15, description: "산출물 그룹 A. 솔루션이 가정한 자금흐름·인센티브·리스크 메커니즘이 금융 지식그래프와 정합하는가. 규제 RAG 로 적법성 동시 검증." },
+    { id: "A3_impact_quantification", name: "A3 — 기대효과의 정량적 타당성", weight: 0.10, description: "산출물 그룹 A. 기대효과 수치 추정의 가정·근거·계산 체인이 검증 가능한가. M5 추정 체인 정합성으로 비약·과대추정 탐지." },
+    { id: "B1_framework_fit", name: "B1 — 분석 프레임워크 적절성", weight: 0.10, description: "산출물 그룹 B (분석보고서/논문). 적용한 경제·금융 프레임워크가 다루는 문제의 깊이 계층과 부합하는가. 깊이 계층 판정 + 프레임-문제 적합 검증." },
+    { id: "B2_data_interpretation", name: "B2 — 데이터 신뢰성·해석력", weight: 0.13, description: "산출물 그룹 B. 인용 데이터의 출처·시점·범위가 정확하고 해석이 데이터의 한계를 인지하는가. M4 RAG 로 원본 시계열·통계 대조." },
+    { id: "B3_causal_reasoning", name: "B3 — 추론의 논리·인과 엄밀성", weight: 0.15, description: "산출물 그룹 B. 인과/상관 구분, 반례 처리, 변수 통제, 결론 비약 여부 등 추론의 엄밀성. M5 추론 정합성 엔진." },
+    { id: "C1_message_logic", name: "C1 — 핵심 메시지의 금융 논리성", weight: 0.10, description: "산출물 그룹 C (발표자료/PT). 1장 요약·결론 슬라이드의 금융 논리가 본문 슬라이드와 정합하고 오개념이 없는가. M2 오개념 룰셋 50종 검증." },
+    { id: "C2_visualization_honesty", name: "C2 — 데이터 시각화 정직성", weight: 0.07, description: "산출물 그룹 C. 차트·표가 원본 시계열을 왜곡 없이 표현하는가. 축 절단·기준선 조작·확대해석 탐지. 차트 없는 덱은 SKIP." },
+    { id: "C3_claim_evidence_structure", name: "C3 — 근거-주장 구조 완결성", weight: 0.08, description: "산출물 그룹 C. 슬라이드별 역할(주장/근거/예시) 분류 및 매칭. 주장에 대응 근거 부재 또는 근거 없는 일반화 탐지." },
+  ],
+};
+
+/** 대회 종류별 preset lookup. */
+export const TEMPLATES_BY_TYPE = {
+  game: GAME_TEMPLATE,
+  literature: LITERATURE_TEMPLATE,
+  finance: FINANCE_TEMPLATE,
+} as const;
+
 /** 모두의 창업경진대회 스타일 평가표 (예시). */
 const KOSME_TEMPLATE: CriteriaTemplate = {
   id: "kosme-2026",

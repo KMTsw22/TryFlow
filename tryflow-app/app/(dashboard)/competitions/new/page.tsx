@@ -20,9 +20,19 @@ import {
   Check,
   AlertTriangle,
 } from "lucide-react";
-import { BUILTIN_TEMPLATE } from "@/lib/fastlane/mock";
-import type { Criterion } from "@/lib/fastlane/types";
+import { BUILTIN_TEMPLATE, TEMPLATES_BY_TYPE } from "@/lib/fastlane/mock";
+import type { CompetitionType, Criterion } from "@/lib/fastlane/types";
+import { COMPETITION_TYPE_LABELS } from "@/lib/fastlane/types";
 import { useToast } from "@/components/ui/Toast";
+
+// 2026-05 피벗: 대회 종류 선택지.
+// 게임 대회는 9축 preset (fastlane/prompts/game/agents/*.md 의 도메인 지식 기반) 제공.
+// 문학·금융은 placeholder — preset axis 정의 추가 후 활성화.
+const COMPETITION_TYPES: { value: CompetitionType; label: string; description: string; available: boolean }[] = [
+  { value: "game", label: "게임", description: "재미·디자인·혁신성 등 9축 preset 제공", available: true },
+  { value: "finance", label: "금융", description: "기획안·보고서·PT 산출물별 9기준 + 금융지식 엔진", available: true },
+  { value: "literature", label: "문학", description: "단편소설 채점 7항목 (구조·문체·캐릭터·서사·결말)", available: true },
+];
 
 // 기본 마감일 = 오늘 + 30일. <input type="date"> 가 받는 YYYY-MM-DD 포맷.
 function defaultDeadline(): string {
@@ -64,8 +74,10 @@ export default function NewCompetitionPage() {
   const [theme, setTheme] = useState("");
   const [deadline, setDeadline] = useState(defaultDeadline());
   const [submitting, setSubmitting] = useState(false);
+  // 대회 종류 — 피벗 후 필수 선택. 종류에 따라 사용 가능한 preset 이 달라짐.
+  const [competitionType, setCompetitionType] = useState<CompetitionType | null>(null);
   // 일반 대회 (미술, 글쓰기, 과학, 창업, ...) 전부 지원하므로 기본값은 비어있음.
-  // 창업 6축 preset 은 옆 버튼으로 명시적으로 불러와야 함.
+  // 종류별 preset 은 옆 버튼으로 명시적으로 불러와야 함.
   const [criteria, setCriteria] = useState<Criterion[]>([]);
 
   const totalWeight = useMemo(
@@ -77,6 +89,18 @@ export default function NewCompetitionPage() {
 
   function loadBuiltin() {
     setCriteria(BUILTIN_TEMPLATE.criteria.map((c) => ({ ...c })));
+  }
+  function loadTypePreset() {
+    if (!competitionType) return;
+    const preset = TEMPLATES_BY_TYPE[competitionType];
+    if (!preset || preset.criteria.length === 0) {
+      toast({
+        message: `${COMPETITION_TYPE_LABELS[competitionType]} 대회 preset 은 아직 준비 중입니다.`,
+        tone: "danger",
+      });
+      return;
+    }
+    setCriteria(preset.criteria.map((c) => ({ ...c })));
   }
   function clearAll() {
     setCriteria([]);
@@ -100,6 +124,8 @@ export default function NewCompetitionPage() {
     e.preventDefault();
     if (submitting) return;
     if (!name.trim()) return toast({ message: "대회명을 입력해주세요.", tone: "danger" });
+    if (!competitionType)
+      return toast({ message: "대회 종류를 선택해주세요.", tone: "danger" });
     if (criteria.length === 0)
       return toast({ message: "평가 항목을 1개 이상 추가해주세요.", tone: "danger" });
     if (!weightOk)
@@ -132,6 +158,7 @@ export default function NewCompetitionPage() {
             id: `custom-${Date.now()}`,
             name: name.trim(),
             isBuiltin: false,
+            competitionType,
             criteria: criteria.map((c) => ({
               ...c,
               name: c.name.trim(),
@@ -207,6 +234,70 @@ export default function NewCompetitionPage() {
       </p>
 
       <form onSubmit={handleSave} className="space-y-14">
+        {/* 00 — 대회 종류 */}
+        <Section step="00" title="대회 종류" subtitle="평가 도메인 선택">
+          <p
+            className="text-[12.5px] leading-[1.7] mb-4"
+            style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
+          >
+            대회 종류에 따라 도메인 특화된 axis 프롬프트와 preset 평가표가 제공됩니다.
+            게임 대회는 9축 preset (재미·게임 디자인·혁신성·스토리·분위기·테마·범위·QA·시장성)
+            을 즉시 불러올 수 있습니다.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+            {COMPETITION_TYPES.map((t) => {
+              const selected = competitionType === t.value;
+              return (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => t.available && setCompetitionType(t.value)}
+                  disabled={!t.available}
+                  className="relative text-left p-4 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: selected ? "var(--accent-soft)" : "var(--surface-1)",
+                    border: `1px solid ${selected ? "var(--accent)" : "var(--t-border-subtle)"}`,
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        fontSize: "0.95rem",
+                        color: selected ? "var(--accent)" : "var(--text-primary)",
+                        letterSpacing: "-0.005em",
+                      }}
+                    >
+                      {t.label}
+                    </span>
+                    {!t.available && (
+                      <span
+                        className="text-[10px] font-bold uppercase"
+                        style={{ color: "var(--text-tertiary)", letterSpacing: "0.12em" }}
+                      >
+                        준비 중
+                      </span>
+                    )}
+                    {selected && t.available && (
+                      <Check
+                        className="w-4 h-4"
+                        strokeWidth={2.4}
+                        style={{ color: "var(--accent)" }}
+                      />
+                    )}
+                  </div>
+                  <p
+                    className="text-[11.5px] leading-[1.55]"
+                    style={{ color: "var(--text-tertiary)" }}
+                  >
+                    {t.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+
         {/* 01 — 대회 정보 */}
         <Section step="01" title="대회 정보">
           <FieldStack>
@@ -271,19 +362,38 @@ export default function NewCompetitionPage() {
 
           {/* 액션 row */}
           <div className="flex items-center flex-wrap gap-2 mt-4 mb-4">
+            {competitionType && TEMPLATES_BY_TYPE[competitionType].criteria.length > 0 && (
+              <button
+                type="button"
+                onClick={loadTypePreset}
+                className="inline-flex items-center gap-1.5 px-3 h-8 text-[12px] font-semibold transition-colors"
+                style={{
+                  color: "var(--accent)",
+                  background: "var(--accent-soft)",
+                  letterSpacing: "0.04em",
+                }}
+                title={TEMPLATES_BY_TYPE[competitionType].criteria
+                  .map((c) => c.name)
+                  .join(" · ")}
+              >
+                <Sparkles className="w-3 h-3" />
+                {COMPETITION_TYPE_LABELS[competitionType]} preset 불러오기
+                ({TEMPLATES_BY_TYPE[competitionType].criteria.length}축)
+              </button>
+            )}
             <button
               type="button"
               onClick={loadBuiltin}
               className="inline-flex items-center gap-1.5 px-3 h-8 text-[12px] font-semibold transition-colors"
               style={{
-                color: "var(--accent)",
-                background: "var(--accent-soft)",
+                color: "var(--text-secondary)",
+                border: "1px solid var(--t-border-subtle)",
                 letterSpacing: "0.04em",
               }}
               title="시장성·문제 절박성·제품 우수성·차별화·수익 모델·시장 타이밍"
             >
               <Sparkles className="w-3 h-3" />
-              창업 6축 예시 불러오기
+              창업 6축
             </button>
             <button
               type="button"
