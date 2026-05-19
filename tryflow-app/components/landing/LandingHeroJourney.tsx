@@ -46,10 +46,10 @@ export function LandingHeroJourney() {
         </div>
         <div className={j.bottomCopy}>
           <p className={j.tagline}>
-            <span className={j.taglineMain}>공모전 1차 AI 검증</span>
-            <span className={j.taglineSub}>같은 조건으로, 빠르게 통과시키는 1차</span>
+            <span className={j.taglineMain}>1차 평가를 표준화합니다.</span>
+            <span className={j.taglineSub}>같은 조건·같은 기준·같은 기록.</span>
           </p>
-          <p className={j.hint}>아래에서 왜 필요한지, 짧게만 짚습니다.</p>
+          <p className={j.hint}>왜 필요한지, 아래에서 짧게 짚습니다.</p>
         </div>
         </div>
       </div>

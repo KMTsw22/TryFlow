@@ -24,6 +24,22 @@ import { FairnessBadge } from "@/components/fastlane/FairnessBadge";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
 import { RubricStatusBanner } from "@/components/fastlane/RubricStatusBanner";
 import { CriterionRubricCard } from "@/components/fastlane/CriterionRubricCard";
+import {
+  StageStepper,
+  type CompetitionStage,
+} from "@/components/fastlane/StageStepper";
+
+// 대회 운영 단계 추정 — DB 에 별도 stage 컬럼이 없으므로
+// 출품/평가/검토종료 진척 상태에서 휴리스틱으로 산출.
+function stageOf(comp: Competition): CompetitionStage {
+  const props = comp.proposals;
+  if (props.length === 0) return "intake";
+  const allEvaluated = props.every((p) => !!p.score);
+  if (!allEvaluated) return "ai-eval";
+  const allClosed = props.every((p) => !!p.reviewClosedAt);
+  if (allClosed) return "tally"; // 별도 published 플래그 없으므로 tally 로.
+  return "human-review";
+}
 
 // uuid v4 모양인지 — DB 조회를 시도할지 결정.
 function looksLikeUuid(id: string): boolean {
@@ -108,62 +124,82 @@ export default async function CompetitionDetailPage({
     Math.ceil((new Date(competition.deadline).getTime() - Date.now()) / 86_400_000)
   );
 
+  const stage = stageOf(competition);
+
   return (
-    <div className="max-w-[1320px] mx-auto px-8 pt-10 pb-24">
-      {/* Back nav — 미니멀 */}
+    <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
+      {/* Back nav */}
       <Link
         href="/competitions"
-        className="inline-flex items-center gap-1.5 text-[12.5px] font-medium mb-10 transition-colors hover:text-[color:var(--text-primary)]"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
+        className="inline-flex items-center gap-1.5 text-[12.5px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
+        style={{ color: "var(--text-tertiary)" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         대회 목록
       </Link>
 
-      {/* 사무톤 페이지 헤더: 제목 + 메타 한 줄 */}
+      {/* 운영 톤 페이지 헤더: 제목 + 메타 + CTA */}
       <div className="flex items-start justify-between gap-6 mb-2 flex-wrap">
         <h1
           style={{
-            fontWeight: 700,
-            fontSize: "1.75rem",
+            fontWeight: 600,
+            fontSize: "22px",
             lineHeight: 1.3,
             color: "var(--text-primary)",
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.005em",
           }}
         >
           {competition.name}
         </h1>
         {!isMock && (
-          <Link
-            href={`/competitions/${competition.id}/proposals/new`}
-            className="inline-flex items-center gap-2 px-4 h-10 text-[13px] font-semibold transition-colors hover:brightness-110"
-            style={{
-              background: "var(--accent)",
-              color: "#fff",
-              letterSpacing: "0.01em",
-            }}
-          >
-            <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
-            출품 제출
-          </Link>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {isOwner && (
+              <Link
+                href={`/competitions/${competition.id}/judges`}
+                className="inline-flex items-center gap-1.5 px-3.5 h-9 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+                style={{
+                  border: "1px solid var(--t-input-border)",
+                  color: "var(--text-primary)",
+                  borderRadius: 2,
+                }}
+              >
+                심사위원 관리
+              </Link>
+            )}
+            <Link
+              href={`/competitions/${competition.id}/proposals/new`}
+              className="inline-flex items-center gap-1.5 px-3.5 h-9 text-[13px] font-medium transition-colors hover:brightness-110"
+              style={{
+                background: "var(--accent)",
+                color: "#fff",
+                borderRadius: 2,
+              }}
+            >
+              <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
+              출품 제출
+            </Link>
+          </div>
         )}
       </div>
       <div
-        className="flex items-center gap-3 mb-8 text-[12.5px] tabular-nums flex-wrap"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
+        className="flex items-center gap-3 mb-6 text-[12.5px] tabular-nums flex-wrap"
+        style={{ color: "var(--text-tertiary)" }}
       >
-        <span style={{ color: "var(--accent)", fontWeight: 600 }}>
+        <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
           {competition.organizer}
         </span>
         {competition.theme && (
           <>
             <span style={{ color: "var(--t-border-bright)" }}>·</span>
-            <span style={{ fontWeight: 500 }}>{competition.theme}</span>
+            <span>{competition.theme}</span>
           </>
         )}
         <span style={{ color: "var(--t-border-bright)" }}>·</span>
         <span>마감 D-{dDay}</span>
       </div>
+
+      {/* 단계 스텝퍼 — 행정 시스템 표준 시그널 */}
+      <StageStepper current={stage} />
 
       {/* Rubric 자동 생성 상태 — DB 대회만. mock 은 status 무관. */}
       {!isMock && (
@@ -177,10 +213,14 @@ export default async function CompetitionDetailPage({
         />
       )}
 
-      {/* 메타 strip — 4개 통계 카드. 인포메이션 디자인의 “기능적 헤더”. */}
+      {/* 메타 strip — 4개 통계 셀. 운영 톤으로 줄여 잡은 정보 띠. */}
       <div
-        className="grid grid-cols-2 md:grid-cols-4 mb-12 border-y"
-        style={{ borderColor: "var(--t-border-subtle)" }}
+        className="grid grid-cols-2 md:grid-cols-4 mb-10"
+        style={{
+          background: "var(--surface-1)",
+          border: "1px solid var(--t-border)",
+          borderRadius: 2,
+        }}
       >
         <MetaCell
           label="제출"
@@ -537,10 +577,10 @@ function MetaCell({
     tone === "attention" ? "var(--signal-attention)" : "var(--text-primary)";
   return (
     <div
-      className="px-6 py-5 border-r last:border-r-0"
-      style={{ borderColor: "var(--t-border-subtle)" }}
+      className="px-5 py-4 border-r last:border-r-0"
+      style={{ borderColor: "var(--t-border)" }}
     >
-      <div className="flex items-center gap-1.5 mb-2.5">
+      <div className="flex items-center gap-1.5 mb-1.5">
         {Icon && (
           <Icon
             className="w-3 h-3"
@@ -549,20 +589,20 @@ function MetaCell({
           />
         )}
         <span
-          className="text-[10.5px] font-bold uppercase"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+          className="text-[11.5px]"
+          style={{ color: "var(--text-tertiary)" }}
         >
           {label}
         </span>
       </div>
-      <div className="flex items-baseline gap-1.5">
+      <div className="flex items-baseline gap-1">
         <span
-          className="num-display tabular-nums"
+          className="tabular-nums"
           style={{
-            fontWeight: 800,
-            fontSize: "1.7rem",
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
+            fontWeight: 600,
+            fontSize: "1.25rem",
+            letterSpacing: "-0.01em",
+            lineHeight: 1.1,
             color: valueColor,
           }}
         >
@@ -570,7 +610,7 @@ function MetaCell({
         </span>
         {unit && (
           <span
-            className="text-[12px] font-medium"
+            className="text-[12px]"
             style={{ color: "var(--text-tertiary)" }}
           >
             {unit}
@@ -579,7 +619,7 @@ function MetaCell({
       </div>
       {hint && (
         <p
-          className="mt-1.5 text-[11.5px] truncate"
+          className="mt-1 text-[11.5px] truncate"
           style={{ color: "var(--text-tertiary)" }}
           title={hint}
         >

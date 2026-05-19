@@ -4,7 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  // 피벗 후 default: /competitions (Fastlane 의 organizer 진입점).
+  // /dashboard 진입점도 자체 redirect 가 있어 안전망 역할.
+  const next = searchParams.get("next") ?? "/competitions";
 
   if (code) {
     // 세션 쿠키를 반드시 이 redirect response 에 직접 써야 브라우저로 전달됨.

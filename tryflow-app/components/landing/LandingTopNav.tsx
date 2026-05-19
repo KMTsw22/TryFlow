@@ -43,6 +43,15 @@ export function LandingTopNav({
         >
           요금제
         </Link>
+        {/* 로그인 진입점 — '앱 열기' 가 비로그인 데모 진입이라면 이 링크는
+            본인 계정으로 들어가는 명시적 경로. /signup 은 /login 으로 자동 합쳐짐. */}
+        <Link
+          href="/login"
+          className="text-[13px] font-bold px-3 py-2 rounded-sm transition-opacity hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2a4a72]"
+          style={{ color: ink, letterSpacing: "0.06em" }}
+        >
+          로그인
+        </Link>
       </div>
 
         <Link

@@ -2,10 +2,16 @@
 // Supabase 에서 jsonb 로 저장한 template, score 를 lib/fastlane/types.ts 의 형태로 복원한다.
 
 import type {
+  AxisReview,
   AxisScore,
   Competition,
   CriteriaTemplate,
   Criterion,
+  DisputeAction,
+  DisputeResolution,
+  Invitation,
+  JudgeAssignment,
+  JudgeReview,
   Proposal,
   ProposalScore,
   RubricStatus,
@@ -41,8 +47,65 @@ export interface ProposalRow {
   evaluation_error: string | null;
   evaluation_report_md?: string | null;
   axis_reports?: unknown;
+  // add_judge_review_model.sql 로 추가된 컬럼들. 옵셔널 — 마이그레이션 전 DB
+  // 호환성 위해 select * 에서 누락되어도 동작.
+  review_closed_at?: string | null;
+  review_closed_by?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// ── 심사위원 모델 row 타입들 (add_judge_review_model.sql) ──────────────
+
+export interface JudgeAssignmentRow {
+  id: string;
+  competition_id: string;
+  judge_id: string;
+  judge_name: string;
+  affiliation: string | null;
+  scope: string;
+  invited_at: string;
+}
+
+export interface ProposalReviewRow {
+  id: string;
+  proposal_id: string;
+  judge_id: string;
+  judge_name: string;
+  affiliation: string | null;
+  // AxisReview[] 의 jsonb 직렬화.
+  axes: unknown;
+  overall_comment: string | null;
+  status: string;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DisputeResolutionRow {
+  id: string;
+  proposal_id: string;
+  criterion_id: string;
+  action: string;
+  final_score: number | null;
+  decided_by: string | null;
+  decided_by_name: string;
+  decided_at: string;
+  reason: string | null;
+}
+
+/** competition_invitations row — 슬랙 스타일 초대 링크. */
+export interface InvitationRow {
+  token: string;
+  competition_id: string;
+  invited_by: string | null;
+  invited_by_name: string;
+  role: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  used_count: number;
+  revoked_at: string | null;
+  created_at: string;
 }
 
 // ── 변환 함수 ─────────────────────────────────────────────
@@ -66,7 +129,19 @@ export function rowToCompetition(row: CompetitionRow, proposals: Proposal[] = []
   };
 }
 
-export function rowToProposal(row: ProposalRow): Proposal {
+/**
+ * Proposal row → Proposal 객체.
+ *
+ * extras 인자로 심사위원 평가 / 분쟁 결정을 함께 받으면 nested 로 채워 반환.
+ * 옵셔널이라 기존 호출자(인자 없음)는 그대로 동작.
+ */
+export function rowToProposal(
+  row: ProposalRow,
+  extras?: {
+    judgeReviews?: JudgeReview[];
+    disputeResolutions?: DisputeResolution[];
+  }
+): Proposal {
   return {
     id: row.id,
     title: row.title,
@@ -74,7 +149,98 @@ export function rowToProposal(row: ProposalRow): Proposal {
     summary: row.summary,
     submittedAt: row.created_at,
     score: parseScore(row.score, row.id),
+    judgeReviews: extras?.judgeReviews,
+    disputeResolutions: extras?.disputeResolutions,
+    reviewClosedAt: row.review_closed_at ?? undefined,
   };
+}
+
+// ── 심사위원 모델 변환 함수 ──────────────────────────────────
+
+export function rowToJudgeAssignment(row: JudgeAssignmentRow): JudgeAssignment {
+  return {
+    judgeId: row.judge_id,
+    judgeName: row.judge_name,
+    affiliation: row.affiliation ?? undefined,
+    invitedAt: row.invited_at,
+    // 'subset' scope 는 MVP 에 없으므로 'all' 로 통일. 추후 확장 시 분기.
+    scope: "all",
+  };
+}
+
+export function rowToJudgeReview(row: ProposalReviewRow): JudgeReview {
+  const axes = parseAxisReviews(row.axes);
+  return {
+    judgeId: row.judge_id,
+    judgeName: row.judge_name,
+    affiliation: row.affiliation ?? undefined,
+    axes,
+    overallComment: row.overall_comment ?? undefined,
+    status: row.status === "draft" ? "draft" : "submitted",
+    submittedAt: row.submitted_at ?? undefined,
+  };
+}
+
+export function rowToDisputeResolution(row: DisputeResolutionRow): DisputeResolution {
+  return {
+    criterionId: row.criterion_id,
+    action: parseDisputeAction(row.action),
+    finalScore: row.final_score ?? undefined,
+    decidedBy: {
+      judgeId: row.decided_by ?? "",
+      judgeName: row.decided_by_name,
+    },
+    decidedAt: row.decided_at,
+    reason: row.reason ?? undefined,
+  };
+}
+
+function parseDisputeAction(raw: string): DisputeAction {
+  // DB 에 잘못된 값이 들어와도 앱이 깨지지 않게 fallback.
+  switch (raw) {
+    case "accept_ai":
+    case "accept_human_avg":
+    case "manual_override":
+    case "request_rereview":
+      return raw;
+    default:
+      return "accept_ai";
+  }
+}
+
+export function rowToInvitation(row: InvitationRow): Invitation {
+  return {
+    token: row.token,
+    competitionId: row.competition_id,
+    invitedByName: row.invited_by_name,
+    role: row.role === "judge" ? "judge" : "judge", // MVP 는 judge 만 — fallback 도 judge.
+    expiresAt: row.expires_at ?? undefined,
+    maxUses: row.max_uses ?? undefined,
+    usedCount: row.used_count,
+    revoked: row.revoked_at !== null,
+    createdAt: row.created_at,
+  };
+}
+
+function parseAxisReviews(raw: unknown): AxisReview[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((a): AxisReview | null => {
+      if (!a || typeof a !== "object") return null;
+      const r = a as Record<string, unknown>;
+      const criterionId = typeof r.criterionId === "string" ? r.criterionId : null;
+      if (!criterionId) return null;
+      const accepted = !!r.acceptedAiScore;
+      const override = typeof r.overrideScore === "number" ? r.overrideScore : undefined;
+      const comment = typeof r.comment === "string" ? r.comment : undefined;
+      return {
+        criterionId,
+        acceptedAiScore: accepted,
+        overrideScore: accepted ? undefined : override,
+        comment,
+      };
+    })
+    .filter((a): a is AxisReview => a !== null);
 }
 
 // ── 안전 파싱 ─────────────────────────────────────────────

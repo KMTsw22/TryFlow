@@ -1,16 +1,16 @@
 // 대회 목록.
 //
-// 디자인 결정 (2026-05 senior pass):
-//   - 카드 안에 mini-summary: 제출 N건 / 평가 N건 / 검토 권고 N개.
-//     검토 권고가 있으면 amber dot + 카운트로 시선 끌기.
-//   - 우측 큰 D-day 숫자 — 마감 임박 (D-7 이하) 시 rose tint.
-//   - hover: 카드가 살짝 떠오르는 게 아니라 좌측 vertical accent 가 자라남 (calm).
+// 2026-05-17 리톤: 카드 그리드 → 행정 시스템 테이블.
+// 변경 이유: 운영 영역(목록)은 스코어러 플러스 류 실무 시스템 톤이 맞다.
+//   - serif/큰숫자/uppercase/vertical stripe 제거
+//   - 카드 행 → 테이블 행 (hairline border, 셀 안 컴팩트 정보)
+//   - 단계(stage) 컬럼 추가 — 출품·평가 진척에서 추정해 4단계로 칩 표시
+//   - 진행률은 작은 1px 막대 + 숫자 (큰 progress bar 아님)
 //
-// 데이터: 로그인 시 본인이 운영하는 competitions 테이블 데이터를 표시.
-// 비로그인 시엔 demo mock 으로 fallback (로그인 유도 배너 포함).
+// 데이터: 로그인 시 본인이 운영하는 competitions. 비로그인 = mock 데모.
 
 import Link from "next/link";
-import { ArrowRight, LogIn, Plus, Trophy } from "lucide-react";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import {
   rowToCompetition,
@@ -21,15 +21,54 @@ import { rowToProposal } from "@/lib/fastlane/db";
 import { MOCK_COMPETITIONS } from "@/lib/fastlane/mock";
 import type { Competition } from "@/lib/fastlane/types";
 
-const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
+// 4단계 stage — 출품/평가 진척에서 추정. 별도 stage 컬럼이 DB 에 없어도
+// 의미 있는 운영 신호를 줄 수 있도록 휴리스틱 적용.
+type Stage = "intake" | "evaluating" | "reviewing" | "closed";
+
+function stageOf(comp: Competition): Stage {
+  const props = comp.proposals;
+  if (props.length === 0) return "intake";
+  const allEvaluated = props.every((p) => !!p.score);
+  if (!allEvaluated) return "evaluating";
+  const allClosed = props.every((p) => !!p.reviewClosedAt);
+  if (allClosed) return "closed";
+  return "reviewing";
+}
+
+function stageLabel(s: Stage): string {
+  if (s === "intake") return "접수 중";
+  if (s === "evaluating") return "AI 평가 중";
+  if (s === "reviewing") return "심사 진행 중";
+  return "검토 종료";
+}
+
+function stageColor(s: Stage): string {
+  if (s === "intake") return "var(--text-tertiary)";
+  if (s === "evaluating") return "var(--accent)";
+  if (s === "reviewing") return "var(--signal-attention)";
+  return "var(--signal-success)";
+}
 
 function daysUntil(iso: string): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000));
 }
 
-async function loadUserCompetitions(): Promise<{ competitions: Competition[]; isAuthenticated: boolean }> {
+function formatDeadline(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+}
+
+async function loadUserCompetitions(): Promise<{
+  competitions: Competition[];
+  isAuthenticated: boolean;
+}> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { competitions: [], isAuthenticated: false };
 
   const { data: rows } = await supabase
@@ -67,10 +106,10 @@ async function loadUserCompetitions(): Promise<{ competitions: Competition[]; is
 }
 
 export default async function CompetitionsPage() {
-  const { competitions: userCompetitions, isAuthenticated } = await loadUserCompetitions();
+  const { competitions: userCompetitions, isAuthenticated } =
+    await loadUserCompetitions();
 
-  // 로그인 + 본인 대회 있으면 그것만 표시. 그 외엔 demo mock 으로 미리보기.
-  const useDemoFallback = !isAuthenticated || userCompetitions.length === 0;
+  const useDemoFallback = !isAuthenticated;
   const competitions = useDemoFallback ? MOCK_COMPETITIONS : userCompetitions;
 
   const totalProposals = competitions.reduce((s, c) => s + c.proposals.length, 0);
@@ -85,37 +124,40 @@ export default async function CompetitionsPage() {
   );
 
   return (
-    <div className="max-w-5xl mx-auto px-8 pt-10 pb-24">
-      {/* 사무 SaaS 페이지 헤더 — 제목 + 부제 + 우측 primary CTA. */}
-      <div className="flex items-start justify-between gap-8 mb-3 flex-wrap">
+    <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
+      {/* 헤더 — 행정 톤 */}
+      <div
+        className="pb-5 mb-6 border-b flex items-start justify-between gap-6 flex-wrap"
+        style={{ borderColor: "var(--t-border)" }}
+      >
         <div>
+          <p
+            className="text-[12px] mb-1.5"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            대회 운영
+          </p>
           <h1
-            style={{
-              fontWeight: 700,
-              fontSize: "1.625rem",
-              lineHeight: 1.3,
-              color: "var(--text-primary)",
-              letterSpacing: "-0.01em",
-            }}
+            className="text-[20px] font-semibold"
+            style={{ color: "var(--text-primary)", letterSpacing: "-0.005em" }}
           >
             내 대회
           </h1>
           <p
-            className="mt-1 text-[12.5px] tabular-nums"
-            style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
+            className="text-[13px] mt-2 max-w-2xl"
+            style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
           >
-            {useDemoFallback
-              ? `${MOCK_COMPETITIONS.length}건 데모 표시 중`
-              : `${competitions.length}건 운영 중`}
+            평가표를 입력하면 AI가 도메인 특화 rubric을 자동 생성해 1차 채점합니다.
+            의견이 갈리는 항목은 심사위원에게 넘깁니다.
           </p>
         </div>
         <Link
           href="/competitions/new"
-          className="group inline-flex items-center gap-2 px-4 h-10 text-[13px] font-semibold transition-colors hover:brightness-110"
+          className="inline-flex items-center gap-1.5 px-3.5 h-9 text-[13px] font-medium transition-colors hover:brightness-110"
           style={{
             background: "var(--accent)",
             color: "#fff",
-            letterSpacing: "0.01em",
+            borderRadius: 2,
           }}
         >
           <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
@@ -123,292 +165,395 @@ export default async function CompetitionsPage() {
         </Link>
       </div>
 
-      <p
-        className="text-[13.5px] leading-[1.8] mb-10 max-w-xl"
-        style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
-      >
-        창업·미술·글쓰기·과학·디자인 등 어떤 대회든 평가표를 입력하면 AI가
-        도메인 특화 rubric을 자동 생성해 1차 채점합니다. 항목마다
-        Draft → Skeptic → Judge 3-Pass 검증으로 점수를 산출하고, 의견이
-        갈리는 항목은 심사위원에게 넘깁니다.
-      </p>
-
-      {/* 비로그인 안내 — 데모 데이터 표시 중임을 알림 */}
+      {/* 비로그인 안내 */}
       {!isAuthenticated && (
         <div
-          className="flex items-start gap-3 px-5 py-4 mb-10"
+          className="px-5 py-3 mb-4 text-[13px]"
           style={{
             background: "var(--accent-soft)",
             border: "1px solid var(--accent-ring)",
+            borderRadius: 2,
+            color: "var(--text-secondary)",
           }}
         >
-          <LogIn
-            className="w-4 h-4 mt-0.5 shrink-0"
+          아래는 미리보기 샘플입니다.{" "}
+          <Link
+            href="/login"
+            className="font-medium underline-offset-2 hover:underline"
             style={{ color: "var(--accent)" }}
-            strokeWidth={2.2}
-          />
-          <div className="text-[13px] leading-[1.7]" style={{ color: "var(--text-secondary)" }}>
-            아래는 미리보기 샘플입니다.{" "}
-            <Link
-              href="/login"
-              className="font-semibold underline-offset-2 hover:underline"
-              style={{ color: "var(--accent)" }}
-            >
-              로그인
-            </Link>{" "}
-            하면 본인이 운영하는 대회만 표시됩니다.
-          </div>
+          >
+            로그인
+          </Link>{" "}
+          하면 본인이 운영하는 대회만 표시됩니다.
         </div>
       )}
 
-      {isAuthenticated && userCompetitions.length === 0 && (
+      {/* 한 줄 요약 strip */}
+      <div
+        className="flex flex-wrap items-baseline gap-x-5 gap-y-1.5 px-5 py-3 mb-4 text-[13px]"
+        style={{
+          background: "var(--surface-2)",
+          border: "1px solid var(--t-border)",
+          borderRadius: 2,
+          color: "var(--text-secondary)",
+        }}
+      >
+        <span style={{ color: "var(--text-tertiary)" }}>
+          운영{" "}
+          <strong
+            className="tabular-nums"
+            style={{ color: "var(--text-primary)", fontWeight: 600 }}
+          >
+            {competitions.length}
+          </strong>
+          건
+        </span>
+        <Divider />
+        <span style={{ color: "var(--text-tertiary)" }}>
+          누적 출품{" "}
+          <strong
+            className="tabular-nums"
+            style={{ color: "var(--text-primary)", fontWeight: 600 }}
+          >
+            {totalProposals}
+          </strong>
+          건
+        </span>
+        <Divider />
+        <span style={{ color: "var(--text-tertiary)" }}>
+          검토 권고{" "}
+          <strong
+            className="tabular-nums"
+            style={{
+              color:
+                totalReview > 0
+                  ? "var(--signal-attention)"
+                  : "var(--text-primary)",
+              fontWeight: totalReview > 0 ? 700 : 600,
+            }}
+          >
+            {totalReview}
+          </strong>
+          개 항목
+        </span>
+      </div>
+
+      {/* 데이터 테이블 */}
+      {competitions.length === 0 ? (
         <div
-          className="flex items-start gap-3 px-5 py-4 mb-10"
+          className="px-6 py-12 text-center"
           style={{
-            background: "var(--surface-2)",
-            border: "1px solid var(--t-border-subtle)",
+            background: "var(--surface-1)",
+            border: "1px solid var(--t-border)",
+            borderRadius: 2,
           }}
         >
-          <Trophy
-            className="w-4 h-4 mt-0.5 shrink-0"
-            style={{ color: "var(--text-tertiary)" }}
-            strokeWidth={2.2}
-          />
-          <div className="text-[13px] leading-[1.7]" style={{ color: "var(--text-secondary)" }}>
-            아직 운영 중인 대회가 없어 데모 샘플을 보여드립니다. 우측{" "}
+          <p
+            className="text-[14px] font-medium mb-1.5"
+            style={{ color: "var(--text-primary)" }}
+          >
+            아직 운영 중인 대회가 없습니다.
+          </p>
+          <p
+            className="text-[12.5px] leading-[1.7]"
+            style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
+          >
+            우측 상단{" "}
             <span style={{ fontWeight: 600 }}>새 대회</span> 버튼으로 첫 평가표를
             만들어보세요.
-          </div>
+          </p>
+        </div>
+      ) : (
+        <div
+          className="overflow-x-auto"
+          style={{
+            background: "var(--surface-1)",
+            border: "1px solid var(--t-border)",
+            borderRadius: 2,
+          }}
+        >
+          <table className="w-full min-w-[1040px] text-[13px]">
+            <thead>
+              <tr
+                style={{
+                  background: "var(--surface-2)",
+                  borderBottom: "1px solid var(--t-border)",
+                }}
+              >
+                <Th width="auto">대회</Th>
+                <Th width="12%">평가표</Th>
+                <Th width="12%">단계</Th>
+                <Th width="8%" align="right">
+                  출품
+                </Th>
+                <Th width="14%">평가 진행률</Th>
+                <Th width="9%" align="right">
+                  검토 권고
+                </Th>
+                <Th width="11%">마감</Th>
+                <Th width="6%" align="right">
+                  &nbsp;
+                </Th>
+              </tr>
+            </thead>
+            <tbody>
+              {competitions.map((comp, idx) => {
+                const d = daysUntil(comp.deadline);
+                const proposalCount = comp.proposals.length;
+                const evaluated = comp.proposals.filter((p) => !!p.score).length;
+                const reviewCount = comp.proposals.reduce(
+                  (s, p) =>
+                    s +
+                    (p.score?.axes.filter((a) => a.needsReview).length ?? 0),
+                  0
+                );
+                const stage = stageOf(comp);
+                const dDanger = d <= 7;
+                const isLast = idx === competitions.length - 1;
+
+                return (
+                  <tr
+                    key={comp.id}
+                    style={{
+                      borderBottom: isLast
+                        ? "none"
+                        : "1px solid var(--t-border-subtle)",
+                      background: "var(--surface-1)",
+                    }}
+                    className="hover:bg-[color:var(--accent-soft)] transition-colors"
+                  >
+                    {/* 대회 (이름 + 주최) */}
+                    <Td>
+                      <Link
+                        href={`/competitions/${comp.id}`}
+                        className="block group min-w-0"
+                      >
+                        <div
+                          className="text-[11.5px] mb-0.5"
+                          style={{ color: "var(--text-tertiary)" }}
+                        >
+                          {comp.organizer}
+                        </div>
+                        <div
+                          className="font-medium truncate group-hover:underline underline-offset-2"
+                          style={{
+                            fontSize: "13.5px",
+                            color: "var(--text-primary)",
+                          }}
+                          title={comp.name}
+                        >
+                          {comp.name}
+                        </div>
+                      </Link>
+                    </Td>
+
+                    {/* 평가표 */}
+                    <Td>
+                      <div
+                        className="truncate"
+                        style={{ color: "var(--text-secondary)" }}
+                        title={comp.template.name}
+                      >
+                        {comp.template.name}
+                      </div>
+                      <div
+                        className="text-[11.5px] mt-0.5"
+                        style={{ color: "var(--text-tertiary)" }}
+                      >
+                        {comp.template.criteria.length}개 항목
+                      </div>
+                    </Td>
+
+                    {/* 단계 */}
+                    <Td>
+                      <StageChip stage={stage} />
+                    </Td>
+
+                    {/* 출품 */}
+                    <Td align="right">
+                      <span
+                        className="tabular-nums"
+                        style={{
+                          color: "var(--text-primary)",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {proposalCount}
+                      </span>
+                    </Td>
+
+                    {/* 평가 진행률 */}
+                    <Td>
+                      {proposalCount > 0 ? (
+                        <div>
+                          <div
+                            className="relative h-1 mb-1 overflow-hidden"
+                            style={{ background: "var(--t-border-subtle)" }}
+                          >
+                            <div
+                              className="absolute top-0 bottom-0 left-0"
+                              style={{
+                                width: `${
+                                  (evaluated / proposalCount) * 100
+                                }%`,
+                                background: "var(--accent)",
+                              }}
+                            />
+                          </div>
+                          <p
+                            className="text-[11.5px] tabular-nums"
+                            style={{ color: "var(--text-tertiary)" }}
+                          >
+                            {evaluated}/{proposalCount}
+                          </p>
+                        </div>
+                      ) : (
+                        <span style={{ color: "var(--text-tertiary)" }}>—</span>
+                      )}
+                    </Td>
+
+                    {/* 검토 권고 */}
+                    <Td align="right">
+                      {reviewCount > 0 ? (
+                        <span
+                          className="tabular-nums"
+                          style={{
+                            color: "var(--signal-attention)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {reviewCount}
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-tertiary)" }}>—</span>
+                      )}
+                    </Td>
+
+                    {/* 마감 */}
+                    <Td>
+                      <div
+                        className="leading-tight"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        <div className="tabular-nums">
+                          {formatDeadline(comp.deadline)}
+                        </div>
+                        <div
+                          className="text-[11.5px] tabular-nums mt-0.5"
+                          style={{
+                            color: dDanger
+                              ? "var(--signal-danger)"
+                              : "var(--text-tertiary)",
+                            fontWeight: dDanger ? 600 : 400,
+                          }}
+                        >
+                          D-{d}
+                        </div>
+                      </div>
+                    </Td>
+
+                    {/* 액션 */}
+                    <Td align="right">
+                      <Link
+                        href={`/competitions/${comp.id}`}
+                        className="inline-flex items-center justify-center px-3 py-1 text-[12px] font-medium transition-colors"
+                        style={{
+                          color: "var(--text-primary)",
+                          background: "var(--surface-1)",
+                          border: "1px solid var(--t-input-border)",
+                          borderRadius: 2,
+                          minWidth: 56,
+                        }}
+                      >
+                        열기
+                      </Link>
+                    </Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
-
-      {/* 통계 strip */}
-      <div
-        className="grid grid-cols-3 mb-12 border-y"
-        style={{ borderColor: "var(--t-border-subtle)" }}
-      >
-        <Stat label="운영 중 대회" value={`${competitions.length}`} />
-        <Stat label="누적 출품" value={`${totalProposals}`} />
-        <Stat
-          label="검토 권고"
-          value={`${totalReview}`}
-          tone={totalReview > 0 ? "attention" : "neutral"}
-        />
-      </div>
-
-      {/* 카드 그리드 */}
-      <div className="space-y-3.5">
-        {competitions.map((comp) => {
-          const d = daysUntil(comp.deadline);
-          const proposalCount = comp.proposals.length;
-          const reviewCount = comp.proposals.reduce(
-            (s, p) =>
-              s + (p.score?.axes.filter((a) => a.needsReview).length ?? 0),
-            0
-          );
-          const evaluatedCount = comp.proposals.filter((p) => !!p.score).length;
-          const evalProgress =
-            proposalCount === 0 ? 0 : evaluatedCount / proposalCount;
-          const dDanger = d <= 7;
-
-          return (
-            <Link
-              key={comp.id}
-              href={`/competitions/${comp.id}`}
-              className="group relative grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 px-7 py-6 transition-all hover:bg-[color:var(--accent-soft)]"
-              style={{
-                background: "var(--surface-1)",
-                border: "1px solid var(--t-border-subtle)",
-              }}
-            >
-              {/* 좌측 vertical accent — hover 시 자라남 */}
-              <span
-                aria-hidden
-                className="absolute left-0 top-0 bottom-0 w-[3px] origin-top transition-transform duration-200 group-hover:scale-y-100 scale-y-0"
-                style={{ background: "var(--accent)" }}
-              />
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <Trophy
-                    className="w-3.5 h-3.5"
-                    style={{ color: "var(--accent)" }}
-                    strokeWidth={2}
-                  />
-                  <span
-                    className="text-[11px] font-bold uppercase"
-                    style={{
-                      color: "var(--text-tertiary)",
-                      letterSpacing: "0.14em",
-                    }}
-                  >
-                    {comp.organizer}
-                  </span>
-                </div>
-                <h2
-                  className="ko-display mb-3 truncate"
-                  style={{
-                    fontFamily: SERIF,
-                    fontWeight: 800,
-                    fontSize: "1.5rem",
-                    lineHeight: 1.2,
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {comp.name}
-                </h2>
-
-                {/* 정보 행 */}
-                <div
-                  className="flex items-center flex-wrap gap-x-5 gap-y-1.5 text-[12.5px]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  <span>
-                    평가표:{" "}
-                    <span
-                      style={{ color: "var(--text-primary)", fontWeight: 600 }}
-                    >
-                      {comp.template.name}
-                    </span>
-                    <span style={{ color: "var(--text-tertiary)" }}>
-                      {" · "}
-                      {comp.template.criteria.length}개 항목
-                    </span>
-                  </span>
-                  <span style={{ color: "var(--t-border-bright)" }}>·</span>
-                  <span>
-                    출품{" "}
-                    <span
-                      className="tabular-nums"
-                      style={{
-                        color: "var(--text-primary)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {proposalCount}
-                    </span>
-                    건
-                  </span>
-                  {reviewCount > 0 && (
-                    <>
-                      <span style={{ color: "var(--t-border-bright)" }}>·</span>
-                      <span
-                        className="inline-flex items-center gap-1.5"
-                        style={{ color: "var(--signal-attention)", fontWeight: 600 }}
-                      >
-                        <span
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: "var(--signal-attention)" }}
-                        />
-                        검토 권고 {reviewCount}개
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* 평가 진척도 */}
-                {proposalCount > 0 && (
-                  <div className="mt-4 max-w-md">
-                    <div
-                      className="relative h-1 overflow-hidden"
-                      style={{ background: "var(--t-border-subtle)" }}
-                    >
-                      <div
-                        className="absolute top-0 bottom-0 left-0 transition-all"
-                        style={{
-                          width: `${evalProgress * 100}%`,
-                          background: "var(--accent)",
-                        }}
-                      />
-                    </div>
-                    <p
-                      className="mt-1.5 text-[10.5px] tabular-nums"
-                      style={{
-                        color: "var(--text-tertiary)",
-                        letterSpacing: "0.04em",
-                      }}
-                    >
-                      평가 완료 {evaluatedCount}/{proposalCount}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* 우측: D-day + 화살표 */}
-              <div className="md:text-right md:min-w-[100px] flex md:block items-center gap-3 self-stretch">
-                <div>
-                  <span
-                    className="num-display tabular-nums leading-none"
-                    style={{
-                      fontFamily: SERIF,
-                      fontWeight: 800,
-                      fontSize: "2.4rem",
-                      letterSpacing: "-0.04em",
-                      color: dDanger
-                        ? "var(--signal-danger)"
-                        : "var(--text-primary)",
-                    }}
-                  >
-                    D-{d}
-                  </span>
-                  <p
-                    className="mt-1 text-[10.5px] font-bold uppercase"
-                    style={{
-                      color: "var(--text-tertiary)",
-                      letterSpacing: "0.14em",
-                    }}
-                  >
-                    마감
-                  </p>
-                </div>
-                <ArrowRight
-                  className="md:absolute md:bottom-6 md:right-7 w-4 h-4 transition-transform group-hover:translate-x-1"
-                  style={{ color: "var(--accent)" }}
-                />
-              </div>
-            </Link>
-          );
-        })}
-      </div>
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone = "neutral",
+// ── primitives ────────────────────────────────────────────────
+
+function Th({
+  children,
+  width,
+  align = "left",
 }: {
-  label: string;
-  value: string;
-  tone?: "neutral" | "attention";
+  children: React.ReactNode;
+  width?: string;
+  align?: "left" | "right" | "center";
 }) {
   return (
-    <div
-      className="px-5 py-5 border-r last:border-r-0"
-      style={{ borderColor: "var(--t-border-subtle)" }}
+    <th
+      className="px-3 py-2.5 text-[11.5px] font-semibold"
+      style={{
+        width,
+        textAlign: align,
+        color: "var(--text-tertiary)",
+        letterSpacing: "0",
+      }}
     >
-      <p
-        className="text-[10.5px] font-bold uppercase mb-2"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
-      >
-        {label}
-      </p>
-      <p
-        className="num-display tabular-nums leading-none"
-        style={{
-          fontFamily: SERIF,
-          fontWeight: 800,
-          fontSize: "1.8rem",
-          letterSpacing: "-0.025em",
-          color:
-            tone === "attention"
-              ? "var(--signal-attention)"
-              : "var(--text-primary)",
-        }}
-      >
-        {value}
-      </p>
-    </div>
+      {children}
+    </th>
+  );
+}
+
+function Td({
+  children,
+  align = "left",
+}: {
+  children: React.ReactNode;
+  align?: "left" | "right" | "center";
+}) {
+  return (
+    <td
+      className="px-3 py-3 align-middle"
+      style={{
+        textAlign: align,
+        verticalAlign: "middle",
+      }}
+    >
+      {children}
+    </td>
+  );
+}
+
+function StageChip({ stage }: { stage: Stage }) {
+  const color = stageColor(stage);
+  const label = stageLabel(stage);
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px]"
+      style={{
+        color,
+        border: `1px solid ${color}33`,
+        borderRadius: 2,
+        fontWeight: 500,
+      }}
+    >
+      <span
+        aria-hidden
+        className="inline-block w-1.5 h-1.5 rounded-full"
+        style={{ background: color }}
+      />
+      {label}
+    </span>
+  );
+}
+
+function Divider() {
+  return (
+    <span
+      aria-hidden
+      className="inline-block w-px h-3.5"
+      style={{ background: "var(--t-border-bright)" }}
+    />
   );
 }

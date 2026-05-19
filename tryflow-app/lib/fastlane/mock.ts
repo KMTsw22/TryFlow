@@ -4,12 +4,117 @@
 // 시각적으로 잘 드러나게 함.
 
 import type {
+  AxisReview,
   Competition,
   CriteriaTemplate,
+  DisputeResolution,
+  JudgeAssignment,
+  JudgeReview,
   Proposal,
   ProposalScore,
 } from "./types";
 import { STDDEV_REVIEW_THRESHOLD } from "./types";
+
+// ── 심사위원 mock pool (2026-05 시연용) ───────────────────────────────────
+// 발표 때 "여러 심사위원이 평가하는" 흐름을 보여주기 위한 가짜 인물들.
+// 소속은 실제 기관 흉내 — 시연 신뢰도용. 실제 연락처/계정 X.
+const JUDGE_POOL: { id: string; name: string; affiliation: string }[] = [
+  { id: "j1", name: "김민수", affiliation: "스파크랩스 파트너" },
+  { id: "j2", name: "이지현", affiliation: "고려대학교 경영학과 교수" },
+  { id: "j3", name: "박재훈", affiliation: "본엔젤스 심사역" },
+  { id: "j4", name: "정수아", affiliation: "프라이머 심사역" },
+  { id: "j5", name: "최도윤", affiliation: "KAIST 창업원 책임연구원" },
+];
+
+/** 데모용 — 한 대회의 심사위원 N명을 pool 에서 뽑아 배정 정보 만들기. */
+function pickJudges(count: number): JudgeAssignment[] {
+  return JUDGE_POOL.slice(0, count).map((j, i) => ({
+    judgeId: j.id,
+    judgeName: j.name,
+    affiliation: j.affiliation,
+    // 며칠 전에 초대됐다는 식으로 살짝 다른 시각.
+    invitedAt: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString(),
+    scope: "all",
+  }));
+}
+
+/**
+ * 한 심사위원이 한 proposal 에 매기는 평가 mock 생성기.
+ *
+ * 동작:
+ *   - AI 점수를 기준으로 small random delta (-8 ~ +6) 를 더해 사람 점수 시뮬레이션.
+ *   - 일부 항목은 AI 점수를 "그대로 수용" (acceptedAiScore=true) 처리해서
+ *     실제 심사 흐름에 가깝게 ("다 수정하진 않고 의심되는 부분만 수정") 표현.
+ *   - 코멘트는 미리 정의된 톤별 풀에서 골라 끼움.
+ *
+ * 결과적으로 mock 데이터에서 자연스럽게:
+ *   - AI ≈ Judge1 ≈ Judge2 인 axis (합의)
+ *   - AI vs Judge 간 큰 차이 있는 axis (override)
+ *   - judges 끼리도 갈리는 axis (다인 분산)
+ * 가 모두 등장한다.
+ */
+function buildJudgeReview(
+  judge: { id: string; name: string; affiliation: string },
+  baseScore: ProposalScore,
+  // 사람 1명의 평가 톤. seed 로 결정론적으로 다르게.
+  seed: number,
+  overallComment?: string
+): JudgeReview {
+  const axes: AxisReview[] = baseScore.axes.map((a, idx) => {
+    // 의사 난수 — seed × idx 로 결정적인 변형. 매 빌드 같은 결과.
+    const drift = ((seed * 7 + idx * 3) % 14) - 6; // -6 ~ +7
+    const wantsOverride = ((seed + idx) % 3) !== 0; // 약 2/3 확률로 수정
+    if (!wantsOverride) {
+      return { criterionId: a.criterionId, acceptedAiScore: true };
+    }
+    const overrideScore = Math.max(0, Math.min(100, a.mean + drift));
+    // 코멘트는 drift 부호에 따라 다른 톤.
+    const comment =
+      drift > 4
+        ? "현장 사례와 비교하면 AI 추정보다 상향이 적절."
+        : drift < -3
+        ? "리스크 가정이 낙관적. 보수적으로 봤을 때 점수 하향."
+        : undefined;
+    return {
+      criterionId: a.criterionId,
+      acceptedAiScore: false,
+      overrideScore,
+      comment,
+    };
+  });
+  return {
+    judgeId: judge.id,
+    judgeName: judge.name,
+    affiliation: judge.affiliation,
+    axes,
+    overallComment,
+    status: "submitted",
+    submittedAt: new Date(Date.now() - (seed % 5) * 12 * 60 * 60 * 1000).toISOString(),
+  };
+}
+
+// 종합 코멘트 풀 — 시연 시 자연스러워 보이게 짤막한 한국어.
+const OVERALL_COMMENTS: string[] = [
+  "전반적으로 시장 진입 논리는 탄탄하나, 팀 실행력 입증 자료가 부족합니다.",
+  "사회적 가치 측면에서 강점이 분명. 본심 진출 권고.",
+  "기술 차별성은 인정되나, 수익화 시나리오의 가정이 다소 낙관적입니다.",
+  "AI 평가 결과에 대체로 동의. 다만 시장성 항목은 좀 더 보수적으로 봤습니다.",
+  undefined as unknown as string, // 일부 심사위원은 종합 코멘트 미작성
+].filter((c): c is string => typeof c === "string");
+
+/** proposal 에 N명의 judge 가 평가를 단 mock 을 부착. */
+function attachJudgeReviews(p: Proposal, judges: JudgeAssignment[], propIdx: number): Proposal {
+  if (!p.score) return p;
+  const reviews: JudgeReview[] = judges.map((j, i) =>
+    buildJudgeReview(
+      { id: j.judgeId, name: j.judgeName, affiliation: j.affiliation ?? "" },
+      p.score!,
+      propIdx * 11 + i * 5 + 1, // proposal × judge 조합마다 다른 seed
+      OVERALL_COMMENTS[(propIdx + i) % OVERALL_COMMENTS.length]
+    )
+  );
+  return { ...p, judgeReviews: reviews };
+}
 
 /** 6축 기본 템플릿. 주최 측이 평가표를 안 적었을 때 fallback. */
 export const BUILTIN_TEMPLATE: CriteriaTemplate = {
@@ -344,9 +449,58 @@ export const DEMO_COMPETITION: Competition = {
   ],
 };
 
+// ── 심사위원 배정 + 평가 mock 부착 ─────────────────────────────────────────
+// 위에서 정의한 DEMO_COMPETITION 은 judges/reviews 없는 base.
+// 여기서 한 번에 3명 배정 + 각 proposal 에 그 3명의 평가를 attach 해 export.
+// 이렇게 후처리하는 이유: buildProposal 시점에 judges 가 정해지지 않았기 때문.
+const DEMO_JUDGES = pickJudges(3);
+
+// 데모용 — 첫 번째 심사위원(=심사위원장 가정)이 일부 분쟁을 미리 결정해둔 상태.
+// 발표 시연 시 "이미 일부는 결정됐고, 남은 분쟁만 결정하면 검토 종료" 흐름을
+// 보여주기 위해 일부 proposal 에 부분 결정 데이터를 박는다.
+const DECISION_AUTHOR = {
+  judgeId: DEMO_JUDGES[0].judgeId,
+  judgeName: DEMO_JUDGES[0].judgeName,
+};
+const DEMO_PRESEEDED_RESOLUTIONS: Record<string, DisputeResolution[]> = {
+  // p1 (케어브릿지) — team axis (stddev 11.3) 가 분쟁. 이미 사람 평균 채택으로 결정.
+  p1: [
+    {
+      criterionId: "team",
+      action: "accept_human_avg",
+      finalScore: 70,
+      decidedBy: DECISION_AUTHOR,
+      decidedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+      reason: "보완 자료 검토 결과 사람 평균(70)이 합리적.",
+    },
+  ],
+  // p3 (그린레저) — feasibility (12.4) 가 분쟁. AI 점수가 너무 비관적이라 결정한
+  // 사례 — manual_override 로 65 직접 입력.
+  p3: [
+    {
+      criterionId: "feasibility",
+      action: "manual_override",
+      finalScore: 65,
+      decidedBy: DECISION_AUTHOR,
+      decidedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      reason: "규제 이슈는 분명하나 정부 가이드라인 발표 이후 실행 가능성 상향.",
+    },
+  ],
+};
+
+const DEMO_COMPETITION_WITH_JUDGES: Competition = {
+  ...DEMO_COMPETITION,
+  judges: DEMO_JUDGES,
+  proposals: DEMO_COMPETITION.proposals.map((p, idx) => {
+    const withReviews = attachJudgeReviews(p, DEMO_JUDGES, idx);
+    const preseeded = DEMO_PRESEEDED_RESOLUTIONS[p.id];
+    return preseeded ? { ...withReviews, disputeResolutions: preseeded } : withReviews;
+  }),
+};
+
 /** 데모용 대회 목록. */
 export const MOCK_COMPETITIONS: Competition[] = [
-  DEMO_COMPETITION,
+  DEMO_COMPETITION_WITH_JUDGES,
   {
     id: "demo-edu-2026",
     name: "에듀테크 챌린지 2026",
@@ -356,6 +510,7 @@ export const MOCK_COMPETITIONS: Competition[] = [
     template: BUILTIN_TEMPLATE,
     rubricStatus: "ready",
     proposals: [],
+    judges: pickJudges(2), // 출품 전이라 평가는 없지만 심사위원만 배정됨
   },
 ];
 

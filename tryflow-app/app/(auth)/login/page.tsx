@@ -37,7 +37,7 @@ function LoginForm() {
       setGuestLoading(false);
       return;
     }
-    const next = searchParams?.get("next") ?? "/dashboard";
+    const next = searchParams?.get("next") ?? "/competitions";
     router.push(next);
     router.refresh();
   };
