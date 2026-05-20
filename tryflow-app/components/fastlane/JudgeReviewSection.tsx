@@ -566,7 +566,6 @@ function ResolvedBadge({ resolution }: { resolution: DisputeResolution }) {
     >
       <Icon
         className="w-3 h-3"
-        // @ts-expect-error — style on lucide icon
         style={{ color: "var(--signal-success)" }}
         strokeWidth={2.4}
       />
