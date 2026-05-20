@@ -98,6 +98,7 @@ export async function POST(
             systemPrompt,
             competition.name,
             competition.theme,
+            competitionType,
             c
           );
           return { criterion: c, rubric, source: "ai" as const };
@@ -210,13 +211,16 @@ async function generateRubric(
   systemPrompt: string,
   competitionName: string,
   theme: string,
+  competitionType: string | undefined,
   criterion: Criterion
 ): Promise<string> {
   // user 메시지는 두 부분으로 구성:
   //   1) 역할(role) 한 줄 — LLM 에게 "너는 이 대회의 이 축 담당 평가 agent" 정체성 부여.
   //      이후 출품작 채점 단계에서도 이 rubric 이 system prompt 로 그대로 쓰이기 때문에,
   //      rubric 을 작성하는 자아 = 채점하는 자아 임을 명시해 일관성 강화.
-  //   2) JSON payload — competition.name/theme + criterion 정의.
+  //   2) JSON payload — competition.name/theme/competitionType + criterion 정의.
+  //      competitionType 은 rubric_generator.md 의 도메인 모드 분기 (game/finance/literature/일반)
+  //      에 직접 영향. 없으면 일반 모드로 빠져 theme 어휘를 그대로 받는다.
   const roleLine =
     `너는 **${competitionName || "이 대회"}** 의 **${criterion.name}** 축을 전담하는 평가 agent 다. ` +
     `지금 너의 임무는 이 축에 대해 **너 자신이 이후 출품작을 채점할 때 사용할** ` +
@@ -226,6 +230,7 @@ async function generateRubric(
     competition: {
       name: competitionName,
       theme: theme || "",
+      competitionType: competitionType ?? null,
     },
     criterion: {
       id: criterion.id,
