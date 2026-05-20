@@ -26,15 +26,24 @@ import { COMPETITION_TYPE_LABELS } from "@/lib/fastlane/types";
 import { useToast } from "@/components/ui/Toast";
 
 // 2026-05 피벗: 대회 종류 선택지.
-// 게임 대회는 9축 preset (fastlane/prompts/game/agents/*.md 의 도메인 지식 기반) 제공.
-// 문학·금융은 placeholder — preset axis 정의 추가 후 활성화.
-const COMPETITION_TYPES: { value: CompetitionType; label: string; description: string; available: boolean }[] = [
+// 게임/금융/문학은 정적 rubric 파일(fastlane/prompts/{type}/)을 가진 프리셋 패스트레인.
+// "general"(기타)은 프리셋 없이 사용자가 직접 축을 입력 → AI rubric_generator 가
+// theme 기반으로 전 축 rubric 을 생성. 저장 시 competitionType 을 omit 한다.
+type TypeChoice = CompetitionType | "general";
+
+const COMPETITION_TYPES: { value: TypeChoice; label: string; description: string; available: boolean }[] = [
   { value: "game", label: "게임", description: "재미·디자인·혁신성 등 9축 preset 제공", available: true },
   { value: "finance", label: "금융", description: "기획안·보고서·PT 산출물별 9기준 + 금융지식 엔진", available: true },
   {
     value: "literature",
     label: "문학",
     description: "문학 출품 7축 (구조·장르·주제·형식·인물·밀도·갈등/마무리)",
+    available: true,
+  },
+  {
+    value: "general",
+    label: "기타 (자유 주제)",
+    description: "미술·사진·음악·창업·논문·요리 등 모든 분야 — 직접 항목 입력, AI가 주제 맞춤 rubric 생성",
     available: true,
   },
 ];
@@ -80,7 +89,8 @@ export default function NewCompetitionPage() {
   const [deadline, setDeadline] = useState(defaultDeadline());
   const [submitting, setSubmitting] = useState(false);
   // 대회 종류 — 피벗 후 필수 선택. 종류에 따라 사용 가능한 preset 이 달라짐.
-  const [competitionType, setCompetitionType] = useState<CompetitionType | null>(null);
+  // "general" 은 프리셋 없는 자유 주제. null 은 아직 미선택.
+  const [competitionType, setCompetitionType] = useState<TypeChoice | null>(null);
   // 일반 대회 (미술, 글쓰기, 과학, 창업, ...) 전부 지원하므로 기본값은 비어있음.
   // 종류별 preset 은 옆 버튼으로 명시적으로 불러와야 함.
   const [criteria, setCriteria] = useState<Criterion[]>([]);
@@ -96,7 +106,7 @@ export default function NewCompetitionPage() {
     setCriteria(BUILTIN_TEMPLATE.criteria.map((c) => ({ ...c })));
   }
   function loadTypePreset() {
-    if (!competitionType) return;
+    if (!competitionType || competitionType === "general") return;
     const preset = TEMPLATES_BY_TYPE[competitionType];
     if (!preset || preset.criteria.length === 0) {
       toast({
@@ -163,7 +173,9 @@ export default function NewCompetitionPage() {
             id: `custom-${Date.now()}`,
             name: name.trim(),
             isBuiltin: false,
-            competitionType,
+            // "general" 은 정적 프리셋이 없으므로 competitionType 을 보내지 않는다.
+            // 백엔드에서 undefined → AI rubric_generator 가 theme 기반으로 생성.
+            ...(competitionType !== "general" ? { competitionType } : {}),
             criteria: criteria.map((c) => ({
               ...c,
               name: c.name.trim(),
@@ -367,7 +379,7 @@ export default function NewCompetitionPage() {
 
           {/* 액션 row */}
           <div className="flex items-center flex-wrap gap-2 mt-4 mb-4">
-            {competitionType && TEMPLATES_BY_TYPE[competitionType].criteria.length > 0 && (
+            {competitionType && competitionType !== "general" && TEMPLATES_BY_TYPE[competitionType].criteria.length > 0 && (
               <button
                 type="button"
                 onClick={loadTypePreset}

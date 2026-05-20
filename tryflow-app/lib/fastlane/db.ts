@@ -5,6 +5,7 @@ import type {
   AxisReview,
   AxisScore,
   Competition,
+  CompetitionType,
   CriteriaTemplate,
   Criterion,
   DisputeAction,
@@ -17,6 +18,22 @@ import type {
   RubricStatus,
 } from "./types";
 import { STDDEV_REVIEW_THRESHOLD } from "./types";
+
+// 정적 rubric 파일(fastlane/prompts/{type}/)이 존재하는 빌트인 대회 종류.
+// 이 셋만 프리셋 패스트레인을 탄다. 그 외 주제는 competitionType 을 비워
+// AI rubric_generator 가 theme 기반으로 전 축을 생성한다.
+const BUILTIN_COMPETITION_TYPES: readonly CompetitionType[] = [
+  "game",
+  "finance",
+  "literature",
+];
+
+function parseCompetitionType(raw: unknown): CompetitionType | undefined {
+  return typeof raw === "string" &&
+    (BUILTIN_COMPETITION_TYPES as readonly string[]).includes(raw)
+    ? (raw as CompetitionType)
+    : undefined;
+}
 
 // ── DB row 형태 (snake_case) ───────────────────────────────
 
@@ -279,10 +296,12 @@ function parseTemplate(raw: unknown): CriteriaTemplate {
       };
     })
     .filter((c): c is Criterion => c !== null);
+  const competitionType = parseCompetitionType(t.competitionType);
   return {
     id: typeof t.id === "string" ? t.id : "custom",
     name: typeof t.name === "string" ? t.name : "(이름 없음)",
     isBuiltin: !!t.isBuiltin,
+    ...(competitionType ? { competitionType } : {}),
     criteria,
   };
 }
@@ -396,10 +415,12 @@ export function validateCompetitionPayload(
     };
   }
 
+  const competitionType = parseCompetitionType(t.competitionType);
   const template: CriteriaTemplate = {
     id: typeof t.id === "string" && t.id ? t.id : `custom-${Date.now()}`,
     name: typeof t.name === "string" && t.name ? t.name : name,
     isBuiltin: false,
+    ...(competitionType ? { competitionType } : {}),
     criteria,
   };
 
