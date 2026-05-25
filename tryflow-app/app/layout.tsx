@@ -9,6 +9,7 @@ import { CompareTrayProvider } from "@/components/compare/CompareTrayContext";
 import { CompareTray } from "@/components/compare/CompareTray";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ConfirmProvider } from "@/components/ui/ConfirmModal";
+import { SidebarProvider } from "@/components/layout/SidebarContext";
 
 export const metadata: Metadata = {
   title: "Fastlane — AI 기반 창업 평가 플랫폼",
@@ -55,12 +56,14 @@ export default async function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <ConfirmProvider>
-              <CompareTrayProvider>
-                <NavigationProgress />
-                <SidebarWrapper />
-                <CompareTray />
-                <ContentWrapper>{children}</ContentWrapper>
-              </CompareTrayProvider>
+              <SidebarProvider>
+                <CompareTrayProvider>
+                  <NavigationProgress />
+                  <SidebarWrapper />
+                  <CompareTray />
+                  <ContentWrapper>{children}</ContentWrapper>
+                </CompareTrayProvider>
+              </SidebarProvider>
             </ConfirmProvider>
           </ToastProvider>
         </ThemeProvider>

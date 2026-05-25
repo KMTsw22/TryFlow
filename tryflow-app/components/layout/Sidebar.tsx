@@ -9,9 +9,12 @@ import {
   Trophy,
   FilePlus,
   AlertTriangle,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useSidebar } from "./SidebarContext";
 
 // 2026-05-21 단일화:
 //   - 역할 토글(주최자/심사위원) 제거.
@@ -102,7 +105,12 @@ interface Props {
 
 export function Sidebar(_props: Props) {
   const pathname = usePathname();
-  const [expanded, setExpanded] = useState(false);
+  // pinned: 사용자가 명시적으로 "펼친 채 고정" (Context + localStorage).
+  // hovered: 사이드바 위 마우스 올렸을 때 임시 펼침.
+  // expanded = pinned || hovered.
+  const { pinned, togglePin } = useSidebar();
+  const [hovered, setHovered] = useState(false);
+  const expanded = pinned || hovered;
   const [stats, setStats] = useState<SidebarStats>({
     totalCompetitions: 0,
     pendingReviewItems: 0,
@@ -131,8 +139,8 @@ export function Sidebar(_props: Props) {
 
   return (
     <aside
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={cn(
         "fixed left-0 top-0 z-40 flex flex-col h-screen transition-all duration-200 ease-in-out overflow-hidden",
         expanded ? "w-[200px]" : "w-[64px]"
@@ -142,15 +150,15 @@ export function Sidebar(_props: Props) {
         borderRight: "1px solid var(--t-border)",
       }}
     >
-      {/* Logo */}
+      {/* Logo + 핀 토글 — 펼친 상태에서만 핀 버튼 노출. */}
       <div
-        className="flex items-center gap-2.5 px-3.5 py-4 shrink-0 h-[60px]"
+        className="flex items-center justify-between gap-2.5 px-3.5 py-4 shrink-0 h-[60px]"
         style={{ borderBottom: "1px solid var(--t-border)" }}
       >
         <Link
           href="/"
           aria-label="Fastlane — 홈으로"
-          className="flex items-center gap-2.5"
+          className="flex items-center gap-2.5 min-w-0"
         >
           <img src="/logo.png" className="w-7 h-7 shrink-0" alt="Fastlane" />
           <span
@@ -169,6 +177,23 @@ export function Sidebar(_props: Props) {
             Fastlane
           </span>
         </Link>
+        {/* 핀 토글 — 펼친 상태에서만 보이고, 클릭으로 펼침 고정/해제. */}
+        {expanded && (
+          <button
+            type="button"
+            onClick={togglePin}
+            aria-label={pinned ? "사이드바 접기 (펼침 해제)" : "사이드바 펼침 고정"}
+            title={pinned ? "사이드바 접기" : "사이드바 펼침 고정"}
+            className="shrink-0 inline-flex items-center justify-center w-7 h-7 transition-colors hover:bg-[color:var(--t-border-subtle)]"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            {pinned ? (
+              <PanelLeftClose className="w-3.5 h-3.5" strokeWidth={2} />
+            ) : (
+              <PanelLeftOpen className="w-3.5 h-3.5" strokeWidth={2} />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
