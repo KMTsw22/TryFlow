@@ -114,8 +114,9 @@ export default function InviteAcceptPage() {
         setError(data?.error ?? `HTTP ${res.status}`);
         return;
       }
-      // 성공 — judge 페이지로 (방금 등록된 본인 배정 보임).
-      router.push("/judge");
+      // 성공 — 통합 대회 목록으로 (역할 칩으로 본인이 추가된 대회가 표시됨).
+      // /judge 는 사이드바에서 빠졌고 통합 진입점이 /competitions.
+      router.push("/competitions");
       router.refresh();
     } catch (err) {
       console.error("accept invitation", err);

@@ -32,7 +32,7 @@ function LoginForm() {
     if (error) {
       setGuestError(
         error.message ||
-          "Guest sign-in is unavailable. Please use Google instead."
+          "게스트 로그인을 사용할 수 없습니다. Google 로그인을 이용해주세요."
       );
       setGuestLoading(false);
       return;
@@ -44,9 +44,9 @@ function LoginForm() {
 
   return (
     <div className="border p-8" style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }}>
-      <h2 className="text-lg font-bold text-center" style={{ color: "var(--text-primary)" }}>Sign in to continue</h2>
+      <h2 className="text-lg font-bold text-center" style={{ color: "var(--text-primary)" }}>로그인하고 시작하기</h2>
       <p className="text-sm text-center mt-1 mb-8" style={{ color: "var(--text-tertiary)" }}>
-        New or returning — just click below
+        처음이든 다시 오시든 — 아래 버튼 하나로 시작
       </p>
 
       <button
@@ -64,16 +64,16 @@ function LoginForm() {
           <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
           <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
         </svg>
-        Continue with Google
+        Google 계정으로 계속하기
       </button>
 
       <div className="flex items-center gap-3 my-5" aria-hidden>
         <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
         <span
-          className="text-[10.5px] font-medium tracking-[0.14em] uppercase"
+          className="text-[11px]"
           style={{ color: "var(--text-tertiary)" }}
         >
-          or
+          또는
         </span>
         <span className="flex-1 h-px" style={{ background: "var(--t-border-subtle)" }} />
       </div>
@@ -88,7 +88,7 @@ function LoginForm() {
           color: "var(--text-secondary)",
         }}
       >
-        {guestLoading ? "Signing in…" : "Continue as guest"}
+        {guestLoading ? "로그인 중…" : "게스트로 계속하기"}
       </button>
 
       {guestError && (
@@ -105,26 +105,27 @@ function LoginForm() {
         className="text-[11px] text-center mt-3 leading-relaxed"
         style={{ color: "var(--text-tertiary)" }}
       >
-        No email required. You can link a Google account later to keep your ideas.
+        이메일 없이도 시작할 수 있어요. 나중에 Google 계정을 연결하면 운영 기록이 그대로 이어집니다.
       </p>
 
       <p className="text-xs text-center mt-6 leading-relaxed" style={{ color: "var(--text-tertiary)" }}>
-        By signing in, you agree to our{" "}
+        로그인하면{" "}
         <a
           href="#"
           className="transition-[filter] hover:brightness-110"
           style={{ color: "var(--accent)" }}
         >
-          Terms of Service
+          이용약관
         </a>
-        {" "}and{" "}
+        {" "}과{" "}
         <a
           href="#"
           className="transition-[filter] hover:brightness-110"
           style={{ color: "var(--accent)" }}
         >
-          Privacy Policy
+          개인정보처리방침
         </a>
+        에 동의한 것으로 봅니다.
       </p>
     </div>
   );
@@ -136,7 +137,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <Brand size="lg" className="mb-2" />
-          <p className="text-sm mt-2" style={{ color: "var(--text-tertiary)" }}>Anonymous Founder Idea Signals</p>
+          <p className="text-sm mt-2" style={{ color: "var(--text-tertiary)" }}>공모전·지원사업·경진대회 1차 심사 자동화</p>
         </div>
 
         <Suspense fallback={<div className="border p-8" style={{ background: "var(--card-bg)", borderColor: "var(--t-border-card)" }} />}>
@@ -144,7 +145,7 @@ export default function LoginPage() {
         </Suspense>
 
         <p className="text-center text-xs mt-6" style={{ color: "var(--text-tertiary)" }}>
-          <Link href="/" className="transition-[filter] hover:brightness-125">← Back to home</Link>
+          <Link href="/" className="transition-[filter] hover:brightness-125">← 홈으로 돌아가기</Link>
         </p>
       </div>
     </div>

@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   ArrowRight,
   FileText,
+  Pencil,
   Upload,
   Loader2,
   Check,
@@ -51,7 +52,11 @@ type RowStatus =
 interface Row {
   id: string;
   fileName: string;
-  file: File; // 재시도 가능하게 보관. 메모리 부담 있지만 N=수십 수준이면 OK.
+  /** 파일 출처 row 만 file 보관 — manual row 는 undefined.
+   *  재시도 가능하게 보관. N=수십 수준이면 메모리 부담 무시 가능. */
+  file?: File;
+  /** "file" = 드롭/선택, "manual" = 직접 입력. UI/retry 분기 + 상태 표시용. */
+  source: "file" | "manual";
   status: RowStatus;
   title: string;
   team: string;
@@ -78,6 +83,7 @@ export default function BatchUploadProposalsPage() {
       id: crypto.randomUUID(),
       fileName: f.name,
       file: f,
+      source: "file",
       status: "extracting",
       title: "",
       team: "",
@@ -91,7 +97,24 @@ export default function BatchUploadProposalsPage() {
     }
   }
 
+  // 직접 입력 row 추가 — 파일 없이 빈 ready 상태로 시작.
+  // 사용자가 제목·팀·요약을 직접 채워서 일괄 제출에 포함시킴.
+  function addManualRow() {
+    const newRow: Row = {
+      id: crypto.randomUUID(),
+      fileName: "직접 입력",
+      file: undefined,
+      source: "manual",
+      status: "ready",
+      title: "",
+      team: "",
+      summary: "",
+    };
+    setRows((prev) => [...prev, newRow]);
+  }
+
   async function extractForRow(row: Row) {
+    if (!row.file) return; // manual row 는 추출 대상 아님 (방어).
     try {
       const fd = new FormData();
       fd.append("file", row.file);
@@ -139,6 +162,8 @@ export default function BatchUploadProposalsPage() {
   function retryRow(id: string) {
     const row = rows.find((r) => r.id === id);
     if (!row) return;
+    // manual row 는 추출 대상이 아니므로 retry 호출 안 됨.
+    if (!row.file) return;
     updateRow(id, { status: "extracting", error: undefined });
     void extractForRow(row);
   }
@@ -206,8 +231,11 @@ export default function BatchUploadProposalsPage() {
       )
     );
 
-    await Promise.all(
-      targets.map(async (r) => {
+    // Promise.all 의 결과로 성공 여부를 직접 추적.
+    // setRows 가 비동기라 외부 rows 변수는 stale — 그걸 보고 판정하면
+    // 모두 성공해도 "실패" 토스트가 잘못 떴음. 결과 배열로 평가.
+    const results = await Promise.all(
+      targets.map(async (r): Promise<{ ok: boolean }> => {
         try {
           const res = await fetch(`/api/competitions/${competitionId}/proposals`, {
             method: "POST",
@@ -227,25 +255,25 @@ export default function BatchUploadProposalsPage() {
               status: "submit_error",
               error: data?.error ?? `HTTP ${res.status}`,
             });
-            return;
+            return { ok: false };
           }
           updateRow(r.id, { status: "submitted", error: undefined });
+          return { ok: true };
         } catch (err) {
           console.error("submit row failed", err);
           updateRow(r.id, {
             status: "submit_error",
             error: "네트워크 오류가 발생했습니다.",
           });
+          return { ok: false };
         }
       })
     );
 
     setBatchSubmitting(false);
 
-    // 결과 확인 — 모두 성공이면 자동 이동, 일부 실패면 그대로 머물러서 사용자가 수정.
-    const allOk = rows.every(
-      (r) => r.status === "submitted" || !targets.some((t) => t.id === r.id)
-    );
+    // 결과 확인 — Promise.all 결과 기반. stale state 위험 없음.
+    const allOk = results.every((r) => r.ok);
     if (allOk) {
       toast({
         message: `${targets.length}건 제출 완료. AI 평가가 시작됩니다.`,
@@ -353,6 +381,38 @@ export default function BatchUploadProposalsPage() {
           className="sr-only"
           tabIndex={-1}
           aria-hidden
+        />
+      </div>
+
+      {/* 또는 직접 입력 — 파일이 없을 때 빈 행 추가 */}
+      <div
+        className="flex items-center gap-3 mb-8"
+        style={{ color: "var(--text-tertiary)" }}
+      >
+        <span
+          aria-hidden
+          className="flex-1 h-px"
+          style={{ background: "var(--t-border-subtle)" }}
+        />
+        <span className="text-[11.5px]">또는</span>
+        <button
+          type="button"
+          onClick={addManualRow}
+          className="inline-flex items-center gap-1.5 px-3 h-8 text-[12px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+          style={{
+            border: "1px solid var(--t-input-border)",
+            color: "var(--text-primary)",
+            background: "var(--surface-1)",
+            borderRadius: 2,
+          }}
+        >
+          <Plus className="w-3 h-3" strokeWidth={2.4} />
+          직접 입력으로 추가
+        </button>
+        <span
+          aria-hidden
+          className="flex-1 h-px"
+          style={{ background: "var(--t-border-subtle)" }}
         />
       </div>
 
@@ -508,14 +568,22 @@ function RowCard({
         border: `1px solid ${borderColor}`,
       }}
     >
-      {/* 헤더 — 파일명 + 상태 라벨 + 제거 버튼 */}
+      {/* 헤더 — 파일명/직접 입력 라벨 + 상태 + 제거 */}
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
-          <FileText
-            className="w-3.5 h-3.5 shrink-0"
-            style={{ color: "var(--text-tertiary)" }}
-            strokeWidth={2}
-          />
+          {row.source === "manual" ? (
+            <Pencil
+              className="w-3.5 h-3.5 shrink-0"
+              style={{ color: "var(--accent)" }}
+              strokeWidth={2}
+            />
+          ) : (
+            <FileText
+              className="w-3.5 h-3.5 shrink-0"
+              style={{ color: "var(--text-tertiary)" }}
+              strokeWidth={2}
+            />
+          )}
           <span
             className="text-[12.5px] font-semibold truncate"
             style={{ color: "var(--text-primary)" }}
