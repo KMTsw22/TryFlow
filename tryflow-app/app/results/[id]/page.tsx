@@ -15,11 +15,14 @@ import { Brand } from "@/components/layout/Brand";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   rowToCompetition,
+  rowToDisputeResolution,
   rowToProposal,
   type CompetitionRow,
+  type DisputeResolutionRow,
   type ProposalRow,
 } from "@/lib/fastlane/db";
-import type { Competition } from "@/lib/fastlane/types";
+import { foldFinalScore } from "@/lib/fastlane/score";
+import type { Competition, DisputeResolution } from "@/lib/fastlane/types";
 
 interface Loaded {
   competition: Competition;
@@ -50,10 +53,27 @@ async function loadPublicResults(id: string): Promise<Loaded | null> {
   ]);
   if (!compRow) return null;
 
-  const proposals = ((propRows ?? []) as ProposalRow[]).map((r) =>
-    rowToProposal(r)
+  const propRowsTyped = (propRows ?? []) as ProposalRow[];
+  if (propRowsTyped.length === 0) return null;
+
+  // 분쟁 결정도 함께 가져와 axis 점수를 최종값으로 폴드한다.
+  // proposal_dispute_resolutions 의 final_score 가 있으면 그 값으로 axis 를 덮어쓰고
+  // composite 를 재계산.
+  const proposalIds = propRowsTyped.map((r) => r.id);
+  const { data: disputeRows } = await admin
+    .from("proposal_dispute_resolutions")
+    .select("*")
+    .in("proposal_id", proposalIds);
+  const disputesByProposal = new Map<string, DisputeResolution[]>();
+  for (const r of (disputeRows ?? []) as DisputeResolutionRow[]) {
+    const list = disputesByProposal.get(r.proposal_id) ?? [];
+    list.push(rowToDisputeResolution(r));
+    disputesByProposal.set(r.proposal_id, list);
+  }
+
+  const proposals = propRowsTyped.map((r) =>
+    rowToProposal(r, { disputeResolutions: disputesByProposal.get(r.id) })
   );
-  if (proposals.length === 0) return null;
 
   // 모든 출품이 검토 종료된 경우만 공개. 한 건이라도 미종료면 결과 비공개.
   const allClosed = proposals.every((p) => !!p.reviewClosedAt);
@@ -105,9 +125,21 @@ export default async function PublicResultsPage({
   const { competition, publishedAt, totalProposals } = loaded;
   const { proposals, template } = competition;
 
+  // 분쟁 결정을 폴드한 최종 점수를 proposal.id 별로 미리 계산.
+  // 이후 정렬과 표 표시 모두 이 값을 사용한다.
+  const foldedByProposal = new Map(
+    proposals.map((p) => {
+      if (!p.score) return [p.id, null] as const;
+      return [
+        p.id,
+        foldFinalScore(p.score, template.criteria, p.disputeResolutions ?? []),
+      ] as const;
+    })
+  );
+
   const ranked = [...proposals].sort((a, b) => {
-    const sa = a.score?.composite ?? -1;
-    const sb = b.score?.composite ?? -1;
+    const sa = foldedByProposal.get(a.id)?.composite ?? -1;
+    const sb = foldedByProposal.get(b.id)?.composite ?? -1;
     return sb - sa;
   });
 
@@ -244,8 +276,8 @@ export default async function PublicResultsPage({
               </thead>
               <tbody>
                 {ranked.map((p, i) => {
-                  const score = p.score;
-                  const composite = score?.composite ?? null;
+                  const folded = foldedByProposal.get(p.id) ?? null;
+                  const composite = folded?.composite ?? null;
                   const rank = i + 1;
                   const accent = rankAccent(rank);
                   return (
@@ -302,9 +334,10 @@ export default async function PublicResultsPage({
                         {composite ?? "—"}
                       </td>
                       {template.criteria.map((c) => {
-                        const axis = score?.axes.find(
+                        const axis = folded?.axes.find(
                           (a) => a.criterionId === c.id
                         );
+                        const fromDispute = axis?.source === "dispute";
                         return (
                           <td
                             key={c.id}
@@ -312,10 +345,21 @@ export default async function PublicResultsPage({
                           >
                             {axis ? (
                               <span
+                                title={
+                                  fromDispute
+                                    ? "분쟁 결정으로 확정된 최종 점수"
+                                    : "AI 평가 결과"
+                                }
                                 className="tabular-nums text-[13px]"
-                                style={{ color: "var(--text-primary)" }}
+                                style={{
+                                  color: fromDispute
+                                    ? "var(--accent)"
+                                    : "var(--text-primary)",
+                                  fontWeight: fromDispute ? 700 : 500,
+                                }}
                               >
                                 {axis.mean}
+                                {fromDispute ? "*" : ""}
                               </span>
                             ) : (
                               <span
