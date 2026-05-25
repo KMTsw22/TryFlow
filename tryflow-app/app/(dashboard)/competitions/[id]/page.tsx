@@ -26,7 +26,6 @@ import { RubricStatusBanner } from "@/components/fastlane/RubricStatusBanner";
 import { CriterionRubricCard } from "@/components/fastlane/CriterionRubricCard";
 import { BulkAcceptAction } from "@/components/fastlane/BulkAcceptAction";
 import { BulkCloseAction } from "@/components/fastlane/BulkCloseAction";
-import { DemoResetAction } from "@/components/fastlane/DemoResetAction";
 import {
   StageStepper,
   type CompetitionStage,
@@ -324,8 +323,6 @@ export default async function CompetitionDetailPage({
               <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
               출품 제출
             </Link>
-            {/* 데모용 리셋 — organizer 본인만 노출. 시연/테스트 편의. */}
-            {isOwner && <DemoResetAction competitionId={competition.id} />}
           </div>
         )}
       </div>
