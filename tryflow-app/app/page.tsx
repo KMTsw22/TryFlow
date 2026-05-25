@@ -822,7 +822,7 @@ function ThreePassMockup() {
                   border: p.isFinal
                     ? "1.5px solid var(--accent)"
                     : "1px solid var(--t-border)",
-                  borderRadius: 6,
+                  borderRadius: 4,
                   padding: "12px 8px 14px",
                   boxShadow: p.isFinal
                     ? "0 2px 8px rgba(30,58,138,0.12)"
@@ -876,7 +876,7 @@ function ThreePassMockup() {
           className="flex items-center justify-between px-4 py-2.5"
           style={{
             background: "var(--accent-soft)",
-            borderRadius: 6,
+            borderRadius: 4,
             border: "1px solid var(--accent-ring)",
           }}
         >
@@ -1210,7 +1210,7 @@ function Comparison() {
             style={{
               background: "var(--accent-soft)",
               border: "1px solid var(--accent-ring)",
-              borderRadius: 12,
+              borderRadius: 8,
             }}
           >
             <p
