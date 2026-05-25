@@ -95,6 +95,11 @@ export function JudgeReviewSection({
   // 검토 종료 — initialClosedAt 이 있으면 그대로, 없으면 사용자가 버튼 클릭해서 종료.
   const [closedAt, setClosedAt] = useState<string | undefined>(initialClosedAt);
 
+  // 본인이 이미 평가를 제출했는지. 다른 심사위원 비교 영역을 자동 펼침 여부 결정.
+  // anchoring 방지 — 미제출이면 비교 영역을 collapsed 로 두고 본인 의견을 먼저 형성.
+  const initiallySubmitted = myExistingReview?.status === "submitted";
+  const [peerExpanded, setPeerExpanded] = useState(initiallySubmitted);
+
   // submitted 평가만 점수에 반영. draft 는 제외.
   const submittedReviews = useMemo(
     () => reviews.filter((r) => r.status === "submitted"),
@@ -228,92 +233,20 @@ export function JudgeReviewSection({
         </p>
       </div>
 
-      {hasReviews ? (
-        <>
-          <p
-            className="text-[12px] mb-4 max-w-2xl"
-            style={{
-              color: "var(--text-tertiary)",
-              letterSpacing: "0.02em",
-              wordBreak: "keep-all",
-            }}
-          >
-            AI 1차 점수 위에 각 심사위원이 매긴 점수와 코멘트입니다. 사람이
-            제출한 axis 는 그 평균이 자동으로 최종 점수가 됩니다.
-          </p>
+      <p
+        className="text-[12px] mb-6 max-w-2xl"
+        style={{
+          color: "var(--text-tertiary)",
+          letterSpacing: "0.02em",
+          wordBreak: "keep-all",
+        }}
+      >
+        본인 평가를 먼저 매긴 뒤 다른 심사위원의 의견을 확인할 수 있습니다.
+        사람이 제출한 axis 는 그 평균이 자동으로 최종 점수가 됩니다.
+      </p>
 
-          {/* 심사위원 chip 리스트 */}
-          <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mb-7">
-            {reviews.map((r, i) => (
-              <span
-                key={r.judgeId}
-                className="inline-flex items-center gap-2 px-2.5 py-1 text-[12px]"
-                style={{
-                  background: "var(--surface-1)",
-                  border: "1px solid var(--t-border-subtle)",
-                  color: "var(--text-primary)",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: judgeColor(i) }}
-                  aria-hidden
-                />
-                <span style={{ fontWeight: 600 }}>{r.judgeName}</span>
-                {r.affiliation && (
-                  <span style={{ color: "var(--text-tertiary)" }}>
-                    · {r.affiliation}
-                  </span>
-                )}
-              </span>
-            ))}
-          </div>
-
-          {/* 격차 경고 — σ>20 인 axis 가 있으면 운영자에게 알림. 점수는 평균으로
-              이미 반영됨. 추가 평가자 초대 같은 능동 액션을 권고. */}
-          {noisyAxesCount > 0 && (
-            <div
-              className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12px]"
-              style={{
-                background: "var(--signal-attention-soft)",
-                border: "1px solid var(--signal-attention-ring)",
-                borderRadius: 2,
-                color: "var(--text-secondary)",
-                wordBreak: "keep-all",
-              }}
-            >
-              <AlertTriangle
-                className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                style={{ color: "var(--signal-attention)" }}
-                strokeWidth={2.4}
-              />
-              <span>
-                심사위원 점수 격차가 큰 항목{" "}
-                <strong style={{ color: "var(--signal-attention)" }}>
-                  {noisyAxesCount}개
-                </strong>
-                가 있습니다 (σ &gt; 20). 평균은 반영되었지만 추가 평가자 초대를
-                권고합니다.
-              </span>
-            </div>
-          )}
-
-          <ComparisonTable
-            criteria={criteria}
-            aiAxes={aiAxes}
-            reviews={reviews}
-            resolutions={resolutions}
-            disputeIds={new Set(disputeAxes.map((c) => c.id))}
-            disabled={reviewClosed}
-          />
-
-          <OverallComments reviews={reviews} />
-        </>
-      ) : (
-        <EmptyReviews />
-      )}
-
+      {/* 1. 내 평가 작성 — 최상위. anchoring 방지를 위해 다른 심사위원
+            점수가 먼저 보이지 않도록. */}
       <MyReviewDraft
         criteria={criteria}
         aiAxes={aiAxes}
@@ -323,6 +256,137 @@ export function JudgeReviewSection({
         existingReview={myExistingReview}
         axisReports={axisReports}
       />
+
+      {/* 2. 다른 심사위원 비교 영역 — 본인 미제출이면 collapsed. 본인 의견
+            형성 후 비교할 수 있게. submitted 자동 펼침. 토글 가능. */}
+      {hasReviews ? (
+        <section
+          className="mb-10 mt-10 px-5 py-4"
+          style={{
+            background: "var(--surface-1)",
+            border: "1px solid var(--t-border-subtle)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setPeerExpanded((v) => !v)}
+            aria-expanded={peerExpanded}
+            className="w-full flex items-center justify-between gap-3"
+          >
+            <div className="text-left">
+              <h3
+                className="text-[14px] font-bold"
+                style={{
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.003em",
+                }}
+              >
+                다른 심사위원 평가
+                <span
+                  className="ml-2 text-[12px] font-medium"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  {reviews.length}명 제출
+                </span>
+              </h3>
+              {!peerExpanded && !initiallySubmitted && (
+                <p
+                  className="text-[11px] mt-0.5"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  본인 평가를 먼저 제출한 뒤 비교하는 것을 권장합니다.
+                </p>
+              )}
+            </div>
+            <span
+              className="inline-flex items-center gap-1 text-[12px] font-semibold"
+              style={{ color: "var(--accent)" }}
+            >
+              {peerExpanded ? "접기" : "펼치기"}
+              <ChevronDown
+                className="w-4 h-4 transition-transform"
+                style={{
+                  transform: peerExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                }}
+                strokeWidth={2.2}
+              />
+            </span>
+          </button>
+
+          {peerExpanded && (
+            <div className="mt-5">
+              {/* 심사위원 chip 리스트 */}
+              <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mb-6">
+                {reviews.map((r, i) => (
+                  <span
+                    key={r.judgeId}
+                    className="inline-flex items-center gap-2 px-2.5 py-1 text-[12px]"
+                    style={{
+                      background: "var(--surface-1)",
+                      border: "1px solid var(--t-border-subtle)",
+                      color: "var(--text-primary)",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ background: judgeColor(i) }}
+                      aria-hidden
+                    />
+                    <span style={{ fontWeight: 600 }}>{r.judgeName}</span>
+                    {r.affiliation && (
+                      <span style={{ color: "var(--text-tertiary)" }}>
+                        · {r.affiliation}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+
+              {/* 격차 경고 — σ>20 인 axis 가 있으면 운영자에게 알림. */}
+              {noisyAxesCount > 0 && (
+                <div
+                  className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12px]"
+                  style={{
+                    background: "var(--signal-attention-soft)",
+                    border: "1px solid var(--signal-attention-ring)",
+                    borderRadius: 2,
+                    color: "var(--text-secondary)",
+                    wordBreak: "keep-all",
+                  }}
+                >
+                  <AlertTriangle
+                    className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                    style={{ color: "var(--signal-attention)" }}
+                    strokeWidth={2.4}
+                  />
+                  <span>
+                    심사위원 점수 격차가 큰 항목{" "}
+                    <strong style={{ color: "var(--signal-attention)" }}>
+                      {noisyAxesCount}개
+                    </strong>
+                    가 있습니다 (σ &gt; 20). 평균은 반영되었지만 추가 평가자
+                    초대를 권고합니다.
+                  </span>
+                </div>
+              )}
+
+              <ComparisonTable
+                criteria={criteria}
+                aiAxes={aiAxes}
+                reviews={reviews}
+                resolutions={resolutions}
+                disputeIds={new Set(disputeAxes.map((c) => c.id))}
+                disabled={reviewClosed}
+              />
+
+              <OverallComments reviews={reviews} />
+            </div>
+          )}
+        </section>
+      ) : (
+        <EmptyReviews />
+      )}
 
       {/* 검토 종료 영역 — 사람 합의 axis 수 / 격차 큰 axis 수 요약 + 종료 액션. */}
       <CloseReviewArea
