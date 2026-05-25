@@ -34,6 +34,7 @@ import { JudgeReviewSection } from "@/components/fastlane/JudgeReviewSection";
 import { AIReportEnvelope } from "@/components/fastlane/AIReportEnvelope";
 import { DeleteProposalButton } from "@/components/fastlane/DeleteProposalButton";
 import { EditProposalButton } from "@/components/fastlane/EditProposalButton";
+import { foldFinalScore } from "@/lib/fastlane/score";
 
 function looksLikeUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -222,6 +223,20 @@ export default async function ProposalDetailPage({
     ? proposal.judgeReviews?.find((r) => r.judgeId === currentUserId)
     : undefined;
 
+  // 분쟁 결정·사람 평가가 반영된 최종 점수 — 리더보드와 동일하게 view-time 폴드.
+  // 이게 없으면 상세 페이지는 AI 원본 score.composite, 리더보드는 폴드된 값으로
+  // 둘이 따로 보여서 사용자 혼란.
+  const folded = score
+    ? foldFinalScore(
+        score,
+        competition.template.criteria,
+        proposal.disputeResolutions ?? [],
+        proposal.judgeReviews ?? []
+      )
+    : null;
+  const displayComposite = folded?.composite ?? score?.composite ?? null;
+  const displayAxes = folded?.axes ?? score?.axes ?? [];
+
   return (
     <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
       {/* ── Breadcrumb (운영 톤) ─────────────────────────────── */}
@@ -346,10 +361,10 @@ export default async function ProposalDetailPage({
                     fontWeight: 700,
                     fontSize: "clamp(3rem, 5.6vw, 4rem)",
                     letterSpacing: "-0.03em",
-                    color: scoreColor(score.composite),
+                    color: scoreColor(displayComposite ?? 0),
                   }}
                 >
-                  {score.composite}
+                  {displayComposite ?? "—"}
                 </span>
                 <span
                   className="text-[13px] font-medium tabular-nums"
@@ -381,7 +396,7 @@ export default async function ProposalDetailPage({
                   wordBreak: "keep-all",
                 }}
               >
-                {verdict(score.composite)}.
+                {verdict(displayComposite ?? 0)}.
               </p>
               <p
                 className="text-[11.5px]"
@@ -441,7 +456,7 @@ export default async function ProposalDetailPage({
               각 축의 강점/약점 디테일은 행마다 "심층 분석 보기" 안 axisMarkdown 으로. */}
           <CollapsibleAxisGrid
             criteria={competition.template.criteria}
-            axes={score.axes}
+            axes={displayAxes}
             axisReports={axisReports}
           />
 
