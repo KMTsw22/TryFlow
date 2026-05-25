@@ -5,8 +5,6 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { CompareTrayProvider } from "@/components/compare/CompareTrayContext";
-import { CompareTray } from "@/components/compare/CompareTray";
 import { ToastProvider } from "@/components/ui/Toast";
 
 export const metadata: Metadata = {
@@ -53,12 +51,9 @@ export default async function RootLayout({
 
         <ThemeProvider>
           <ToastProvider>
-            <CompareTrayProvider>
-              <NavigationProgress />
-              <SidebarWrapper />
-              <CompareTray />
-              <ContentWrapper>{children}</ContentWrapper>
-            </CompareTrayProvider>
+            <NavigationProgress />
+            <SidebarWrapper />
+            <ContentWrapper>{children}</ContentWrapper>
           </ToastProvider>
         </ThemeProvider>
       </body>
