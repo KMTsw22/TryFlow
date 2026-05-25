@@ -963,22 +963,56 @@ function MyReviewDraft({
         {criteria.map((c) => {
           const ai = aiAxes.find((a) => a.criterionId === c.id);
           const myScore = overrides[c.id];
+          // AI 분산이 임계를 넘는 axis 는 시각적으로 강조해 심사위원이 우선
+          // 검토하게 한다. needsReview 는 AI 평가 시점에 STDDEV_REVIEW_THRESHOLD
+          // (현재 8) 기준으로 미리 계산된 플래그.
+          const needsAttention = ai?.needsReview === true;
           return (
             <div
               key={c.id}
               className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-3"
-              style={{ borderBottom: "1px solid var(--t-border-subtle)" }}
+              style={{
+                borderBottom: "1px solid var(--t-border-subtle)",
+                background: needsAttention
+                  ? "var(--signal-attention-soft)"
+                  : undefined,
+                borderLeft: needsAttention
+                  ? "3px solid var(--signal-attention)"
+                  : "3px solid transparent",
+              }}
             >
               <div className="min-w-0">
-                <p
-                  className="text-[13px] font-semibold mb-0.5"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  {c.name}
-                </p>
+                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                  <p
+                    className="text-[13px] font-semibold"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {c.name}
+                  </p>
+                  {needsAttention && (
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold uppercase"
+                      style={{
+                        background: "var(--signal-attention)",
+                        color: "#fff",
+                        letterSpacing: "0.06em",
+                        borderRadius: 2,
+                      }}
+                      title="AI 의 3-Pass 점수 분산이 임계(σ>8)를 넘었습니다. 사람 검토를 권장합니다."
+                    >
+                      <AlertTriangle className="w-2.5 h-2.5" strokeWidth={2.6} />
+                      임계 초과
+                    </span>
+                  )}
+                </div>
                 <p
                   className="text-[11.5px] truncate"
-                  style={{ color: "var(--text-tertiary)" }}
+                  style={{
+                    color: needsAttention
+                      ? "var(--signal-attention)"
+                      : "var(--text-tertiary)",
+                    fontWeight: needsAttention ? 600 : 500,
+                  }}
                 >
                   AI {ai?.mean ?? "—"} · σ {ai?.stddev.toFixed(1) ?? "—"}
                 </p>
