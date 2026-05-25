@@ -290,7 +290,7 @@ export default async function PublicResultsPage({
               borderRadius: 2,
             }}
           >
-            <table className="w-full min-w-[760px] text-[13px]">
+            <table className="w-full md:min-w-[760px] text-[13px]">
               <thead>
                 <tr
                   style={{
@@ -319,7 +319,7 @@ export default async function PublicResultsPage({
                   {template.criteria.map((c) => (
                     <th
                       key={c.id}
-                      className="px-2 py-2.5 text-center text-[11px] font-semibold"
+                      className="px-2 py-2.5 text-center text-[11px] font-semibold hidden md:table-cell"
                       style={{ color: "var(--text-tertiary)", minWidth: 76 }}
                       title={`${c.name} · 가중치 ${Math.round(c.weight * 100)}%`}
                     >
@@ -412,7 +412,7 @@ export default async function PublicResultsPage({
                         return (
                           <td
                             key={c.id}
-                            className="px-2 py-3 text-center align-middle"
+                            className="px-2 py-3 text-center align-middle hidden md:table-cell"
                           >
                             {axis ? (
                               <span
