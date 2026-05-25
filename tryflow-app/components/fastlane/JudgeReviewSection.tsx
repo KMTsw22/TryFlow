@@ -127,6 +127,23 @@ export function JudgeReviewSection({
   const allDecided = disputeCount > 0 && decidedCount >= disputeCount;
   const reviewClosed = !!closedAt;
 
+  // 약한 분쟁(weak_override) axis 수 — 분쟁 axis 가 아닌데 submitted 사람 중
+  // acceptedAi=false 로 override 한 사람이 1명 이상 있는 axis 의 수.
+  // 결과 페이지·리더보드에서 이미 사람 평균으로 자동 반영되므로 안내 톤은 정보성.
+  const weakOverrideCount = useMemo(() => {
+    const disputeIds = new Set(disputeAxes.map((c) => c.id));
+    let cnt = 0;
+    for (const c of criteria) {
+      if (disputeIds.has(c.id)) continue;
+      const hasOverride = submittedReviews.some((r) => {
+        const a = r.axes.find((x) => x.criterionId === c.id);
+        return a && !a.acceptedAiScore && typeof a.overrideScore === "number";
+      });
+      if (hasOverride) cnt += 1;
+    }
+    return cnt;
+  }, [criteria, disputeAxes, submittedReviews]);
+
   // 결정 모달 상태.
   const [modalCriterion, setModalCriterion] = useState<Criterion | null>(null);
 
@@ -311,6 +328,35 @@ export function JudgeReviewSection({
               </span>
             ))}
           </div>
+
+          {/* 약한 분쟁 자동 반영 요약 — 운영자가 사람 조정이 어디서 일어났는지
+              한눈에 보게. 점수는 이미 사람 평균으로 자동 반영됨. */}
+          {weakOverrideCount > 0 && (
+            <div
+              className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12.5px]"
+              style={{
+                background: "var(--accent-soft)",
+                border: "1px solid var(--accent-ring)",
+                borderRadius: 2,
+                color: "var(--text-secondary)",
+                wordBreak: "keep-all",
+              }}
+            >
+              <Pencil
+                className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                style={{ color: "var(--accent)" }}
+                strokeWidth={2.4}
+              />
+              <span>
+                심사위원이 조정한 항목{" "}
+                <strong style={{ color: "var(--accent)" }}>
+                  {weakOverrideCount}개
+                </strong>
+                가 자동 반영되었습니다 — 임계 이하 axis 라도 사람 점수가 있으면
+                그 평균이 최종 점수가 됩니다.
+              </span>
+            </div>
+          )}
 
           <ComparisonTable
             criteria={criteria}

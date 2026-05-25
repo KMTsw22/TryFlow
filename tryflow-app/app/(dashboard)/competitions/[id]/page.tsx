@@ -746,18 +746,23 @@ export default async function CompetitionDetailPage({
                       }
                       const resolved =
                         axis.source === "dispute" ||
-                        axis.source === "human_consensus";
+                        axis.source === "human_consensus" ||
+                        axis.source === "weak_override";
                       const sourceTitle =
                         axis.source === "dispute"
                           ? "분쟁 결정으로 확정된 최종 점수"
                           : axis.source === "human_consensus"
                           ? "사람 합의 자동 채택 (σ ≤ 7)"
+                          : axis.source === "weak_override"
+                          ? "심사위원이 명시적으로 조정 — 사람 평균 자동 반영"
                           : undefined;
                       const sourceLabel =
                         axis.source === "dispute"
                           ? "확정"
                           : axis.source === "human_consensus"
                           ? "합의"
+                          : axis.source === "weak_override"
+                          ? "조정"
                           : `σ ${axis.stddev.toFixed(1)}`;
                       return (
                         <td

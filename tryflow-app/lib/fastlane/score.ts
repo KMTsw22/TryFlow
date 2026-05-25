@@ -2,16 +2,20 @@
 // 폴드해 최종 composite 를 재계산하는 순수 함수. 출처 데이터는 그대로 두고
 // view-time 에 머지한다.
 //
-// A안 (2026-05) — "사람 합의 우선 자동 폴드"
-//   1) dispute resolution 에 final_score 가 있으면 → 그 값 (수동 결정 완료)
-//   2) 분쟁 axis (AI needsReview 또는 사람 σ > HUMAN_STDDEV_WARN) 이고
-//      submitted 사람 평가자 ≥ 1, 사람 σ ≤ HUMAN_STDDEV_WARN → 사람 평균 자동
-//   3) 그 외 → AI mean 그대로 유지
+// 폴드 규칙 (3분법) — 2026-05
+//   1) dispute resolution 에 final_score 있음          → source: "dispute"
+//   2) 분쟁 axis (AI needsReview OR 사람 σ > 7)
+//        - submitted 사람 ≥ 1, 사람 σ ≤ 7 → 사람 평균  → source: "human_consensus"
+//        - 그 외                            → AI mean   → source: "ai"
+//   3) 일반 axis 이지만 submitted 사람 중 override(acceptedAi=false)
+//      가 1명 이상 있음 → submitted 사람 평균          → source: "weak_override"
+//   4) 그 외 (사람 override 없음)              → AI mean → source: "ai"
 //
 // 의도:
-//   - 사람들이 합의된 경우 (σ 작음) 는 결정자 없이 자동 확정.
-//   - 사람들도 의견 갈리면 (σ 큼) 그때만 사람 결정이 필요 — UI 에서 모달 노출.
-//   - "심사위원장" 이라는 1인 결정자 가정 제거.
+//   - 강한 분쟁: 사람들이 자동 합의 or 결정 모달
+//   - 약한 분쟁: 1명이라도 명시적으로 다르게 매기면 그 신호를 자동 반영.
+//     심사위원 시간을 존중하고, 별도 결정자 없이 시스템 신뢰 유지.
+//   - 무분쟁: 모두 AI 동의 → AI 그대로
 
 import type {
   AxisReview,
@@ -27,11 +31,16 @@ export const HUMAN_STDDEV_WARN = 7;
 
 /**
  * axis 점수가 어떻게 결정됐는지 표시. UI 가 시각적 분기에 사용.
- *   - ai            : AI mean 그대로
- *   - human_consensus : 사람 평균이 자동 채택됨 (A안 자동 폴드)
- *   - dispute       : 분쟁 모달에서 수동 결정됨
+ *   - ai             : AI mean 그대로 (분쟁 없거나 사람이 모두 AI 동의)
+ *   - weak_override  : 일반 axis 인데 사람 1명 이상이 override — 사람 평균 자동 반영
+ *   - human_consensus: 분쟁 axis 였지만 사람 σ≤7 합의로 사람 평균 자동 채택
+ *   - dispute        : 분쟁 결정 모달에서 명시적으로 결정됨
  */
-export type AxisSource = "ai" | "human_consensus" | "dispute";
+export type AxisSource =
+  | "ai"
+  | "weak_override"
+  | "human_consensus"
+  | "dispute";
 
 export interface FoldedScore {
   /** 분쟁 결정·사람 합의 반영된 가중 평균 점수 (정수 0~100). */
@@ -80,10 +89,15 @@ export function foldFinalScore(
       };
     }
 
-    // (2) 분쟁 axis 이고 사람 합의 있으면 사람 평균 자동 채택.
-    const isDispute = axis.needsReview || isHumanDisputed(axis, submittedReviews);
+    // (2) 강한 분쟁 axis 이고 사람 합의 있으면 사람 평균 자동 채택.
+    const isDispute =
+      axis.needsReview || isHumanDisputed(axis, submittedReviews);
     if (isDispute) {
-      const humanAgg = humanAggregate(axis.criterionId, axis.mean, submittedReviews);
+      const humanAgg = humanAggregate(
+        axis.criterionId,
+        axis.mean,
+        submittedReviews
+      );
       if (humanAgg && humanAgg.stddev <= HUMAN_STDDEV_WARN) {
         return {
           ...axis,
@@ -93,6 +107,26 @@ export function foldFinalScore(
         };
       }
       // 사람들끼리도 σ 가 크거나 평가자 0명 → AI mean 유지 (수동 결정 필요).
+      return { ...axis, resolved: false, source: "ai" as const };
+    }
+
+    // (3) 약한 분쟁 — 일반 axis 이지만 사람 1명 이상이 명시적 override.
+    // override = acceptedAiScore=false 이고 overrideScore 가 있는 review.
+    // 그런 사람이 한 명이라도 있으면 그 axis 의 submitted 사람 평균을 채택.
+    if (hasExplicitOverride(axis.criterionId, submittedReviews)) {
+      const humanAgg = humanAggregate(
+        axis.criterionId,
+        axis.mean,
+        submittedReviews
+      );
+      if (humanAgg) {
+        return {
+          ...axis,
+          mean: humanAgg.mean,
+          resolved: true,
+          source: "weak_override" as const,
+        };
+      }
     }
 
     return { ...axis, resolved: false, source: "ai" as const };
@@ -119,7 +153,9 @@ export function foldFinalScore(
     axes: mergedAxes,
     hasResolution:
       finalByCriterion.size > 0 ||
-      mergedAxes.some((a) => a.source === "human_consensus"),
+      mergedAxes.some(
+        (a) => a.source === "human_consensus" || a.source === "weak_override"
+      ),
   };
 }
 
@@ -169,4 +205,24 @@ function isHumanDisputed(
 ): boolean {
   const agg = humanAggregate(axis.criterionId, axis.mean, submittedReviews);
   return !!agg && agg.stddev > HUMAN_STDDEV_WARN;
+}
+
+/**
+ * 약한 분쟁 감지 — submitted 사람 중 acceptedAiScore=false 이고
+ * overrideScore 가 있는 평가자가 한 명이라도 있는지.
+ * acceptedAi=true 인 사람은 AI 점수 동의로 본다 — override 신호 아님.
+ */
+function hasExplicitOverride(
+  criterionId: string,
+  submittedReviews: JudgeReview[]
+): boolean {
+  for (const r of submittedReviews) {
+    const a: AxisReview | undefined = r.axes.find(
+      (x) => x.criterionId === criterionId
+    );
+    if (a && !a.acceptedAiScore && typeof a.overrideScore === "number") {
+      return true;
+    }
+  }
+  return false;
 }
