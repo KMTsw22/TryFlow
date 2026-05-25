@@ -223,8 +223,8 @@ export function JudgeReviewSection({
           심사위원 평가
         </h2>
         <p
-          className="text-[11px] font-bold uppercase"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+          className="text-[11px] font-bold"
+          style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
         >
           {hasReviews ? `${reviews.length}명 제출` : "아직 제출 없음"}
           {humanFinalizedCount > 0 &&
@@ -643,10 +643,10 @@ function Th({
 }) {
   return (
     <th
-      className="px-3 py-2.5 font-bold uppercase"
+      className="px-3 py-2.5 font-bold"
       style={{
         color: "var(--text-tertiary)",
-        letterSpacing: "0.14em",
+        letterSpacing: "0.04em",
         fontSize: "10.5px",
         borderBottom: "1px solid var(--t-border-subtle)",
         textAlign: align,
@@ -742,8 +742,8 @@ function OverallComments({ reviews }: { reviews: JudgeReview[] }) {
   return (
     <div className="mb-10">
       <h3
-        className="mb-3 text-[12px] font-bold uppercase"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+        className="mb-3 text-[12px] font-bold"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
       >
         종합 코멘트
       </h3>
@@ -1163,7 +1163,7 @@ function MyReviewDraft({
                     </p>
                     {needsAttention && (
                       <span
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold uppercase"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold"
                         style={{
                           background: "var(--signal-attention)",
                           color: "#fff",
@@ -1240,10 +1240,10 @@ function MyReviewDraft({
                     }}
                   >
                     <span
-                      className="text-[11px] font-bold uppercase tabular-nums"
+                      className="text-[11px] font-bold tabular-nums"
                       style={{
                         color: "var(--text-tertiary)",
-                        letterSpacing: "0.12em",
+                        letterSpacing: "0.04em",
                       }}
                     >
                       AI
@@ -1293,12 +1293,12 @@ function MyReviewDraft({
                   }}
                 >
                   <span
-                    className="inline-block mr-1.5 text-[11px] font-bold uppercase tracking-wider not-italic align-middle px-1.5 py-0.5"
+                    className="inline-block mr-1.5 text-[11px] font-bold tracking-wider not-italic align-middle px-1.5 py-0.5"
                     style={{
                       background: "var(--surface-2)",
                       border: "1px solid var(--t-border-subtle)",
                       color: "var(--text-tertiary)",
-                      letterSpacing: "0.12em",
+                      letterSpacing: "0.04em",
                       fontFamily: "var(--font-sans, system-ui)",
                       borderRadius: 2,
                     }}
@@ -1368,8 +1368,8 @@ function MyReviewDraft({
       </div>
 
       <label
-        className="block text-[11px] font-bold uppercase mb-2"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+        className="block text-[11px] font-bold mb-2"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
       >
         종합 코멘트
       </label>
@@ -1524,8 +1524,8 @@ function CloseReviewArea({
           검토 종료
         </h3>
         <span
-          className="text-[11px] font-bold uppercase tabular-nums"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+          className="text-[11px] font-bold tabular-nums"
+          style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
         >
           사람 합의 {humanFinalizedCount}개
           {noisyAxesCount > 0 ? ` · 격차 큼 ${noisyAxesCount}개` : ""}

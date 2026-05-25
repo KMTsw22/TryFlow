@@ -128,8 +128,8 @@ export function EditProposalModal({
         >
           <div>
             <p
-              className="text-[11px] font-bold uppercase mb-1"
-              style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+              className="text-[11px] font-bold mb-1"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
             >
               출품 수정
             </p>
@@ -160,8 +160,8 @@ export function EditProposalModal({
         <div className="px-7 py-5 space-y-4">
           <div>
             <label
-              className="block text-[11px] font-bold uppercase mb-2"
-              style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+              className="block text-[11px] font-bold mb-2"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
             >
               제목 (필수)
             </label>
@@ -184,8 +184,8 @@ export function EditProposalModal({
 
           <div>
             <label
-              className="block text-[11px] font-bold uppercase mb-2"
-              style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+              className="block text-[11px] font-bold mb-2"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
             >
               팀명
             </label>
@@ -204,8 +204,8 @@ export function EditProposalModal({
 
           <div>
             <label
-              className="block text-[11px] font-bold uppercase mb-2"
-              style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+              className="block text-[11px] font-bold mb-2"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
             >
               내용 / 요약 (최소 30자)
             </label>

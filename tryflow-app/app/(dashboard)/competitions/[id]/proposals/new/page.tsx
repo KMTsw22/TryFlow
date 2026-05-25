@@ -421,10 +421,10 @@ export default function BatchUploadProposalsPage() {
         <div className="mb-8">
           <div className="flex items-baseline justify-between gap-3 mb-3">
             <h2
-              className="text-[14px] font-bold uppercase"
+              className="text-[14px] font-bold"
               style={{
                 color: "var(--text-tertiary)",
-                letterSpacing: "0.14em",
+                letterSpacing: "0.04em",
               }}
             >
               출품 목록 · {rows.length}건
@@ -681,10 +681,10 @@ function RowCard({
         <div>
           <div className="flex items-baseline justify-between mb-1">
             <label
-              className="text-[11px] font-bold uppercase"
+              className="text-[11px] font-bold"
               style={{
                 color: "var(--text-tertiary)",
-                letterSpacing: "0.14em",
+                letterSpacing: "0.04em",
               }}
             >
               요약 · 본문
@@ -782,7 +782,7 @@ function StatusBadge({ status }: { status: RowStatus }) {
   const cfg = map[status];
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider shrink-0"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold tracking-wider shrink-0"
       style={{ color: cfg.color, letterSpacing: "0.1em" }}
     >
       {cfg.icon}
@@ -812,10 +812,10 @@ function FieldInline({
   return (
     <div>
       <label
-        className="block text-[11px] font-bold uppercase mb-1"
+        className="block text-[11px] font-bold mb-1"
         style={{
           color: invalid ? "var(--signal-warning)" : "var(--text-tertiary)",
-          letterSpacing: "0.14em",
+          letterSpacing: "0.04em",
         }}
       >
         {label}

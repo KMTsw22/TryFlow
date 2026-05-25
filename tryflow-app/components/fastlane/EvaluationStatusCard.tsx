@@ -43,8 +43,8 @@ export function EvaluationStatusCard({
         />
         <div>
           <p
-            className="text-[11px] font-bold uppercase mb-1.5"
-            style={{ color: "var(--signal-danger)", letterSpacing: "0.16em" }}
+            className="text-[11px] font-bold mb-1.5"
+            style={{ color: "var(--signal-danger)", letterSpacing: "0.04em" }}
           >
             평가 실패
           </p>
@@ -84,8 +84,8 @@ export function EvaluationStatusCard({
       />
       <div>
         <p
-          className="text-[11px] font-bold uppercase mb-1.5"
-          style={{ color: "var(--accent)", letterSpacing: "0.16em" }}
+          className="text-[11px] font-bold mb-1.5"
+          style={{ color: "var(--accent)", letterSpacing: "0.04em" }}
         >
           {status === "running" ? "AI 평가 진행 중" : "평가 대기 중"}
         </p>

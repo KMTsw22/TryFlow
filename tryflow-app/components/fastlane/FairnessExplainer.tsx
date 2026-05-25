@@ -38,8 +38,8 @@ export function FairnessExplainer({ compact = false }: { compact?: boolean }) {
     >
       <div>
         <p
-          className="text-[11px] font-bold uppercase mb-3"
-          style={{ color: "var(--accent)", letterSpacing: "0.16em" }}
+          className="text-[11px] font-bold mb-3"
+          style={{ color: "var(--accent)", letterSpacing: "0.04em" }}
         >
           심사 절차 표준
         </p>
@@ -75,7 +75,7 @@ export function FairnessExplainer({ compact = false }: { compact?: boolean }) {
                 className="text-[11px] font-bold tabular-nums"
                 style={{
                   color: "var(--text-tertiary)",
-                  letterSpacing: "0.12em",
+                  letterSpacing: "0.04em",
                 }}
               >
                 0{i + 1}

@@ -980,10 +980,10 @@ function Th({
 }) {
   return (
     <th
-      className="py-3 px-2 text-[11px] font-bold uppercase"
+      className="py-3 px-2 text-[11px] font-bold"
       style={{
         color: "var(--text-tertiary)",
-        letterSpacing: "0.14em",
+        letterSpacing: "0.04em",
         width,
         minWidth,
         textAlign: align,

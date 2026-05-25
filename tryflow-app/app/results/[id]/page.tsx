@@ -200,10 +200,10 @@ export default async function PublicResultsPage({
             가운데 정렬, 큰 제목, 메타는 3 카드 그리드. */}
         <div className="text-center mb-12">
           <p
-            className="text-[11px] mb-3 inline-flex items-center gap-1.5 font-bold uppercase"
+            className="text-[11px] mb-3 inline-flex items-center gap-1.5 font-bold"
             style={{
               color: "var(--accent)",
-              letterSpacing: "0.18em",
+              letterSpacing: "0.06em",
             }}
           >
             <Trophy className="w-3.5 h-3.5" strokeWidth={2.2} />
@@ -455,10 +455,10 @@ export default async function PublicResultsPage({
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-start">
             <div>
               <p
-                className="text-[11px] mb-2 font-bold uppercase"
+                className="text-[11px] mb-2 font-bold"
                 style={{
                   color: "var(--text-tertiary)",
-                  letterSpacing: "0.14em",
+                  letterSpacing: "0.04em",
                 }}
               >
                 결과 산출 방식
@@ -522,10 +522,10 @@ function MetaCard({
       }}
     >
       <p
-        className="text-[11px] mb-1.5 font-bold uppercase"
+        className="text-[11px] mb-1.5 font-bold"
         style={{
           color: "var(--text-tertiary)",
-          letterSpacing: "0.14em",
+          letterSpacing: "0.04em",
         }}
       >
         {label}

@@ -173,10 +173,10 @@ export function DisputeResolutionModal({
         >
           <div className="min-w-0">
             <p
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase mb-1"
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold mb-1"
               style={{
                 color: "var(--signal-attention)",
-                letterSpacing: "0.14em",
+                letterSpacing: "0.04em",
               }}
             >
               <AlertTriangle className="w-3 h-3" strokeWidth={2.4} />
@@ -287,8 +287,8 @@ export function DisputeResolutionModal({
         {action === "manual_override" && (
           <div className="px-7 pb-4">
             <label
-              className="block text-[11px] font-bold uppercase mb-2"
-              style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+              className="block text-[11px] font-bold mb-2"
+              style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
             >
               최종 점수 (0~100)
             </label>
@@ -321,8 +321,8 @@ export function DisputeResolutionModal({
         {/* 사유 — manual_override / request_rereview 에서 권장 */}
         <div className="px-7 pb-2">
           <label
-            className="block text-[11px] font-bold uppercase mb-2"
-            style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+            className="block text-[11px] font-bold mb-2"
+            style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
           >
             결정 사유 {reasonRequired ? "(필수)" : "(선택)"}
           </label>

@@ -377,8 +377,8 @@ export default async function ProposalDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-x-10 gap-y-6 items-end pb-8 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
             <div>
               <p
-                className="text-[11px] font-bold uppercase mb-3"
-                style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
+                className="text-[11px] font-bold mb-3"
+                style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
               >
                 종합 점수
               </p>
@@ -408,8 +408,8 @@ export default async function ProposalDetailPage({
               style={{ borderColor: "var(--t-border-subtle)" }}
             >
               <p
-                className="text-[11px] font-bold uppercase mb-2"
-                style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
+                className="text-[11px] font-bold mb-2"
+                style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
               >
                 참고 의견
               </p>
@@ -450,8 +450,8 @@ export default async function ProposalDetailPage({
                     strokeWidth={2.2}
                   />
                   <span
-                    className="text-[11px] font-bold uppercase"
-                    style={{ color: "var(--signal-attention)", letterSpacing: "0.14em" }}
+                    className="text-[11px] font-bold"
+                    style={{ color: "var(--signal-attention)", letterSpacing: "0.04em" }}
                   >
                     검토 권고
                   </span>

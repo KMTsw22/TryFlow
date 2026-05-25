@@ -306,10 +306,10 @@ function ProposalRow({ item }: { item: QueueItem }) {
             strokeWidth={2}
           />
           <span
-            className="text-[11px] font-bold uppercase truncate"
+            className="text-[11px] font-bold truncate"
             style={{
               color: "var(--text-tertiary)",
-              letterSpacing: "0.14em",
+              letterSpacing: "0.04em",
             }}
           >
             {organizer} · {competitionName}
@@ -393,10 +393,10 @@ function ProposalRow({ item }: { item: QueueItem }) {
             {evaluated ? composite : "—"}
           </span>
           <p
-            className="mt-1 text-[11px] font-bold uppercase"
+            className="mt-1 text-[11px] font-bold"
             style={{
               color: "var(--text-tertiary)",
-              letterSpacing: "0.14em",
+              letterSpacing: "0.04em",
             }}
           >
             {evaluated ? "종합 점수" : "평가 전"}
@@ -426,8 +426,8 @@ function Stat({
       style={{ borderColor: "var(--t-border-subtle)" }}
     >
       <p
-        className="text-[11px] font-bold uppercase mb-2"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+        className="text-[11px] font-bold mb-2"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
       >
         {label}
       </p>
