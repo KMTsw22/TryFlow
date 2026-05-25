@@ -214,7 +214,7 @@ export function JudgeReviewSection({
           심사위원 평가
         </h2>
         <p
-          className="text-[10.5px] font-bold uppercase"
+          className="text-[11px] font-bold uppercase"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
           {hasReviews ? `${reviews.length}명 제출` : "아직 제출 없음"}
@@ -227,7 +227,7 @@ export function JudgeReviewSection({
       {hasReviews ? (
         <>
           <p
-            className="text-[12.5px] mb-4 max-w-2xl"
+            className="text-[12px] mb-4 max-w-2xl"
             style={{
               color: "var(--text-tertiary)",
               letterSpacing: "0.02em",
@@ -270,7 +270,7 @@ export function JudgeReviewSection({
               이미 반영됨. 추가 평가자 초대 같은 능동 액션을 권고. */}
           {noisyAxesCount > 0 && (
             <div
-              className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12.5px]"
+              className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12px]"
               style={{
                 background: "var(--signal-attention-soft)",
                 border: "1px solid var(--signal-attention-ring)",
@@ -357,7 +357,7 @@ function ComparisonTable({
       className="mb-10 overflow-x-auto border"
       style={{ borderColor: "var(--t-border-subtle)" }}
     >
-      <table className="w-full text-[12.5px] tabular-nums" style={{ borderCollapse: "collapse" }}>
+      <table className="w-full text-[12px] tabular-nums" style={{ borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ background: "var(--surface-2)" }}>
             <Th align="left" minW={120}>항목</Th>
@@ -457,7 +457,7 @@ function ComparisonTable({
                 <td className="px-4 py-3" style={{ color: "var(--text-primary)" }}>
                   <span style={{ fontWeight: 600 }}>{c.name}</span>
                   <span
-                    className="ml-1.5 text-[10.5px]"
+                    className="ml-1.5 text-[11px]"
                     style={{ color: "var(--text-tertiary)" }}
                   >
                     (w {Math.round(c.weight * 100)}%)
@@ -673,7 +673,7 @@ function OverallComments({ reviews }: { reviews: JudgeReview[] }) {
   return (
     <div className="mb-10">
       <h3
-        className="mb-3 text-[12.5px] font-bold uppercase"
+        className="mb-3 text-[12px] font-bold uppercase"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
       >
         종합 코멘트
@@ -895,7 +895,7 @@ function MyReviewDraft({
               proposal 페이지는 모두 UUID 라 이 라벨이 보이지 않는다. */}
           {!usingBackend && (
             <span
-              className="text-[10.5px] font-medium"
+              className="text-[11px] font-medium"
               style={{ color: "var(--text-tertiary)" }}
             >
               샘플 데이터 — 저장되지 않습니다
@@ -909,7 +909,7 @@ function MyReviewDraft({
                 setEditing(true);
                 setSubmitted(false);
               }}
-              className="inline-flex items-center gap-1 px-2.5 h-7 text-[11.5px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+              className="inline-flex items-center gap-1 px-2.5 h-7 text-[11px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
               style={{
                 border: "1px solid var(--t-border-subtle)",
                 color: "var(--text-secondary)",
@@ -966,7 +966,7 @@ function MyReviewDraft({
         if (disputedCount > 0) {
           return (
             <div
-              className="flex items-start gap-2.5 px-4 py-3 mb-5 text-[12.5px]"
+              className="flex items-start gap-2.5 px-4 py-3 mb-5 text-[12px]"
               style={{
                 background: "var(--signal-attention-soft)",
                 border: "1px solid var(--signal-attention-ring)",
@@ -1008,7 +1008,7 @@ function MyReviewDraft({
                 strokeWidth={2.4}
               />
               <p
-                className="text-[12.5px] leading-[1.6]"
+                className="text-[12px] leading-[1.6]"
                 style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
               >
                 AI 가 모든 항목에 자신감을 보였습니다 — 분쟁 항목 없음. 모두 AI
@@ -1081,7 +1081,7 @@ function MyReviewDraft({
                     </p>
                     {needsAttention && (
                       <span
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold uppercase"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold uppercase"
                         style={{
                           background: "var(--signal-attention)",
                           color: "#fff",
@@ -1096,7 +1096,7 @@ function MyReviewDraft({
                     )}
                   </div>
                   <p
-                    className="text-[11.5px] truncate"
+                    className="text-[11px] truncate"
                     style={{
                       color: needsAttention
                         ? "var(--signal-attention)"
@@ -1158,7 +1158,7 @@ function MyReviewDraft({
                     }}
                   >
                     <span
-                      className="text-[10px] font-bold uppercase tabular-nums"
+                      className="text-[11px] font-bold uppercase tabular-nums"
                       style={{
                         color: "var(--text-tertiary)",
                         letterSpacing: "0.12em",
@@ -1173,7 +1173,7 @@ function MyReviewDraft({
                       {ai?.mean ?? "—"}
                     </span>
                     <span
-                      className="text-[10.5px] ml-1"
+                      className="text-[11px] ml-1"
                       style={{ color: "var(--accent)" }}
                     >
                       조정 →
@@ -1189,7 +1189,7 @@ function MyReviewDraft({
                   }
                   aria-label={`${c.name} 코멘트`}
                   disabled={!editing}
-                  className="w-full px-3 h-9 text-[12.5px] outline-none disabled:opacity-60"
+                  className="w-full px-3 h-9 text-[12px] outline-none disabled:opacity-60"
                   style={{
                     background: "var(--surface-2)",
                     border: "1px solid var(--t-border-subtle)",
@@ -1202,7 +1202,7 @@ function MyReviewDraft({
                   바로 그 자리에서 보여 anchoring 줄이고 신뢰 형성. */}
               {ai?.reasoning && (
                 <p
-                  className="mt-2 text-[12.5px] leading-[1.65]"
+                  className="mt-2 text-[12px] leading-[1.65]"
                   style={{
                     color: "var(--text-secondary)",
                     fontStyle: "italic",
@@ -1211,7 +1211,7 @@ function MyReviewDraft({
                   }}
                 >
                   <span
-                    className="inline-block mr-1.5 text-[10px] font-bold uppercase tracking-wider not-italic align-middle px-1.5 py-0.5"
+                    className="inline-block mr-1.5 text-[11px] font-bold uppercase tracking-wider not-italic align-middle px-1.5 py-0.5"
                     style={{
                       background: "var(--surface-2)",
                       border: "1px solid var(--t-border-subtle)",
@@ -1254,7 +1254,7 @@ function MyReviewDraft({
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <p
-          className="text-[11.5px]"
+          className="text-[11px]"
           style={{
             color: errorMsg ? "var(--signal-danger)" : "var(--text-tertiary)",
           }}
@@ -1388,7 +1388,7 @@ function CloseReviewArea({
           검토 종료
         </h3>
         <span
-          className="text-[10.5px] font-bold uppercase tabular-nums"
+          className="text-[11px] font-bold uppercase tabular-nums"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
           사람 합의 {humanFinalizedCount}개
@@ -1434,13 +1434,13 @@ function EmptyReviews() {
       }}
     >
       <p
-        className="mb-1 text-[13.5px] font-semibold"
+        className="mb-1 text-[13px] font-semibold"
         style={{ color: "var(--text-primary)" }}
       >
         다른 심사위원 평가가 아직 없습니다.
       </p>
       <p
-        className="text-[12.5px] leading-[1.7] max-w-md mx-auto"
+        className="text-[12px] leading-[1.7] max-w-md mx-auto"
         style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
       >
         아래 <strong>내 평가 작성</strong> 에서 본인이 첫 평가자가 될 수 있습니다.

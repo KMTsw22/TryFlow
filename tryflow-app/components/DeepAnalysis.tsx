@@ -868,7 +868,7 @@ export default function DeepAnalysis({
                 &ldquo;Unlock detailed per-agent assessments.&rdquo;
               </p>
               <p
-                className="text-[14.5px] leading-[1.75] mb-6"
+                className="text-[14px] leading-[1.75] mb-6"
                 style={{ color: "var(--text-secondary)" }}
               >
                 You&apos;re seeing the summarized score and radar. Upgrade to Plus to unlock cross-agent insights, opportunities, risks, and recommended next steps on your own ideas.

@@ -144,7 +144,7 @@ export default async function QueuePage() {
             심사 큐
           </h1>
           <p
-            className="mt-1 text-[12.5px] tabular-nums"
+            className="mt-1 text-[12px] tabular-nums"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
           >
             {useDemoFallback
@@ -167,7 +167,7 @@ export default async function QueuePage() {
       </div>
 
       <p
-        className="text-[13.5px] leading-[1.8] mb-10 max-w-xl"
+        className="text-[13px] leading-[1.8] mb-10 max-w-xl"
         style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
         운영 중인 모든 대회의 출품을 한 곳에서 봅니다. 최신 제출 순으로
@@ -393,7 +393,7 @@ function ProposalRow({ item }: { item: QueueItem }) {
             {evaluated ? composite : "—"}
           </span>
           <p
-            className="mt-1 text-[10.5px] font-bold uppercase"
+            className="mt-1 text-[11px] font-bold uppercase"
             style={{
               color: "var(--text-tertiary)",
               letterSpacing: "0.14em",
@@ -426,7 +426,7 @@ function Stat({
       style={{ borderColor: "var(--t-border-subtle)" }}
     >
       <p
-        className="text-[10.5px] font-bold uppercase mb-2"
+        className="text-[11px] font-bold uppercase mb-2"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
       >
         {label}

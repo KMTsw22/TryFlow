@@ -186,7 +186,7 @@ export default async function PublicResultsPage({
           <Brand size="sm" />
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-[12.5px]"
+            className="inline-flex items-center gap-1.5 text-[12px]"
             style={{ color: "var(--text-tertiary)" }}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -217,7 +217,7 @@ export default async function PublicResultsPage({
             {competition.name}
           </h1>
           <div
-            className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[12.5px] mt-2"
+            className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[12px] mt-2"
             style={{ color: "var(--text-tertiary)" }}
           >
             <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
@@ -264,19 +264,19 @@ export default async function PublicResultsPage({
                   }}
                 >
                   <th
-                    className="px-3 py-2.5 text-center text-[11.5px] font-semibold"
+                    className="px-3 py-2.5 text-center text-[11px] font-semibold"
                     style={{ color: "var(--text-tertiary)", width: 56 }}
                   >
                     순위
                   </th>
                   <th
-                    className="px-3 py-2.5 text-left text-[11.5px] font-semibold"
+                    className="px-3 py-2.5 text-left text-[11px] font-semibold"
                     style={{ color: "var(--text-tertiary)" }}
                   >
                     출품작
                   </th>
                   <th
-                    className="px-3 py-2.5 text-right text-[11.5px] font-semibold"
+                    className="px-3 py-2.5 text-right text-[11px] font-semibold"
                     style={{ color: "var(--text-tertiary)", width: 90 }}
                   >
                     종합 점수
@@ -290,7 +290,7 @@ export default async function PublicResultsPage({
                     >
                       <span className="block">{c.name}</span>
                       <span
-                        className="block tabular-nums mt-0.5 text-[10px]"
+                        className="block tabular-nums mt-0.5 text-[11px]"
                         style={{ color: "var(--text-tertiary)" }}
                       >
                         {Math.round(c.weight * 100)}%
@@ -314,7 +314,7 @@ export default async function PublicResultsPage({
                     >
                       <td className="py-3 text-center">
                         <span
-                          className="inline-flex items-center justify-center w-7 h-7 tabular-nums text-[12.5px] font-bold"
+                          className="inline-flex items-center justify-center w-7 h-7 tabular-nums text-[12px] font-bold"
                           style={{
                             background: accent?.bg ?? "transparent",
                             color: accent?.fg ?? "var(--text-tertiary)",
@@ -414,7 +414,7 @@ export default async function PublicResultsPage({
 
         {/* 주석 — 결과 산출 방식 */}
         <p
-          className="text-[11.5px] mt-5"
+          className="text-[11px] mt-5"
           style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
         >
           AI 1차 평가(3-Pass: Draft·Skeptic·Judge)와 심사위원 검토를 거쳐 확정된

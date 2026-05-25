@@ -338,7 +338,7 @@ export default async function CompetitionDetailPage({
       {/* Back nav */}
       <Link
         href="/competitions"
-        className="inline-flex items-center gap-1.5 text-[12.5px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
+        className="inline-flex items-center gap-1.5 text-[12px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
         style={{ color: "var(--text-tertiary)" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
@@ -389,7 +389,7 @@ export default async function CompetitionDetailPage({
         )}
       </div>
       <div
-        className="flex items-center gap-3 mb-6 text-[12.5px] tabular-nums flex-wrap"
+        className="flex items-center gap-3 mb-6 text-[12px] tabular-nums flex-wrap"
         style={{ color: "var(--text-tertiary)" }}
       >
         <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
@@ -425,7 +425,7 @@ export default async function CompetitionDetailPage({
               strokeWidth={2.4}
             />
             <p
-              className="text-[12.5px] leading-[1.6]"
+              className="text-[12px] leading-[1.6]"
               style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
             >
               모든 검토가 끝났습니다. 결과 페이지를 외부에 공유할 수 있습니다.
@@ -696,7 +696,7 @@ export default async function CompetitionDetailPage({
                           )}
                         </div>
                         <p
-                          className="text-[12.5px]"
+                          className="text-[12px]"
                           style={{ color: "var(--text-tertiary)" }}
                         >
                           {p.team}
@@ -780,7 +780,7 @@ export default async function CompetitionDetailPage({
                             />
                             <div className="flex items-center gap-1">
                               <span
-                                className="text-[10px] tabular-nums"
+                                className="text-[11px] tabular-nums"
                                 style={{
                                   color: noisy
                                     ? "var(--signal-attention)"
@@ -843,7 +843,7 @@ export default async function CompetitionDetailPage({
 
         {/* 하단 캡션 */}
         <p
-          className="mt-4 text-[11.5px] leading-[1.65]"
+          className="mt-4 text-[11px] leading-[1.65]"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
         >
           편차 = Draft·Skeptic·Judge 3-Pass 점수의 흔들림 정도(표준편차 σ). 임계값을 넘는 항목은
@@ -889,7 +889,7 @@ function MetaCell({
           />
         )}
         <span
-          className="text-[11.5px]"
+          className="text-[11px]"
           style={{ color: "var(--text-tertiary)" }}
         >
           {label}
@@ -919,7 +919,7 @@ function MetaCell({
       </div>
       {hint && (
         <p
-          className="mt-1 text-[11.5px] truncate"
+          className="mt-1 text-[11px] truncate"
           style={{ color: "var(--text-tertiary)" }}
           title={hint}
         >
@@ -980,7 +980,7 @@ function Th({
 }) {
   return (
     <th
-      className="py-3 px-2 text-[10.5px] font-bold uppercase"
+      className="py-3 px-2 text-[11px] font-bold uppercase"
       style={{
         color: "var(--text-tertiary)",
         letterSpacing: "0.14em",

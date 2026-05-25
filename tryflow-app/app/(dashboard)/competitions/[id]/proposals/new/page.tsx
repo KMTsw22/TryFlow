@@ -296,7 +296,7 @@ export default function BatchUploadProposalsPage() {
     <div className="max-w-4xl mx-auto px-8 pt-10 pb-24">
       <Link
         href={`/competitions/${competitionId}`}
-        className="inline-flex items-center gap-1.5 text-[12.5px] font-medium mb-10 transition-colors hover:text-[color:var(--text-primary)]"
+        className="inline-flex items-center gap-1.5 text-[12px] font-medium mb-10 transition-colors hover:text-[color:var(--text-primary)]"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
@@ -315,13 +315,13 @@ export default function BatchUploadProposalsPage() {
         출품 일괄 업로드
       </h1>
       <p
-        className="mt-1 text-[12.5px]"
+        className="mt-1 text-[12px]"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
       >
         한 번에 여러 파일을 던지면 각자 별개 출품으로 들어갑니다
       </p>
       <p
-        className="text-[13.5px] leading-[1.8] mt-4 mb-10 max-w-2xl"
+        className="text-[13px] leading-[1.8] mt-4 mb-10 max-w-2xl"
         style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
         파일마다 AI 가 제목·팀·요약을 자동으로 채웁니다. 행을 검토·수정한 다음
@@ -366,7 +366,7 @@ export default function BatchUploadProposalsPage() {
           파일을 끌어다 놓거나 클릭해서 선택
         </p>
         <p
-          className="text-[11.5px]"
+          className="text-[11px]"
           style={{ color: "var(--text-tertiary)" }}
         >
           PDF · Markdown(.md) · Text(.txt) · 한 번에 여러 파일 동시 가능 · 파일당
@@ -394,7 +394,7 @@ export default function BatchUploadProposalsPage() {
           className="flex-1 h-px"
           style={{ background: "var(--t-border-subtle)" }}
         />
-        <span className="text-[11.5px]">또는</span>
+        <span className="text-[11px]">또는</span>
         <button
           type="button"
           onClick={addManualRow}
@@ -473,7 +473,7 @@ export default function BatchUploadProposalsPage() {
                 : `제출 준비 완료: ${submittableRows.length}건 / 전체 ${rows.length}건`}
             </p>
             <p
-              className="text-[11.5px]"
+              className="text-[11px]"
               style={{ color: "var(--text-tertiary)" }}
             >
               {hasInvalid
@@ -585,7 +585,7 @@ function RowCard({
             />
           )}
           <span
-            className="text-[12.5px] font-semibold truncate"
+            className="text-[12px] font-semibold truncate"
             style={{ color: "var(--text-primary)" }}
           >
             {row.fileName}
@@ -624,7 +624,7 @@ function RowCard({
       {/* 본문 */}
       {isExtracting && (
         <div
-          className="flex items-center gap-2 px-3 py-3 text-[12.5px]"
+          className="flex items-center gap-2 px-3 py-3 text-[12px]"
           style={{
             background: "var(--surface-2)",
             color: "var(--text-secondary)",
@@ -640,7 +640,7 @@ function RowCard({
 
       {isError && (
         <div
-          className="flex items-start gap-2 px-3 py-3 text-[12.5px]"
+          className="flex items-start gap-2 px-3 py-3 text-[12px]"
           style={{
             background: "var(--surface-2)",
             color: "var(--signal-danger)",
@@ -681,7 +681,7 @@ function RowCard({
         <div>
           <div className="flex items-baseline justify-between mb-1">
             <label
-              className="text-[10.5px] font-bold uppercase"
+              className="text-[11px] font-bold uppercase"
               style={{
                 color: "var(--text-tertiary)",
                 letterSpacing: "0.14em",
@@ -690,7 +690,7 @@ function RowCard({
               요약 · 본문
             </label>
             <span
-              className="text-[10.5px] tabular-nums"
+              className="text-[11px] tabular-nums"
               style={{
                 color:
                   summaryEmpty || summaryInvalid
@@ -711,7 +711,7 @@ function RowCard({
             disabled={isSubmitting || isSubmitted}
             rows={3}
             placeholder="출품작의 핵심 내용을 채점이 가능하도록 작성하세요."
-            className="w-full px-3 py-2.5 text-[12.5px] leading-[1.6] outline-none resize-none disabled:opacity-60"
+            className="w-full px-3 py-2.5 text-[12px] leading-[1.6] outline-none resize-none disabled:opacity-60"
             style={{
               background: "var(--surface-2)",
               border: `1px solid ${
@@ -736,7 +736,7 @@ function RowCard({
 
       {isSubmitError && row.error && (
         <p
-          className="mt-2 text-[11.5px]"
+          className="mt-2 text-[11px]"
           style={{ color: "var(--signal-danger)" }}
         >
           제출 실패: {row.error}
@@ -782,7 +782,7 @@ function StatusBadge({ status }: { status: RowStatus }) {
   const cfg = map[status];
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider shrink-0"
       style={{ color: cfg.color, letterSpacing: "0.1em" }}
     >
       {cfg.icon}
@@ -812,7 +812,7 @@ function FieldInline({
   return (
     <div>
       <label
-        className="block text-[10.5px] font-bold uppercase mb-1"
+        className="block text-[11px] font-bold uppercase mb-1"
         style={{
           color: invalid ? "var(--signal-warning)" : "var(--text-tertiary)",
           letterSpacing: "0.14em",

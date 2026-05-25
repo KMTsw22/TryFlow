@@ -325,7 +325,7 @@ export function IdeaHero({
               )}
 
               <p
-                className="text-[14.5px] leading-[1.75]"
+                className="text-[14px] leading-[1.75]"
                 style={{ color: "var(--text-secondary)" }}
               >
                 {summary}

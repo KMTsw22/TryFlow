@@ -56,7 +56,7 @@ export function FairnessExplainer({ compact = false }: { compact?: boolean }) {
           공정성<br />3장치
         </h3>
         <p
-          className="text-[12.5px] leading-[1.7]"
+          className="text-[12px] leading-[1.7]"
           style={{ color: "var(--text-tertiary)" }}
         >
           AI는 1차 스코어링까지. 최종 심사 권한은 항상 심사위원에게 있습니다.
@@ -72,7 +72,7 @@ export function FairnessExplainer({ compact = false }: { compact?: boolean }) {
           >
             <div className="flex items-center gap-2.5 mb-4">
               <span
-                className="text-[10.5px] font-bold tabular-nums"
+                className="text-[11px] font-bold tabular-nums"
                 style={{
                   color: "var(--text-tertiary)",
                   letterSpacing: "0.12em",

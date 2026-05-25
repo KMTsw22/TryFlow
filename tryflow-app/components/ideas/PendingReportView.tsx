@@ -271,7 +271,7 @@ export function PendingReportView({ submittedDate }: Props) {
 
                   {/* Hint */}
                   <span
-                    className="flex-1 text-[13.5px] leading-[1.55] truncate"
+                    className="flex-1 text-[13px] leading-[1.55] truncate"
                     style={{ color: "var(--text-secondary)" }}
                   >
                     {stage.hint}
@@ -376,7 +376,7 @@ export function PendingReportView({ submittedDate }: Props) {
 
         {/* Footer — 기대치 설정용 한 줄 */}
         <p
-          className="mt-12 text-[12.5px] leading-[1.6]"
+          className="mt-12 text-[12px] leading-[1.6]"
           style={{ color: "var(--text-tertiary)" }}
         >
           Reports typically finish within 60–90 seconds. This page refreshes automatically the

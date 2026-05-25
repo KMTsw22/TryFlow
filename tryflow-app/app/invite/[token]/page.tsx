@@ -143,7 +143,7 @@ export default function InviteAcceptPage() {
         <div className="mb-8 flex items-center justify-between">
           <Brand size="sm" asStatic />
           <span
-            className="text-[10.5px] font-bold uppercase"
+            className="text-[11px] font-bold uppercase"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
           >
             심사위원 초대
@@ -157,7 +157,7 @@ export default function InviteAcceptPage() {
               style={{ color: "var(--accent)" }}
             />
             <p
-              className="text-[12.5px]"
+              className="text-[12px]"
               style={{ color: "var(--text-tertiary)" }}
             >
               초대 정보를 확인하는 중…
@@ -250,7 +250,7 @@ function NeedsLogin({ token }: { token: string }) {
         심사위원으로 초대받았어요
       </p>
       <p
-        className="text-[12.5px] leading-[1.7] mb-7 max-w-xs mx-auto"
+        className="text-[12px] leading-[1.7] mb-7 max-w-xs mx-auto"
         style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
         로그인하면 자동으로 이 대회의 심사위원으로 등록되고, 평가 흐름이 시작됩니다.
@@ -306,7 +306,7 @@ function AcceptForm({
           심사위원으로 가입하시겠어요?
         </p>
         <p
-          className="text-[12.5px] leading-[1.7] max-w-xs mx-auto"
+          className="text-[12px] leading-[1.7] max-w-xs mx-auto"
           style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
         >
           <strong style={{ color: "var(--text-primary)" }}>{meta.competitionName}</strong>
@@ -324,7 +324,7 @@ function AcceptForm({
       <div className="space-y-3 mb-6">
         {userEmail && (
           <div
-            className="px-3 py-2 text-[11.5px]"
+            className="px-3 py-2 text-[11px]"
             style={{
               background: "var(--surface-2)",
               border: "1px solid var(--t-border-subtle)",
@@ -374,7 +374,7 @@ function AcceptForm({
       </button>
 
       <p
-        className="mt-4 text-[10.5px] text-center"
+        className="mt-4 text-[11px] text-center"
         style={{ color: "var(--text-tertiary)" }}
       >
         발급: {meta.invitedByName}
@@ -396,14 +396,14 @@ function Field({
     <div>
       <div className="flex items-baseline justify-between mb-1">
         <label
-          className="block text-[10.5px] font-bold uppercase"
+          className="block text-[11px] font-bold uppercase"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
           {label}
         </label>
         {hint && (
           <span
-            className="text-[10px]"
+            className="text-[11px]"
             style={{ color: "var(--text-tertiary)" }}
           >
             {hint}

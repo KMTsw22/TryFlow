@@ -49,7 +49,7 @@ export function AverageViabilityHero({ avgScore }: { avgScore: number | null }) 
   return (
     <div className="lg:text-right">
       <p
-        className="text-[10.5px] font-medium tracking-[0.1em] uppercase mb-3"
+        className="text-[11px] font-medium tracking-[0.1em] uppercase mb-3"
         style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
       >
         Average viability
@@ -184,7 +184,7 @@ function Metric({
   return (
     <div className="min-w-0 text-center">
       <p
-        className="text-[10.5px] font-medium tracking-[0.1em] uppercase mb-2.5"
+        className="text-[11px] font-medium tracking-[0.1em] uppercase mb-2.5"
         style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
       >
         {label}
@@ -206,7 +206,7 @@ function Metric({
       </div>
       {hint && (
         <p
-          className="text-[11.5px] leading-[1.35] truncate"
+          className="text-[11px] leading-[1.35] truncate"
           style={{ color: "var(--text-tertiary)", opacity: 0.75 }}
         >
           {hint}

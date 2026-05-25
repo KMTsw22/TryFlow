@@ -128,7 +128,7 @@ export function EditProposalModal({
         >
           <div>
             <p
-              className="text-[10.5px] font-bold uppercase mb-1"
+              className="text-[11px] font-bold uppercase mb-1"
               style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
             >
               출품 수정
@@ -213,7 +213,7 @@ export function EditProposalModal({
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               rows={10}
-              className="w-full px-3 py-2.5 text-[13.5px] leading-[1.6] outline-none resize-y"
+              className="w-full px-3 py-2.5 text-[13px] leading-[1.6] outline-none resize-y"
               style={{
                 background: "var(--surface-2)",
                 border: `1px solid ${
@@ -227,7 +227,7 @@ export function EditProposalModal({
               }}
             />
             <p
-              className="text-[11.5px] mt-1.5 tabular-nums"
+              className="text-[11px] mt-1.5 tabular-nums"
               style={{
                 color: summaryInvalid
                   ? "var(--signal-danger)"
@@ -241,7 +241,7 @@ export function EditProposalModal({
           {/* 재평가 경고 — content 가 바뀌면 AI 점수가 비워지고 다시 매김. */}
           {contentChanged && (
             <div
-              className="flex items-start gap-2.5 px-3.5 py-3 text-[12.5px]"
+              className="flex items-start gap-2.5 px-3.5 py-3 text-[12px]"
               style={{
                 background: "var(--signal-attention-soft)",
                 border: "1px solid var(--signal-attention-ring)",

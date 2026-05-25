@@ -319,7 +319,7 @@ function PendingRow({ item }: { item: PendingItem }) {
       <div className="min-w-0">
         {/* 대회 메타 — uppercase letter-spacing 제거 */}
         <div
-          className="text-[11.5px] mb-1 truncate"
+          className="text-[11px] mb-1 truncate"
           style={{ color: "var(--text-tertiary)" }}
         >
           {organizer} · {competitionName}
@@ -338,7 +338,7 @@ function PendingRow({ item }: { item: PendingItem }) {
         </h2>
 
         <p
-          className="text-[12.5px] leading-[1.6] mb-3 line-clamp-1"
+          className="text-[12px] leading-[1.6] mb-3 line-clamp-1"
           style={{ color: "var(--text-tertiary)" }}
         >
           {proposal.summary}
@@ -348,7 +348,7 @@ function PendingRow({ item }: { item: PendingItem }) {
         <div className="flex items-center flex-wrap gap-1.5 mb-2.5">
           {disputeTotal > 0 && (
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px] tabular-nums"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] tabular-nums"
               style={{
                 background: allDecided
                   ? "transparent"
@@ -376,7 +376,7 @@ function PendingRow({ item }: { item: PendingItem }) {
           {reviewAxes.map((axis) => (
             <span
               key={axis.name}
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-[11.5px] tabular-nums"
+              className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] tabular-nums"
               style={{
                 background: "var(--accent-soft)",
                 border: "1px solid var(--accent-ring)",
@@ -428,7 +428,7 @@ function PendingRow({ item }: { item: PendingItem }) {
       <div className="md:text-right md:min-w-[100px] flex md:flex-col items-end gap-3 self-stretch justify-between">
         <div className="md:text-right">
           <p
-            className="text-[11.5px] mb-0.5"
+            className="text-[11px] mb-0.5"
             style={{ color: "var(--text-tertiary)" }}
           >
             최대 분산
@@ -524,7 +524,7 @@ function HealthyEmptyState() {
         검토할 항목이 없습니다.
       </p>
       <p
-        className="text-[12.5px] leading-[1.7] max-w-md mx-auto"
+        className="text-[12px] leading-[1.7] max-w-md mx-auto"
         style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
       >
         모든 출품이 AI 3단계 합의 임계({STDDEV_REVIEW_THRESHOLD}σ) 안에

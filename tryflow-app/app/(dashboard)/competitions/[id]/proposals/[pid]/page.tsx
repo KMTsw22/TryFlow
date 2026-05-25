@@ -244,7 +244,7 @@ export default async function ProposalDetailPage({
       {/* ── Breadcrumb (운영 톤) ─────────────────────────────── */}
       <Link
         href={`/competitions/${competition.id}`}
-        className="inline-flex items-center gap-1.5 text-[12.5px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
+        className="inline-flex items-center gap-1.5 text-[12px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
         style={{ color: "var(--text-tertiary)" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
@@ -312,7 +312,7 @@ export default async function ProposalDetailPage({
 
         {/* 인라인 메타 — 행정 시스템 식별 정보 */}
         <div
-          className="flex items-center flex-wrap gap-x-4 gap-y-1 text-[12.5px] mb-4"
+          className="flex items-center flex-wrap gap-x-4 gap-y-1 text-[12px] mb-4"
           style={{ color: "var(--text-tertiary)" }}
         >
           <MetaItem label="대회" value={competition.name} />
@@ -351,7 +351,7 @@ export default async function ProposalDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-x-10 gap-y-6 items-end pb-8 mb-8 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
             <div>
               <p
-                className="text-[10.5px] font-bold uppercase mb-3"
+                className="text-[11px] font-bold uppercase mb-3"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
               >
                 종합 점수
@@ -382,7 +382,7 @@ export default async function ProposalDetailPage({
               style={{ borderColor: "var(--t-border-subtle)" }}
             >
               <p
-                className="text-[10.5px] font-bold uppercase mb-2"
+                className="text-[11px] font-bold uppercase mb-2"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
               >
                 참고 의견
@@ -401,7 +401,7 @@ export default async function ProposalDetailPage({
                 {verdict(displayComposite ?? 0)}.
               </p>
               <p
-                className="text-[11.5px]"
+                className="text-[11px]"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
               >
                 Draft → Skeptic → Judge 3-Pass 검증
@@ -424,7 +424,7 @@ export default async function ProposalDetailPage({
                     strokeWidth={2.2}
                   />
                   <span
-                    className="text-[10px] font-bold uppercase"
+                    className="text-[11px] font-bold uppercase"
                     style={{ color: "var(--signal-attention)", letterSpacing: "0.14em" }}
                   >
                     검토 권고
@@ -445,7 +445,7 @@ export default async function ProposalDetailPage({
                   </span>
                 </p>
                 <p
-                  className="text-[11.5px] mt-1"
+                  className="text-[11px] mt-1"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   의견 분산 임계값 초과
@@ -480,7 +480,7 @@ export default async function ProposalDetailPage({
                 종합 평가
               </h2>
               <p
-                className="text-[12.5px] mb-6"
+                className="text-[12px] mb-6"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
               >
                 AI 1차 평가의 결론입니다. 항목별 강점·리스크는 위 "심층 분석
@@ -509,7 +509,7 @@ export default async function ProposalDetailPage({
               심사 작업
             </h2>
             <p
-              className="text-[12.5px] mt-1"
+              className="text-[12px] mt-1"
               style={{ color: "var(--text-tertiary)" }}
             >
               AI 평가는 참고용입니다. 본인의 평가·코멘트·분쟁 결정을 아래에서 진행합니다.
@@ -572,7 +572,7 @@ function Chip({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px]"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px]"
       style={{
         color,
         background: "transparent",

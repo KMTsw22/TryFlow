@@ -278,7 +278,7 @@ function DeleteConfirmModal({
         </h3>
 
         <p
-          className="text-[14.5px] leading-[1.7] mb-8"
+          className="text-[14px] leading-[1.7] mb-8"
           style={{ color: "var(--text-secondary)" }}
         >
           This will permanently delete the submission and its insight report. This action cannot be undone.

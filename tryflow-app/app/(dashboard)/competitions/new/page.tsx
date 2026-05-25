@@ -244,7 +244,7 @@ export default function NewCompetitionPage() {
     <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
       <Link
         href="/competitions"
-        className="inline-flex items-center gap-1.5 text-[12.5px] font-medium mb-10 transition-colors hover:text-[color:var(--text-primary)]"
+        className="inline-flex items-center gap-1.5 text-[12px] font-medium mb-10 transition-colors hover:text-[color:var(--text-primary)]"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
@@ -263,13 +263,13 @@ export default function NewCompetitionPage() {
         새 대회
       </h1>
       <p
-        className="mt-1 text-[12.5px]"
+        className="mt-1 text-[12px]"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
       >
         평가표 정의
       </p>
       <p
-        className="text-[13.5px] leading-[1.8] mt-4 mb-12 max-w-xl"
+        className="text-[13px] leading-[1.8] mt-4 mb-12 max-w-xl"
         style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
         대회를 만들면 입력한 주제와 평가 항목으로부터 AI가 항목별 채점 rubric
@@ -282,7 +282,7 @@ export default function NewCompetitionPage() {
         {/* 00 — 대회 종류 */}
         <Section step="00" title="대회 종류" subtitle="평가 도메인 선택">
           <p
-            className="text-[12.5px] leading-[1.7] mb-4"
+            className="text-[12px] leading-[1.7] mb-4"
             style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
           >
             대회 종류에 따라 도메인 특화된 axis 프롬프트와 preset 평가표가 제공됩니다.
@@ -317,7 +317,7 @@ export default function NewCompetitionPage() {
                     </span>
                     {!t.available && (
                       <span
-                        className="text-[10px] font-bold uppercase"
+                        className="text-[11px] font-bold uppercase"
                         style={{ color: "var(--text-tertiary)", letterSpacing: "0.12em" }}
                       >
                         준비 중
@@ -332,7 +332,7 @@ export default function NewCompetitionPage() {
                     )}
                   </div>
                   <p
-                    className="text-[11.5px] leading-[1.55]"
+                    className="text-[11px] leading-[1.55]"
                     style={{ color: "var(--text-tertiary)" }}
                   >
                     {t.description}
@@ -386,7 +386,7 @@ export default function NewCompetitionPage() {
                   placeholder="예: 환경 사진 공모전, 청소년 단편소설, 고등 화학 경진대회, 핀테크 SaaS"
                 />
                 <p
-                  className="mt-2 text-[11.5px] leading-[1.65]"
+                  className="mt-2 text-[11px] leading-[1.65]"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   창업·미술·사진·글쓰기·과학·디자인·해커톤 등 어떤 분야든 OK.
@@ -417,7 +417,7 @@ export default function NewCompetitionPage() {
                 />
                 <span className="min-w-0">
                   <span
-                    className="block text-[13.5px] font-semibold mb-0.5"
+                    className="block text-[13px] font-semibold mb-0.5"
                     style={{
                       color: "var(--text-primary)",
                       letterSpacing: "-0.003em",
@@ -551,7 +551,7 @@ export default function NewCompetitionPage() {
                     <div className="space-y-1.5">
                       <div className="flex items-baseline gap-2">
                         <span
-                          className="text-[10.5px] font-bold tabular-nums"
+                          className="text-[11px] font-bold tabular-nums"
                           style={{
                             color: "var(--text-tertiary)",
                             letterSpacing: "0.14em",
@@ -586,7 +586,7 @@ export default function NewCompetitionPage() {
                     {/* 가중치 */}
                     <div>
                       <p
-                        className="text-[10.5px] font-bold uppercase mb-1.5"
+                        className="text-[11px] font-bold uppercase mb-1.5"
                         style={{
                           color: "var(--text-tertiary)",
                           letterSpacing: "0.14em",
@@ -676,7 +676,7 @@ export default function NewCompetitionPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-7 h-11 inline-flex items-center gap-2 text-[13.5px] font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-7 h-11 inline-flex items-center gap-2 text-[13px] font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
               style={{
                 background: "var(--accent)",
                 color: "#fff",
@@ -710,7 +710,7 @@ function Section({
       <div className="flex items-end justify-between mb-6 pb-3 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
         <div>
           <p
-            className="text-[10.5px] font-bold uppercase mb-1.5"
+            className="text-[11px] font-bold uppercase mb-1.5"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
           >
             {step}
@@ -805,7 +805,7 @@ function WeightBalanceBar({
     <div>
       <div className="flex items-end justify-between mb-2">
         <p
-          className="text-[10.5px] font-bold uppercase"
+          className="text-[11px] font-bold uppercase"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
           가중치 합계

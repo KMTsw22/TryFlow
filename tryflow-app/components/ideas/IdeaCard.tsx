@@ -151,7 +151,7 @@ export function IdeaCard({
 
       {/* Target user */}
       <h3
-        className={`leading-snug mb-2 line-clamp-2 ${isHero ? "text-[19px]" : "text-[17px]"}`}
+        className={`leading-snug mb-2 line-clamp-2 ${isHero ? "text-[20px]" : "text-[17px]"}`}
         style={{
           fontFamily: SERIF,
           fontWeight: 700,
@@ -173,7 +173,7 @@ export function IdeaCard({
       {/* Hero only: AI pull-quote */}
       {isHero && idea.summary && (
         <p
-          className="mt-4 pl-3 border-l italic text-[13.5px] leading-[1.55] line-clamp-3"
+          className="mt-4 pl-3 border-l italic text-[13px] leading-[1.55] line-clamp-3"
           style={{
             borderColor: "var(--t-border-bright)",
             color: "var(--text-secondary)",
@@ -209,7 +209,7 @@ export function IdeaCard({
               framed for viewers discovering this idea, not the submitter). */}
           {typeof idea.save_count === "number" && idea.save_count > 0 && (
             <span
-              className="inline-flex items-center gap-1 text-[11.5px] font-medium tabular-nums tracking-[0.04em] uppercase"
+              className="inline-flex items-center gap-1 text-[11px] font-medium tabular-nums tracking-[0.04em] uppercase"
               style={{ fontFamily: DISPLAY, color: "#ef4444" }}
               title={`${idea.save_count} ${idea.save_count === 1 ? "investor" : "investors"} watching`}
             >
@@ -224,7 +224,7 @@ export function IdeaCard({
 
           {idea.contactOpen === true && (
             <span
-              className="inline-flex items-center gap-1 text-[10.5px] font-bold tracking-[0.08em] uppercase px-1.5 py-0.5"
+              className="inline-flex items-center gap-1 text-[11px] font-bold tracking-[0.08em] uppercase px-1.5 py-0.5"
               style={{
                 fontFamily: DISPLAY,
                 color: "var(--signal-success)",

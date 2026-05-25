@@ -391,7 +391,7 @@ export default async function CompetitionsPage() {
                         className="block group min-w-0"
                       >
                         <div
-                          className="text-[11.5px] mb-0.5"
+                          className="text-[11px] mb-0.5"
                           style={{ color: "var(--text-tertiary)" }}
                         >
                           {comp.organizer}
@@ -460,7 +460,7 @@ export default async function CompetitionsPage() {
                             />
                           </div>
                           <p
-                            className="text-[11.5px] tabular-nums"
+                            className="text-[11px] tabular-nums"
                             style={{ color: "var(--text-tertiary)" }}
                           >
                             {evaluated}/{proposalCount}
@@ -498,7 +498,7 @@ export default async function CompetitionsPage() {
                           {formatDeadline(comp.deadline)}
                         </div>
                         <div
-                          className="text-[11.5px] tabular-nums mt-0.5"
+                          className="text-[11px] tabular-nums mt-0.5"
                           style={{
                             color: dDanger
                               ? "var(--signal-danger)"
@@ -570,7 +570,7 @@ function Th({
 }) {
   return (
     <th
-      className="px-3 py-2.5 text-[11.5px] font-semibold"
+      className="px-3 py-2.5 text-[11px] font-semibold"
       style={{
         width,
         textAlign: align,
@@ -608,7 +608,7 @@ function StageChip({ stage }: { stage: Stage }) {
   const label = stageLabel(stage);
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px]"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px]"
       style={{
         color,
         border: `1px solid ${color}33`,
@@ -646,7 +646,7 @@ function RoleChip({
   if (role.asOrganizer) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 text-[11.5px]"
+        className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px]"
         style={{
           color: "var(--accent)",
           border: "1px solid var(--accent-ring)",
@@ -662,7 +662,7 @@ function RoleChip({
   if (role.asJudge) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 text-[11.5px]"
+        className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px]"
         style={{
           color: "var(--text-secondary)",
           border: "1px solid var(--t-border)",
@@ -803,7 +803,7 @@ function OnboardingChecklist() {
                 </h3>
               </div>
               <p
-                className="text-[12.5px] leading-[1.7]"
+                className="text-[12px] leading-[1.7]"
                 style={{
                   color: "var(--text-secondary)",
                   wordBreak: "keep-all",
