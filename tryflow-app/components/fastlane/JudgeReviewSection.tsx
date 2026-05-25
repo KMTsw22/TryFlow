@@ -1028,7 +1028,7 @@ function MyReviewDraft({
           return (
             <div
               key={c.id}
-              className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-4 py-3"
+              className="px-4 py-3"
               style={{
                 borderBottom: "1px solid var(--t-border-subtle)",
                 background: needsAttention
@@ -1039,74 +1039,105 @@ function MyReviewDraft({
                   : "3px solid transparent",
               }}
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                  <p
-                    className="text-[13px] font-semibold"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {c.name}
-                  </p>
-                  {needsAttention && (
-                    <span
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold uppercase"
-                      style={{
-                        background: "var(--signal-attention)",
-                        color: "#fff",
-                        letterSpacing: "0.06em",
-                        borderRadius: 2,
-                      }}
-                      title="AI 의 3-Pass 점수 분산이 임계(σ>8)를 넘었습니다. 사람 검토를 권장합니다."
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                    <p
+                      className="text-[13px] font-semibold"
+                      style={{ color: "var(--text-primary)" }}
                     >
-                      <AlertTriangle className="w-2.5 h-2.5" strokeWidth={2.6} />
-                      임계 초과
-                    </span>
-                  )}
+                      {c.name}
+                    </p>
+                    {needsAttention && (
+                      <span
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold uppercase"
+                        style={{
+                          background: "var(--signal-attention)",
+                          color: "#fff",
+                          letterSpacing: "0.06em",
+                          borderRadius: 2,
+                        }}
+                        title="AI 의 3-Pass 점수 분산이 임계(σ>8)를 넘었습니다. 사람 검토를 권장합니다."
+                      >
+                        <AlertTriangle className="w-2.5 h-2.5" strokeWidth={2.6} />
+                        임계 초과
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className="text-[11.5px] truncate"
+                    style={{
+                      color: needsAttention
+                        ? "var(--signal-attention)"
+                        : "var(--text-tertiary)",
+                      fontWeight: needsAttention ? 600 : 500,
+                    }}
+                  >
+                    AI {ai?.mean ?? "—"} · σ {ai?.stddev.toFixed(1) ?? "—"}
+                  </p>
                 </div>
-                <p
-                  className="text-[11.5px] truncate"
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  placeholder={String(ai?.mean ?? "—")}
+                  value={myScore ?? ""}
+                  onChange={(e) => setOverride(c.id, e.target.value)}
+                  aria-label={`${c.name} 내 점수`}
+                  disabled={!editing}
+                  className="w-20 px-2.5 h-9 text-[14px] font-semibold text-right tabular-nums outline-none disabled:opacity-60"
                   style={{
-                    color: needsAttention
-                      ? "var(--signal-attention)"
-                      : "var(--text-tertiary)",
-                    fontWeight: needsAttention ? 600 : 500,
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--t-border-subtle)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="이 항목에 대한 코멘트 (선택)"
+                  value={comments[c.id] ?? ""}
+                  onChange={(e) =>
+                    setComments((prev) => ({ ...prev, [c.id]: e.target.value }))
+                  }
+                  aria-label={`${c.name} 코멘트`}
+                  disabled={!editing}
+                  className="w-full px-3 h-9 text-[12.5px] outline-none disabled:opacity-60"
+                  style={{
+                    background: "var(--surface-2)",
+                    border: "1px solid var(--t-border-subtle)",
+                    color: "var(--text-primary)",
+                  }}
+                />
+              </div>
+
+              {/* AI 의 axis 별 근거 — Judge 의 1-2 문장 assessment. 점수 매기는
+                  바로 그 자리에서 보여 anchoring 줄이고 신뢰 형성. */}
+              {ai?.reasoning && (
+                <p
+                  className="mt-2 text-[12.5px] leading-[1.65]"
+                  style={{
+                    color: "var(--text-secondary)",
+                    fontStyle: "italic",
+                    fontFamily: "'Fraunces', serif",
+                    wordBreak: "keep-all",
                   }}
                 >
-                  AI {ai?.mean ?? "—"} · σ {ai?.stddev.toFixed(1) ?? "—"}
+                  <span
+                    className="inline-block mr-1.5 text-[10px] font-bold uppercase tracking-wider not-italic align-middle px-1.5 py-0.5"
+                    style={{
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--t-border-subtle)",
+                      color: "var(--text-tertiary)",
+                      letterSpacing: "0.12em",
+                      fontFamily: "var(--font-sans, system-ui)",
+                      borderRadius: 2,
+                    }}
+                  >
+                    AI 근거
+                  </span>
+                  &ldquo;{ai.reasoning}&rdquo;
                 </p>
-              </div>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                placeholder={String(ai?.mean ?? "—")}
-                value={myScore ?? ""}
-                onChange={(e) => setOverride(c.id, e.target.value)}
-                aria-label={`${c.name} 내 점수`}
-                disabled={!editing}
-                className="w-20 px-2.5 h-9 text-[14px] font-semibold text-right tabular-nums outline-none disabled:opacity-60"
-                style={{
-                  background: "var(--surface-2)",
-                  border: "1px solid var(--t-border-subtle)",
-                  color: "var(--text-primary)",
-                }}
-              />
-              <input
-                type="text"
-                placeholder="이 항목에 대한 코멘트 (선택)"
-                value={comments[c.id] ?? ""}
-                onChange={(e) =>
-                  setComments((prev) => ({ ...prev, [c.id]: e.target.value }))
-                }
-                aria-label={`${c.name} 코멘트`}
-                disabled={!editing}
-                className="w-full px-3 h-9 text-[12.5px] outline-none disabled:opacity-60"
-                style={{
-                  background: "var(--surface-2)",
-                  border: "1px solid var(--t-border-subtle)",
-                  color: "var(--text-primary)",
-                }}
-              />
+              )}
             </div>
           );
         })}
