@@ -359,7 +359,7 @@ export function DisputeResolutionModal({
             결정자: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
               {decidedBy.judgeName}
             </span>{" "}
-            · 데모 — 새로고침 시 초기화
+            · 샘플 데이터 — 새로고침 시 초기화
           </p>
           <div className="flex items-center gap-2">
             <button

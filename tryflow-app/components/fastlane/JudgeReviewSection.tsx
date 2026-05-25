@@ -28,6 +28,7 @@ import {
   Repeat,
   ShieldCheck,
   Loader2,
+  X,
 } from "lucide-react";
 import type {
   AxisReview,
@@ -739,13 +740,16 @@ function MyReviewDraft({
   const router = useRouter();
 
   // 폼 초기값을 existingReview 기반으로 셋업. acceptedAi=true 이면 비워두고
-  // (placeholder=AI 점수), false 이면 본인의 overrideScore 를 prefill.
+  // (잠긴 상태 — AI 점수 박힘), false 이면 본인의 overrideScore 를 prefill +
+  // activeAxis 에 추가해 input 활성 상태로 시작.
   const initialOverrides: Record<string, number | undefined> = {};
   const initialComments: Record<string, string> = {};
+  const initialActiveAxis = new Set<string>();
   if (existingReview) {
     for (const a of existingReview.axes) {
       if (!a.acceptedAiScore && typeof a.overrideScore === "number") {
         initialOverrides[a.criterionId] = a.overrideScore;
+        initialActiveAxis.add(a.criterionId);
       }
       if (a.comment) initialComments[a.criterionId] = a.comment;
     }
@@ -754,6 +758,9 @@ function MyReviewDraft({
   const [overrides, setOverrides] =
     useState<Record<string, number | undefined>>(initialOverrides);
   const [comments, setComments] = useState<Record<string, string>>(initialComments);
+  // 어떤 axis 가 "조정 모드" 인지 — set 에 있으면 input 활성, 없으면 잠긴 박스.
+  // 디폴트는 비어있음 = 모든 axis 가 "AI 동의" 상태로 시작 (8번 보강의 핵심).
+  const [activeAxis, setActiveAxis] = useState<Set<string>>(initialActiveAxis);
   const [overallComment, setOverallComment] = useState(
     existingReview?.overallComment ?? ""
   );
@@ -780,6 +787,29 @@ function MyReviewDraft({
     if (Number.isFinite(n) && n >= 0 && n <= 100) {
       setOverrides((prev) => ({ ...prev, [cid]: n }));
     }
+  }
+
+  // axis 의 잠긴 박스 → 입력 모드. 빈 input 으로 시작해 심사위원이 점수 입력.
+  function activateAxis(cid: string) {
+    setActiveAxis((prev) => {
+      const next = new Set(prev);
+      next.add(cid);
+      return next;
+    });
+  }
+
+  // 입력 모드 → AI 동의로 되돌림. overrides 에서 점수 삭제 + activeAxis 에서 제거.
+  function revertAxisToAi(cid: string) {
+    setActiveAxis((prev) => {
+      const next = new Set(prev);
+      next.delete(cid);
+      return next;
+    });
+    setOverrides((prev) => {
+      const n = { ...prev };
+      delete n[cid];
+      return n;
+    });
   }
 
   async function handleSubmit() {
@@ -861,13 +891,14 @@ function MyReviewDraft({
           내 평가 작성
         </h3>
         <div className="inline-flex items-center gap-2">
-          {/* mock 데모(competitionId 가 UUID 아님)에서만 "저장 안 됨" 경고. */}
+          {/* mock URL (= 샘플 데이터) 일 때만 노출되는 안내. production 의
+              proposal 페이지는 모두 UUID 라 이 라벨이 보이지 않는다. */}
           {!usingBackend && (
             <span
               className="text-[10.5px] font-medium"
-              style={{ color: "var(--signal-attention)" }}
+              style={{ color: "var(--text-tertiary)" }}
             >
-              데모 — 저장 안 됨
+              샘플 데이터 — 저장되지 않습니다
             </span>
           )}
           {/* 이미 제출된 평가가 있고 잠긴 상태 — "수정하기" 로 편집 모드 진입. */}
@@ -920,8 +951,8 @@ function MyReviewDraft({
         className="text-[12px] mb-4"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
       >
-        AI 점수를 그대로 두려면 비워두고, 다르게 매기고 싶으면 0~100 사이로
-        입력하세요. 항목별·전체 코멘트도 함께 남길 수 있습니다.
+        AI 가 이미 모든 항목을 채점했습니다. 동의하시면 그대로 두고,
+        의견이 다른 항목만 <strong>조정 →</strong> 을 눌러 점수를 입력하세요.
       </p>
 
       {/* AI 점수 전부 동의 — 분쟁 axis 0개 + 본인 override 0개일 때만 노출.
@@ -1076,22 +1107,79 @@ function MyReviewDraft({
                     AI {ai?.mean ?? "—"} · σ {ai?.stddev.toFixed(1) ?? "—"}
                   </p>
                 </div>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  placeholder={String(ai?.mean ?? "—")}
-                  value={myScore ?? ""}
-                  onChange={(e) => setOverride(c.id, e.target.value)}
-                  aria-label={`${c.name} 내 점수`}
-                  disabled={!editing}
-                  className="w-20 px-2.5 h-9 text-[14px] font-semibold text-right tabular-nums outline-none disabled:opacity-60"
-                  style={{
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--t-border-subtle)",
-                    color: "var(--text-primary)",
-                  }}
-                />
+                {/* 점수 영역 — 디폴트는 AI 점수가 박힌 잠긴 박스.
+                    "조정" 클릭 시 input 활성화. 심사위원이 매번 점수를 매기지
+                    않아도 되어 "AI 가 이미 다 봤다" 가 시각적으로 분명해진다. */}
+                {activeAxis.has(c.id) ? (
+                  <div className="inline-flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      autoFocus
+                      placeholder={String(ai?.mean ?? "—")}
+                      value={myScore ?? ""}
+                      onChange={(e) => setOverride(c.id, e.target.value)}
+                      aria-label={`${c.name} 내 점수`}
+                      disabled={!editing}
+                      className="w-20 px-2.5 h-9 text-[14px] font-semibold text-right tabular-nums outline-none disabled:opacity-60"
+                      style={{
+                        background: "var(--surface-1)",
+                        border: "1px solid var(--accent-ring)",
+                        color: "var(--text-primary)",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => revertAxisToAi(c.id)}
+                      disabled={!editing}
+                      title="AI 점수로 되돌리기"
+                      aria-label="AI 점수로 되돌리기"
+                      className="inline-flex items-center justify-center w-6 h-6 transition-colors hover:bg-[color:var(--surface-2)] disabled:opacity-50"
+                      style={{
+                        color: "var(--text-tertiary)",
+                        border: "1px solid var(--t-border-subtle)",
+                      }}
+                    >
+                      <X className="w-3 h-3" strokeWidth={2.4} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => editing && activateAxis(c.id)}
+                    disabled={!editing}
+                    aria-label={`${c.name} 점수 조정`}
+                    title="클릭하면 AI 점수를 다른 점수로 조정합니다."
+                    className="inline-flex items-center gap-2 px-3 h-9 transition-colors hover:bg-[color:var(--surface-2)] disabled:opacity-60 disabled:cursor-not-allowed"
+                    style={{
+                      background: "var(--surface-1)",
+                      border: "1px solid var(--t-border-subtle)",
+                    }}
+                  >
+                    <span
+                      className="text-[10px] font-bold uppercase tabular-nums"
+                      style={{
+                        color: "var(--text-tertiary)",
+                        letterSpacing: "0.12em",
+                      }}
+                    >
+                      AI
+                    </span>
+                    <span
+                      className="text-[14px] font-semibold tabular-nums"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {ai?.mean ?? "—"}
+                    </span>
+                    <span
+                      className="text-[10.5px] ml-1"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      조정 →
+                    </span>
+                  </button>
+                )}
                 <input
                   type="text"
                   placeholder="이 항목에 대한 코멘트 (선택)"
@@ -1176,7 +1264,7 @@ function MyReviewDraft({
             : submitted
             ? usingBackend
               ? "제출되었습니다. 다른 심사위원의 평가와 함께 위 표에 반영됩니다."
-              : "데모 모드 — 흐름만 시연되고 저장은 되지 않습니다."
+              : "샘플 데이터 — 흐름만 미리보기되고 저장은 되지 않습니다."
             : usingBackend
             ? "제출하면 본인의 점수·코멘트가 저장됩니다."
             : "제출 전까지 다른 심사위원에게 공개되지 않습니다."}
@@ -1196,7 +1284,7 @@ function MyReviewDraft({
           ) : submitted && !editing ? (
             <>
               <Check className="w-3.5 h-3.5" strokeWidth={2.4} />
-              제출됨{!usingBackend && " (데모)"}
+              제출됨{!usingBackend && " (샘플)"}
             </>
           ) : existingReview?.status === "submitted" ? (
             <>
