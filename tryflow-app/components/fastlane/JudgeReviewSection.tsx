@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   Loader2,
   X,
+  ChevronDown,
 } from "lucide-react";
 import type {
   AxisReview,
@@ -55,6 +56,8 @@ interface Props {
   initialClosedAt?: string;
   /** 본인의 기존 평가 — MyReviewDraft 폼 prefill 용. 없으면 빈 상태. */
   myExistingReview?: JudgeReview;
+  /** axis 별 markdown 심층 분석 — 폼 각 행의 "심층 분석 보기" 토글에서 사용. */
+  axisReports?: Record<string, { markdown: string; generatedAt?: string }>;
 }
 
 /** uuid 형식만 진짜 API 호출. mock 데모 데이터는 client state 로만. */
@@ -71,6 +74,7 @@ export function JudgeReviewSection({
   initialResolutions = [],
   initialClosedAt,
   myExistingReview,
+  axisReports,
 }: Props) {
   const router = useRouter();
   const usingBackend = isRealId(competitionId) && isRealId(proposalId);
@@ -317,6 +321,7 @@ export function JudgeReviewSection({
         proposalId={proposalId}
         usingBackend={usingBackend}
         existingReview={myExistingReview}
+        axisReports={axisReports}
       />
 
       {/* 검토 종료 영역 — 사람 합의 axis 수 / 격차 큰 axis 수 요약 + 종료 액션. */}
@@ -729,6 +734,7 @@ function MyReviewDraft({
   proposalId,
   usingBackend,
   existingReview,
+  axisReports,
 }: {
   criteria: Criterion[];
   aiAxes: AxisScore[];
@@ -736,6 +742,7 @@ function MyReviewDraft({
   proposalId: string;
   usingBackend: boolean;
   existingReview?: JudgeReview;
+  axisReports?: Record<string, { markdown: string; generatedAt?: string }>;
 }) {
   const router = useRouter();
 
@@ -773,6 +780,17 @@ function MyReviewDraft({
   );
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // 각 axis 행의 "심층 분석 보기" 펼침 상태. 봉투 안 CollapsibleAxisGrid 에서
+  // 빠져나와 폼 행에 흡수된 패턴.
+  const [expandedAnalysis, setExpandedAnalysis] = useState<Set<string>>(new Set());
+  function toggleAnalysis(cid: string) {
+    setExpandedAnalysis((prev) => {
+      const next = new Set(prev);
+      if (next.has(cid)) next.delete(cid);
+      else next.add(cid);
+      return next;
+    });
+  }
 
   function setOverride(cid: string, val: string) {
     if (val.trim() === "") {
@@ -1225,6 +1243,60 @@ function MyReviewDraft({
                   </span>
                   &ldquo;{ai.reasoning}&rdquo;
                 </p>
+              )}
+
+              {/* 채점 기준 — 봉투 안 CollapsibleAxisGrid 에 있던 정보를 폼 행으로 흡수.
+                  심사위원이 점수 매기는 그 자리에서 "어떤 기준인지" 즉시 확인. */}
+              {c.description && (
+                <p
+                  className="mt-2 text-[12px]"
+                  style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
+                >
+                  <span className="font-semibold">채점 기준:</span> {c.description}
+                </p>
+              )}
+
+              {/* 심층 분석 보기 — axisReports markdown 토글. 봉투 안에서 빠져나옴. */}
+              {axisReports?.[c.id]?.markdown && (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleAnalysis(c.id)}
+                    aria-expanded={expandedAnalysis.has(c.id)}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold transition-colors hover:text-[color:var(--accent)]"
+                    style={{
+                      color: "var(--text-tertiary)",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {expandedAnalysis.has(c.id) ? "심층 분석 접기" : "심층 분석 보기"}
+                    <ChevronDown
+                      className="w-3 h-3 transition-transform"
+                      strokeWidth={2.4}
+                      style={{
+                        transform: expandedAnalysis.has(c.id)
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      }}
+                    />
+                  </button>
+                  {expandedAnalysis.has(c.id) && (
+                    <div
+                      className="mt-3 px-4 py-3.5 text-[12px] leading-[1.75]"
+                      style={{
+                        background: "var(--envelope-bg, var(--surface-2))",
+                        border: "1px solid var(--envelope-border, var(--t-border-subtle))",
+                        borderRadius: 4,
+                        color: "var(--text-secondary)",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "keep-all",
+                        fontFamily: "'Fraunces', serif",
+                      }}
+                    >
+                      {axisReports[c.id].markdown}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           );
