@@ -50,7 +50,7 @@ export function CriterionRubricCard({
         className="w-full text-left flex items-start gap-4 px-5 py-4 transition-colors hover:bg-[color:var(--accent-soft)] disabled:cursor-default disabled:hover:bg-transparent"
       >
         <span
-          className="text-[10.5px] font-bold tabular-nums shrink-0 mt-1"
+          className="text-[11px] font-bold tabular-nums shrink-0 mt-1"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
           {String(index + 1).padStart(2, "0")}
@@ -71,25 +71,25 @@ export function CriterionRubricCard({
             </span>
             {hasRubric ? (
               <span
-                className="inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase"
                 style={{ color: "var(--signal-success)", letterSpacing: "0.12em" }}
               >
                 <FileText className="w-3 h-3" />
-                rubric 준비됨
+                채점 가이드 준비됨
               </span>
             ) : (
               <span
-                className="inline-flex items-center gap-1 text-[10.5px] font-semibold uppercase"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.12em" }}
               >
                 <Hourglass className="w-3 h-3" />
-                rubric 미생성
+                채점 가이드 미생성
               </span>
             )}
           </div>
           {criterion.description && (
             <p
-              className="mt-1 text-[12.5px] leading-[1.65]"
+              className="mt-1 text-[12px] leading-[1.65]"
               style={{ color: "var(--text-secondary)" }}
             >
               {criterion.description}

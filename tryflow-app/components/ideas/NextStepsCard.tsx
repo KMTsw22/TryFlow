@@ -89,7 +89,7 @@ export function NextStepsCard() {
               {String(i + 1).padStart(2, "0")}
             </span>
             <p
-              className="flex-1 text-[15.5px] leading-[1.7]"
+              className="flex-1 text-[15px] leading-[1.7]"
               style={{ color: "var(--text-primary)" }}
             >
               {step}

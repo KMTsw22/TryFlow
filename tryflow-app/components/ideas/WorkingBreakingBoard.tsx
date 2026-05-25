@@ -165,7 +165,7 @@ function Column({
                 {symbol}
               </span>
               <p
-                className="flex-1 text-[14.5px] leading-[1.65]"
+                className="flex-1 text-[14px] leading-[1.65]"
                 style={{ color: "var(--text-primary)" }}
               >
                 {item.text}

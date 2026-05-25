@@ -122,7 +122,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
         strokeWidth={2.25}
       />
       <span
-        className="flex-1 text-[13.5px] leading-[1.4]"
+        className="flex-1 text-[13px] leading-[1.4]"
         style={{ fontFamily: DISPLAY, color: "var(--text-primary)" }}
       >
         {toast.message}

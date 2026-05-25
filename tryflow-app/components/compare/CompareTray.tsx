@@ -182,7 +182,7 @@ export function CompareTray() {
                   {letter}
                 </span>
                 <span
-                  className="text-[12.5px] leading-tight truncate"
+                  className="text-[12px] leading-tight truncate"
                   style={{
                     fontFamily: SERIF,
                     fontWeight: 600,

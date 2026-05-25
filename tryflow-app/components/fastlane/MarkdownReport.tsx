@@ -368,7 +368,7 @@ function SectionBlock({
           return (
             <p
               key={i}
-              className="text-[13.5px] leading-[1.85] mb-3"
+              className="text-[13px] leading-[1.85] mb-3"
               style={{ color: "var(--text-secondary)" }}
             >
               {renderInline(b.text)}
@@ -471,7 +471,7 @@ function PointGrid({
               {p.label}
             </p>
             <p
-              className="text-[12.5px] leading-[1.7] mb-2"
+              className="text-[12px] leading-[1.7] mb-2"
               style={{ color: "var(--text-secondary)" }}
             >
               {renderInline(p.body)}
@@ -500,7 +500,7 @@ function PlainBullets({ items, accent }: { items: string[]; accent: string }) {
       {items.map((item, i) => (
         <li
           key={i}
-          className="relative pl-4 text-[13.5px] leading-[1.75]"
+          className="relative pl-4 text-[13px] leading-[1.75]"
           style={{ color: "var(--text-secondary)" }}
         >
           <span

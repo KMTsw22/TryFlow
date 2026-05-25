@@ -573,7 +573,7 @@ function AgentCard({
             {meta?.full ?? agentId}
           </span>
           <span
-            className="text-[10px] font-medium tracking-[0.06em] uppercase shrink-0"
+            className="text-[11px] font-medium tracking-[0.06em] uppercase shrink-0"
             style={{ fontFamily: DISPLAY, color: stateColor }}
           >
             {stateLabel}
@@ -607,7 +607,7 @@ function AgentCard({
             );
           })}
           <span
-            className="ml-1.5 text-[10px] tracking-[0.06em] uppercase tabular-nums"
+            className="ml-1.5 text-[11px] tracking-[0.06em] uppercase tabular-nums"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             draft · calibrator · judge

@@ -53,7 +53,7 @@ export function AIReportEnvelope({
         }}
       >
         <span
-          className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px] font-semibold"
+          className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-semibold"
           style={{
             background: "var(--accent-soft)",
             color: "var(--accent)",
@@ -72,7 +72,7 @@ export function AIReportEnvelope({
           {ts && <span style={{ color: "var(--text-tertiary)" }}>{` · ${ts} 생성`}</span>}
         </span>
         <span
-          className="text-[11.5px] sm:ml-auto"
+          className="text-[11px] sm:ml-auto"
           style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
         >
           이 리포트는 AI가 작성한 1차 참고용 평가입니다. 최종 결정은 심사위원의 권한입니다.

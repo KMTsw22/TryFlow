@@ -85,7 +85,7 @@ function TopNav() {
           </Link>
           <Link
             href="/competitions/new"
-            className="inline-flex items-center gap-1.5 px-3 h-8 text-[12.5px] font-medium hover:brightness-110"
+            className="inline-flex items-center gap-1.5 px-3 h-8 text-[12px] font-medium hover:brightness-110"
             style={{
               background: "var(--accent)",
               color: "#fff",
@@ -129,7 +129,7 @@ function PageHeader() {
           1차 심사 자동화 운영 시스템
         </h1>
         <p
-          className="text-[13.5px] leading-[1.7] mt-3 max-w-xl"
+          className="text-[13px] leading-[1.7] mt-3 max-w-xl"
           style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
         >
           공모전·지원사업·경진대회의 1차 평가를 AI가 맡고, 의견이 갈리는 항목만
@@ -192,7 +192,7 @@ function ProblemBox({
   return (
     <div className="px-5 py-4" style={{ background: "var(--surface-1)" }}>
       <p
-        className="text-[11.5px] mb-1.5"
+        className="text-[11px] mb-1.5"
         style={{ color: "var(--text-tertiary)" }}
       >
         {label}
@@ -208,7 +208,7 @@ function ProblemBox({
         {value}
       </p>
       <p
-        className="text-[11.5px] mt-1"
+        className="text-[11px] mt-1"
         style={{ color: "var(--text-tertiary)" }}
       >
         {note}
@@ -305,7 +305,7 @@ function Features() {
                 {it.title}
               </h3>
               <p
-                className="text-[11.5px]"
+                className="text-[11px]"
                 style={{ color: "var(--text-secondary)" }}
               >
                 {it.body}
@@ -381,19 +381,19 @@ function Comparison() {
                 }}
               >
                 <th
-                  className="px-5 py-3 text-left text-[11.5px] font-semibold"
+                  className="px-5 py-3 text-left text-[11px] font-semibold"
                   style={{ color: "var(--text-tertiary)", width: "22%" }}
                 >
                   영역
                 </th>
                 <th
-                  className="px-5 py-3 text-left text-[11.5px] font-semibold"
+                  className="px-5 py-3 text-left text-[11px] font-semibold"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   기존 방식 (AS IS)
                 </th>
                 <th
-                  className="px-5 py-3 text-left text-[11.5px] font-semibold"
+                  className="px-5 py-3 text-left text-[11px] font-semibold"
                   style={{
                     color: "var(--accent)",
                     background: "var(--accent-soft)",
@@ -500,7 +500,7 @@ function Workflow() {
               }}
             >
               <span
-                className="inline-flex items-center justify-center w-7 h-7 text-[12.5px] font-semibold tabular-nums mt-0.5"
+                className="inline-flex items-center justify-center w-7 h-7 text-[12px] font-semibold tabular-nums mt-0.5"
                 style={{
                   background: "var(--accent-soft)",
                   color: "var(--accent)",
@@ -521,7 +521,7 @@ function Workflow() {
                   {s.title}
                 </h3>
                 <p
-                  className="text-[12.5px] leading-[1.7]"
+                  className="text-[12px] leading-[1.7]"
                   style={{
                     color: "var(--text-secondary)",
                     wordBreak: "keep-all",
@@ -531,7 +531,7 @@ function Workflow() {
                 </p>
               </div>
               <span
-                className="inline-flex items-center justify-center px-2 py-1 text-[11.5px] font-medium self-start"
+                className="inline-flex items-center justify-center px-2 py-1 text-[11px] font-medium self-start"
                 style={{
                   color: "var(--text-secondary)",
                   background: "var(--surface-2)",
@@ -574,7 +574,7 @@ function Fairness() {
             }}
           >
             <p
-              className="text-[11.5px] mb-3"
+              className="text-[11px] mb-3"
               style={{ color: "var(--text-tertiary)" }}
             >
               현재 적용된 3장치
@@ -607,7 +607,7 @@ function Fairness() {
             }}
           >
             <p
-              className="text-[11.5px] mb-3"
+              className="text-[11px] mb-3"
               style={{ color: "var(--text-tertiary)" }}
             >
               보강 예정
@@ -619,7 +619,7 @@ function Fairness() {
               <PlanItem text="분기마다 공정성 감사 결과를 외부에 공개" />
             </ul>
             <p
-              className="text-[11.5px] mt-5 pt-4 border-t"
+              className="text-[11px] mt-5 pt-4 border-t"
               style={{
                 color: "var(--text-tertiary)",
                 borderColor: "var(--t-border)",
@@ -661,7 +661,7 @@ function FairnessItem({
       </span>
       <div>
         <h4
-          className="text-[13.5px] font-semibold mb-0.5"
+          className="text-[13px] font-semibold mb-0.5"
           style={{
             color: "var(--text-primary)",
             letterSpacing: "-0.005em",
@@ -670,7 +670,7 @@ function FairnessItem({
           {title}
         </h4>
         <p
-          className="text-[12.5px] leading-[1.7]"
+          className="text-[12px] leading-[1.7]"
           style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
         >
           {body}
@@ -802,7 +802,7 @@ function Pricing() {
                 </span>
               </div>
               <p
-                className="text-[12.5px] leading-[1.65] mb-4"
+                className="text-[12px] leading-[1.65] mb-4"
                 style={{
                   color: "var(--text-secondary)",
                   wordBreak: "keep-all",
@@ -810,7 +810,7 @@ function Pricing() {
               >
                 {t.desc}
               </p>
-              <ul className="space-y-2 text-[12.5px] mb-6 flex-1">
+              <ul className="space-y-2 text-[12px] mb-6 flex-1">
                 {t.features.map((f) => (
                   <li key={f} className="flex items-start gap-2">
                     <CheckCircle2
@@ -872,7 +872,7 @@ function Closing() {
         <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
           <Link
             href="/competitions/new"
-            className="inline-flex items-center gap-2 px-4 h-10 text-[13.5px] font-medium hover:brightness-110"
+            className="inline-flex items-center gap-2 px-4 h-10 text-[13px] font-medium hover:brightness-110"
             style={{
               background: "var(--accent)",
               color: "#fff",
@@ -884,7 +884,7 @@ function Closing() {
           </Link>
           <a
             href="mailto:contact@fastlane.example"
-            className="inline-flex items-center px-4 h-10 text-[13.5px] font-medium transition-colors hover:bg-[color:var(--surface-1)]"
+            className="inline-flex items-center px-4 h-10 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-1)]"
             style={{
               border: "1px solid var(--t-input-border)",
               color: "var(--text-primary)",

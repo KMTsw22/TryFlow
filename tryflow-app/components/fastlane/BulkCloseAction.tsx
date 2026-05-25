@@ -93,7 +93,7 @@ export function BulkCloseAction({ competitionId, proposalIds }: Props) {
           strokeWidth={2.4}
         />
         <p
-          className="text-[12.5px] leading-[1.6]"
+          className="text-[12px] leading-[1.6]"
           style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
         >
           모든 심사위원의 평가가 끝난 출품{" "}

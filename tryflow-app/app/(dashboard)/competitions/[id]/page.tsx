@@ -14,11 +14,20 @@ import { findCompetition } from "@/lib/fastlane/mock";
 import { createClient } from "@/lib/supabase/server";
 import {
   rowToCompetition,
+  rowToDisputeResolution,
+  rowToJudgeReview,
   rowToProposal,
   type CompetitionRow,
+  type DisputeResolutionRow,
   type ProposalRow,
+  type ProposalReviewRow,
 } from "@/lib/fastlane/db";
-import type { Competition } from "@/lib/fastlane/types";
+import { foldFinalScore } from "@/lib/fastlane/score";
+import type {
+  Competition,
+  DisputeResolution,
+  JudgeReview,
+} from "@/lib/fastlane/types";
 import { ScoreChip } from "@/components/fastlane/ScoreChip";
 import { FairnessBadge } from "@/components/fastlane/FairnessBadge";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
@@ -110,7 +119,43 @@ async function loadCompetition(id: string): Promise<{
     .eq("competition_id", id)
     .order("created_at", { ascending: false });
 
-  const proposals = ((propRows ?? []) as ProposalRow[]).map((r) => rowToProposal(r));
+  const propRowsTyped = (propRows ?? []) as ProposalRow[];
+
+  // 분쟁 결정·사람 평가를 함께 로드. score.ts 의 foldFinalScore 가
+  // (1) 분쟁 결정의 final_score, (2) 사람 합의(σ≤7) 의 평균 을 자동으로
+  // axis 점수에 폴드하기 위해 둘 다 필요.
+  const proposalIds = propRowsTyped.map((r) => r.id);
+  const disputesByProposal = new Map<string, DisputeResolution[]>();
+  const reviewsByProposal = new Map<string, JudgeReview[]>();
+  if (proposalIds.length > 0) {
+    const [{ data: disputeRows }, { data: reviewRows }] = await Promise.all([
+      supabase
+        .from("proposal_dispute_resolutions")
+        .select("*")
+        .in("proposal_id", proposalIds),
+      supabase
+        .from("proposal_reviews")
+        .select("*")
+        .in("proposal_id", proposalIds),
+    ]);
+    for (const r of (disputeRows ?? []) as DisputeResolutionRow[]) {
+      const list = disputesByProposal.get(r.proposal_id) ?? [];
+      list.push(rowToDisputeResolution(r));
+      disputesByProposal.set(r.proposal_id, list);
+    }
+    for (const r of (reviewRows ?? []) as ProposalReviewRow[]) {
+      const list = reviewsByProposal.get(r.proposal_id) ?? [];
+      list.push(rowToJudgeReview(r));
+      reviewsByProposal.set(r.proposal_id, list);
+    }
+  }
+
+  const proposals = propRowsTyped.map((r) =>
+    rowToProposal(r, {
+      disputeResolutions: disputesByProposal.get(r.id),
+      judgeReviews: reviewsByProposal.get(r.id),
+    })
+  );
   const competition = rowToCompetition(comp as CompetitionRow, proposals);
 
   const {
@@ -253,9 +298,26 @@ export default async function CompetitionDetailPage({
     (c) => !!c.rubricMd && c.rubricMd.trim().length > 0
   ).length;
 
+  // 분쟁 결정 + 사람 합의(σ≤7) 자동 폴드를 반영한 최종 점수.
+  // 리더보드 정렬·합산 표시 모두 이 값을 사용한다 (axis 셀도 동일).
+  const foldedByProposal = new Map(
+    proposals.map((p) => {
+      if (!p.score) return [p.id, null] as const;
+      return [
+        p.id,
+        foldFinalScore(
+          p.score,
+          template.criteria,
+          p.disputeResolutions ?? [],
+          p.judgeReviews ?? []
+        ),
+      ] as const;
+    })
+  );
+
   const ranked = [...proposals].sort((a, b) => {
-    const sa = a.score?.composite ?? -1;
-    const sb = b.score?.composite ?? -1;
+    const sa = foldedByProposal.get(a.id)?.composite ?? -1;
+    const sb = foldedByProposal.get(b.id)?.composite ?? -1;
     return sb - sa;
   });
 
@@ -276,7 +338,7 @@ export default async function CompetitionDetailPage({
       {/* Back nav */}
       <Link
         href="/competitions"
-        className="inline-flex items-center gap-1.5 text-[12.5px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
+        className="inline-flex items-center gap-1.5 text-[12px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
         style={{ color: "var(--text-tertiary)" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
@@ -327,7 +389,7 @@ export default async function CompetitionDetailPage({
         )}
       </div>
       <div
-        className="flex items-center gap-3 mb-6 text-[12.5px] tabular-nums flex-wrap"
+        className="flex items-center gap-3 mb-6 text-[12px] tabular-nums flex-wrap"
         style={{ color: "var(--text-tertiary)" }}
       >
         <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
@@ -363,7 +425,7 @@ export default async function CompetitionDetailPage({
               strokeWidth={2.4}
             />
             <p
-              className="text-[12.5px] leading-[1.6]"
+              className="text-[12px] leading-[1.6]"
               style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
             >
               모든 검토가 끝났습니다. 결과 페이지를 외부에 공유할 수 있습니다.
@@ -495,7 +557,7 @@ export default async function CompetitionDetailPage({
             className="text-[12px] tabular-nums hidden md:block"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
           >
-            3-Pass (Draft·Skeptic·Judge) · σ 분기점 분산 · 임계값 초과 시 검토 권고
+            3-Pass (Draft·Skeptic·Judge) · 편차 큰 항목은 검토 권고
           </p>
         </div>
 
@@ -565,10 +627,12 @@ export default async function CompetitionDetailPage({
             </thead>
             <tbody>
               {ranked.map((p, i) => {
-                const score = p.score;
-                const composite = score?.composite ?? null;
+                const folded = foldedByProposal.get(p.id) ?? null;
+                const composite = folded?.composite ?? null;
+                // 분쟁 카운트는 원본 AI score 의 needsReview 플래그 기준. 결정 후에도
+                // 표시는 유지되되, 결정 완료 여부는 disputeResolutions 길이로 별도 판단.
                 const reviewCount =
-                  score?.axes.filter((a) => a.needsReview).length ?? 0;
+                  p.score?.axes.filter((a) => a.needsReview).length ?? 0;
                 const rank = i + 1;
                 const accent = rankAccent(rank);
                 const isClosed = !!p.reviewClosedAt;
@@ -632,7 +696,7 @@ export default async function CompetitionDetailPage({
                           )}
                         </div>
                         <p
-                          className="text-[12.5px]"
+                          className="text-[12px]"
                           style={{ color: "var(--text-tertiary)" }}
                         >
                           {p.team}
@@ -654,8 +718,8 @@ export default async function CompetitionDetailPage({
                                 composite >= 75
                                   ? "var(--signal-success)"
                                   : composite >= 55
-                                  ? "var(--signal-warning)"
-                                  : "var(--signal-danger)",
+                                  ? "var(--text-primary)"
+                                  : "var(--text-tertiary)",
                             }}
                           >
                             {composite}
@@ -666,9 +730,9 @@ export default async function CompetitionDetailPage({
                       )}
                     </td>
 
-                    {/* 항목별 셀 */}
+                    {/* 항목별 셀 — 분쟁 결정된 axis 는 folded 가 그 final 점수를 갖고 있음. */}
                     {template.criteria.map((c) => {
-                      const axis = score?.axes.find((a) => a.criterionId === c.id);
+                      const axis = folded?.axes.find((a) => a.criterionId === c.id);
                       if (!axis) {
                         return (
                           <td
@@ -680,8 +744,33 @@ export default async function CompetitionDetailPage({
                           </td>
                         );
                       }
+                      const resolved =
+                        axis.source === "dispute" ||
+                        axis.source === "human_consensus" ||
+                        axis.source === "noisy_consensus";
+                      const noisy = axis.source === "noisy_consensus";
+                      const sourceTitle =
+                        axis.source === "dispute"
+                          ? "분쟁 결정으로 확정된 최종 점수"
+                          : axis.source === "human_consensus"
+                          ? `심사위원 ${axis.humanCount}명 평균 자동 채택`
+                          : axis.source === "noisy_consensus"
+                          ? `심사위원 ${axis.humanCount}명 평균 채택 — 격차 큼(편차 ${axis.humanStddev.toFixed(1)})`
+                          : undefined;
+                      const sourceLabel =
+                        axis.source === "dispute"
+                          ? "확정"
+                          : noisy
+                          ? "격차"
+                          : axis.source === "human_consensus"
+                          ? "합의"
+                          : `편차 ${axis.stddev.toFixed(1)}`;
                       return (
-                        <td key={c.id} className="py-3 px-1 text-center align-middle">
+                        <td
+                          key={c.id}
+                          className="py-3 px-1 text-center align-middle"
+                          title={sourceTitle}
+                        >
                           <div className="flex flex-col items-center gap-0.5">
                             <ScoreChip
                               mean={axis.mean}
@@ -691,18 +780,23 @@ export default async function CompetitionDetailPage({
                             />
                             <div className="flex items-center gap-1">
                               <span
-                                className="text-[10px] tabular-nums"
+                                className="text-[11px] tabular-nums"
                                 style={{
-                                  color: axis.needsReview
+                                  color: noisy
+                                    ? "var(--signal-attention)"
+                                    : resolved
+                                    ? "var(--accent)"
+                                    : axis.needsReview
                                     ? "var(--signal-attention)"
                                     : "var(--text-tertiary)",
-                                  fontWeight: axis.needsReview ? 600 : 500,
+                                  fontWeight:
+                                    resolved || axis.needsReview ? 600 : 500,
                                   letterSpacing: "0.02em",
                                 }}
                               >
-                                σ {axis.stddev.toFixed(1)}
+                                {sourceLabel}
                               </span>
-                              {axis.needsReview && (
+                              {!resolved && axis.needsReview && (
                                 <FairnessBadge stddev={axis.stddev} compact />
                               )}
                             </div>
@@ -749,11 +843,11 @@ export default async function CompetitionDetailPage({
 
         {/* 하단 캡션 */}
         <p
-          className="mt-4 text-[11.5px] leading-[1.65]"
+          className="mt-4 text-[11px] leading-[1.65]"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
         >
-          σ (시그마) = Draft·Skeptic·Judge 세 agent 점수의 표준편차. 임계값을 넘는 항목은
-          AI 의 평가가 흔들린다는 의미이므로 심사위원의 검토를 권합니다.
+          편차 = Draft·Skeptic·Judge 3-Pass 점수의 흔들림 정도(표준편차 σ). 임계값을 넘는 항목은
+          AI 가 자신 없는 부분이므로 심사위원의 검토를 권합니다.
         </p>
       </section>
 
@@ -795,7 +889,7 @@ function MetaCell({
           />
         )}
         <span
-          className="text-[11.5px]"
+          className="text-[11px]"
           style={{ color: "var(--text-tertiary)" }}
         >
           {label}
@@ -825,7 +919,7 @@ function MetaCell({
       </div>
       {hint && (
         <p
-          className="mt-1 text-[11.5px] truncate"
+          className="mt-1 text-[11px] truncate"
           style={{ color: "var(--text-tertiary)" }}
           title={hint}
         >
@@ -886,7 +980,7 @@ function Th({
 }) {
   return (
     <th
-      className="py-3 px-2 text-[10.5px] font-bold uppercase"
+      className="py-3 px-2 text-[11px] font-bold uppercase"
       style={{
         color: "var(--text-tertiary)",
         letterSpacing: "0.14em",

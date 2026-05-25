@@ -269,7 +269,7 @@ function RecentActivityHero({
         style={{ borderColor: "var(--t-border-subtle)" }}
       >
         <span
-          className="text-[11.5px] font-medium tracking-[0.14em] uppercase"
+          className="text-[11px] font-medium tracking-[0.14em] uppercase"
           style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
         >
           Most recently saved · {timeLabel}
@@ -277,7 +277,7 @@ function RecentActivityHero({
         <span className="inline-flex items-center gap-4">
           {watchers > 0 && (
             <span
-              className="inline-flex items-center gap-2 text-[11.5px] font-medium tracking-[0.14em] uppercase"
+              className="inline-flex items-center gap-2 text-[11px] font-medium tracking-[0.14em] uppercase"
               style={{ fontFamily: DISPLAY, color: "#ef4444" }}
               title={`${watchers} ${watchers === 1 ? "investor" : "investors"} watching`}
             >
@@ -290,7 +290,7 @@ function RecentActivityHero({
             </span>
           )}
           <span
-            className="inline-flex items-center gap-2 text-[11.5px] font-medium tracking-[0.14em] uppercase"
+            className="inline-flex items-center gap-2 text-[11px] font-medium tracking-[0.14em] uppercase"
             style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
           >
             <span
@@ -320,7 +320,7 @@ function RecentActivityHero({
                 {item.viability_score}
               </span>
               <span
-                className="mt-4 text-[10.5px] font-medium tracking-[0.18em] uppercase"
+                className="mt-4 text-[11px] font-medium tracking-[0.18em] uppercase"
                 style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
               >
                 Signal · of 100
@@ -342,7 +342,7 @@ function RecentActivityHero({
                 …
               </span>
               <span
-                className="mt-4 text-[10.5px] font-medium tracking-[0.18em] uppercase"
+                className="mt-4 text-[11px] font-medium tracking-[0.18em] uppercase"
                 style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
               >
                 Report pending
@@ -378,7 +378,7 @@ function RecentActivityHero({
             For {item.target_user}
           </p>
           <p
-            className="text-[14.5px] leading-[1.65] line-clamp-3 max-w-xl mb-8"
+            className="text-[14px] leading-[1.65] line-clamp-3 max-w-xl mb-8"
             style={{ color: "var(--text-secondary)" }}
           >
             {item.description}
@@ -386,7 +386,7 @@ function RecentActivityHero({
           <div className="flex items-center gap-8 flex-wrap">
             <Link
               href={`/ideas/${item.id}`}
-              className="group inline-flex items-center gap-2 text-[12.5px] font-medium tracking-[0.16em] uppercase transition-opacity hover:opacity-70"
+              className="group inline-flex items-center gap-2 text-[12px] font-medium tracking-[0.16em] uppercase transition-opacity hover:opacity-70"
               style={{ fontFamily: DISPLAY, color: "var(--text-primary)" }}
             >
               Open report
@@ -397,7 +397,7 @@ function RecentActivityHero({
             </Link>
             <Link
               href={`/compare?pick=${item.id}`}
-              className="group inline-flex items-center gap-2 text-[12.5px] font-medium tracking-[0.16em] uppercase transition-opacity hover:opacity-70"
+              className="group inline-flex items-center gap-2 text-[12px] font-medium tracking-[0.16em] uppercase transition-opacity hover:opacity-70"
               style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
             >
               Compare with yours
@@ -445,7 +445,7 @@ function EmptyState({ isPro }: { isPro: boolean }) {
               &ldquo;Save an idea to start tracking it here.&rdquo;
             </p>
             <p
-              className="text-[14.5px] leading-[1.7] mb-7"
+              className="text-[14px] leading-[1.7] mb-7"
               style={{ color: "var(--text-secondary)" }}
             >
               Browse the Market and click the heart on any idea. Watchlist is
@@ -480,7 +480,7 @@ function EmptyState({ isPro }: { isPro: boolean }) {
               &ldquo;Watchlist is for tracking other founders&apos; ideas.&rdquo;
             </p>
             <p
-              className="text-[14.5px] leading-[1.7] mb-7"
+              className="text-[14px] leading-[1.7] mb-7"
               style={{ color: "var(--text-secondary)" }}
             >
               This space fills up when you save ideas from the Market — which

@@ -229,7 +229,7 @@ export default function JudgesManagementPage() {
     <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
       <Link
         href={`/competitions/${competitionId}`}
-        className="inline-flex items-center gap-1.5 text-[12.5px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
+        className="inline-flex items-center gap-1.5 text-[12px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
         style={{ color: "var(--text-tertiary)" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
@@ -275,7 +275,7 @@ export default function JudgesManagementPage() {
             className="w-5 h-5 animate-spin mx-auto mb-3"
             style={{ color: "var(--accent)" }}
           />
-          <p className="text-[12.5px]" style={{ color: "var(--text-tertiary)" }}>
+          <p className="text-[12px]" style={{ color: "var(--text-tertiary)" }}>
             불러오는 중…
           </p>
         </div>
@@ -391,7 +391,7 @@ export default function JudgesManagementPage() {
                               {j.judgeName}
                             </div>
                             <div
-                              className="text-[11.5px] mt-0.5 truncate"
+                              className="text-[11px] mt-0.5 truncate"
                               style={{ color: "var(--text-tertiary)" }}
                             >
                               {j.affiliation ?? "—"}
@@ -416,7 +416,7 @@ export default function JudgesManagementPage() {
                               />
                             </div>
                             <p
-                              className="text-[11.5px] tabular-nums"
+                              className="text-[11px] tabular-nums"
                               style={{ color: "var(--text-tertiary)" }}
                             >
                               {j.submittedCount}/{total} 제출
@@ -487,7 +487,7 @@ export default function JudgesManagementPage() {
                   hint={`${progress.proposals.length}건 × ${progress.judges.length}명`}
                 />
                 <p
-                  className="text-[11.5px] mb-3"
+                  className="text-[11px] mb-3"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   ● 제출 완료 · ◐ 임시 저장 · ○ 미평가
@@ -561,7 +561,7 @@ export default function JudgesManagementPage() {
             {inactiveInvitations.length > 0 && (
               <details className="mt-5">
                 <summary
-                  className="text-[11.5px] cursor-pointer inline-block"
+                  className="text-[11px] cursor-pointer inline-block"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   비활성 {inactiveInvitations.length}건 보기
@@ -602,7 +602,7 @@ function Matrix({
         borderRadius: 2,
       }}
     >
-      <table className="text-[12.5px]" style={{ minWidth: "100%" }}>
+      <table className="text-[12px]" style={{ minWidth: "100%" }}>
         <thead>
           <tr
             style={{
@@ -611,7 +611,7 @@ function Matrix({
             }}
           >
             <th
-              className="px-3 py-2.5 text-left text-[11.5px] font-semibold"
+              className="px-3 py-2.5 text-left text-[11px] font-semibold"
               style={{
                 color: "var(--text-tertiary)",
                 minWidth: 220,
@@ -626,7 +626,7 @@ function Matrix({
             {judges.map((j) => (
               <th
                 key={j.judgeId}
-                className="px-2 py-2.5 text-center text-[11.5px] font-semibold whitespace-nowrap"
+                className="px-2 py-2.5 text-center text-[11px] font-semibold whitespace-nowrap"
                 style={{
                   color: "var(--text-tertiary)",
                   minWidth: 88,
@@ -677,7 +677,7 @@ function Matrix({
                       {p.title}
                     </div>
                     <div
-                      className="text-[11.5px] truncate"
+                      className="text-[11px] truncate"
                       style={{ color: "var(--text-tertiary)" }}
                     >
                       {p.team}
@@ -794,7 +794,7 @@ function Th({
 }) {
   return (
     <th
-      className="px-3 py-2.5 text-[11.5px] font-semibold"
+      className="px-3 py-2.5 text-[11px] font-semibold"
       style={{
         width,
         textAlign: align,
@@ -892,13 +892,13 @@ function EmptyBox({
       }}
     >
       <p
-        className="text-[13.5px] font-medium mb-1"
+        className="text-[13px] font-medium mb-1"
         style={{ color: "var(--text-primary)" }}
       >
         {title}
       </p>
       <p
-        className="text-[12.5px] leading-[1.7]"
+        className="text-[12px] leading-[1.7]"
         style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
       >
         {body}
@@ -944,7 +944,7 @@ function InvitationCard({
     >
       <div className="min-w-0 flex-1">
         <p
-          className="font-mono text-[12.5px] truncate"
+          className="font-mono text-[12px] truncate"
           style={{ color: "var(--text-primary)" }}
           title={path}
         >
@@ -1008,7 +1008,7 @@ function InactiveInvitationRow({ inv }: { inv: Invitation }) {
     : "비활성";
   return (
     <div
-      className="flex items-center justify-between gap-3 px-3 py-2 text-[11.5px]"
+      className="flex items-center justify-between gap-3 px-3 py-2 text-[11px]"
       style={{
         background: "var(--surface-2)",
         border: "1px solid var(--t-border-subtle)",

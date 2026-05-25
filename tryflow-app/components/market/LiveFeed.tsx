@@ -77,7 +77,7 @@ export function LiveFeed({ items }: Props) {
 
       {/* Count + copy */}
       <span
-        className="text-[12.5px] leading-[1.5]"
+        className="text-[12px] leading-[1.5]"
         style={{ fontFamily: DISPLAY, color: "var(--text-secondary)" }}
       >
         <span className="tabular-nums font-semibold" style={{ color: "var(--text-primary)" }}>

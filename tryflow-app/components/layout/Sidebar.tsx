@@ -242,7 +242,7 @@ export function Sidebar(_props: Props) {
                     {showBadge && (
                       <span
                         className={cn(
-                          "inline-flex items-center justify-center px-1.5 h-5 rounded-sm text-[10.5px] font-bold tabular-nums transition-all duration-150",
+                          "inline-flex items-center justify-center px-1.5 h-5 rounded-sm text-[11px] font-bold tabular-nums transition-all duration-150",
                           expanded ? "opacity-100 delay-75" : "opacity-0 w-0 h-0 px-0"
                         )}
                         style={{

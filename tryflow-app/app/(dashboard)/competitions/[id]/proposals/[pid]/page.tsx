@@ -32,6 +32,9 @@ import { EvaluationStatusCard } from "@/components/fastlane/EvaluationStatusCard
 import { MarkdownReport } from "@/components/fastlane/MarkdownReport";
 import { JudgeReviewSection } from "@/components/fastlane/JudgeReviewSection";
 import { AIReportEnvelope } from "@/components/fastlane/AIReportEnvelope";
+import { DeleteProposalButton } from "@/components/fastlane/DeleteProposalButton";
+import { EditProposalButton } from "@/components/fastlane/EditProposalButton";
+import { foldFinalScore } from "@/lib/fastlane/score";
 
 function looksLikeUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -50,6 +53,10 @@ async function loadProposalContext(
   evaluatedAt: string | null;
   reportMd: string | null;
   axisReports: AxisReportsMap;
+  /** 현재 로그인 user.id — review prefill·삭제 권한 UI 분기에 사용. */
+  currentUserId: string | null;
+  /** organizer 본인 여부 — 출품 삭제 버튼 노출 조건. */
+  isOwner: boolean;
 } | null> {
   if (!looksLikeUuid(competitionId)) {
     const found = findProposal(competitionId, proposalId);
@@ -62,6 +69,8 @@ async function loadProposalContext(
       evaluatedAt: null,
       reportMd: null,
       axisReports: {},
+      currentUserId: null,
+      isOwner: false,
     };
   }
 
@@ -72,6 +81,9 @@ async function loadProposalContext(
     { data: judgeRows },
     { data: reviewRows },
     { data: disputeRows },
+    {
+      data: { user },
+    },
   ] = await Promise.all([
     supabase.from("competitions").select("*").eq("id", competitionId).single(),
     supabase
@@ -89,6 +101,7 @@ async function loadProposalContext(
       .from("proposal_dispute_resolutions")
       .select("*")
       .eq("proposal_id", proposalId),
+    supabase.auth.getUser(),
   ]);
   if (!compRow) return null;
   if (!propRow) return null;
@@ -130,6 +143,10 @@ async function loadProposalContext(
     }
   }
 
+  const currentUserId = user?.id ?? null;
+  const isOwner =
+    !!currentUserId && currentUserId === (compRow as CompetitionRow).user_id;
+
   return {
     competition,
     proposal,
@@ -143,13 +160,17 @@ async function loadProposalContext(
         ? row.evaluation_report_md
         : null,
     axisReports,
+    currentUserId,
+    isOwner,
   };
 }
 
+// 점수는 양적 정보지 위험 신호가 아니므로 빨강을 쓰지 않는다. 우수(75+)만
+// 초록으로 강조하고, 나머지는 회색 톤 안에서 진하기로 위계를 표현.
 function scoreColor(score: number) {
   if (score >= 75) return "var(--signal-success)";
-  if (score >= 55) return "var(--signal-warning)";
-  return "var(--signal-danger)";
+  if (score >= 55) return "var(--text-primary)";
+  return "var(--text-tertiary)";
 }
 
 function verdict(score: number): string {
@@ -189,6 +210,8 @@ export default async function ProposalDetailPage({
     evaluatedAt,
     reportMd,
     axisReports,
+    currentUserId,
+    isOwner,
   } = ctx;
   const score = proposal.score;
   const reviewAxes = score?.axes.filter((a) => a.needsReview) ?? [];
@@ -197,12 +220,31 @@ export default async function ProposalDetailPage({
   const submittedReviews =
     proposal.judgeReviews?.filter((r) => r.status === "submitted").length ?? 0;
 
+  // 본인의 기존 review — MyReviewDraft 폼 prefill 용. 없으면 undefined.
+  const myExistingReview = currentUserId
+    ? proposal.judgeReviews?.find((r) => r.judgeId === currentUserId)
+    : undefined;
+
+  // 분쟁 결정·사람 평가가 반영된 최종 점수 — 리더보드와 동일하게 view-time 폴드.
+  // 이게 없으면 상세 페이지는 AI 원본 score.composite, 리더보드는 폴드된 값으로
+  // 둘이 따로 보여서 사용자 혼란.
+  const folded = score
+    ? foldFinalScore(
+        score,
+        competition.template.criteria,
+        proposal.disputeResolutions ?? [],
+        proposal.judgeReviews ?? []
+      )
+    : null;
+  const displayComposite = folded?.composite ?? score?.composite ?? null;
+  const displayAxes = folded?.axes ?? score?.axes ?? [];
+
   return (
     <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
       {/* ── Breadcrumb (운영 톤) ─────────────────────────────── */}
       <Link
         href={`/competitions/${competition.id}`}
-        className="inline-flex items-center gap-1.5 text-[12.5px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
+        className="inline-flex items-center gap-1.5 text-[12px] mb-6 transition-colors hover:text-[color:var(--text-primary)]"
         style={{ color: "var(--text-tertiary)" }}
       >
         <ArrowLeft className="w-3.5 h-3.5" />
@@ -235,22 +277,42 @@ export default async function ProposalDetailPage({
           )}
         </div>
 
-        <h1
-          className="mb-2"
-          style={{
-            fontWeight: 600,
-            fontSize: "20px",
-            lineHeight: 1.3,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.005em",
-          }}
-        >
-          {proposal.title}
-        </h1>
+        <div className="flex items-start gap-3 flex-wrap mb-2">
+          <h1
+            className="flex-1 min-w-0"
+            style={{
+              fontWeight: 600,
+              fontSize: "20px",
+              lineHeight: 1.3,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.005em",
+            }}
+          >
+            {proposal.title}
+          </h1>
+          {isOwner && !reviewClosed && (
+            <EditProposalButton
+              competitionId={competition.id}
+              proposalId={proposal.id}
+              initial={{
+                title: proposal.title,
+                team: proposal.team,
+                summary: proposal.summary,
+              }}
+            />
+          )}
+          {isOwner && (
+            <DeleteProposalButton
+              competitionId={competition.id}
+              proposalId={proposal.id}
+              proposalTitle={proposal.title}
+            />
+          )}
+        </div>
 
         {/* 인라인 메타 — 행정 시스템 식별 정보 */}
         <div
-          className="flex items-center flex-wrap gap-x-4 gap-y-1 text-[12.5px] mb-4"
+          className="flex items-center flex-wrap gap-x-4 gap-y-1 text-[12px] mb-4"
           style={{ color: "var(--text-tertiary)" }}
         >
           <MetaItem label="대회" value={competition.name} />
@@ -289,7 +351,7 @@ export default async function ProposalDetailPage({
           <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-x-10 gap-y-6 items-end pb-8 mb-8 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
             <div>
               <p
-                className="text-[10.5px] font-bold uppercase mb-3"
+                className="text-[11px] font-bold uppercase mb-3"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
               >
                 종합 점수
@@ -301,10 +363,10 @@ export default async function ProposalDetailPage({
                     fontWeight: 700,
                     fontSize: "clamp(3rem, 5.6vw, 4rem)",
                     letterSpacing: "-0.03em",
-                    color: scoreColor(score.composite),
+                    color: scoreColor(displayComposite ?? 0),
                   }}
                 >
-                  {score.composite}
+                  {displayComposite ?? "—"}
                 </span>
                 <span
                   className="text-[13px] font-medium tabular-nums"
@@ -320,7 +382,7 @@ export default async function ProposalDetailPage({
               style={{ borderColor: "var(--t-border-subtle)" }}
             >
               <p
-                className="text-[10.5px] font-bold uppercase mb-2"
+                className="text-[11px] font-bold uppercase mb-2"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
               >
                 참고 의견
@@ -336,10 +398,10 @@ export default async function ProposalDetailPage({
                   wordBreak: "keep-all",
                 }}
               >
-                {verdict(score.composite)}.
+                {verdict(displayComposite ?? 0)}.
               </p>
               <p
-                className="text-[11.5px]"
+                className="text-[11px]"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
               >
                 Draft → Skeptic → Judge 3-Pass 검증
@@ -362,7 +424,7 @@ export default async function ProposalDetailPage({
                     strokeWidth={2.2}
                   />
                   <span
-                    className="text-[10px] font-bold uppercase"
+                    className="text-[11px] font-bold uppercase"
                     style={{ color: "var(--signal-attention)", letterSpacing: "0.14em" }}
                   >
                     검토 권고
@@ -383,7 +445,7 @@ export default async function ProposalDetailPage({
                   </span>
                 </p>
                 <p
-                  className="text-[11.5px] mt-1"
+                  className="text-[11px] mt-1"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   의견 분산 임계값 초과
@@ -396,7 +458,7 @@ export default async function ProposalDetailPage({
               각 축의 강점/약점 디테일은 행마다 "심층 분석 보기" 안 axisMarkdown 으로. */}
           <CollapsibleAxisGrid
             criteria={competition.template.criteria}
-            axes={score.axes}
+            axes={displayAxes}
             axisReports={axisReports}
           />
 
@@ -418,7 +480,7 @@ export default async function ProposalDetailPage({
                 종합 평가
               </h2>
               <p
-                className="text-[12.5px] mb-6"
+                className="text-[12px] mb-6"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
               >
                 AI 1차 평가의 결론입니다. 항목별 강점·리스크는 위 "심층 분석
@@ -447,7 +509,7 @@ export default async function ProposalDetailPage({
               심사 작업
             </h2>
             <p
-              className="text-[12.5px] mt-1"
+              className="text-[12px] mt-1"
               style={{ color: "var(--text-tertiary)" }}
             >
               AI 평가는 참고용입니다. 본인의 평가·코멘트·분쟁 결정을 아래에서 진행합니다.
@@ -461,6 +523,7 @@ export default async function ProposalDetailPage({
             reviews={proposal.judgeReviews}
             initialResolutions={proposal.disputeResolutions}
             initialClosedAt={proposal.reviewClosedAt}
+            myExistingReview={myExistingReview}
           />
         </section>
       )}
@@ -509,7 +572,7 @@ function Chip({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px]"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px]"
       style={{
         color,
         background: "transparent",

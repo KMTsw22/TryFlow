@@ -226,7 +226,7 @@ function MyIdeaCard({
             </span>
           )}
           <span
-            className="font-medium tracking-wider uppercase text-[10px]"
+            className="font-medium tracking-wider uppercase text-[11px]"
             style={{
               color:
                 item.status === "private"

@@ -337,7 +337,7 @@ function ProposalTr({ item, isLast }: { item: JudgeItem; isLast: boolean }) {
       <Td muted={isMuted}>
         <div className="leading-tight">
           <div
-            className="text-[11.5px] mb-0.5"
+            className="text-[11px] mb-0.5"
             style={{ color: "var(--text-tertiary)" }}
           >
             {organizer || "—"}
@@ -387,7 +387,7 @@ function ProposalTr({ item, isLast }: { item: JudgeItem; isLast: boolean }) {
             {proposal.team}
           </div>
           <div
-            className="text-[11.5px] mt-0.5"
+            className="text-[11px] mt-0.5"
             style={{ color: "var(--text-tertiary)" }}
           >
             {timeAgo(proposal.submittedAt)}
@@ -483,7 +483,7 @@ function Th({
 }) {
   return (
     <th
-      className="px-3 py-2.5 text-[11.5px] font-semibold"
+      className="px-3 py-2.5 text-[11px] font-semibold"
       style={{
         width,
         textAlign: align,
@@ -556,7 +556,7 @@ function Badge({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px]"
+      className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px]"
       style={{
         color,
         background: subtle ? "transparent" : "transparent",
@@ -643,7 +643,7 @@ function EmptyState() {
         아직 평가할 출품이 없습니다.
       </p>
       <p
-        className="text-[12.5px] leading-[1.7] max-w-md mx-auto"
+        className="text-[12px] leading-[1.7] max-w-md mx-auto"
         style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
       >
         본인이 배정된 대회에 출품이 접수되고 AI 1차 평가가 끝나면 여기에 표시됩니다.

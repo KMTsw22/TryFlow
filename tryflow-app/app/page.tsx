@@ -84,7 +84,7 @@ function TopNav() {
           </Link>
           <Link
             href="/competitions/new"
-            className="inline-flex items-center gap-1.5 px-3 h-8 text-[12.5px] font-medium transition-colors hover:brightness-110"
+            className="inline-flex items-center gap-1.5 px-3 h-8 text-[12px] font-medium transition-colors hover:brightness-110"
             style={{
               background: "var(--accent)",
               color: "#fff",
@@ -138,7 +138,7 @@ function Hero() {
         <span style={{ color: LANE_YELLOW }}>사람은 분쟁만</span>
       </h1>
       <p
-        className="text-[14.5px] leading-[1.7] mt-5"
+        className="text-[14px] leading-[1.7] mt-5"
         style={{
           color: "rgba(255,255,255,0.7)",
           wordBreak: "keep-all",
@@ -297,7 +297,7 @@ function UIPreview() {
           />
         </span>
         <div
-          className="flex-1 mx-2 px-3 py-1 text-[10.5px] tabular-nums truncate"
+          className="flex-1 mx-2 px-3 py-1 text-[11px] tabular-nums truncate"
           style={{
             background: "#FFFFFF",
             border: "1px solid #D8D8DC",
@@ -318,19 +318,19 @@ function UIPreview() {
         }}
       >
         <p
-          className="text-[10px] mb-0.5"
+          className="text-[11px] mb-0.5"
           style={{ color: "var(--text-tertiary)" }}
         >
           대회 운영 · 리더보드
         </p>
         <p
-          className="text-[13.5px] font-semibold"
+          className="text-[13px] font-semibold"
           style={{ color: "var(--text-primary)" }}
         >
           2026 국민대 PBL 해커톤
         </p>
         <p
-          className="text-[10.5px] mt-1 tabular-nums"
+          className="text-[11px] mt-1 tabular-nums"
           style={{ color: "var(--text-tertiary)" }}
         >
           출품 8 · 평가 완료 8 · 검토 필요 2 · 마감 D-12
@@ -361,7 +361,7 @@ function UIPreview() {
               className="px-3 py-2 text-right text-[11px] font-semibold"
               style={{ color: "var(--text-tertiary)" }}
             >
-              σ
+              편차
             </th>
             <th
               className="px-4 py-2 text-left text-[11px] font-semibold"
@@ -461,7 +461,7 @@ function StatusPill({
 function Workflow() {
   const steps = [
     { n: 1, title: "평가 기준 입력", body: "주제·항목·가중치", who: "운영자" },
-    { n: 2, title: "AI 채점 가이드 생성", body: "rubric 자동 작성·저장", who: "AI" },
+    { n: 2, title: "AI 채점 가이드 생성", body: "항목별 채점 기준 자동 작성·저장", who: "AI" },
     { n: 3, title: "지원서 접수", body: "PDF·링크 업로드", who: "참가자" },
     { n: 4, title: "AI 1차 평가", body: "Draft·Skeptic·Judge 3단계 검증", who: "AI" },
     { n: 5, title: "분쟁 검토", body: "의견 갈리는 항목만", who: "심사위원" },
@@ -511,7 +511,7 @@ function Workflow() {
                 )}
               </div>
               <h3
-                className="text-[13.5px] font-semibold mb-1"
+                className="text-[13px] font-semibold mb-1"
                 style={{
                   color: "var(--text-primary)",
                   letterSpacing: "-0.005em",
@@ -520,13 +520,13 @@ function Workflow() {
                 {s.title}
               </h3>
               <p
-                className="text-[11.5px] leading-[1.55]"
+                className="text-[11px] leading-[1.55]"
                 style={{ color: "var(--text-secondary)" }}
               >
                 {s.body}
               </p>
               <p
-                className="text-[10.5px] mt-2"
+                className="text-[11px] mt-2"
                 style={{ color: "var(--text-tertiary)" }}
               >
                 {s.who}
@@ -549,7 +549,7 @@ function Workflow() {
             badge="04"
             kicker="AI 1차 평가 · 3-Pass 검증"
             title="같은 출품을 세 관점으로 다시 채점합니다"
-            body="Draft(낙관) → Skeptic(양방향 보정) → Judge(가중 평균)의 3단계 검증으로 한 번 호출에서 나오는 즉흥성을 흡수합니다. 점수와 함께 표준편차(σ)도 같이 기록해 AI 자체가 자신 없는 항목을 자동 표시합니다."
+            body="Draft(낙관) → Skeptic(양방향 보정) → Judge(가중 평균)의 3단계 검증으로 한 번 호출에서 나오는 즉흥성을 흡수합니다. 점수와 함께 편차(표준편차 σ)도 같이 기록해 AI 자체가 자신 없는 항목을 자동 표시합니다."
             who="AI · 출품당 평균 1-2분"
             mockup={<ThreePassMockup />}
             reverse
@@ -685,7 +685,7 @@ function RubricMockup() {
               aria-hidden
             />
             <p
-              className="text-[10.5px]"
+              className="text-[11px]"
               style={{ color: "var(--accent)", fontWeight: 600 }}
             >
               AI 생성 완료 · 약 28초
@@ -797,7 +797,7 @@ function ThreePassMockup() {
         }}
       >
         <p
-          className="text-[10.5px] mb-0.5"
+          className="text-[11px] mb-0.5"
           style={{ color: "var(--text-tertiary)" }}
         >
           3-Pass 검증 결과 · gpt-4o-mini
@@ -822,7 +822,7 @@ function ThreePassMockup() {
                   border: p.isFinal
                     ? "1.5px solid var(--accent)"
                     : "1px solid var(--t-border)",
-                  borderRadius: 6,
+                  borderRadius: 4,
                   padding: "12px 8px 14px",
                   boxShadow: p.isFinal
                     ? "0 2px 8px rgba(30,58,138,0.12)"
@@ -830,7 +830,7 @@ function ThreePassMockup() {
                 }}
               >
                 <p
-                  className="text-[10px] uppercase tracking-wider mb-1"
+                  className="text-[11px] uppercase tracking-wider mb-1"
                   style={{
                     color: p.isFinal
                       ? "var(--accent)"
@@ -856,7 +856,7 @@ function ThreePassMockup() {
                   {p.score}
                 </p>
                 <p
-                  className="text-[10px] mt-1"
+                  className="text-[11px] mt-1"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   {p.role}
@@ -876,7 +876,7 @@ function ThreePassMockup() {
           className="flex items-center justify-between px-4 py-2.5"
           style={{
             background: "var(--accent-soft)",
-            borderRadius: 6,
+            borderRadius: 4,
             border: "1px solid var(--accent-ring)",
           }}
         >
@@ -894,7 +894,7 @@ function ThreePassMockup() {
               Σ
             </span>
             <span
-              className="text-[11.5px]"
+              className="text-[11px]"
               style={{ color: "var(--text-secondary)" }}
             >
               가중 평균 + 분산 기록
@@ -904,7 +904,7 @@ function ThreePassMockup() {
             className="text-[13px] font-bold tabular-nums"
             style={{ color: "var(--accent)" }}
           >
-            73 <span style={{ color: "var(--text-tertiary)", fontWeight: 400, fontSize: 11 }}>· σ 1.6</span>
+            73 <span style={{ color: "var(--text-tertiary)", fontWeight: 400, fontSize: 11 }}>· 편차 1.6</span>
           </span>
         </div>
       </div>
@@ -944,10 +944,10 @@ function DisputeMockup() {
       >
         <div>
           <p
-            className="text-[10.5px] mb-0.5"
+            className="text-[11px] mb-0.5"
             style={{ color: "var(--text-tertiary)" }}
           >
-            항목별 분산 · σ
+            항목별 편차
           </p>
           <p
             className="text-[14px] font-semibold"
@@ -961,7 +961,7 @@ function DisputeMockup() {
               className="tabular-nums"
               style={{ color: "var(--signal-attention)" }}
             >
-              σ &gt; {THRESHOLD}
+              편차 &gt; {THRESHOLD}
             </span>
           </p>
         </div>
@@ -1015,7 +1015,7 @@ function DisputeMockup() {
             }}
           >
             <p
-              className="text-[12.5px] flex-1"
+              className="text-[12px] flex-1"
               style={{
                 color: a.disputed
                   ? "var(--signal-attention)"
@@ -1060,7 +1060,7 @@ function DisputeMockup() {
         ))}
       </div>
       <div
-        className="px-5 py-3 flex items-center gap-2 text-[11.5px]"
+        className="px-5 py-3 flex items-center gap-2 text-[11px]"
         style={{
           background: "var(--surface-2)",
           borderTop: "1px solid var(--t-border)",
@@ -1172,7 +1172,7 @@ function Comparison() {
                 item ? (
                   <div
                     key={i}
-                    className="relative z-10 flex items-center justify-center text-center text-[13.5px] px-5"
+                    className="relative z-10 flex items-center justify-center text-center text-[13px] px-5"
                     style={{
                       background: "var(--surface-1)",
                       border: "1px solid var(--t-border)",
@@ -1210,7 +1210,7 @@ function Comparison() {
             style={{
               background: "var(--accent-soft)",
               border: "1px solid var(--accent-ring)",
-              borderRadius: 12,
+              borderRadius: 8,
             }}
           >
             <p
@@ -1309,7 +1309,7 @@ function TrustFramework() {
                 {it.title}
               </h3>
               <p
-                className="text-[11.5px]"
+                className="text-[11px]"
                 style={{ color: "var(--text-secondary)" }}
               >
                 {it.body}
@@ -1361,7 +1361,7 @@ function ClosingCTA() {
         <div className="mt-6 flex items-center justify-center gap-3">
           <Link
             href="/competitions/new"
-            className="inline-flex items-center gap-2 px-4 h-10 text-[13.5px] font-medium transition-colors hover:brightness-110"
+            className="inline-flex items-center gap-2 px-4 h-10 text-[13px] font-medium transition-colors hover:brightness-110"
             style={{
               background: "var(--accent)",
               color: "#fff",
@@ -1373,7 +1373,7 @@ function ClosingCTA() {
           </Link>
           <Link
             href="/about"
-            className="inline-flex items-center px-4 h-10 text-[13.5px] font-medium transition-colors hover:bg-[color:var(--surface-1)]"
+            className="inline-flex items-center px-4 h-10 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-1)]"
             style={{
               border: "1px solid var(--t-input-border)",
               color: "var(--text-primary)",

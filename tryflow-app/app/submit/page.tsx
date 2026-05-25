@@ -475,7 +475,7 @@ export default function SubmitPage() {
                       Have a deck or memo? Let AI draft the six answers.
                     </p>
                     <p
-                      className="text-[12.5px] mt-0.5 leading-relaxed"
+                      className="text-[12px] mt-0.5 leading-relaxed"
                       style={{ color: "var(--text-tertiary)" }}
                     >
                       Upload PDF (≤10MB) or Markdown (≤1MB). You&apos;ll review and edit before submitting.
@@ -515,7 +515,7 @@ export default function SubmitPage() {
                         )}
                       </button>
                       <span
-                        className="text-[11.5px]"
+                        className="text-[11px]"
                         style={{ color: "var(--text-tertiary)" }}
                       >
                         .pdf · .md
@@ -546,7 +546,7 @@ export default function SubmitPage() {
                     style={{ color: "var(--accent)" }}
                   />
                   <p
-                    className="text-[12.5px] leading-relaxed"
+                    className="text-[12px] leading-relaxed"
                     style={{ color: "var(--text-primary)" }}
                   >
                     AI drafted these answers from your file. <strong>Review every one</strong> and rewrite in your own words —
@@ -905,7 +905,7 @@ function AxisField({
             >
               {index}
             </span>
-            <span className="uppercase tracking-[0.08em] text-[11.5px]">{label}</span>
+            <span className="uppercase tracking-[0.08em] text-[11px]">{label}</span>
           </span>
         </label>
         <span
@@ -916,7 +916,7 @@ function AxisField({
         </span>
       </div>
       <p
-        className="text-[13.5px] leading-[1.5] mb-2"
+        className="text-[13px] leading-[1.5] mb-2"
         style={{ color: "var(--text-secondary)" }}
       >
         {question}

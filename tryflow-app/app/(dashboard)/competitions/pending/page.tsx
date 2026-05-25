@@ -56,13 +56,38 @@ async function loadUserCompetitions(): Promise<{
   } = await supabase.auth.getUser();
   if (!user) return { competitions: [], isAuthenticated: false };
 
-  const { data: cRows } = await supabase
-    .from("competitions")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  // organizer 가 만든 대회 + 심사위원으로 초대된 대회 둘 다 가져온다.
+  // 기존엔 organizer 본인 대회만 봐서, 일반 심사위원은 검토 대기 페이지가
+  // 항상 비어 보이는 버그가 있었음.
+  const [{ data: ownedRows }, { data: judgeAssignRows }] = await Promise.all([
+    supabase.from("competitions").select("*").eq("user_id", user.id),
+    supabase
+      .from("competition_judges")
+      .select("competition_id")
+      .eq("judge_id", user.id),
+  ]);
 
-  const compRows = (cRows ?? []) as CompetitionRow[];
+  const ownedCompRows = (ownedRows ?? []) as CompetitionRow[];
+  const judgedIds = ((judgeAssignRows ?? []) as Array<{
+    competition_id: string;
+  }>)
+    .map((r) => r.competition_id)
+    .filter((id) => !ownedCompRows.some((c) => c.id === id));
+
+  let judgedRows: CompetitionRow[] = [];
+  if (judgedIds.length > 0) {
+    const { data } = await supabase
+      .from("competitions")
+      .select("*")
+      .in("id", judgedIds);
+    judgedRows = (data ?? []) as CompetitionRow[];
+  }
+
+  // 합치고 created_at 내림차순 정렬.
+  const compRows = [...ownedCompRows, ...judgedRows].sort((a, b) =>
+    (b.created_at ?? "").localeCompare(a.created_at ?? "")
+  );
+
   const ids = compRows.map((c) => c.id);
   const pRows: ProposalRow[] = [];
   if (ids.length > 0) {
@@ -294,7 +319,7 @@ function PendingRow({ item }: { item: PendingItem }) {
       <div className="min-w-0">
         {/* 대회 메타 — uppercase letter-spacing 제거 */}
         <div
-          className="text-[11.5px] mb-1 truncate"
+          className="text-[11px] mb-1 truncate"
           style={{ color: "var(--text-tertiary)" }}
         >
           {organizer} · {competitionName}
@@ -313,7 +338,7 @@ function PendingRow({ item }: { item: PendingItem }) {
         </h2>
 
         <p
-          className="text-[12.5px] leading-[1.6] mb-3 line-clamp-1"
+          className="text-[12px] leading-[1.6] mb-3 line-clamp-1"
           style={{ color: "var(--text-tertiary)" }}
         >
           {proposal.summary}
@@ -323,7 +348,7 @@ function PendingRow({ item }: { item: PendingItem }) {
         <div className="flex items-center flex-wrap gap-1.5 mb-2.5">
           {disputeTotal > 0 && (
             <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px] tabular-nums"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] tabular-nums"
               style={{
                 background: allDecided
                   ? "transparent"
@@ -351,7 +376,7 @@ function PendingRow({ item }: { item: PendingItem }) {
           {reviewAxes.map((axis) => (
             <span
               key={axis.name}
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-[11.5px] tabular-nums"
+              className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] tabular-nums"
               style={{
                 background: "var(--accent-soft)",
                 border: "1px solid var(--accent-ring)",
@@ -363,7 +388,7 @@ function PendingRow({ item }: { item: PendingItem }) {
               <AlertTriangle className="w-3 h-3" strokeWidth={2.2} />
               {axis.name}
               <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
-                σ {axis.stddev.toFixed(1)}
+                편차 {axis.stddev.toFixed(1)}
               </span>
             </span>
           ))}
@@ -403,7 +428,7 @@ function PendingRow({ item }: { item: PendingItem }) {
       <div className="md:text-right md:min-w-[100px] flex md:flex-col items-end gap-3 self-stretch justify-between">
         <div className="md:text-right">
           <p
-            className="text-[11.5px] mb-0.5"
+            className="text-[11px] mb-0.5"
             style={{ color: "var(--text-tertiary)" }}
           >
             최대 분산
@@ -418,7 +443,7 @@ function PendingRow({ item }: { item: PendingItem }) {
               color: "var(--signal-attention)",
             }}
           >
-            σ {maxStddev.toFixed(1)}
+            편차 {maxStddev.toFixed(1)}
           </p>
         </div>
         <ArrowRight
@@ -499,7 +524,7 @@ function HealthyEmptyState() {
         검토할 항목이 없습니다.
       </p>
       <p
-        className="text-[12.5px] leading-[1.7] max-w-md mx-auto"
+        className="text-[12px] leading-[1.7] max-w-md mx-auto"
         style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
       >
         모든 출품이 AI 3단계 합의 임계({STDDEV_REVIEW_THRESHOLD}σ) 안에

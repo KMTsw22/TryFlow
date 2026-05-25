@@ -236,7 +236,7 @@ function MultiRadar({ entries }: MultiRadarProps) {
               {avgs[i]}
             </span>
             <span
-              className="text-[10px] font-medium tracking-[0.06em] uppercase"
+              className="text-[11px] font-medium tracking-[0.06em] uppercase"
               style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
             >
               avg
@@ -499,7 +499,7 @@ function TldrCard({ entries }: TldrProps) {
           {axisLeaders.map((a) => (
             <span
               key={a.axis}
-              className="inline-flex items-center gap-2 px-3 py-1 text-[12.5px]"
+              className="inline-flex items-center gap-2 px-3 py-1 text-[12px]"
               style={{
                 background: "var(--surface-1)",
                 border: "1px solid var(--t-border-subtle)",
@@ -619,7 +619,7 @@ function ScoreFaceoff({
         </span>
         {isWinner && (
           <span
-            className="text-[10px] font-medium tracking-[0.08em] uppercase shrink-0"
+            className="text-[11px] font-medium tracking-[0.08em] uppercase shrink-0"
             style={{ fontFamily: DISPLAY, color: "#10b981" }}
           >
             Leads
@@ -725,7 +725,7 @@ function FaceoffValue({
       </span>
       {active && (
         <span
-          className="text-[10px] font-medium tracking-[0.06em] uppercase shrink-0"
+          className="text-[11px] font-medium tracking-[0.06em] uppercase shrink-0"
           style={{ fontFamily: DISPLAY, color: accent }}
         >
           Leads
@@ -755,7 +755,7 @@ function FaceoffTextRow({ label, values }: { label: string; values: string[] }) 
       {values.map((v, i) => (
         <p
           key={i}
-          className="text-[13.5px] leading-[1.65]"
+          className="text-[13px] leading-[1.65]"
           style={{ color: "var(--text-secondary)" }}
         >
           {v}
@@ -1146,7 +1146,7 @@ export default function ComparePage() {
           )}
 
           <p
-            className="text-[14.5px] leading-[1.75] max-w-3xl"
+            className="text-[14px] leading-[1.75] max-w-3xl"
             style={{ color: "var(--text-secondary)" }}
           >
             {leaderIdx >= 0
@@ -1306,7 +1306,7 @@ export default function ComparePage() {
               How to add ideas
             </p>
             <p
-              className="text-[14.5px] leading-[1.65] mb-3"
+              className="text-[14px] leading-[1.65] mb-3"
               style={{ color: "var(--text-secondary)" }}
             >
               Click the <span className="inline-flex items-center justify-center w-5 h-5 align-middle border" style={{ borderColor: "var(--accent-ring)", color: "var(--accent)" }}>+</span> icon on any idea card to add it to the compare tray —
@@ -1393,7 +1393,7 @@ export default function ComparePage() {
                   <button
                     onClick={() => toggleSelect(selIdea!.id)}
                     aria-label={`Remove idea ${letter}`}
-                    className="shrink-0 text-[10px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
+                    className="shrink-0 text-[11px] font-medium tracking-[0.08em] uppercase transition-opacity hover:opacity-70"
                     style={{ fontFamily: DISPLAY, color: "var(--text-tertiary)" }}
                   >
                     Remove

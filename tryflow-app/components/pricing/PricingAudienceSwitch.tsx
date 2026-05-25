@@ -89,7 +89,7 @@ export function PricingAudienceSwitch({ plans, isLoggedIn }: Props) {
             : "Back founders before the product exists."}
         </h2>
         <p
-          className="text-[15.5px] leading-[1.7] mx-auto"
+          className="text-[15px] leading-[1.7] mx-auto"
           style={{ color: "var(--text-secondary)" }}
         >
           {audience === "founder"
@@ -148,7 +148,7 @@ function AudienceTab({
       role="tab"
       aria-selected={active}
       onClick={onClick}
-      className="px-6 py-2.5 text-[12.5px] font-medium tracking-[0.16em] uppercase transition-colors"
+      className="px-6 py-2.5 text-[12px] font-medium tracking-[0.16em] uppercase transition-colors"
       style={{
         fontFamily: DISPLAY,
         background: active ? "var(--text-primary)" : "transparent",

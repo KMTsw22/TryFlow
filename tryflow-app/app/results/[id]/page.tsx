@@ -15,11 +15,20 @@ import { Brand } from "@/components/layout/Brand";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   rowToCompetition,
+  rowToDisputeResolution,
+  rowToJudgeReview,
   rowToProposal,
   type CompetitionRow,
+  type DisputeResolutionRow,
   type ProposalRow,
+  type ProposalReviewRow,
 } from "@/lib/fastlane/db";
-import type { Competition } from "@/lib/fastlane/types";
+import { foldFinalScore } from "@/lib/fastlane/score";
+import type {
+  Competition,
+  DisputeResolution,
+  JudgeReview,
+} from "@/lib/fastlane/types";
 
 interface Loaded {
   competition: Competition;
@@ -50,10 +59,41 @@ async function loadPublicResults(id: string): Promise<Loaded | null> {
   ]);
   if (!compRow) return null;
 
-  const proposals = ((propRows ?? []) as ProposalRow[]).map((r) =>
-    rowToProposal(r)
+  const propRowsTyped = (propRows ?? []) as ProposalRow[];
+  if (propRowsTyped.length === 0) return null;
+
+  // 분쟁 결정 + 사람 평가를 함께 가져온다. score.ts 의 foldFinalScore 가
+  // (1) 분쟁 final_score, (2) 사람 합의(σ≤7) 평균 을 axis 점수에 자동 폴드.
+  const proposalIds = propRowsTyped.map((r) => r.id);
+  const [{ data: disputeRows }, { data: reviewRows }] = await Promise.all([
+    admin
+      .from("proposal_dispute_resolutions")
+      .select("*")
+      .in("proposal_id", proposalIds),
+    admin
+      .from("proposal_reviews")
+      .select("*")
+      .in("proposal_id", proposalIds),
+  ]);
+  const disputesByProposal = new Map<string, DisputeResolution[]>();
+  const reviewsByProposal = new Map<string, JudgeReview[]>();
+  for (const r of (disputeRows ?? []) as DisputeResolutionRow[]) {
+    const list = disputesByProposal.get(r.proposal_id) ?? [];
+    list.push(rowToDisputeResolution(r));
+    disputesByProposal.set(r.proposal_id, list);
+  }
+  for (const r of (reviewRows ?? []) as ProposalReviewRow[]) {
+    const list = reviewsByProposal.get(r.proposal_id) ?? [];
+    list.push(rowToJudgeReview(r));
+    reviewsByProposal.set(r.proposal_id, list);
+  }
+
+  const proposals = propRowsTyped.map((r) =>
+    rowToProposal(r, {
+      disputeResolutions: disputesByProposal.get(r.id),
+      judgeReviews: reviewsByProposal.get(r.id),
+    })
   );
-  if (proposals.length === 0) return null;
 
   // 모든 출품이 검토 종료된 경우만 공개. 한 건이라도 미종료면 결과 비공개.
   const allClosed = proposals.every((p) => !!p.reviewClosedAt);
@@ -105,9 +145,26 @@ export default async function PublicResultsPage({
   const { competition, publishedAt, totalProposals } = loaded;
   const { proposals, template } = competition;
 
+  // 분쟁 결정 + 사람 합의(σ≤7) 자동 폴드를 반영한 최종 점수.
+  // 이후 정렬과 표 표시 모두 이 값을 사용한다.
+  const foldedByProposal = new Map(
+    proposals.map((p) => {
+      if (!p.score) return [p.id, null] as const;
+      return [
+        p.id,
+        foldFinalScore(
+          p.score,
+          template.criteria,
+          p.disputeResolutions ?? [],
+          p.judgeReviews ?? []
+        ),
+      ] as const;
+    })
+  );
+
   const ranked = [...proposals].sort((a, b) => {
-    const sa = a.score?.composite ?? -1;
-    const sb = b.score?.composite ?? -1;
+    const sa = foldedByProposal.get(a.id)?.composite ?? -1;
+    const sb = foldedByProposal.get(b.id)?.composite ?? -1;
     return sb - sa;
   });
 
@@ -129,7 +186,7 @@ export default async function PublicResultsPage({
           <Brand size="sm" />
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-[12.5px]"
+            className="inline-flex items-center gap-1.5 text-[12px]"
             style={{ color: "var(--text-tertiary)" }}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -160,7 +217,7 @@ export default async function PublicResultsPage({
             {competition.name}
           </h1>
           <div
-            className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[12.5px] mt-2"
+            className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[12px] mt-2"
             style={{ color: "var(--text-tertiary)" }}
           >
             <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
@@ -207,19 +264,19 @@ export default async function PublicResultsPage({
                   }}
                 >
                   <th
-                    className="px-3 py-2.5 text-center text-[11.5px] font-semibold"
+                    className="px-3 py-2.5 text-center text-[11px] font-semibold"
                     style={{ color: "var(--text-tertiary)", width: 56 }}
                   >
                     순위
                   </th>
                   <th
-                    className="px-3 py-2.5 text-left text-[11.5px] font-semibold"
+                    className="px-3 py-2.5 text-left text-[11px] font-semibold"
                     style={{ color: "var(--text-tertiary)" }}
                   >
                     출품작
                   </th>
                   <th
-                    className="px-3 py-2.5 text-right text-[11.5px] font-semibold"
+                    className="px-3 py-2.5 text-right text-[11px] font-semibold"
                     style={{ color: "var(--text-tertiary)", width: 90 }}
                   >
                     종합 점수
@@ -233,7 +290,7 @@ export default async function PublicResultsPage({
                     >
                       <span className="block">{c.name}</span>
                       <span
-                        className="block tabular-nums mt-0.5 text-[10px]"
+                        className="block tabular-nums mt-0.5 text-[11px]"
                         style={{ color: "var(--text-tertiary)" }}
                       >
                         {Math.round(c.weight * 100)}%
@@ -244,8 +301,8 @@ export default async function PublicResultsPage({
               </thead>
               <tbody>
                 {ranked.map((p, i) => {
-                  const score = p.score;
-                  const composite = score?.composite ?? null;
+                  const folded = foldedByProposal.get(p.id) ?? null;
+                  const composite = folded?.composite ?? null;
                   const rank = i + 1;
                   const accent = rankAccent(rank);
                   return (
@@ -257,7 +314,7 @@ export default async function PublicResultsPage({
                     >
                       <td className="py-3 text-center">
                         <span
-                          className="inline-flex items-center justify-center w-7 h-7 tabular-nums text-[12.5px] font-bold"
+                          className="inline-flex items-center justify-center w-7 h-7 tabular-nums text-[12px] font-bold"
                           style={{
                             background: accent?.bg ?? "transparent",
                             color: accent?.fg ?? "var(--text-tertiary)",
@@ -295,16 +352,28 @@ export default async function PublicResultsPage({
                               : composite >= 75
                               ? "var(--signal-success)"
                               : composite >= 55
-                              ? "var(--signal-warning)"
-                              : "var(--signal-danger)",
+                              ? "var(--text-primary)"
+                              : "var(--text-tertiary)",
                         }}
                       >
                         {composite ?? "—"}
                       </td>
                       {template.criteria.map((c) => {
-                        const axis = score?.axes.find(
+                        const axis = folded?.axes.find(
                           (a) => a.criterionId === c.id
                         );
+                        const resolved =
+                          axis?.source === "dispute" ||
+                          axis?.source === "human_consensus" ||
+                          axis?.source === "noisy_consensus";
+                        const title =
+                          axis?.source === "dispute"
+                            ? "분쟁 결정으로 확정된 최종 점수"
+                            : axis?.source === "human_consensus"
+                            ? "심사위원 평균 채택"
+                            : axis?.source === "noisy_consensus"
+                            ? `심사위원 평균 채택 — 격차 큼(σ ${axis.humanStddev.toFixed(1)})`
+                            : "AI 평가 결과";
                         return (
                           <td
                             key={c.id}
@@ -312,10 +381,17 @@ export default async function PublicResultsPage({
                           >
                             {axis ? (
                               <span
+                                title={title}
                                 className="tabular-nums text-[13px]"
-                                style={{ color: "var(--text-primary)" }}
+                                style={{
+                                  color: resolved
+                                    ? "var(--accent)"
+                                    : "var(--text-primary)",
+                                  fontWeight: resolved ? 700 : 500,
+                                }}
                               >
                                 {axis.mean}
+                                {resolved ? "*" : ""}
                               </span>
                             ) : (
                               <span
@@ -338,7 +414,7 @@ export default async function PublicResultsPage({
 
         {/* 주석 — 결과 산출 방식 */}
         <p
-          className="text-[11.5px] mt-5"
+          className="text-[11px] mt-5"
           style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
         >
           AI 1차 평가(3-Pass: Draft·Skeptic·Judge)와 심사위원 검토를 거쳐 확정된

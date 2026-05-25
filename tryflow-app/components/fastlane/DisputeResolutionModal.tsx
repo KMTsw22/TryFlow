@@ -173,7 +173,7 @@ export function DisputeResolutionModal({
         >
           <div className="min-w-0">
             <p
-              className="inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase mb-1"
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase mb-1"
               style={{
                 color: "var(--signal-attention)",
                 letterSpacing: "0.14em",
@@ -309,7 +309,7 @@ export function DisputeResolutionModal({
             />
             {!manualValid && manualScore.length > 0 && (
               <p
-                className="mt-1.5 text-[11.5px]"
+                className="mt-1.5 text-[11px]"
                 style={{ color: "var(--signal-danger)" }}
               >
                 0에서 100 사이의 숫자만 입력 가능합니다.
@@ -353,13 +353,13 @@ export function DisputeResolutionModal({
           style={{ borderTop: "1px solid var(--t-border-subtle)" }}
         >
           <p
-            className="text-[11.5px]"
+            className="text-[11px]"
             style={{ color: "var(--text-tertiary)" }}
           >
             결정자: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
               {decidedBy.judgeName}
             </span>{" "}
-            · 데모 — 새로고침 시 초기화
+            · 샘플 데이터 — 새로고침 시 초기화
           </p>
           <div className="flex items-center gap-2">
             <button

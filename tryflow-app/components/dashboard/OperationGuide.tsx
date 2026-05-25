@@ -88,7 +88,7 @@ export function OperationGuide({ topic, trigger }: Props) {
             >
               <div>
                 <p
-                  className="text-[11.5px] mb-0.5"
+                  className="text-[11px] mb-0.5"
                   style={{ color: "var(--text-tertiary)" }}
                 >
                   운영 가이드
@@ -210,7 +210,7 @@ function InviteGuide() {
 
       {/* 실무 팁 */}
       <SubSection title="실무 팁">
-        <ul className="space-y-2 text-[12.5px]">
+        <ul className="space-y-2 text-[12px]">
           <Tip>
             링크는 <strong>여러 번 재사용 가능</strong>. 다수 위원에게 같은 링크 공유 OK.
           </Tip>
@@ -279,7 +279,7 @@ function SubmissionGuide() {
       {/* 운영자 직접 접수 */}
       <SubSection title="운영자가 직접 추가하는 경우">
         <p
-          className="text-[12.5px] leading-[1.7]"
+          className="text-[12px] leading-[1.7]"
           style={{
             color: "var(--text-secondary)",
             wordBreak: "keep-all",
@@ -292,7 +292,7 @@ function SubmissionGuide() {
 
       {/* 수정 가능 여부 */}
       <SubSection title="제출 후 수정">
-        <ul className="space-y-2 text-[12.5px]">
+        <ul className="space-y-2 text-[12px]">
           <Tip>
             <strong>AI 평가 시작 전</strong>: 참가자 본인이 수정·재업로드 가능.
           </Tip>
@@ -379,7 +379,7 @@ function Steps({
           }}
         >
           <span
-            className="inline-flex items-center justify-center w-6 h-6 text-[11.5px] font-semibold tabular-nums mt-0.5"
+            className="inline-flex items-center justify-center w-6 h-6 text-[11px] font-semibold tabular-nums mt-0.5"
             style={{
               background: "var(--accent-soft)",
               color: "var(--accent)",
@@ -432,7 +432,7 @@ function SubSection({
   return (
     <section>
       <p
-        className="text-[11.5px] mb-2"
+        className="text-[11px] mb-2"
         style={{ color: "var(--text-tertiary)" }}
       >
         {title}

@@ -38,7 +38,7 @@ export function AxisScoreBar({ axis, criterionName, weight, axisMarkdown }: Prop
       <div className="flex items-baseline justify-between gap-3 mb-3">
         <div className="flex items-baseline gap-2.5 min-w-0">
           <span
-            className="ko-display text-[14.5px] font-semibold truncate"
+            className="ko-display text-[14px] font-semibold truncate"
             style={{ color: "var(--text-primary)" }}
           >
             {criterionName}
@@ -109,7 +109,7 @@ export function AxisScoreBar({ axis, criterionName, weight, axisMarkdown }: Prop
       {/* σ 범위 라벨 — 좁은 텍스트로 정량 정보 보강 */}
       <div className="flex items-center justify-between mt-2 gap-3">
         <span
-          className="text-[10.5px] tabular-nums shrink-0"
+          className="text-[11px] tabular-nums shrink-0"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
         >
           3-Pass · {sigmaLo.toFixed(0)}–{sigmaHi.toFixed(0)} 범위
@@ -134,7 +134,7 @@ export function AxisScoreBar({ axis, criterionName, weight, axisMarkdown }: Prop
       {/* Judge assessment — 한 줄 요약. 펼치면 줄바꿈 허용. */}
       {axis.reasoning && (
         <p
-          className={`mt-2 text-[12.5px] leading-[1.7] ${expanded ? "" : "line-clamp-2"}`}
+          className={`mt-2 text-[12px] leading-[1.7] ${expanded ? "" : "line-clamp-2"}`}
           style={{
             color: "var(--text-secondary)",
             fontStyle: "italic",

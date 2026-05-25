@@ -63,7 +63,7 @@ export function StageStepper({ current }: { current: CompetitionStage }) {
               <StepDot state={state} index={idx + 1} />
               <div className="min-w-0 pt-0.5">
                 <p
-                  className="text-[12.5px] font-medium leading-tight whitespace-nowrap"
+                  className="text-[12px] font-medium leading-tight whitespace-nowrap"
                   style={{
                     color:
                       state === "pending"

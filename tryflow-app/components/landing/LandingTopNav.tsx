@@ -56,7 +56,7 @@ export function LandingTopNav({
 
         <Link
           href="/competitions"
-          className={`text-[12.5px] font-bold px-4 h-9 inline-flex items-center gap-1.5 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2a4a72] ${
+          className={`text-[12px] font-bold px-4 h-9 inline-flex items-center gap-1.5 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2a4a72] ${
             onHero
               ? "border border-white/80"
               : analog
