@@ -33,6 +33,7 @@ import { MarkdownReport } from "@/components/fastlane/MarkdownReport";
 import { JudgeReviewSection } from "@/components/fastlane/JudgeReviewSection";
 import { AIReportEnvelope } from "@/components/fastlane/AIReportEnvelope";
 import { DeleteProposalButton } from "@/components/fastlane/DeleteProposalButton";
+import { EditProposalButton } from "@/components/fastlane/EditProposalButton";
 
 function looksLikeUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -272,6 +273,17 @@ export default async function ProposalDetailPage({
           >
             {proposal.title}
           </h1>
+          {isOwner && !reviewClosed && (
+            <EditProposalButton
+              competitionId={competition.id}
+              proposalId={proposal.id}
+              initial={{
+                title: proposal.title,
+                team: proposal.team,
+                summary: proposal.summary,
+              }}
+            />
+          )}
           {isOwner && (
             <DeleteProposalButton
               competitionId={competition.id}
