@@ -388,7 +388,7 @@ function PendingRow({ item }: { item: PendingItem }) {
               <AlertTriangle className="w-3 h-3" strokeWidth={2.2} />
               {axis.name}
               <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
-                σ {axis.stddev.toFixed(1)}
+                편차 {axis.stddev.toFixed(1)}
               </span>
             </span>
           ))}
@@ -443,7 +443,7 @@ function PendingRow({ item }: { item: PendingItem }) {
               color: "var(--signal-attention)",
             }}
           >
-            σ {maxStddev.toFixed(1)}
+            편차 {maxStddev.toFixed(1)}
           </p>
         </div>
         <ArrowRight

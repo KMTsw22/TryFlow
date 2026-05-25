@@ -75,7 +75,7 @@ export function CriterionRubricCard({
                 style={{ color: "var(--signal-success)", letterSpacing: "0.12em" }}
               >
                 <FileText className="w-3 h-3" />
-                rubric 준비됨
+                채점 가이드 준비됨
               </span>
             ) : (
               <span
@@ -83,7 +83,7 @@ export function CriterionRubricCard({
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.12em" }}
               >
                 <Hourglass className="w-3 h-3" />
-                rubric 미생성
+                채점 가이드 미생성
               </span>
             )}
           </div>

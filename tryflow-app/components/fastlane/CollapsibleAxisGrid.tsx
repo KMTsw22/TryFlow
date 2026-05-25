@@ -109,8 +109,8 @@ export function CollapsibleAxisGrid({
             className="text-[12.5px] mb-4"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
           >
-            3-Pass (Draft → Skeptic → Judge) · σ = 세 agent 점수 표준편차. 임계값
-            초과 시 검토 권고.
+            3-Pass (Draft → Skeptic → Judge) · 편차 = 세 agent 점수의 흔들림
+            (표준편차 σ). 임계값 초과 시 검토 권고.
           </p>
           <div
             className="border-t"

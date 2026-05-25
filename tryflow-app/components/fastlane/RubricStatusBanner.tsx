@@ -66,10 +66,10 @@ export function RubricStatusBanner({
             className="text-[12px] font-bold uppercase mb-0.5"
             style={{ color: "var(--signal-success)", letterSpacing: "0.14em" }}
           >
-            평가 rubric 준비 완료
+            평가 가이드 준비 완료
           </p>
           <p className="text-[12.5px]" style={{ color: "var(--text-secondary)" }}>
-            {totalCount}개 항목 모두 도메인 특화 rubric이 생성되어 저장되었습니다. 이후
+            {totalCount}개 항목 모두 도메인 특화 채점 가이드가 생성되어 저장되었습니다. 이후
             모든 제안서는 동일한 잣대로 채점됩니다.
           </p>
         </div>
@@ -84,7 +84,7 @@ export function RubricStatusBanner({
               border: "1px solid var(--t-border-subtle)",
               letterSpacing: "0.04em",
             }}
-            title="rubric 을 다시 생성"
+            title="채점 가이드 다시 생성"
           >
             <RotateCcw className="w-3 h-3" />
             재생성
@@ -113,10 +113,10 @@ export function RubricStatusBanner({
             className="text-[12px] font-bold uppercase mb-0.5"
             style={{ color: "var(--signal-danger)", letterSpacing: "0.14em" }}
           >
-            rubric 생성 실패
+            채점 가이드 생성 실패
           </p>
           <p className="text-[12.5px]" style={{ color: "var(--text-secondary)" }}>
-            {error ?? "일부 항목의 rubric 생성에 실패했습니다."}
+            {error ?? "일부 항목의 채점 가이드 생성에 실패했습니다."}
             {generatedCount > 0 &&
               ` ${generatedCount}/${totalCount}개 항목은 성공적으로 생성됨.`}
           </p>
@@ -166,8 +166,8 @@ export function RubricStatusBanner({
           style={{ color: "var(--accent)", letterSpacing: "0.14em" }}
         >
           {status === "generating"
-            ? "AI rubric 생성 중"
-            : "rubric 생성 대기 중"}
+            ? "AI 채점 가이드 생성 중"
+            : "채점 가이드 생성 대기 중"}
         </p>
         <p className="text-[12.5px]" style={{ color: "var(--text-secondary)" }}>
           {totalCount}개 평가 항목에 대해 도메인 특화 채점 기준 (점수 가이드 +

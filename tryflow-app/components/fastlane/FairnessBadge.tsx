@@ -44,7 +44,7 @@ export function FairnessBadge({ stddev, compact = false }: Props) {
         className="w-1.5 h-1.5 rounded-full"
         style={{ background: "var(--signal-attention)" }}
       />
-      검토 권고 · σ {stddev.toFixed(1)}
+      검토 권고 · 편차 {stddev.toFixed(1)}
     </span>
   );
 }

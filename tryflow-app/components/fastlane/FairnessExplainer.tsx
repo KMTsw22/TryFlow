@@ -12,7 +12,7 @@ const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 const STEPS = [
   {
     icon: FileText,
-    title: "도메인 특화 rubric",
+    title: "도메인 특화 채점 가이드",
     body: "대회 생성 시 주최자의 평가 항목과 주제로부터 항목별 채점 기준(점수 가이드 + Calibration Anchors)을 AI가 미리 생성해 DB에 고정. 모든 출품작이 동일한 잣대로 채점됩니다.",
   },
   {

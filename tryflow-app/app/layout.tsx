@@ -12,7 +12,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 export const metadata: Metadata = {
   title: "Fastlane — AI 기반 창업 평가 플랫폼",
   description:
-    "각종 대회·공모전의 1차 평가를 AI가 공정하게. 주최 측이 평가표를 입력하면 AI가 도메인 특화 rubric을 자동 생성 후 항목마다 Draft → Skeptic → Judge 3-Pass 검증으로 채점하고, 의견이 갈리는 항목은 심사위원에게 넘깁니다.",
+    "각종 대회·공모전의 1차 평가를 AI가 공정하게. 주최 측이 평가표를 입력하면 AI가 도메인 특화 채점 가이드를 자동 생성 후 항목마다 Draft → Skeptic → Judge 3-Pass 검증으로 채점하고, 의견이 갈리는 항목은 심사위원에게 넘깁니다.",
 };
 
 // Runs before React hydrates. Applies saved theme early to prevent a flash

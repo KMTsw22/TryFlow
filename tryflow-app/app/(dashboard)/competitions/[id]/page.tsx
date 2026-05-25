@@ -557,7 +557,7 @@ export default async function CompetitionDetailPage({
             className="text-[12px] tabular-nums hidden md:block"
             style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
           >
-            3-Pass (Draft·Skeptic·Judge) · σ 분기점 분산 · 임계값 초과 시 검토 권고
+            3-Pass (Draft·Skeptic·Judge) · 편차 큰 항목은 검토 권고
           </p>
         </div>
 
@@ -755,7 +755,7 @@ export default async function CompetitionDetailPage({
                           : axis.source === "human_consensus"
                           ? `심사위원 ${axis.humanCount}명 평균 자동 채택`
                           : axis.source === "noisy_consensus"
-                          ? `심사위원 ${axis.humanCount}명 평균 채택 — 격차 큼(σ ${axis.humanStddev.toFixed(1)})`
+                          ? `심사위원 ${axis.humanCount}명 평균 채택 — 격차 큼(편차 ${axis.humanStddev.toFixed(1)})`
                           : undefined;
                       const sourceLabel =
                         axis.source === "dispute"
@@ -764,7 +764,7 @@ export default async function CompetitionDetailPage({
                           ? "격차"
                           : axis.source === "human_consensus"
                           ? "합의"
-                          : `σ ${axis.stddev.toFixed(1)}`;
+                          : `편차 ${axis.stddev.toFixed(1)}`;
                       return (
                         <td
                           key={c.id}
@@ -846,8 +846,8 @@ export default async function CompetitionDetailPage({
           className="mt-4 text-[11.5px] leading-[1.65]"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
         >
-          σ (시그마) = Draft·Skeptic·Judge 세 agent 점수의 표준편차. 임계값을 넘는 항목은
-          AI 의 평가가 흔들린다는 의미이므로 심사위원의 검토를 권합니다.
+          편차 = Draft·Skeptic·Judge 3-Pass 점수의 흔들림 정도(표준편차 σ). 임계값을 넘는 항목은
+          AI 가 자신 없는 부분이므로 심사위원의 검토를 권합니다.
         </p>
       </section>
 

@@ -84,9 +84,9 @@ export function ScoreChip({
             letterSpacing: "0.01em",
             fontWeight: needsReview ? 600 : 500,
           }}
-          title={`표준편차 ${stddev.toFixed(1)}`}
+          title={`AI 의 Draft·Skeptic·Judge 3-Pass 점수의 표준편차(σ ${stddev.toFixed(1)})`}
         >
-          σ {stddev.toFixed(1)}
+          편차 {stddev.toFixed(1)}
         </span>
       )}
     </div>

@@ -361,7 +361,7 @@ function UIPreview() {
               className="px-3 py-2 text-right text-[11px] font-semibold"
               style={{ color: "var(--text-tertiary)" }}
             >
-              σ
+              편차
             </th>
             <th
               className="px-4 py-2 text-left text-[11px] font-semibold"
@@ -461,7 +461,7 @@ function StatusPill({
 function Workflow() {
   const steps = [
     { n: 1, title: "평가 기준 입력", body: "주제·항목·가중치", who: "운영자" },
-    { n: 2, title: "AI 채점 가이드 생성", body: "rubric 자동 작성·저장", who: "AI" },
+    { n: 2, title: "AI 채점 가이드 생성", body: "항목별 채점 기준 자동 작성·저장", who: "AI" },
     { n: 3, title: "지원서 접수", body: "PDF·링크 업로드", who: "참가자" },
     { n: 4, title: "AI 1차 평가", body: "Draft·Skeptic·Judge 3단계 검증", who: "AI" },
     { n: 5, title: "분쟁 검토", body: "의견 갈리는 항목만", who: "심사위원" },
@@ -549,7 +549,7 @@ function Workflow() {
             badge="04"
             kicker="AI 1차 평가 · 3-Pass 검증"
             title="같은 출품을 세 관점으로 다시 채점합니다"
-            body="Draft(낙관) → Skeptic(양방향 보정) → Judge(가중 평균)의 3단계 검증으로 한 번 호출에서 나오는 즉흥성을 흡수합니다. 점수와 함께 표준편차(σ)도 같이 기록해 AI 자체가 자신 없는 항목을 자동 표시합니다."
+            body="Draft(낙관) → Skeptic(양방향 보정) → Judge(가중 평균)의 3단계 검증으로 한 번 호출에서 나오는 즉흥성을 흡수합니다. 점수와 함께 편차(표준편차 σ)도 같이 기록해 AI 자체가 자신 없는 항목을 자동 표시합니다."
             who="AI · 출품당 평균 1-2분"
             mockup={<ThreePassMockup />}
             reverse
@@ -904,7 +904,7 @@ function ThreePassMockup() {
             className="text-[13px] font-bold tabular-nums"
             style={{ color: "var(--accent)" }}
           >
-            73 <span style={{ color: "var(--text-tertiary)", fontWeight: 400, fontSize: 11 }}>· σ 1.6</span>
+            73 <span style={{ color: "var(--text-tertiary)", fontWeight: 400, fontSize: 11 }}>· 편차 1.6</span>
           </span>
         </div>
       </div>
@@ -947,7 +947,7 @@ function DisputeMockup() {
             className="text-[10.5px] mb-0.5"
             style={{ color: "var(--text-tertiary)" }}
           >
-            항목별 분산 · σ
+            항목별 편차
           </p>
           <p
             className="text-[14px] font-semibold"
@@ -961,7 +961,7 @@ function DisputeMockup() {
               className="tabular-nums"
               style={{ color: "var(--signal-attention)" }}
             >
-              σ &gt; {THRESHOLD}
+              편차 &gt; {THRESHOLD}
             </span>
           </p>
         </div>

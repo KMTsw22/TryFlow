@@ -1088,7 +1088,7 @@ function MyReviewDraft({
                           letterSpacing: "0.06em",
                           borderRadius: 2,
                         }}
-                        title="AI 의 3-Pass 점수 분산이 임계(σ>8)를 넘었습니다. 사람 검토를 권장합니다."
+                        title="AI 의 Draft·Skeptic·Judge 3-Pass 점수 편차가 임계(σ>8)를 넘어 — 사람 검토 권장."
                       >
                         <AlertTriangle className="w-2.5 h-2.5" strokeWidth={2.6} />
                         임계 초과
@@ -1104,7 +1104,7 @@ function MyReviewDraft({
                       fontWeight: needsAttention ? 600 : 500,
                     }}
                   >
-                    AI {ai?.mean ?? "—"} · σ {ai?.stddev.toFixed(1) ?? "—"}
+                    AI {ai?.mean ?? "—"} · 편차 {ai?.stddev.toFixed(1) ?? "—"}
                   </p>
                 </div>
                 {/* 점수 영역 — 디폴트는 AI 점수가 박힌 잠긴 박스.
