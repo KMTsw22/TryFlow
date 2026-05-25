@@ -16,6 +16,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 
 interface Props {
   competitionId: string;
@@ -26,17 +27,24 @@ interface Props {
 export function BulkCloseAction({ competitionId, proposalIds }: Props) {
   const router = useRouter();
   const { show: toast } = useToast();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   if (proposalIds.length === 0) return null;
 
   async function handleClick() {
     if (busy) return;
-    const ok = confirm(
-      `심사가 완료된 출품 ${proposalIds.length}건을 일괄 검토 종료합니다.\n\n` +
-        "종료된 출품은 점수 수정이 더는 반영되지 않습니다.\n" +
-        "(필요 시 출품 상세에서 개별로 종료 취소 가능)"
-    );
+    const ok = await confirm({
+      title: `${proposalIds.length}건 일괄 검토 종료`,
+      body: (
+        <>
+          심사가 완료된 출품 <strong>{proposalIds.length}건</strong>을 일괄
+          검토 종료합니다. 종료된 출품은 점수 수정이 더는 반영되지 않습니다.
+          필요 시 출품 상세에서 개별로 종료 취소 가능합니다.
+        </>
+      ),
+      confirmLabel: "검토 종료",
+    });
     if (!ok) return;
 
     setBusy(true);

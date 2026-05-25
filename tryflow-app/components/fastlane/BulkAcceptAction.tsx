@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 
 interface Props {
   competitionId: string;
@@ -38,15 +39,24 @@ export function BulkAcceptAction({
 }: Props) {
   const router = useRouter();
   const { show: toast } = useToast();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   if (proposalIds.length === 0) return null;
 
   async function handleClick() {
     if (busy) return;
-    const ok = confirm(
-      `분쟁 항목이 없는 출품 ${proposalIds.length}건에 모두 AI 점수에 동의하고 일괄 제출합니다.\n\n계속할까요? (실행 후 개별 출품에서 점수 수정은 가능합니다)`
-    );
+    const ok = await confirm({
+      title: `${proposalIds.length}건 일괄 동의·제출`,
+      body: (
+        <>
+          분쟁 항목이 없는 출품 <strong>{proposalIds.length}건</strong> 에 모두 AI
+          점수에 동의하고 한 번에 제출합니다. 실행 후 개별 출품에서 점수 수정은
+          가능합니다.
+        </>
+      ),
+      confirmLabel: "동의 후 제출",
+    });
     if (!ok) return;
 
     setBusy(true);

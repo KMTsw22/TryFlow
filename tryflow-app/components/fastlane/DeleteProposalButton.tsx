@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 
 export function DeleteProposalButton({
   competitionId,
@@ -19,14 +20,27 @@ export function DeleteProposalButton({
 }) {
   const router = useRouter();
   const { show: toast } = useToast();
+  const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
 
   async function handleClick() {
     if (busy) return;
-    const ok = confirm(
-      `정말 이 출품을 삭제하시겠습니까?\n\n"${proposalTitle}"\n\n` +
-        "삭제 시 출품과 함께 AI 평가·심사위원 평가·분쟁 결정 기록이 모두 사라집니다. 되돌릴 수 없습니다."
-    );
+    const ok = await confirm({
+      title: `이 출품을 삭제하시겠습니까?`,
+      body: (
+        <>
+          <p className="mb-3" style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+            “{proposalTitle}”
+          </p>
+          <p>
+            삭제 시 출품과 함께 AI 평가·심사위원 평가·분쟁 결정 기록이 모두
+            사라집니다. <strong>되돌릴 수 없습니다.</strong>
+          </p>
+        </>
+      ),
+      tone: "danger",
+      confirmLabel: "삭제",
+    });
     if (!ok) return;
 
     setBusy(true);
