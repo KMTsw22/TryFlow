@@ -26,7 +26,7 @@ import {
   type ProposalRow,
 } from "@/lib/fastlane/db";
 import type { Competition, Proposal } from "@/lib/fastlane/types";
-import { AxisScoreBar } from "@/components/fastlane/AxisScoreBar";
+import { CollapsibleAxisGrid } from "@/components/fastlane/CollapsibleAxisGrid";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
 import { EvaluationStatusCard } from "@/components/fastlane/EvaluationStatusCard";
 import { MarkdownReport } from "@/components/fastlane/MarkdownReport";
@@ -392,56 +392,17 @@ export default async function ProposalDetailPage({
             )}
           </div>
 
-          {/* 항목별 평가 */}
-          <div className="mb-10">
-            <h2
-              className="mb-2"
-              style={{
-                fontWeight: 700,
-                fontSize: "1.125rem",
-                lineHeight: 1.4,
-                color: "var(--text-primary)",
-                letterSpacing: "-0.005em",
-              }}
-            >
-              항목별 평가
-            </h2>
-            <p
-              className="text-[12.5px] mb-4"
-              style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
-            >
-              3-Pass (Draft → Skeptic → Judge) · σ = 세 agent 점수 표준편차. 임계값 초과 시 검토 권고.
-            </p>
+          {/* 항목별 평가 — 기본 펼침. 첫 진입 시 점수 한눈에 보임.
+              각 축의 강점/약점 디테일은 행마다 "심층 분석 보기" 안 axisMarkdown 으로. */}
+          <CollapsibleAxisGrid
+            criteria={competition.template.criteria}
+            axes={score.axes}
+            axisReports={axisReports}
+          />
 
-            <div className="border-t" style={{ borderColor: "var(--t-border-subtle)" }}>
-              {competition.template.criteria.map((c) => {
-                const axis = score.axes.find((a) => a.criterionId === c.id);
-                if (!axis) return null;
-                return (
-                  <div
-                    key={c.id}
-                    className="border-b"
-                    style={{ borderColor: "var(--t-border-subtle)" }}
-                  >
-                    <AxisScoreBar
-                      axis={axis}
-                      criterionName={c.name}
-                      weight={c.weight}
-                      axisMarkdown={axisReports[c.id]?.markdown}
-                    />
-                    <p
-                      className="pb-3.5 -mt-2 text-[12px] leading-[1.65]"
-                      style={{ color: "var(--text-tertiary)" }}
-                    >
-                      채점 기준: {c.description}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 서사형 리포트 */}
+          {/* 종합 평가만 노출 — verdict 톤 섹션 한 단락.
+              핵심 강점/보완 리스크/축 통찰 같은 디테일은 페이지 중복 방지 위해
+              각 항목의 "심층 분석 보기" 로 위임. */}
           {reportMd && (
             <div>
               <h2
@@ -454,15 +415,16 @@ export default async function ProposalDetailPage({
                   letterSpacing: "-0.005em",
                 }}
               >
-                심층 평가 리포트
+                종합 평가
               </h2>
               <p
                 className="text-[12.5px] mb-6"
                 style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
               >
-                3-Pass 검증 결과를 종합하여 항목별 심층 분석 후 통합 작성.
+                AI 1차 평가의 결론입니다. 항목별 강점·리스크는 위 "심층 분석
+                보기" 에서 확인할 수 있습니다.
               </p>
-              <MarkdownReport source={reportMd} />
+              <MarkdownReport source={reportMd} verdictOnly />
             </div>
           )}
         </AIReportEnvelope>

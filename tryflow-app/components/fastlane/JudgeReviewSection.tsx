@@ -103,10 +103,10 @@ export function JudgeReviewSection({
   // 백엔드 호출 in-flight 표시 — 버튼 비활성화·로딩 스피너 토글에 사용.
   const [busy, setBusy] = useState<"resolve" | "close" | "reopen" | null>(null);
 
-  // 평가가 0건이면 빈 안내.
-  if (reviews.length === 0) {
-    return <EmptyReviews />;
-  }
+  // 다른 심사위원 평가 0건이어도 본인 평가 작성 영역은 보여야 한다.
+  // 본인이 첫 평가자가 되는 경우가 흔하므로 early return 금지 — 아래에서
+  // hasReviews 분기로 비교 테이블/코멘트만 가리고 MyReviewDraft 는 그대로.
+  const hasReviews = reviews.length > 0;
 
   // 낙관적 UI — 백엔드 응답 전에 화면을 즉시 갱신해 시연 흐름이 끊기지 않게.
   // 실패 시 setResolutions 를 이전 상태로 롤백.
@@ -207,10 +207,13 @@ export function JudgeReviewSection({
     : null;
 
   // 결정자(decidedBy) — 데모에서는 첫 심사위원이 심사위원장 역할.
-  const decidedBy = {
-    judgeId: reviews[0].judgeId,
-    judgeName: reviews[0].judgeName,
-  };
+  // reviews 0건이면 결정 모달 자체가 호출 안 되므로 빈 객체로 둠 (type 만족).
+  const decidedBy = hasReviews
+    ? {
+        judgeId: reviews[0].judgeId,
+        judgeName: reviews[0].judgeName,
+      }
+    : { judgeId: "", judgeName: "" };
 
   return (
     <section className="mb-14" aria-labelledby="judge-review-heading">
@@ -231,57 +234,69 @@ export function JudgeReviewSection({
           className="text-[10.5px] font-bold uppercase"
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
-          {reviews.length}명 제출
+          {hasReviews ? `${reviews.length}명 제출` : "아직 제출 없음"}
           {disputeCount > 0 && ` · 분쟁 ${decidedCount}/${disputeCount} 결정`}
         </p>
       </div>
 
-      <p
-        className="text-[12.5px] mb-4 max-w-2xl"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em", wordBreak: "keep-all" }}
-      >
-        AI 1차 점수 위에 각 심사위원이 매긴 점수와 코멘트입니다. 분쟁(사람 분산
-        σ &gt; {HUMAN_STDDEV_WARN} 또는 AI 분산 임계 초과) 항목은 행 끝의{" "}
-        <strong>결정 →</strong> 버튼으로 처리합니다.
-      </p>
-
-      {/* 심사위원 chip 리스트 */}
-      <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mb-7">
-        {reviews.map((r, i) => (
-          <span
-            key={r.judgeId}
-            className="inline-flex items-center gap-2 px-2.5 py-1 text-[12px]"
+      {hasReviews ? (
+        <>
+          <p
+            className="text-[12.5px] mb-4 max-w-2xl"
             style={{
-              background: "var(--surface-1)",
-              border: "1px solid var(--t-border-subtle)",
-              color: "var(--text-primary)",
-              letterSpacing: "0.01em",
+              color: "var(--text-tertiary)",
+              letterSpacing: "0.02em",
+              wordBreak: "keep-all",
             }}
           >
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ background: judgeColor(i) }}
-              aria-hidden
-            />
-            <span style={{ fontWeight: 600 }}>{r.judgeName}</span>
-            {r.affiliation && (
-              <span style={{ color: "var(--text-tertiary)" }}>· {r.affiliation}</span>
-            )}
-          </span>
-        ))}
-      </div>
+            AI 1차 점수 위에 각 심사위원이 매긴 점수와 코멘트입니다. 분쟁(사람
+            분산 σ &gt; {HUMAN_STDDEV_WARN} 또는 AI 분산 임계 초과) 항목은 행
+            끝의 <strong>결정 →</strong> 버튼으로 처리합니다.
+          </p>
 
-      <ComparisonTable
-        criteria={criteria}
-        aiAxes={aiAxes}
-        reviews={reviews}
-        resolutions={resolutions}
-        disputeIds={new Set(disputeAxes.map((c) => c.id))}
-        onOpenDecide={(c) => setModalCriterion(c)}
-        disabled={reviewClosed}
-      />
+          {/* 심사위원 chip 리스트 */}
+          <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mb-7">
+            {reviews.map((r, i) => (
+              <span
+                key={r.judgeId}
+                className="inline-flex items-center gap-2 px-2.5 py-1 text-[12px]"
+                style={{
+                  background: "var(--surface-1)",
+                  border: "1px solid var(--t-border-subtle)",
+                  color: "var(--text-primary)",
+                  letterSpacing: "0.01em",
+                }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: judgeColor(i) }}
+                  aria-hidden
+                />
+                <span style={{ fontWeight: 600 }}>{r.judgeName}</span>
+                {r.affiliation && (
+                  <span style={{ color: "var(--text-tertiary)" }}>
+                    · {r.affiliation}
+                  </span>
+                )}
+              </span>
+            ))}
+          </div>
 
-      <OverallComments reviews={reviews} />
+          <ComparisonTable
+            criteria={criteria}
+            aiAxes={aiAxes}
+            reviews={reviews}
+            resolutions={resolutions}
+            disputeIds={new Set(disputeAxes.map((c) => c.id))}
+            onOpenDecide={(c) => setModalCriterion(c)}
+            disabled={reviewClosed}
+          />
+
+          <OverallComments reviews={reviews} />
+        </>
+      ) : (
+        <EmptyReviews />
+      )}
 
       <MyReviewDraft
         criteria={criteria}
@@ -742,20 +757,116 @@ function MyReviewDraft({
           />
           내 평가 작성
         </h3>
-        <span
-          className="text-[10.5px] font-bold uppercase"
-          style={{ color: "var(--accent)", letterSpacing: "0.14em" }}
-        >
-          데모 — 저장 안 됨
-        </span>
+        {/* mock 데모(competitionId 가 UUID 아님)에서만 "저장 안 됨" 경고. */}
+        {!usingBackend && (
+          <span
+            className="text-[10.5px] font-medium"
+            style={{ color: "var(--signal-attention)" }}
+          >
+            데모 — 저장 안 됨
+          </span>
+        )}
       </div>
       <p
-        className="text-[12px] mb-5"
+        className="text-[12px] mb-4"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
       >
         AI 점수를 그대로 두려면 비워두고, 다르게 매기고 싶으면 0~100 사이로
         입력하세요. 항목별·전체 코멘트도 함께 남길 수 있습니다.
       </p>
+
+      {/* AI 점수 전부 동의 — 분쟁 axis 0개 + 본인 override 0개일 때만 노출.
+          심사위원이 "이 출품 다 동의야" 의사를 한 번에 표현하고 제출하도록.
+          매트릭스의 ● 제출 완료 셀을 채우는 가장 빠른 경로. */}
+      {(() => {
+        const disputedCount = aiAxes.filter((a) => a.needsReview).length;
+        const hasAnyOverride = Object.values(overrides).some(
+          (v) => v !== undefined
+        );
+        if (disputedCount > 0) {
+          return (
+            <div
+              className="flex items-start gap-2.5 px-4 py-3 mb-5 text-[12.5px]"
+              style={{
+                background: "var(--signal-attention-soft)",
+                border: "1px solid var(--signal-attention-ring)",
+                borderRadius: 2,
+                color: "var(--text-secondary)",
+                wordBreak: "keep-all",
+              }}
+            >
+              <AlertTriangle
+                className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                style={{ color: "var(--signal-attention)" }}
+                strokeWidth={2.4}
+              />
+              <span>
+                AI 의 판단이 갈리는 항목{" "}
+                <strong style={{ color: "var(--signal-attention)" }}>
+                  {disputedCount}개
+                </strong>
+                가 있습니다 — 그 항목만 개별 결정하면 됩니다. 나머지는 비워두고
+                제출하면 AI 점수가 그대로 반영됩니다.
+              </span>
+            </div>
+          );
+        }
+        // 분쟁 0개 — 빠른 동의 액션
+        return (
+          <div
+            className="flex items-center justify-between gap-3 px-4 py-3 mb-5 flex-wrap"
+            style={{
+              background: "var(--accent-soft)",
+              border: "1px solid var(--accent-ring)",
+              borderRadius: 2,
+            }}
+          >
+            <div className="flex items-start gap-2.5 min-w-0">
+              <Check
+                className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                style={{ color: "var(--accent)" }}
+                strokeWidth={2.4}
+              />
+              <p
+                className="text-[12.5px] leading-[1.6]"
+                style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
+              >
+                AI 가 모든 항목에 자신감을 보였습니다 — 분쟁 항목 없음. 모두 AI
+                점수에 동의하시나요?
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting || submitted || hasAnyOverride}
+              title={
+                hasAnyOverride
+                  ? "입력한 점수가 있어 빠른 동의를 사용할 수 없습니다. 일반 제출 버튼을 사용하세요."
+                  : undefined
+              }
+              className="inline-flex items-center gap-1.5 px-3.5 h-9 text-[13px] font-medium text-white shrink-0 transition-[filter] hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ background: "var(--accent)", borderRadius: 2 }}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  제출 중…
+                </>
+              ) : submitted ? (
+                <>
+                  <Check className="w-3.5 h-3.5" strokeWidth={2.4} />
+                  제출 완료
+                </>
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5" strokeWidth={2.4} />
+                  모두 동의하고 제출
+                </>
+              )}
+            </button>
+          </div>
+        );
+      })()}
 
       <div className="space-y-3 mb-5">
         {criteria.map((c) => {
@@ -851,9 +962,9 @@ function MyReviewDraft({
             : submitted
             ? usingBackend
               ? "제출되었습니다. 다른 심사위원의 평가와 함께 위 표에 반영됩니다."
-              : "데모: 제출 흐름만 시연됩니다 (mock URL — 저장 X)."
+              : "데모 모드 — 흐름만 시연되고 저장은 되지 않습니다."
             : usingBackend
-            ? "제출 시 axes·코멘트가 DB 에 저장됩니다 (upsert)."
+            ? "제출하면 본인의 점수·코멘트가 저장됩니다."
             : "제출 전까지 다른 심사위원에게 공개되지 않습니다."}
         </p>
         <button
@@ -1019,24 +1130,24 @@ function CloseReviewArea({
 function EmptyReviews() {
   return (
     <section
-      className="mb-14 px-7 py-10 text-center"
+      className="mb-8 px-7 py-8 text-center"
       style={{
         background: "var(--surface-1)",
         border: "1px dashed var(--t-border-subtle)",
       }}
     >
       <p
-        className="mb-1.5 text-[14.5px] font-semibold"
+        className="mb-1 text-[13.5px] font-semibold"
         style={{ color: "var(--text-primary)" }}
       >
-        아직 심사위원 평가가 없습니다.
+        다른 심사위원 평가가 아직 없습니다.
       </p>
       <p
         className="text-[12.5px] leading-[1.7] max-w-md mx-auto"
         style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
       >
-        AI 1차 평가는 끝났지만 사람 심사가 시작되지 않은 상태입니다. 심사위원이
-        평가를 제출하면 항목별로 AI 점수와 비교한 표가 이 자리에 나타납니다.
+        아래 <strong>내 평가 작성</strong> 에서 본인이 첫 평가자가 될 수 있습니다.
+        다른 위원들이 제출하면 항목별로 AI 점수와 비교한 표가 이 자리에 나타납니다.
       </p>
     </section>
   );

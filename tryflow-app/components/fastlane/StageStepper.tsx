@@ -34,6 +34,9 @@ function stepIndex(s: CompetitionStage): number {
 
 export function StageStepper({ current }: { current: CompetitionStage }) {
   const currentIdx = stepIndex(current);
+  // 마지막 단계(published) 에 도달했으면 "완료" 상태로 보아 모든 단계를 done.
+  // 즉 공개 단계가 active 가 아닌 완료로 보이게 — 사용자 인지: 끝났다.
+  const allDone = currentIdx === STEPS.length - 1;
 
   return (
     <nav
@@ -47,8 +50,13 @@ export function StageStepper({ current }: { current: CompetitionStage }) {
     >
       <ol className="flex items-start gap-2 overflow-x-auto">
         {STEPS.map((step, idx) => {
-          const state =
-            idx < currentIdx ? "done" : idx === currentIdx ? "active" : "pending";
+          const state = allDone
+            ? "done"
+            : idx < currentIdx
+            ? "done"
+            : idx === currentIdx
+            ? "active"
+            : "pending";
           const isLast = idx === STEPS.length - 1;
           return (
             <li key={step.key} className="flex items-start gap-2 min-w-0">
@@ -84,7 +92,7 @@ export function StageStepper({ current }: { current: CompetitionStage }) {
                   className="flex-1 h-px mt-3 mx-2"
                   style={{
                     background:
-                      idx < currentIdx
+                      allDone || idx < currentIdx
                         ? "var(--accent)"
                         : "var(--t-border)",
                     minWidth: 28,

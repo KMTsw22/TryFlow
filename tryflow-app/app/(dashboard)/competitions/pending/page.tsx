@@ -1,23 +1,15 @@
 // 검토 대기 — AI 3-Pass 채점에서 분산(stddev)이 임계를 넘어 사람 판단이 필요한
 // 출품만 모아 보여주는 페이지.
 //
-// 디자인 결정 (2026-05):
-//   - /competitions/queue 와 데이터 소스는 동일하나, needsReview axis 가 1개라도
-//     있는 proposal 만 필터해서 보여줌. 이게 사이드바 "검토 대기" 의 본질.
-//   - 카드에 "어느 축이 검토 필요한지" 를 chip 으로 명시 — 한눈에 어디를
-//     봐야 하는지 알게 함. (단순 카운트만 보여주면 '몇 개' 만 알지 '뭘 봐야 할지'
-//     모른다.)
-//   - 통계 strip 도 검토 필요 관점으로 재구성: 대기 항목 수 / 누적 검토 권고 축 /
-//     평균 분산(σ). 톤은 attention 색을 일관되게.
-//   - 검토 대기가 0건일 때 healthy empty state 로 안내 — "모든 항목이 합의 임계
-//     안에 들어왔다" 는 긍정 메시지.
+// 2026-05-21 행정 톤 리톤: serif/큰숫자/uppercase letter-spacing/vertical stripe 제거.
+// 카드 구조는 유지 — axis chip 이 정보 핵심(어디를 봐야 하나)이라 테이블 셀에
+// 넣으면 가독성 깨짐. 운영 톤 토큰만 일괄 교체.
 //
-// 임계 기준: STDDEV_REVIEW_THRESHOLD = 8 (types.ts). Draft / Skeptic / Judge 세
-// 점수의 stddev 가 이 값을 넘는 axis 만 needsReview=true 로 표시되고, 그게 1개
-// 이상인 proposal 만 이 페이지에 나타난다.
+// 임계 기준: STDDEV_REVIEW_THRESHOLD (types.ts). 그 값을 넘는 axis 가 1개라도
+// 있는 proposal 만 이 페이지에 나타난다.
 
 import Link from "next/link";
-import { ArrowRight, Gavel, LogIn, ShieldCheck, AlertTriangle } from "lucide-react";
+import { ArrowRight, AlertTriangle, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import {
   rowToCompetition,
@@ -32,19 +24,13 @@ import {
   type Proposal,
 } from "@/lib/fastlane/types";
 
-const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
-
-// 평면 검토대기 항목 — proposal 본체 + 어느 대회 소속인지 + 어떤 criterion 들이
-// 분쟁 상태인지(이름 + stddev) 미리 합쳐서 카드에서 바로 렌더링하기 쉽게 만듦.
-// decidedCount 는 이미 결정된 분쟁 axis 수 (시연 mock 의 preseeded resolutions 기준).
+// 평면 검토대기 항목 — proposal 본체 + 대회 메타 + 분쟁 axis 정보 + 결정 진척.
 interface PendingItem {
   proposal: Proposal;
   competitionId: string;
   competitionName: string;
   organizer: string;
-  /** 검토 필요한 axis 마다 criterion 이름과 stddev 를 함께 보관. */
   reviewAxes: { name: string; stddev: number }[];
-  /** 이미 결정된 분쟁 axis 수 — 진행률 표시용. */
   decidedCount: number;
 }
 
@@ -57,8 +43,7 @@ function timeAgo(iso: string): string {
   if (h < 24) return `${h}시간 전`;
   const d = Math.floor(h / 24);
   if (d < 30) return `${d}일 전`;
-  const mo = Math.floor(d / 30);
-  return `${mo}개월 전`;
+  return `${Math.floor(d / 30)}개월 전`;
 }
 
 async function loadUserCompetitions(): Promise<{
@@ -66,7 +51,9 @@ async function loadUserCompetitions(): Promise<{
   isAuthenticated: boolean;
 }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { competitions: [], isAuthenticated: false };
 
   const { data: cRows } = await supabase
@@ -103,9 +90,7 @@ async function loadUserCompetitions(): Promise<{
   return { competitions, isAuthenticated: true };
 }
 
-// competitions 에서 needsReview axis 가 있는 proposal 만 추려서 평면 리스트로.
-// axis 이름은 template.criteria 와 join 해서 사람이 읽을 수 있는 한글 이름으로.
-// 이미 검토 종료된 proposal (reviewClosedAt 있음) 은 제외 — pending 정의상.
+// 검토 종료된 출품은 pending 에서 빠짐. 분산이 큰 것 우선 정렬.
 function collectPending(competitions: Competition[]): PendingItem[] {
   const items: PendingItem[] = [];
   for (const comp of competitions) {
@@ -113,11 +98,10 @@ function collectPending(competitions: Competition[]): PendingItem[] {
       comp.template.criteria.map((c) => [c.id, c.name])
     );
     for (const p of comp.proposals) {
-      if (p.reviewClosedAt) continue; // 검토 종료된 출품은 pending 에서 빠짐.
+      if (p.reviewClosedAt) continue;
       const axes = p.score?.axes ?? [];
       const needs = axes.filter((a) => a.needsReview);
       if (needs.length === 0) continue;
-      // 이미 결정된 분쟁 axis 수 — mock 의 preseeded resolutions 가 있는 경우만.
       const decidedCount = (p.disputeResolutions ?? []).filter((r) =>
         needs.some((n) => n.criterionId === r.criterionId)
       ).length;
@@ -134,7 +118,6 @@ function collectPending(competitions: Competition[]): PendingItem[] {
       });
     }
   }
-  // 분산이 큰(즉 합의가 더 어긋난) 것부터 위로. 같은 분산이면 최신 제출 우선.
   items.sort((a, b) => {
     const maxA = Math.max(...a.reviewAxes.map((r) => r.stddev));
     const maxB = Math.max(...b.reviewAxes.map((r) => r.stddev));
@@ -148,57 +131,66 @@ function collectPending(competitions: Competition[]): PendingItem[] {
 }
 
 export default async function PendingPage() {
-  const { competitions: userComps, isAuthenticated } = await loadUserCompetitions();
-  // 비로그인일 때만 mock 미리보기. 로그인 + 0건은 HealthyEmptyState 가 처리.
+  const { competitions: userComps, isAuthenticated } =
+    await loadUserCompetitions();
   const useDemoFallback = !isAuthenticated;
   const competitions = useDemoFallback ? MOCK_COMPETITIONS : userComps;
 
   const items = collectPending(competitions);
 
-  // 통계 — 대기 항목 수 / 누적 검토 권고 축 수 / 평균 분산.
   const totalPending = items.length;
   const totalAxes = items.reduce((s, it) => s + it.reviewAxes.length, 0);
+  const totalDecided = items.reduce((s, it) => s + it.decidedCount, 0);
   const avgStddev =
     totalAxes === 0
       ? 0
       : items.reduce(
-          (s, it) =>
-            s + it.reviewAxes.reduce((ss, a) => ss + a.stddev, 0),
+          (s, it) => s + it.reviewAxes.reduce((ss, a) => ss + a.stddev, 0),
           0
         ) / totalAxes;
 
   return (
-    <div className="max-w-[1400px] mx-auto px-12 pt-10 pb-24">
-      {/* 헤더 — /competitions, /queue 와 동일 톤 유지. */}
-      <div className="flex items-start justify-between gap-8 mb-3 flex-wrap">
+    <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
+      {/* 헤더 — 운영 톤 */}
+      <div
+        className="pb-5 mb-6 border-b flex items-start justify-between gap-6 flex-wrap"
+        style={{ borderColor: "var(--t-border)" }}
+      >
         <div>
+          <p
+            className="text-[12px] mb-1.5"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            대회 진행 · 검토 대기
+          </p>
           <h1
+            className="text-[20px] font-semibold"
             style={{
-              fontWeight: 700,
-              fontSize: "1.625rem",
-              lineHeight: 1.3,
               color: "var(--text-primary)",
-              letterSpacing: "-0.01em",
+              letterSpacing: "-0.005em",
             }}
           >
-            검토 대기
+            AI 분쟁 항목
           </h1>
           <p
-            className="mt-1 text-[12.5px] tabular-nums"
-            style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
+            className="text-[13px] mt-2 max-w-2xl"
+            style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
           >
-            {useDemoFallback
-              ? `${totalPending}건 데모 표시 중`
-              : `${totalPending}건 대기`}
+            AI 3단계 평가에서 점수 분산(σ)이 임계{" "}
+            <strong style={{ color: "var(--text-primary)" }}>
+              {STDDEV_REVIEW_THRESHOLD}
+            </strong>
+            을 넘은 항목들입니다. 의견이 갈리는 지점만 모아두었으니, 그 항목만
+            확인하면 됩니다.
           </p>
         </div>
         <Link
           href="/competitions/queue"
-          className="group inline-flex items-center gap-2 px-4 h-10 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+          className="inline-flex items-center gap-1.5 px-3.5 h-9 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
           style={{
-            border: "1px solid var(--t-border-subtle)",
-            color: "var(--text-secondary)",
-            letterSpacing: "0.01em",
+            border: "1px solid var(--t-input-border)",
+            color: "var(--text-primary)",
+            borderRadius: 2,
           }}
         >
           심사 큐로
@@ -206,74 +198,66 @@ export default async function PendingPage() {
         </Link>
       </div>
 
-      <p
-        className="text-[13.5px] leading-[1.8] mb-10 max-w-2xl"
-        style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
-      >
-        AI가 같은 출품을 같은 조건으로 5회 반복한 결과, 점수 분산(σ)이 임계{" "}
-        <span style={{ color: "var(--text-primary)", fontWeight: 700 }}>
-          {STDDEV_REVIEW_THRESHOLD}
-        </span>
-        을 넘은 항목들입니다. 의견이 갈리는 지점만 모았으니, 심사위원이
-        해당 축의 평가만 보면 됩니다.
-      </p>
-
-      {/* 비로그인 안내 — queue 와 동일 톤. */}
+      {/* 비로그인 안내 */}
       {!isAuthenticated && (
         <div
-          className="flex items-start gap-3 px-5 py-4 mb-10"
+          className="px-5 py-3 mb-4 text-[13px]"
           style={{
             background: "var(--accent-soft)",
             border: "1px solid var(--accent-ring)",
+            borderRadius: 2,
+            color: "var(--text-secondary)",
           }}
         >
-          <LogIn
-            className="w-4 h-4 mt-0.5 shrink-0"
+          아래는 미리보기 샘플입니다.{" "}
+          <Link
+            href="/login"
+            className="font-medium underline-offset-2 hover:underline"
             style={{ color: "var(--accent)" }}
-            strokeWidth={2.2}
-          />
-          <div className="text-[13px] leading-[1.7]" style={{ color: "var(--text-secondary)" }}>
-            아래는 미리보기 샘플입니다.{" "}
-            <Link
-              href="/login"
-              className="font-semibold underline-offset-2 hover:underline"
-              style={{ color: "var(--accent)" }}
-            >
-              로그인
-            </Link>{" "}
-            하면 본인이 운영하는 대회의 검토 대기만 표시됩니다.
-          </div>
+          >
+            로그인
+          </Link>{" "}
+          하면 본인이 운영하는 대회의 검토 대기만 표시됩니다.
         </div>
       )}
 
-      {/* 통계 strip */}
+      {/* 한 줄 요약 strip */}
       <div
-        className="grid grid-cols-3 mb-12 border-y"
-        style={{ borderColor: "var(--t-border-subtle)" }}
+        className="flex flex-wrap items-baseline gap-x-5 gap-y-1.5 px-5 py-3 mb-4 text-[13px]"
+        style={{
+          background: "var(--surface-2)",
+          border: "1px solid var(--t-border)",
+          borderRadius: 2,
+          color: "var(--text-secondary)",
+        }}
       >
-        <Stat
-          label="대기 출품"
-          value={`${totalPending}`}
-          tone={totalPending > 0 ? "attention" : "neutral"}
-        />
-        <Stat
-          label="누적 검토 권고 축"
-          value={`${totalAxes}`}
-          tone={totalAxes > 0 ? "attention" : "neutral"}
-        />
-        <Stat
-          label="평균 분산 σ"
-          value={avgStddev > 0 ? avgStddev.toFixed(1) : "—"}
-        />
+        <SummaryStat label="대기 출품" value={totalPending} unit="건" tone={totalPending > 0 ? "attention" : "neutral"} strong />
+        <Divider />
+        <SummaryStat label="검토 권고 축" value={totalAxes} unit="개" tone={totalAxes > 0 ? "attention" : "neutral"} />
+        <Divider />
+        <SummaryStat label="결정 완료" value={`${totalDecided}/${totalAxes}`} />
+        <Divider />
+        <span style={{ color: "var(--text-tertiary)" }}>
+          평균 분산 σ{" "}
+          <strong
+            className="tabular-nums"
+            style={{ color: "var(--text-primary)", fontWeight: 600 }}
+          >
+            {avgStddev > 0 ? avgStddev.toFixed(1) : "—"}
+          </strong>
+        </span>
       </div>
 
       {/* 결과 — 0건이면 healthy empty state */}
       {items.length === 0 ? (
         <HealthyEmptyState />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {items.map((it) => (
-            <PendingRow key={`${it.competitionId}:${it.proposal.id}`} item={it} />
+            <PendingRow
+              key={`${it.competitionId}:${it.proposal.id}`}
+              item={it}
+            />
           ))}
         </div>
       )}
@@ -281,10 +265,18 @@ export default async function PendingPage() {
   );
 }
 
+// ── 한 행 (카드 유지, 운영 톤) ──────────────────────────────────
+
 function PendingRow({ item }: { item: PendingItem }) {
-  const { proposal, competitionId, competitionName, organizer, reviewAxes, decidedCount } = item;
+  const {
+    proposal,
+    competitionId,
+    competitionName,
+    organizer,
+    reviewAxes,
+    decidedCount,
+  } = item;
   const composite = proposal.score?.composite ?? null;
-  // 가장 큰 분산 — 카드 우측 큰 숫자로 표시. "어디가 가장 흔들리는지" 한눈에.
   const maxStddev = Math.max(...reviewAxes.map((a) => a.stddev));
   const disputeTotal = reviewAxes.length;
   const allDecided = decidedCount > 0 && decidedCount === disputeTotal;
@@ -292,76 +284,60 @@ function PendingRow({ item }: { item: PendingItem }) {
   return (
     <Link
       href={`/competitions/${competitionId}/proposals/${proposal.id}`}
-      className="group relative grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 px-7 py-5 transition-all hover:bg-[color:var(--accent-soft)]"
+      className="group grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 px-6 py-4 transition-colors hover:bg-[color:var(--accent-soft)]"
       style={{
         background: "var(--surface-1)",
-        border: "1px solid var(--t-border-subtle)",
+        border: "1px solid var(--t-border)",
+        borderRadius: 2,
       }}
     >
-      {/* hover 좌측 accent — attention 색으로 (검토대기 페이지 정체성) */}
-      <span
-        aria-hidden
-        className="absolute left-0 top-0 bottom-0 w-[3px] origin-top transition-transform duration-200 group-hover:scale-y-100 scale-y-0"
-        style={{ background: "var(--signal-attention)" }}
-      />
-
       <div className="min-w-0">
-        {/* 어느 대회 — chip */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <Gavel
-            className="w-3.5 h-3.5 shrink-0"
-            style={{ color: "var(--signal-attention)" }}
-            strokeWidth={2}
-          />
-          <span
-            className="text-[11px] font-bold uppercase truncate"
-            style={{
-              color: "var(--text-tertiary)",
-              letterSpacing: "0.14em",
-            }}
-          >
-            {organizer} · {competitionName}
-          </span>
+        {/* 대회 메타 — uppercase letter-spacing 제거 */}
+        <div
+          className="text-[11.5px] mb-1 truncate"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          {organizer} · {competitionName}
         </div>
 
         <h2
-          className="ko-display mb-1.5 truncate"
+          className="font-medium mb-1 truncate"
           style={{
-            fontFamily: SERIF,
-            fontWeight: 800,
-            fontSize: "1.2rem",
-            lineHeight: 1.25,
+            fontSize: "14px",
             color: "var(--text-primary)",
+            letterSpacing: "-0.005em",
           }}
+          title={proposal.title}
         >
           {proposal.title}
         </h2>
 
         <p
-          className="text-[13px] leading-[1.6] mb-3 line-clamp-1"
-          style={{ color: "var(--text-secondary)" }}
+          className="text-[12.5px] leading-[1.6] mb-3 line-clamp-1"
+          style={{ color: "var(--text-tertiary)" }}
         >
           {proposal.summary}
         </p>
 
-        {/* 검토 필요 axis chip 리스트 — 단순 카운트가 아니라 이름 + σ 명시.
-            결정 진행률 chip 도 함께 — "어느 항목을 보면 되는지" + "얼마나 끝났는지". */}
-        <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mb-2">
-          {/* 결정 진행률 chip — disputes 0개일 땐 표시 X */}
+        {/* 분쟁 axis chip + 결정 진척 chip */}
+        <div className="flex items-center flex-wrap gap-1.5 mb-2.5">
           {disputeTotal > 0 && (
             <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] font-semibold tabular-nums"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11.5px] tabular-nums"
               style={{
                 background: allDecided
-                  ? "var(--surface-2)"
-                  : "var(--surface-1)",
+                  ? "transparent"
+                  : "var(--surface-2)",
                 border: `1px solid ${
-                  allDecided ? "var(--signal-success)" : "var(--t-border-subtle)"
+                  allDecided
+                    ? "var(--signal-success)"
+                    : "var(--t-border)"
                 }`,
                 color: allDecided
                   ? "var(--signal-success)"
-                  : "var(--text-tertiary)",
-                letterSpacing: "0.02em",
+                  : "var(--text-secondary)",
+                fontWeight: 500,
+                borderRadius: 2,
               }}
               title={
                 allDecided
@@ -375,36 +351,37 @@ function PendingRow({ item }: { item: PendingItem }) {
           {reviewAxes.map((axis) => (
             <span
               key={axis.name}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] font-semibold tabular-nums"
+              className="inline-flex items-center gap-1 px-2 py-0.5 text-[11.5px] tabular-nums"
               style={{
                 background: "var(--accent-soft)",
                 border: "1px solid var(--accent-ring)",
                 color: "var(--signal-attention)",
-                letterSpacing: "0.02em",
+                fontWeight: 500,
+                borderRadius: 2,
               }}
             >
-              <AlertTriangle className="w-3 h-3" strokeWidth={2.4} />
+              <AlertTriangle className="w-3 h-3" strokeWidth={2.2} />
               {axis.name}
-              <span style={{ color: "var(--text-tertiary)" }}>· σ {axis.stddev.toFixed(1)}</span>
+              <span style={{ color: "var(--text-tertiary)", fontWeight: 400 }}>
+                σ {axis.stddev.toFixed(1)}
+              </span>
             </span>
           ))}
         </div>
 
         {/* 부가 메타 */}
         <div
-          className="flex items-center flex-wrap gap-x-4 gap-y-1.5 text-[12px]"
-          style={{ color: "var(--text-secondary)" }}
+          className="flex items-center flex-wrap gap-x-4 gap-y-1 text-[12px]"
+          style={{ color: "var(--text-tertiary)" }}
         >
           <span>
-            팀:{" "}
-            <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
+            팀{" "}
+            <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
               {proposal.team}
             </span>
           </span>
           <span style={{ color: "var(--t-border-bright)" }}>·</span>
-          <span style={{ color: "var(--text-tertiary)" }}>
-            {timeAgo(proposal.submittedAt)} 제출
-          </span>
+          <span>{timeAgo(proposal.submittedAt)} 제출</span>
           {composite !== null && (
             <>
               <span style={{ color: "var(--t-border-bright)" }}>·</span>
@@ -412,7 +389,7 @@ function PendingRow({ item }: { item: PendingItem }) {
                 AI 종합{" "}
                 <span
                   className="tabular-nums"
-                  style={{ color: "var(--text-primary)", fontWeight: 700 }}
+                  style={{ color: "var(--text-secondary)", fontWeight: 600 }}
                 >
                   {composite}
                 </span>
@@ -422,33 +399,30 @@ function PendingRow({ item }: { item: PendingItem }) {
         </div>
       </div>
 
-      {/* 우측 — 가장 큰 σ 값 강조 */}
-      <div className="md:text-right md:min-w-[120px] flex md:block items-center gap-3 self-stretch">
-        <div>
-          <span
-            className="num-display tabular-nums leading-none"
+      {/* 우측 — 최대 σ + 액션. serif 큰 숫자 제거, 일관 톤 */}
+      <div className="md:text-right md:min-w-[100px] flex md:flex-col items-end gap-3 self-stretch justify-between">
+        <div className="md:text-right">
+          <p
+            className="text-[11.5px] mb-0.5"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            최대 분산
+          </p>
+          <p
+            className="tabular-nums"
             style={{
-              fontFamily: SERIF,
-              fontWeight: 800,
-              fontSize: "2.2rem",
-              letterSpacing: "-0.03em",
+              fontWeight: 600,
+              fontSize: "1.25rem",
+              lineHeight: 1.1,
+              letterSpacing: "-0.01em",
               color: "var(--signal-attention)",
             }}
           >
             σ {maxStddev.toFixed(1)}
-          </span>
-          <p
-            className="mt-1 text-[10.5px] font-bold uppercase"
-            style={{
-              color: "var(--text-tertiary)",
-              letterSpacing: "0.14em",
-            }}
-          >
-            최대 분산
           </p>
         </div>
         <ArrowRight
-          className="md:absolute md:bottom-5 md:right-7 w-4 h-4 transition-transform group-hover:translate-x-1"
+          className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
           style={{ color: "var(--signal-attention)" }}
         />
       </div>
@@ -456,73 +430,80 @@ function PendingRow({ item }: { item: PendingItem }) {
   );
 }
 
-function Stat({
+// ── primitives ────────────────────────────────────────────────
+
+function SummaryStat({
   label,
   value,
+  unit,
   tone = "neutral",
+  strong = false,
 }: {
   label: string;
-  value: string;
+  value: number | string;
+  unit?: string;
   tone?: "neutral" | "attention";
+  strong?: boolean;
 }) {
+  const color =
+    tone === "attention" ? "var(--signal-attention)" : "var(--text-primary)";
   return (
-    <div
-      className="px-5 py-5 border-r last:border-r-0"
-      style={{ borderColor: "var(--t-border-subtle)" }}
-    >
-      <p
-        className="text-[10.5px] font-bold uppercase mb-2"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
-      >
-        {label}
-      </p>
-      <p
-        className="num-display tabular-nums leading-none"
+    <span style={{ color: "var(--text-tertiary)" }}>
+      {label}{" "}
+      <strong
+        className="tabular-nums"
         style={{
-          fontFamily: SERIF,
-          fontWeight: 800,
-          fontSize: "1.8rem",
-          letterSpacing: "-0.025em",
-          color:
-            tone === "attention"
-              ? "var(--signal-attention)"
-              : "var(--text-primary)",
+          color,
+          fontWeight: strong && Number(value) > 0 ? 700 : 600,
         }}
       >
         {value}
-      </p>
-    </div>
+      </strong>
+      {unit && (
+        <span style={{ color: "var(--text-tertiary)" }}> {unit}</span>
+      )}
+    </span>
   );
 }
 
-// 검토 대기 0건일 때 — 단순 empty 가 아니라 "건강한 상태" 라는 긍정 메시지.
-// 분산이 임계 안에 들어왔다는 건 AI 합의가 안정적이라는 신호이므로.
+function Divider() {
+  return (
+    <span
+      aria-hidden
+      className="inline-block w-px h-3.5"
+      style={{ background: "var(--t-border-bright)" }}
+    />
+  );
+}
+
+// 검토 대기 0건 = 건강 상태. 단순 empty 가 아니라 긍정 신호.
 function HealthyEmptyState() {
   return (
     <div
-      className="px-7 py-20 text-center"
+      className="px-6 py-16 text-center"
       style={{
         background: "var(--surface-1)",
-        border: "1px dashed var(--t-border-subtle)",
+        border: "1px solid var(--t-border)",
+        borderRadius: 2,
       }}
     >
       <ShieldCheck
-        className="w-8 h-8 mx-auto mb-4"
+        className="w-7 h-7 mx-auto mb-3"
         style={{ color: "var(--signal-success)" }}
-        strokeWidth={1.6}
+        strokeWidth={1.8}
       />
       <p
-        className="text-[15px] font-semibold mb-1.5"
+        className="text-[14px] font-medium mb-1"
         style={{ color: "var(--text-primary)" }}
       >
         검토할 항목이 없습니다.
       </p>
       <p
-        className="text-[13px] leading-[1.7] max-w-md mx-auto"
-        style={{ color: "var(--text-tertiary)" }}
+        className="text-[12.5px] leading-[1.7] max-w-md mx-auto"
+        style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
       >
-        모든 출품이 AI 3-Pass 합의 임계({STDDEV_REVIEW_THRESHOLD}σ) 안에
-        들어왔습니다. 새 출품이 임계를 넘으면 이 화면에 자동으로 회부됩니다.
+        모든 출품이 AI 3단계 합의 임계({STDDEV_REVIEW_THRESHOLD}σ) 안에
+        들어왔습니다. 새 출품이 임계를 넘으면 여기에 자동으로 표시됩니다.
       </p>
     </div>
   );

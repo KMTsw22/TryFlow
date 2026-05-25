@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Calendar, Users, FileText, Plus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Users, FileText, Plus, Trophy } from "lucide-react";
 import { findCompetition } from "@/lib/fastlane/mock";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -24,6 +24,9 @@ import { FairnessBadge } from "@/components/fastlane/FairnessBadge";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
 import { RubricStatusBanner } from "@/components/fastlane/RubricStatusBanner";
 import { CriterionRubricCard } from "@/components/fastlane/CriterionRubricCard";
+import { BulkAcceptAction } from "@/components/fastlane/BulkAcceptAction";
+import { BulkCloseAction } from "@/components/fastlane/BulkCloseAction";
+import { DemoResetAction } from "@/components/fastlane/DemoResetAction";
 import {
   StageStepper,
   type CompetitionStage,
@@ -31,14 +34,22 @@ import {
 
 // 대회 운영 단계 추정 — DB 에 별도 stage 컬럼이 없으므로
 // 출품/평가/검토종료 진척 상태에서 휴리스틱으로 산출.
+//
+// 5단계 의미:
+//   intake        출품 0건
+//   ai-eval       AI 평가 미완료
+//   human-review  AI 평가 완료, 검토 종료 0건 (심사위원 검토 진행 중)
+//   tally         검토 종료 일부 진행 (1~전체 미만)
+//   published     모든 검토 종료 → 결과 공개 페이지 활성화
 function stageOf(comp: Competition): CompetitionStage {
   const props = comp.proposals;
   if (props.length === 0) return "intake";
   const allEvaluated = props.every((p) => !!p.score);
   if (!allEvaluated) return "ai-eval";
-  const allClosed = props.every((p) => !!p.reviewClosedAt);
-  if (allClosed) return "tally"; // 별도 published 플래그 없으므로 tally 로.
-  return "human-review";
+  const closedCount = props.filter((p) => !!p.reviewClosedAt).length;
+  if (closedCount === props.length) return "published"; // 모두 종료 → 공개
+  if (closedCount > 0) return "tally"; // 일부만 종료 → 집계 진행 중
+  return "human-review"; // 검토 종료 0건 → 인간 심사 단계
 }
 
 // uuid v4 모양인지 — DB 조회를 시도할지 결정.
@@ -51,11 +62,28 @@ async function loadCompetition(id: string): Promise<{
   isOwner: boolean;
   isMock: boolean;
   rubricError: string | null;
+  /** 본인이 이 대회의 심사위원으로 등록되어 있는지 (owner 자동 등록 포함). */
+  isJudge: boolean;
+  /** 본인이 아직 평가 안 했고 분쟁 axis 0개인 출품 id 들 — 일괄 동의 대상. */
+  bulkAcceptIds: string[];
+  /** organizer 가 일괄 검토 종료 가능한 출품 id 들 — 모든 위원 제출 + 분쟁 0. */
+  bulkCloseIds: string[];
+  /** 본인의 proposal_review 상태 — 리더보드 행 status 칩 분기. */
+  myReviewStatusByProposal: Record<string, "submitted" | "draft">;
 }> {
   // demo mock id 는 DB 조회 안 하고 바로 mock.
   if (!looksLikeUuid(id)) {
     const mock = findCompetition(id);
-    return { competition: mock, isOwner: false, isMock: !!mock, rubricError: null };
+    return {
+      competition: mock,
+      isOwner: false,
+      isMock: !!mock,
+      rubricError: null,
+      isJudge: false,
+      bulkAcceptIds: [],
+      bulkCloseIds: [],
+      myReviewStatusByProposal: {},
+    };
   }
 
   const supabase = await createClient();
@@ -64,7 +92,18 @@ async function loadCompetition(id: string): Promise<{
     .select("*")
     .eq("id", id)
     .single();
-  if (!comp) return { competition: null, isOwner: false, isMock: false, rubricError: null };
+  if (!comp) {
+    return {
+      competition: null,
+      isOwner: false,
+      isMock: false,
+      rubricError: null,
+      isJudge: false,
+      bulkAcceptIds: [],
+      bulkCloseIds: [],
+      myReviewStatusByProposal: {},
+    };
+  }
 
   const { data: propRows } = await supabase
     .from("proposals")
@@ -75,13 +114,112 @@ async function loadCompetition(id: string): Promise<{
   const proposals = ((propRows ?? []) as ProposalRow[]).map((r) => rowToProposal(r));
   const competition = rowToCompetition(comp as CompetitionRow, proposals);
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const isOwner = !!user && user.id === (comp as CompetitionRow).user_id;
+
+  // 본인이 심사위원인지 + 본인의 기존 review 목록 — 일괄 동의 대상 계산.
+  let isJudge = false;
+  let bulkAcceptIds: string[] = [];
+  // 본인의 review 상태 map — 리더보드 행 status 칩에 활용.
+  // "심사 중" 이 본인이 평가했는지와 무관하게 떴던 문제를 해결하기 위함.
+  const myReviewStatusByProposal: Record<string, "submitted" | "draft"> = {};
+  if (user) {
+    const [{ data: judgeRow }, { data: myReviewRows }] = await Promise.all([
+      supabase
+        .from("competition_judges")
+        .select("judge_id")
+        .eq("competition_id", id)
+        .eq("judge_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("proposal_reviews")
+        .select("proposal_id,status")
+        .eq("judge_id", user.id)
+        .in("proposal_id", proposals.map((p) => p.id)),
+    ]);
+    isJudge = !!judgeRow;
+
+    // 본인 review status map 구성 — submitted / draft.
+    for (const r of (myReviewRows ?? []) as Array<{
+      proposal_id: string;
+      status: string;
+    }>) {
+      myReviewStatusByProposal[r.proposal_id] =
+        r.status === "submitted" ? "submitted" : "draft";
+    }
+
+    if (isJudge) {
+      // 이미 submitted 된 출품은 제외 (draft 는 다시 덮어써도 OK 하지만,
+      // 일괄 동의에서는 안전하게 review 자체가 아예 없는 출품만 대상).
+      const myReviewedIds = new Set(
+        (myReviewRows ?? []).map((r) => r.proposal_id as string)
+      );
+      bulkAcceptIds = proposals
+        .filter((p) => {
+          if (myReviewedIds.has(p.id)) return false;
+          if (p.reviewClosedAt) return false; // 검토 종료된 출품 제외
+          const axes = p.score?.axes ?? [];
+          if (axes.length === 0) return false; // AI 평가 미완료
+          const disputed = axes.filter((a) => a.needsReview).length;
+          return disputed === 0;
+        })
+        .map((p) => p.id);
+    }
+  }
+
+  // 운영자 전용: 일괄 검토 종료 대상 출품 ID 계산.
+  // 기준: organizer 본인 + 미종료 + 분쟁 axis 0 + 모든 배정 심사위원이 review submitted.
+  // (분쟁 있는 출품은 운영자가 개별 결정 후 종료 — 일괄에서 제외)
+  let bulkCloseIds: string[] = [];
+  if (isOwner && proposals.length > 0) {
+    const [{ data: allJudgeRows }, { data: allReviewRows }] = await Promise.all([
+      supabase
+        .from("competition_judges")
+        .select("judge_id")
+        .eq("competition_id", id),
+      supabase
+        .from("proposal_reviews")
+        .select("proposal_id,judge_id,status")
+        .in("proposal_id", proposals.map((p) => p.id))
+        .eq("status", "submitted"),
+    ]);
+    const judgeCount = (allJudgeRows ?? []).length;
+    const submittedByProposal = new Map<string, Set<string>>();
+    for (const r of (allReviewRows ?? []) as Array<{
+      proposal_id: string;
+      judge_id: string;
+    }>) {
+      const set = submittedByProposal.get(r.proposal_id) ?? new Set<string>();
+      set.add(r.judge_id);
+      submittedByProposal.set(r.proposal_id, set);
+    }
+    if (judgeCount > 0) {
+      bulkCloseIds = proposals
+        .filter((p) => {
+          if (p.reviewClosedAt) return false;
+          const axes = p.score?.axes ?? [];
+          if (axes.length === 0) return false;
+          const disputed = axes.filter((a) => a.needsReview).length;
+          if (disputed > 0) return false; // 분쟁 있으면 개별 결정 필요
+          const submittedCount =
+            submittedByProposal.get(p.id)?.size ?? 0;
+          return submittedCount >= judgeCount;
+        })
+        .map((p) => p.id);
+    }
+  }
+
   return {
     competition,
     isOwner,
     isMock: false,
     rubricError: (comp as CompetitionRow).rubric_error ?? null,
+    isJudge,
+    bulkAcceptIds,
+    bulkCloseIds,
+    myReviewStatusByProposal,
   };
 }
 
@@ -100,7 +238,15 @@ export default async function CompetitionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { competition, isMock, isOwner, rubricError } = await loadCompetition(id);
+  const {
+    competition,
+    isMock,
+    isOwner,
+    rubricError,
+    bulkAcceptIds,
+    bulkCloseIds,
+    myReviewStatusByProposal,
+  } = await loadCompetition(id);
   if (!competition) notFound();
 
   const { template, proposals } = competition;
@@ -178,6 +324,8 @@ export default async function CompetitionDetailPage({
               <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
               출품 제출
             </Link>
+            {/* 데모용 리셋 — organizer 본인만 노출. 시연/테스트 편의. */}
+            {isOwner && <DemoResetAction competitionId={competition.id} />}
           </div>
         )}
       </div>
@@ -200,6 +348,41 @@ export default async function CompetitionDetailPage({
 
       {/* 단계 스텝퍼 — 행정 시스템 표준 시그널 */}
       <StageStepper current={stage} />
+
+      {/* 공개 단계 + 운영자 → 결과 공개 페이지 안내. 모든 검토 종료 시에만 노출. */}
+      {!isMock && isOwner && stage === "published" && (
+        <div
+          className="flex items-center justify-between gap-3 px-4 py-3 mb-6 flex-wrap"
+          style={{
+            background: "var(--accent-soft)",
+            border: "1px solid var(--accent-ring)",
+            borderRadius: 2,
+          }}
+        >
+          <div className="flex items-start gap-2.5 min-w-0">
+            <Trophy
+              className="w-3.5 h-3.5 mt-0.5 shrink-0"
+              style={{ color: "var(--accent)" }}
+              strokeWidth={2.4}
+            />
+            <p
+              className="text-[12.5px] leading-[1.6]"
+              style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
+            >
+              모든 검토가 끝났습니다. 결과 페이지를 외부에 공유할 수 있습니다.
+            </p>
+          </div>
+          <Link
+            href={`/results/${competition.id}`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 px-3.5 h-9 text-[13px] font-medium text-white shrink-0 transition-[filter] hover:brightness-110"
+            style={{ background: "var(--accent)", borderRadius: 2 }}
+          >
+            <Trophy className="w-3.5 h-3.5" strokeWidth={2.4} />
+            결과 페이지 열기
+          </Link>
+        </div>
+      )}
 
       {/* Rubric 자동 생성 상태 — DB 대회만. mock 은 status 무관. */}
       {!isMock && (
@@ -319,6 +502,23 @@ export default async function CompetitionDetailPage({
           </p>
         </div>
 
+        {/* 본인이 심사위원이고 분쟁 0개 미평가 출품이 있으면 일괄 동의 액션 노출. */}
+        {!isMock && bulkAcceptIds.length > 0 && (
+          <BulkAcceptAction
+            competitionId={competition.id}
+            proposalIds={bulkAcceptIds}
+            criterionIds={template.criteria.map((c) => c.id)}
+          />
+        )}
+
+        {/* organizer 본인 + 모든 위원 제출 끝난 출품이 있으면 일괄 검토 종료 액션. */}
+        {!isMock && bulkCloseIds.length > 0 && (
+          <BulkCloseAction
+            competitionId={competition.id}
+            proposalIds={bulkCloseIds}
+          />
+        )}
+
         <div
           className="overflow-x-auto border"
           style={{
@@ -374,6 +574,8 @@ export default async function CompetitionDetailPage({
                   score?.axes.filter((a) => a.needsReview).length ?? 0;
                 const rank = i + 1;
                 const accent = rankAccent(rank);
+                const isClosed = !!p.reviewClosedAt;
+                const myStatus = myReviewStatusByProposal[p.id]; // submitted/draft/undefined
 
                 return (
                   <tr
@@ -398,38 +600,45 @@ export default async function CompetitionDetailPage({
                       </span>
                     </td>
 
-                    {/* 제안서 */}
+                    {/* 제안서 + 상태 칩 */}
                     <td className="py-4 pr-3">
                       <Link
                         href={`/competitions/${competition.id}/proposals/${p.id}`}
                         className="block group/link"
                       >
-                        <p
-                          className="ko-display text-[15px] font-bold leading-tight mb-0.5 group-hover/link:underline"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          {p.title}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <p
+                            className="ko-display text-[15px] font-bold leading-tight group-hover/link:underline"
+                            style={{ color: "var(--text-primary)" }}
+                          >
+                            {p.title}
+                          </p>
+                          {/* 검토 상태:
+                              - reviewClosedAt    → 검토 종료 (그린, 최우선)
+                              - 분쟁 axis ≥ 1     → 분쟁 N (주황)
+                              - 본인 review submitted → 내 평가 완료 (그린)
+                              - 본인 review draft     → 내 임시 저장 (액센트)
+                              - 그 외             → 미평가 (회색) */}
+                          {isClosed ? (
+                            <StatusChip label="검토 종료" tone="success" />
+                          ) : reviewCount > 0 ? (
+                            <StatusChip
+                              label={`분쟁 ${reviewCount}`}
+                              tone="attention"
+                            />
+                          ) : myStatus === "submitted" ? (
+                            <StatusChip label="내 평가 완료" tone="success" />
+                          ) : myStatus === "draft" ? (
+                            <StatusChip label="내 임시 저장" tone="accent" />
+                          ) : (
+                            <StatusChip label="미평가" tone="neutral" />
+                          )}
+                        </div>
                         <p
                           className="text-[12.5px]"
                           style={{ color: "var(--text-tertiary)" }}
                         >
                           {p.team}
-                          {reviewCount > 0 && (
-                            <>
-                              <span className="mx-2" aria-hidden style={{ color: "var(--t-border-bright)" }}>
-                                ·
-                              </span>
-                              <span
-                                style={{
-                                  color: "var(--signal-attention)",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {reviewCount}개 항목 검토 권고
-                              </span>
-                            </>
-                          )}
                         </p>
                       </Link>
                     </td>
@@ -627,6 +836,41 @@ function MetaCell({
         </p>
       )}
     </div>
+  );
+}
+
+// 리더보드 행의 검토 상태 칩.
+function StatusChip({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "success" | "attention" | "accent" | "neutral";
+}) {
+  const color =
+    tone === "success"
+      ? "var(--signal-success)"
+      : tone === "attention"
+      ? "var(--signal-attention)"
+      : tone === "accent"
+      ? "var(--accent)"
+      : "var(--text-tertiary)";
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap"
+      style={{
+        color,
+        border: `1px solid ${color}33`,
+        borderRadius: 2,
+      }}
+    >
+      <span
+        aria-hidden
+        className="inline-block w-1.5 h-1.5 rounded-full"
+        style={{ background: color }}
+      />
+      {label}
+    </span>
   );
 }
 

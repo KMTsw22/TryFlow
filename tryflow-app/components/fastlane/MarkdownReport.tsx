@@ -15,9 +15,23 @@ import React from "react";
 
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
-export function MarkdownReport({ source }: { source: string }) {
+export function MarkdownReport({
+  source,
+  verdictOnly = false,
+}: {
+  source: string;
+  /**
+   * true 면 verdict(종합 평가) 톤 섹션만 렌더.
+   * 핵심 강점/보완 리스크/축 통찰 같은 디테일은 각 axis 의 axisMarkdown 에서
+   * "심층 분석 보기" 로 접근하므로, 출품 상세 화면에서는 중복 표시 회피.
+   */
+  verdictOnly?: boolean;
+}) {
   const blocks = parseBlocks(source.replace(/\r\n/g, "\n"));
-  const sections = groupIntoSections(blocks);
+  const allSections = groupIntoSections(blocks);
+  const sections = verdictOnly
+    ? allSections.filter((s) => s.tone === "verdict")
+    : allSections;
 
   // 섹션 묶음 — 인접한 success+warning(또는 warning+success) 페어는 좌·우 row 로
   // 묶고, 그 외(verdict / neutral 등) 는 풀폭 단독 행으로. "긍정 vs 부정" 이 한

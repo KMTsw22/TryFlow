@@ -23,6 +23,7 @@ import {
 import { BUILTIN_TEMPLATE, TEMPLATES_BY_TYPE } from "@/lib/fastlane/mock";
 import type { CompetitionType, Criterion } from "@/lib/fastlane/types";
 import { COMPETITION_TYPE_LABELS } from "@/lib/fastlane/types";
+import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ui/Toast";
 
 // 2026-05 피벗: 대회 종류 선택지.
@@ -87,6 +88,9 @@ export default function NewCompetitionPage() {
   const [organizer, setOrganizer] = useState("");
   const [theme, setTheme] = useState("");
   const [deadline, setDeadline] = useState(defaultDeadline());
+  // 운영자 본인이 심사위원으로도 참여할지 — trigger 가 항상 등록하므로,
+  // false 면 대회 생성 직후 본인 judge 행을 제거한다.
+  const [ownerAsJudge, setOwnerAsJudge] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   // 대회 종류 — 피벗 후 필수 선택. 종류에 따라 사용 가능한 preset 이 달라짐.
   // "general" 은 프리셋 없는 자유 주제. null 은 아직 미선택.
@@ -200,8 +204,31 @@ export default function NewCompetitionPage() {
         return;
       }
 
-      toast({ message: "대회가 생성되었습니다.", tone: "success" });
       const newId = data?.competition?.id;
+
+      // 운영자 본인 참여 해제 시 — trigger 가 등록한 본인 judge 행을 제거.
+      // RLS 의 "organizer manages own competition judges" for all 정책이
+      // 허용. 실패해도 대회 생성 자체는 성공이라 사용자에게 알리고 진행.
+      if (newId && !ownerAsJudge) {
+        try {
+          const supabase = createClient();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from("competition_judges")
+              .delete()
+              .eq("competition_id", newId)
+              .eq("judge_id", user.id);
+          }
+        } catch (err) {
+          console.error("remove owner from judges failed", err);
+          // 사용자에게는 알리지 않음 — 대회 생성 자체는 성공.
+        }
+      }
+
+      toast({ message: "대회가 생성되었습니다.", tone: "success" });
       router.push(newId ? `/competitions/${newId}` : "/competitions");
       router.refresh();
     } catch (err) {
@@ -213,7 +240,8 @@ export default function NewCompetitionPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-8 pt-10 pb-24">
+    // 다른 운영 페이지(내 대회 / AI 분쟁 항목)와 동일한 폭.
+    <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
       <Link
         href="/competitions"
         className="inline-flex items-center gap-1.5 text-[12.5px] font-medium mb-10 transition-colors hover:text-[color:var(--text-primary)]"
@@ -261,7 +289,7 @@ export default function NewCompetitionPage() {
             게임 대회는 9축 preset (재미·게임 디자인·혁신성·스토리·분위기·테마·범위·QA·시장성)
             을 즉시 불러올 수 있습니다.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             {COMPETITION_TYPES.map((t) => {
               const selected = competitionType === t.value;
               return (
@@ -315,9 +343,9 @@ export default function NewCompetitionPage() {
           </div>
         </Section>
 
-        {/* 01 — 대회 정보 */}
+        {/* 01 — 대회 정보. 3열(대회명/주최/마감) + 주제·도메인 full-span + 운영자 참여 옵션. */}
         <Section step="01" title="대회 정보">
-          <FieldStack>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
             <Field label="대회명" required>
               <BareInput
                 value={name}
@@ -331,25 +359,6 @@ export default function NewCompetitionPage() {
                 onChange={(e) => setOrganizer(e.target.value)}
                 placeholder="예: 중소벤처기업부 · 창업진흥원"
               />
-            </Field>
-            <Field
-              label="주제 / 도메인"
-              required
-              hint="rubric 자동 생성에 사용"
-            >
-              <BareInput
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                placeholder="예: 환경 사진 공모전, 청소년 단편소설, 고등 화학 경진대회, 핀테크 SaaS"
-              />
-              <p
-                className="mt-2 text-[11.5px] leading-[1.65]"
-                style={{ color: "var(--text-tertiary)" }}
-              >
-                창업·미술·사진·글쓰기·과학·디자인·해커톤 등 어떤 분야든 OK. 구체적일수록
-                도메인 특화된 rubric이 생성됩니다 — "헬스케어" 보다는 "헬스케어 - 만성질환
-                환자 모니터링", "그림" 보다는 "수채화 풍경 공모전 - 도시" 처럼.
-              </p>
             </Field>
             <Field label="제출 마감" required>
               <input
@@ -365,7 +374,72 @@ export default function NewCompetitionPage() {
                 }}
               />
             </Field>
-          </FieldStack>
+            <div className="md:col-span-3">
+              <Field
+                label="주제 / 도메인"
+                required
+                hint="rubric 자동 생성에 사용"
+              >
+                <BareInput
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  placeholder="예: 환경 사진 공모전, 청소년 단편소설, 고등 화학 경진대회, 핀테크 SaaS"
+                />
+                <p
+                  className="mt-2 text-[11.5px] leading-[1.65]"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  창업·미술·사진·글쓰기·과학·디자인·해커톤 등 어떤 분야든 OK.
+                  구체적일수록 도메인 특화된 rubric이 생성됩니다 — "헬스케어"
+                  보다는 "헬스케어 - 만성질환 환자 모니터링", "그림" 보다는
+                  "수채화 풍경 공모전 - 도시" 처럼.
+                </p>
+              </Field>
+            </div>
+
+            {/* 운영자 본인 참여 — 체크 시 자동으로 본인이 심사위원으로 등록.
+                해제 시 trigger 가 등록한 본인 행을 대회 생성 직후 제거.
+                기본 켜짐 (보통 본인 대회는 본인도 채점하는 게 자연스러움). */}
+            <div className="md:col-span-3">
+              <label
+                className="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-[color:var(--surface-2)]"
+                style={{
+                  background: "var(--surface-1)",
+                  border: "1px solid var(--t-border-subtle)",
+                  borderRadius: 2,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={ownerAsJudge}
+                  onChange={(e) => setOwnerAsJudge(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-[color:var(--accent)] cursor-pointer"
+                />
+                <span className="min-w-0">
+                  <span
+                    className="block text-[13.5px] font-semibold mb-0.5"
+                    style={{
+                      color: "var(--text-primary)",
+                      letterSpacing: "-0.003em",
+                    }}
+                  >
+                    나도 이 대회의 심사위원으로 참여
+                  </span>
+                  <span
+                    className="block text-[12px] leading-[1.6]"
+                    style={{
+                      color: "var(--text-tertiary)",
+                      wordBreak: "keep-all",
+                    }}
+                  >
+                    체크 시 본인이 자동으로 심사위원에 등록되어 출품을 평가할
+                    수 있습니다. 해제 시 운영만 담당하고 심사는 초대한 위원들이
+                    진행합니다 (이후에도 언제든 변경 가능).
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
         </Section>
 
         {/* 02 — 평가 항목 */}
@@ -665,10 +739,6 @@ function Section({
       {children}
     </section>
   );
-}
-
-function FieldStack({ children }: { children: React.ReactNode }) {
-  return <div className="space-y-6">{children}</div>;
 }
 
 function Field({
