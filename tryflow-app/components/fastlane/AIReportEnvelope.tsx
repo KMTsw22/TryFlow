@@ -41,15 +41,22 @@ export function AIReportEnvelope({
   const ts = formatDateTime(generatedAt ?? undefined);
 
   return (
-    <section className="mb-14">
-      {/* 봉투 헤더 — 회색 sans 톤. 명확히 "AI 산출물" 신호. */}
+    <section
+      className="mb-14"
+      style={{
+        // 봉투 전체에 미세한 그림자 — 운영 페이지의 평면 위에 "문서 한 장"
+        // 이 놓인 느낌. 시각적으로 깊이 분리.
+        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.04)) drop-shadow(0 8px 24px rgba(0,0,0,0.06))",
+      }}
+    >
+      {/* 봉투 헤더 — 봉투 입구 톤. 명확히 "AI 산출물" 신호. */}
       <div
         className="flex flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3"
         style={{
-          background: "var(--surface-2)",
-          border: "1px solid var(--t-border)",
+          background: "var(--envelope-header)",
+          border: "1px solid var(--envelope-border)",
           borderBottom: "none",
-          borderRadius: "2px 2px 0 0",
+          borderRadius: "6px 6px 0 0",
         }}
       >
         <span
@@ -79,13 +86,14 @@ export function AIReportEnvelope({
         </span>
       </div>
 
-      {/* 봉투 본문 — 흰 종이. 안에서는 에디토리얼 톤(serif/큰숫자/▲▼) 자유. */}
+      {/* 봉투 본문 — 따뜻한 종이 톤. 운영 표(surface-1 흰색)와 시각 분리.
+          안에서는 에디토리얼 톤(serif/큰숫자/인용구) 자유. */}
       <div
         className="px-7 py-8 sm:px-10 sm:py-10"
         style={{
-          background: "var(--surface-1)",
-          border: "1px solid var(--t-border)",
-          borderRadius: "0 0 2px 2px",
+          background: "var(--envelope-bg)",
+          border: "1px solid var(--envelope-border)",
+          borderRadius: "0 0 6px 6px",
         }}
       >
         {children}

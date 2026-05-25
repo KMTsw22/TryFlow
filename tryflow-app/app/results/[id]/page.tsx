@@ -195,55 +195,90 @@ export default async function PublicResultsPage({
         </div>
       </header>
 
-      <main className="max-w-[1100px] mx-auto px-8 pt-10 pb-20">
-        {/* 헤더 */}
-        <div className="mb-8">
+      <main className="max-w-[1100px] mx-auto px-8 pt-14 pb-20">
+        {/* Hero — 공식 결과 발표 톤. 운영 대시보드와 시각 분리.
+            가운데 정렬, 큰 제목, 메타는 3 카드 그리드. */}
+        <div className="text-center mb-12">
           <p
-            className="text-[12px] mb-2 inline-flex items-center gap-1.5"
-            style={{ color: "var(--text-tertiary)" }}
+            className="text-[11px] mb-3 inline-flex items-center gap-1.5 font-bold uppercase"
+            style={{
+              color: "var(--accent)",
+              letterSpacing: "0.18em",
+            }}
           >
-            <Trophy className="w-3 h-3" strokeWidth={2.2} />
-            결과 공개
+            <Trophy className="w-3.5 h-3.5" strokeWidth={2.2} />
+            공식 결과 발표
           </p>
           <h1
-            className="font-semibold"
+            className="font-bold mx-auto"
             style={{
-              fontSize: "clamp(22px, 2.4vw, 28px)",
-              lineHeight: 1.3,
-              letterSpacing: "-0.01em",
+              fontSize: "clamp(28px, 4vw, 44px)",
+              lineHeight: 1.2,
+              letterSpacing: "-0.02em",
               color: "var(--text-primary)",
+              wordBreak: "keep-all",
+              maxWidth: "880px",
             }}
           >
             {competition.name}
           </h1>
-          <div
-            className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[12px] mt-2"
-            style={{ color: "var(--text-tertiary)" }}
-          >
-            <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
-              {competition.organizer}
-            </span>
-            {competition.theme && (
-              <>
-                <span style={{ color: "var(--t-border-bright)" }}>·</span>
-                <span>{competition.theme}</span>
-              </>
-            )}
-            <span style={{ color: "var(--t-border-bright)" }}>·</span>
-            <span>
-              출품{" "}
-              <strong
-                className="tabular-nums"
-                style={{ color: "var(--text-secondary)", fontWeight: 600 }}
-              >
-                {totalProposals}
-              </strong>
-              건
-            </span>
-            <span style={{ color: "var(--t-border-bright)" }}>·</span>
-            <span className="tabular-nums">결과 확정 {formatDate(publishedAt)}</span>
+          {competition.theme && (
+            <p
+              className="mt-3 text-[15px]"
+              style={{
+                color: "var(--text-secondary)",
+                fontFamily: "'Fraunces', serif",
+                fontStyle: "italic",
+              }}
+            >
+              {competition.theme}
+            </p>
+          )}
+
+          {/* 발표 메타 카드 — 주최 / 출품 / 확정일 3개 등분. */}
+          <div className="mt-10 grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <MetaCard label="주최" value={competition.organizer} />
+            <MetaCard
+              label="출품"
+              value={
+                <span className="tabular-nums">
+                  {totalProposals}
+                  <span
+                    className="text-[12px] ml-0.5"
+                    style={{ color: "var(--text-tertiary)" }}
+                  >
+                    건
+                  </span>
+                </span>
+              }
+            />
+            <MetaCard label="결과 확정" value={formatDate(publishedAt)} />
           </div>
         </div>
+
+        {/* Top 3 Podium — 1·2·3등을 큰 카드로 강조. 4위 이하는 표. */}
+        {ranked.length > 0 && (
+          <section className="mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 0, 2]
+                .filter((idx) => ranked[idx])
+                .map((idx) => {
+                  const p = ranked[idx];
+                  const folded = foldedByProposal.get(p.id);
+                  const rank = idx + 1;
+                  return (
+                    <PodiumCard
+                      key={p.id}
+                      rank={rank}
+                      title={p.title}
+                      team={p.team}
+                      composite={folded?.composite ?? null}
+                    />
+                  );
+                })}
+            </div>
+          </section>
+        )}
 
         {/* 리더보드 */}
         <section>
@@ -412,29 +447,174 @@ export default async function PublicResultsPage({
           </div>
         </section>
 
-        {/* 주석 — 결과 산출 방식 */}
-        <p
-          className="text-[11px] mt-5"
-          style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
+        {/* 결과 산출 방식 안내 — 발표회 footer 톤. */}
+        <section
+          className="mt-12 pt-8"
+          style={{ borderTop: "1px solid var(--t-border)" }}
         >
-          AI 1차 평가(3-Pass: Draft·Skeptic·Judge)와 심사위원 검토를 거쳐 확정된
-          결과입니다. 분쟁이 있던 항목은 심사위원의 결정으로 마무리되었습니다.
-        </p>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-start">
+            <div>
+              <p
+                className="text-[11px] mb-2 font-bold uppercase"
+                style={{
+                  color: "var(--text-tertiary)",
+                  letterSpacing: "0.14em",
+                }}
+              >
+                결과 산출 방식
+              </p>
+              <p
+                className="text-[13px] leading-[1.7] max-w-xl"
+                style={{
+                  color: "var(--text-secondary)",
+                  wordBreak: "keep-all",
+                }}
+              >
+                AI 1차 평가(3-Pass: Draft·Skeptic·Judge)로 모든 출품을 같은 기준으로
+                채점한 뒤, 심사위원 검토를 거쳐 확정된 결과입니다. 표 안의 점수 옆에
+                <span style={{ color: "var(--accent)", fontWeight: 600 }}>{" *"}</span>
+                {" "}표시가 있는 항목은 심사위원이 직접 검토한 항목입니다.
+              </p>
+            </div>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-4 h-9 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)] shrink-0"
+              style={{
+                border: "1px solid var(--t-input-border)",
+                color: "var(--text-primary)",
+                borderRadius: 2,
+              }}
+            >
+              Fastlane 알아보기 →
+            </Link>
+          </div>
 
-        <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 px-4 h-9 text-[13px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
-            style={{
-              border: "1px solid var(--t-input-border)",
-              color: "var(--text-primary)",
-              borderRadius: 2,
-            }}
+          {/* "Fastlane 으로 운영됨" 발표회 signature */}
+          <div
+            className="mt-8 flex items-center justify-center gap-2 text-[11px]"
+            style={{ color: "var(--text-tertiary)" }}
           >
-            Fastlane 알아보기 →
-          </Link>
-        </div>
+            <span>이 결과는</span>
+            <Brand size="sm" />
+            <span>으로 운영되었습니다 · {formatDate(publishedAt)} 확정</span>
+          </div>
+        </section>
       </main>
+    </div>
+  );
+}
+
+// 발표 메타 카드 — 주최/출품/확정일 같은 핵심 메타를 등분 강조.
+function MetaCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div
+      className="px-4 py-4 text-center"
+      style={{
+        background: "var(--surface-1)",
+        border: "1px solid var(--t-border)",
+        borderRadius: 4,
+      }}
+    >
+      <p
+        className="text-[11px] mb-1.5 font-bold uppercase"
+        style={{
+          color: "var(--text-tertiary)",
+          letterSpacing: "0.14em",
+        }}
+      >
+        {label}
+      </p>
+      <p
+        className="text-[15px] font-semibold"
+        style={{ color: "var(--text-primary)", wordBreak: "keep-all" }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+// Top 3 podium 카드 — 1·2·3등을 큰 카드로 강조. 1등은 가운데, 2·3은 양옆.
+function PodiumCard({
+  rank,
+  title,
+  team,
+  composite,
+}: {
+  rank: number;
+  title: string;
+  team: string;
+  composite: number | null;
+}) {
+  const accent =
+    rank === 1
+      ? { bg: "rgba(184, 134, 11, 0.10)", border: "var(--rank-gold)", fg: "var(--rank-gold)", label: "1등" }
+      : rank === 2
+      ? { bg: "rgba(113, 113, 122, 0.08)", border: "var(--rank-silver)", fg: "var(--rank-silver)", label: "2등" }
+      : { bg: "rgba(161, 98, 7, 0.08)", border: "var(--rank-bronze)", fg: "var(--rank-bronze)", label: "3등" };
+
+  return (
+    <div
+      className="px-6 py-7 text-center flex flex-col items-center"
+      style={{
+        background: accent.bg,
+        border: `1.5px solid ${accent.border}`,
+        borderRadius: 6,
+        minHeight: rank === 1 ? 240 : 220,
+        transform: rank === 1 ? undefined : "translateY(12px)",
+      }}
+    >
+      <span
+        className="inline-flex items-center justify-center w-9 h-9 text-[13px] font-bold mb-3"
+        style={{
+          background: accent.fg,
+          color: "#fff",
+          borderRadius: 999,
+          letterSpacing: "0.02em",
+        }}
+      >
+        {accent.label}
+      </span>
+      <p
+        className="font-bold mb-1 leading-tight"
+        style={{
+          color: "var(--text-primary)",
+          fontSize: rank === 1 ? "18px" : "16px",
+          wordBreak: "keep-all",
+          fontFamily: "'Fraunces', serif",
+        }}
+      >
+        {title}
+      </p>
+      <p
+        className="text-[12px] mb-4"
+        style={{ color: "var(--text-tertiary)" }}
+      >
+        {team}
+      </p>
+      <span
+        className="tabular-nums font-bold mt-auto"
+        style={{
+          fontSize: rank === 1 ? "44px" : "36px",
+          lineHeight: 1,
+          color: accent.fg,
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {composite ?? "—"}
+      </span>
+      <span
+        className="text-[11px] mt-1"
+        style={{ color: "var(--text-tertiary)" }}
+      >
+        / 100
+      </span>
     </div>
   );
 }

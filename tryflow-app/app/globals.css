@@ -79,6 +79,14 @@
     --rank-gold:   #b8860b;
     --rank-silver: #71717a;
     --rank-bronze: #a16207;
+
+    /* ── AI 봉투(envelope) 톤 — 운영 페이지와 시각 분리 ──────
+       운영 페이지는 surface-1 흰 종이, 봉투 안은 살짝 따뜻한 종이 톤.
+       문서를 "받아 든" 느낌을 위해 미세한 그림자 + 살짝 둥근 모서리. */
+    --envelope-bg:     #FBFAF6;            /* 살짝 따뜻한 종이 */
+    --envelope-border: #E8E5DE;            /* 종이 가장자리 톤 */
+    --envelope-header: #F1EEE6;            /* 헤더 영역 — 봉투 입구 */
+    --envelope-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px -10px rgba(0,0,0,0.10);
   }
 
   html.dark {
@@ -130,6 +138,12 @@
     --rank-gold:   #d4a82a;
     --rank-silver: #a1a1aa;
     --rank-bronze: #c08552;
+
+    /* 봉투 — 다크 모드: 약간 따뜻한 머스타드 톤. */
+    --envelope-bg:     rgba(58, 53, 40, 0.45);
+    --envelope-border: rgba(212, 168, 42, 0.18);
+    --envelope-header: rgba(58, 53, 40, 0.70);
+    --envelope-shadow: 0 1px 2px rgba(0,0,0,0.30), 0 8px 24px -10px rgba(0,0,0,0.55);
   }
 
   * {
