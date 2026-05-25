@@ -32,6 +32,7 @@ import { EvaluationStatusCard } from "@/components/fastlane/EvaluationStatusCard
 import { MarkdownReport } from "@/components/fastlane/MarkdownReport";
 import { JudgeReviewSection } from "@/components/fastlane/JudgeReviewSection";
 import { AIReportEnvelope } from "@/components/fastlane/AIReportEnvelope";
+import { DeleteProposalButton } from "@/components/fastlane/DeleteProposalButton";
 
 function looksLikeUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -50,6 +51,10 @@ async function loadProposalContext(
   evaluatedAt: string | null;
   reportMd: string | null;
   axisReports: AxisReportsMap;
+  /** 현재 로그인 user.id — review prefill·삭제 권한 UI 분기에 사용. */
+  currentUserId: string | null;
+  /** organizer 본인 여부 — 출품 삭제 버튼 노출 조건. */
+  isOwner: boolean;
 } | null> {
   if (!looksLikeUuid(competitionId)) {
     const found = findProposal(competitionId, proposalId);
@@ -62,6 +67,8 @@ async function loadProposalContext(
       evaluatedAt: null,
       reportMd: null,
       axisReports: {},
+      currentUserId: null,
+      isOwner: false,
     };
   }
 
@@ -72,6 +79,9 @@ async function loadProposalContext(
     { data: judgeRows },
     { data: reviewRows },
     { data: disputeRows },
+    {
+      data: { user },
+    },
   ] = await Promise.all([
     supabase.from("competitions").select("*").eq("id", competitionId).single(),
     supabase
@@ -89,6 +99,7 @@ async function loadProposalContext(
       .from("proposal_dispute_resolutions")
       .select("*")
       .eq("proposal_id", proposalId),
+    supabase.auth.getUser(),
   ]);
   if (!compRow) return null;
   if (!propRow) return null;
@@ -130,6 +141,10 @@ async function loadProposalContext(
     }
   }
 
+  const currentUserId = user?.id ?? null;
+  const isOwner =
+    !!currentUserId && currentUserId === (compRow as CompetitionRow).user_id;
+
   return {
     competition,
     proposal,
@@ -143,6 +158,8 @@ async function loadProposalContext(
         ? row.evaluation_report_md
         : null,
     axisReports,
+    currentUserId,
+    isOwner,
   };
 }
 
@@ -189,6 +206,8 @@ export default async function ProposalDetailPage({
     evaluatedAt,
     reportMd,
     axisReports,
+    currentUserId,
+    isOwner,
   } = ctx;
   const score = proposal.score;
   const reviewAxes = score?.axes.filter((a) => a.needsReview) ?? [];
@@ -196,6 +215,11 @@ export default async function ProposalDetailPage({
   const judgeCount = competition.judges?.length ?? 0;
   const submittedReviews =
     proposal.judgeReviews?.filter((r) => r.status === "submitted").length ?? 0;
+
+  // 본인의 기존 review — MyReviewDraft 폼 prefill 용. 없으면 undefined.
+  const myExistingReview = currentUserId
+    ? proposal.judgeReviews?.find((r) => r.judgeId === currentUserId)
+    : undefined;
 
   return (
     <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
@@ -235,18 +259,27 @@ export default async function ProposalDetailPage({
           )}
         </div>
 
-        <h1
-          className="mb-2"
-          style={{
-            fontWeight: 600,
-            fontSize: "20px",
-            lineHeight: 1.3,
-            color: "var(--text-primary)",
-            letterSpacing: "-0.005em",
-          }}
-        >
-          {proposal.title}
-        </h1>
+        <div className="flex items-start gap-3 flex-wrap mb-2">
+          <h1
+            className="flex-1 min-w-0"
+            style={{
+              fontWeight: 600,
+              fontSize: "20px",
+              lineHeight: 1.3,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.005em",
+            }}
+          >
+            {proposal.title}
+          </h1>
+          {isOwner && (
+            <DeleteProposalButton
+              competitionId={competition.id}
+              proposalId={proposal.id}
+              proposalTitle={proposal.title}
+            />
+          )}
+        </div>
 
         {/* 인라인 메타 — 행정 시스템 식별 정보 */}
         <div
@@ -461,6 +494,7 @@ export default async function ProposalDetailPage({
             reviews={proposal.judgeReviews}
             initialResolutions={proposal.disputeResolutions}
             initialClosedAt={proposal.reviewClosedAt}
+            myExistingReview={myExistingReview}
           />
         </section>
       )}

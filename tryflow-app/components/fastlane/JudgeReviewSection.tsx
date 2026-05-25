@@ -52,6 +52,8 @@ interface Props {
   initialResolutions?: DisputeResolution[];
   /** DB 에서 로드한 검토 종료 시각 (없으면 undefined — 진행 중). */
   initialClosedAt?: string;
+  /** 본인의 기존 평가 — MyReviewDraft 폼 prefill 용. 없으면 빈 상태. */
+  myExistingReview?: JudgeReview;
 }
 
 /** uuid 형식만 진짜 API 호출. mock 데모 데이터는 client state 로만. */
@@ -67,6 +69,7 @@ export function JudgeReviewSection({
   reviews,
   initialResolutions = [],
   initialClosedAt,
+  myExistingReview,
 }: Props) {
   const router = useRouter();
   const usingBackend = isRealId(competitionId) && isRealId(proposalId);
@@ -312,6 +315,7 @@ export function JudgeReviewSection({
         competitionId={competitionId}
         proposalId={proposalId}
         usingBackend={usingBackend}
+        existingReview={myExistingReview}
       />
 
       {/* 검토 종료 영역 — 사람 합의 axis 수 / 격차 큰 axis 수 요약 + 종료 액션. */}
@@ -714,24 +718,52 @@ function OverallComments({ reviews }: { reviews: JudgeReview[] }) {
 //
 // usingBackend=true 이면 POST /api/.../reviews 로 서버에 저장 (upsert).
 // false 이면 console.log 만 (mock URL 로 들어온 데모 케이스).
+//
+// existingReview 가 있으면 폼을 그 값으로 채워두고 "이미 제출됨" 모드로 시작.
+// 사용자가 "수정하기" 누르면 편집 가능 상태로 전환되고 다시 제출하면 덮어쓰기.
 function MyReviewDraft({
   criteria,
   aiAxes,
   competitionId,
   proposalId,
   usingBackend,
+  existingReview,
 }: {
   criteria: Criterion[];
   aiAxes: AxisScore[];
   competitionId: string;
   proposalId: string;
   usingBackend: boolean;
+  existingReview?: JudgeReview;
 }) {
   const router = useRouter();
-  const [overrides, setOverrides] = useState<Record<string, number | undefined>>({});
-  const [comments, setComments] = useState<Record<string, string>>({});
-  const [overallComment, setOverallComment] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+
+  // 폼 초기값을 existingReview 기반으로 셋업. acceptedAi=true 이면 비워두고
+  // (placeholder=AI 점수), false 이면 본인의 overrideScore 를 prefill.
+  const initialOverrides: Record<string, number | undefined> = {};
+  const initialComments: Record<string, string> = {};
+  if (existingReview) {
+    for (const a of existingReview.axes) {
+      if (!a.acceptedAiScore && typeof a.overrideScore === "number") {
+        initialOverrides[a.criterionId] = a.overrideScore;
+      }
+      if (a.comment) initialComments[a.criterionId] = a.comment;
+    }
+  }
+
+  const [overrides, setOverrides] =
+    useState<Record<string, number | undefined>>(initialOverrides);
+  const [comments, setComments] = useState<Record<string, string>>(initialComments);
+  const [overallComment, setOverallComment] = useState(
+    existingReview?.overallComment ?? ""
+  );
+  // 이미 submitted 된 review 가 있으면 처음엔 잠겨있고 "수정하기" 버튼으로 풀림.
+  const [editing, setEditing] = useState(
+    !existingReview || existingReview.status !== "submitted"
+  );
+  const [submitted, setSubmitted] = useState(
+    existingReview?.status === "submitted"
+  );
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -770,6 +802,7 @@ function MyReviewDraft({
         overallComment,
       });
       setSubmitted(true);
+      setEditing(false);
       return;
     }
 
@@ -792,6 +825,7 @@ function MyReviewDraft({
         throw new Error(error ?? `HTTP ${res.status}`);
       }
       setSubmitted(true);
+      setEditing(false);
       router.refresh(); // 상위 페이지가 새 review 를 다시 로드하도록.
     } catch (err) {
       console.error("submit review failed", err);
@@ -826,16 +860,62 @@ function MyReviewDraft({
           />
           내 평가 작성
         </h3>
-        {/* mock 데모(competitionId 가 UUID 아님)에서만 "저장 안 됨" 경고. */}
-        {!usingBackend && (
-          <span
-            className="text-[10.5px] font-medium"
-            style={{ color: "var(--signal-attention)" }}
-          >
-            데모 — 저장 안 됨
-          </span>
-        )}
+        <div className="inline-flex items-center gap-2">
+          {/* mock 데모(competitionId 가 UUID 아님)에서만 "저장 안 됨" 경고. */}
+          {!usingBackend && (
+            <span
+              className="text-[10.5px] font-medium"
+              style={{ color: "var(--signal-attention)" }}
+            >
+              데모 — 저장 안 됨
+            </span>
+          )}
+          {/* 이미 제출된 평가가 있고 잠긴 상태 — "수정하기" 로 편집 모드 진입. */}
+          {existingReview?.status === "submitted" && !editing && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(true);
+                setSubmitted(false);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 h-7 text-[11.5px] font-medium transition-colors hover:bg-[color:var(--surface-2)]"
+              style={{
+                border: "1px solid var(--t-border-subtle)",
+                color: "var(--text-secondary)",
+                background: "var(--surface-1)",
+              }}
+            >
+              <Pencil className="w-3 h-3" strokeWidth={2.2} />
+              수정하기
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* 이미 제출된 평가 — 잠금 상태 안내. 수정하기 누르기 전까지 편집 불가. */}
+      {existingReview?.status === "submitted" && !editing && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 mb-4 text-[12px]"
+          style={{
+            background: "var(--accent-soft)",
+            border: "1px solid var(--accent-ring)",
+            borderRadius: 2,
+            color: "var(--text-secondary)",
+          }}
+        >
+          <Check
+            className="w-3.5 h-3.5"
+            style={{ color: "var(--signal-success)" }}
+            strokeWidth={2.4}
+          />
+          <span>
+            이미 평가를 제출하셨습니다
+            {existingReview.submittedAt &&
+              ` · ${new Date(existingReview.submittedAt).toLocaleString("ko-KR")}`}
+            . 수정하려면 우측 <strong>수정하기</strong> 버튼을 누르세요.
+          </span>
+        </div>
+      )}
       <p
         className="text-[12px] mb-4"
         style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
@@ -907,7 +987,7 @@ function MyReviewDraft({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting || submitted || hasAnyOverride}
+              disabled={submitting || !editing || hasAnyOverride}
               title={
                 hasAnyOverride
                   ? "입력한 점수가 있어 빠른 동의를 사용할 수 없습니다. 일반 제출 버튼을 사용하세요."
@@ -1003,7 +1083,7 @@ function MyReviewDraft({
                 value={myScore ?? ""}
                 onChange={(e) => setOverride(c.id, e.target.value)}
                 aria-label={`${c.name} 내 점수`}
-                disabled={submitted}
+                disabled={!editing}
                 className="w-20 px-2.5 h-9 text-[14px] font-semibold text-right tabular-nums outline-none disabled:opacity-60"
                 style={{
                   background: "var(--surface-2)",
@@ -1019,7 +1099,7 @@ function MyReviewDraft({
                   setComments((prev) => ({ ...prev, [c.id]: e.target.value }))
                 }
                 aria-label={`${c.name} 코멘트`}
-                disabled={submitted}
+                disabled={!editing}
                 className="w-full px-3 h-9 text-[12.5px] outline-none disabled:opacity-60"
                 style={{
                   background: "var(--surface-2)",
@@ -1043,7 +1123,7 @@ function MyReviewDraft({
         onChange={(e) => setOverallComment(e.target.value)}
         placeholder="이 출품에 대한 전반적인 의견을 짧게 적어주세요."
         rows={3}
-        disabled={submitted}
+        disabled={!editing}
         className="w-full px-3 py-2.5 text-[13px] leading-[1.6] outline-none mb-5 disabled:opacity-60 resize-none"
         style={{
           background: "var(--surface-2)",
@@ -1073,7 +1153,7 @@ function MyReviewDraft({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={submitted || submitting}
+          disabled={!editing || submitting}
           className="inline-flex items-center gap-2 px-5 h-10 text-[13px] font-semibold text-white transition-[filter] hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ background: "var(--accent)", letterSpacing: "0.01em" }}
         >
@@ -1082,10 +1162,15 @@ function MyReviewDraft({
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               저장 중…
             </>
-          ) : submitted ? (
+          ) : submitted && !editing ? (
             <>
               <Check className="w-3.5 h-3.5" strokeWidth={2.4} />
               제출됨{!usingBackend && " (데모)"}
+            </>
+          ) : existingReview?.status === "submitted" ? (
+            <>
+              <Send className="w-3.5 h-3.5" strokeWidth={2.2} />
+              수정 저장
             </>
           ) : (
             <>
