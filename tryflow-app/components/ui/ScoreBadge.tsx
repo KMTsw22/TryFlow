@@ -11,9 +11,10 @@ function resolveColor(score: number | null | undefined) {
   if (score === null || score === undefined) {
     return { hex: "#71717a", text: "text-zinc-600 dark:text-zinc-400" };
   }
+  // 점수는 양적 정보 — 빨강은 위험 액션 한정. 우수만 초록, 그 외는 회색 위계.
   if (score >= 70) return { hex: "#10b981", text: "text-emerald-600 dark:text-emerald-400" };
-  if (score >= 50) return { hex: "#f59e0b", text: "text-amber-600 dark:text-amber-400" };
-  return { hex: "#ef4444", text: "text-red-600 dark:text-red-400" };
+  if (score >= 50) return { hex: "#52525b", text: "text-zinc-700 dark:text-zinc-300" };
+  return { hex: "#a1a1aa", text: "text-zinc-500 dark:text-zinc-400" };
 }
 
 export function ScoreBadge({ score, size = "inline", className }: Props) {

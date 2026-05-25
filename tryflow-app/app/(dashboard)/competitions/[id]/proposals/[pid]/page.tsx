@@ -165,10 +165,12 @@ async function loadProposalContext(
   };
 }
 
+// 점수는 양적 정보지 위험 신호가 아니므로 빨강을 쓰지 않는다. 우수(75+)만
+// 초록으로 강조하고, 나머지는 회색 톤 안에서 진하기로 위계를 표현.
 function scoreColor(score: number) {
   if (score >= 75) return "var(--signal-success)";
-  if (score >= 55) return "var(--signal-warning)";
-  return "var(--signal-danger)";
+  if (score >= 55) return "var(--text-primary)";
+  return "var(--text-tertiary)";
 }
 
 function verdict(score: number): string {

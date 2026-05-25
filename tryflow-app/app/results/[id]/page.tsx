@@ -352,8 +352,8 @@ export default async function PublicResultsPage({
                               : composite >= 75
                               ? "var(--signal-success)"
                               : composite >= 55
-                              ? "var(--signal-warning)"
-                              : "var(--signal-danger)",
+                              ? "var(--text-primary)"
+                              : "var(--text-tertiary)",
                         }}
                       >
                         {composite ?? "—"}
