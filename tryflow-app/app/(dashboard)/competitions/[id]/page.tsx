@@ -15,13 +15,19 @@ import { createClient } from "@/lib/supabase/server";
 import {
   rowToCompetition,
   rowToDisputeResolution,
+  rowToJudgeReview,
   rowToProposal,
   type CompetitionRow,
   type DisputeResolutionRow,
   type ProposalRow,
+  type ProposalReviewRow,
 } from "@/lib/fastlane/db";
 import { foldFinalScore } from "@/lib/fastlane/score";
-import type { Competition, DisputeResolution } from "@/lib/fastlane/types";
+import type {
+  Competition,
+  DisputeResolution,
+  JudgeReview,
+} from "@/lib/fastlane/types";
 import { ScoreChip } from "@/components/fastlane/ScoreChip";
 import { FairnessBadge } from "@/components/fastlane/FairnessBadge";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
@@ -115,24 +121,40 @@ async function loadCompetition(id: string): Promise<{
 
   const propRowsTyped = (propRows ?? []) as ProposalRow[];
 
-  // 분쟁 결정을 함께 로드해 리더보드 점수에 폴드. 결정된 axis 가 있으면
-  // composite 가 그만큼 갱신되어 표시된다.
+  // 분쟁 결정·사람 평가를 함께 로드. score.ts 의 foldFinalScore 가
+  // (1) 분쟁 결정의 final_score, (2) 사람 합의(σ≤7) 의 평균 을 자동으로
+  // axis 점수에 폴드하기 위해 둘 다 필요.
   const proposalIds = propRowsTyped.map((r) => r.id);
-  let disputesByProposal = new Map<string, DisputeResolution[]>();
+  const disputesByProposal = new Map<string, DisputeResolution[]>();
+  const reviewsByProposal = new Map<string, JudgeReview[]>();
   if (proposalIds.length > 0) {
-    const { data: disputeRows } = await supabase
-      .from("proposal_dispute_resolutions")
-      .select("*")
-      .in("proposal_id", proposalIds);
+    const [{ data: disputeRows }, { data: reviewRows }] = await Promise.all([
+      supabase
+        .from("proposal_dispute_resolutions")
+        .select("*")
+        .in("proposal_id", proposalIds),
+      supabase
+        .from("proposal_reviews")
+        .select("*")
+        .in("proposal_id", proposalIds),
+    ]);
     for (const r of (disputeRows ?? []) as DisputeResolutionRow[]) {
       const list = disputesByProposal.get(r.proposal_id) ?? [];
       list.push(rowToDisputeResolution(r));
       disputesByProposal.set(r.proposal_id, list);
     }
+    for (const r of (reviewRows ?? []) as ProposalReviewRow[]) {
+      const list = reviewsByProposal.get(r.proposal_id) ?? [];
+      list.push(rowToJudgeReview(r));
+      reviewsByProposal.set(r.proposal_id, list);
+    }
   }
 
   const proposals = propRowsTyped.map((r) =>
-    rowToProposal(r, { disputeResolutions: disputesByProposal.get(r.id) })
+    rowToProposal(r, {
+      disputeResolutions: disputesByProposal.get(r.id),
+      judgeReviews: reviewsByProposal.get(r.id),
+    })
   );
   const competition = rowToCompetition(comp as CompetitionRow, proposals);
 
@@ -276,14 +298,19 @@ export default async function CompetitionDetailPage({
     (c) => !!c.rubricMd && c.rubricMd.trim().length > 0
   ).length;
 
-  // 분쟁 결정을 폴드한 최종 점수를 proposal.id 별로 미리 계산.
+  // 분쟁 결정 + 사람 합의(σ≤7) 자동 폴드를 반영한 최종 점수.
   // 리더보드 정렬·합산 표시 모두 이 값을 사용한다 (axis 셀도 동일).
   const foldedByProposal = new Map(
     proposals.map((p) => {
       if (!p.score) return [p.id, null] as const;
       return [
         p.id,
-        foldFinalScore(p.score, template.criteria, p.disputeResolutions ?? []),
+        foldFinalScore(
+          p.score,
+          template.criteria,
+          p.disputeResolutions ?? [],
+          p.judgeReviews ?? []
+        ),
       ] as const;
     })
   );
@@ -717,16 +744,26 @@ export default async function CompetitionDetailPage({
                           </td>
                         );
                       }
-                      const fromDispute = axis.source === "dispute";
+                      const resolved =
+                        axis.source === "dispute" ||
+                        axis.source === "human_consensus";
+                      const sourceTitle =
+                        axis.source === "dispute"
+                          ? "분쟁 결정으로 확정된 최종 점수"
+                          : axis.source === "human_consensus"
+                          ? "사람 합의 자동 채택 (σ ≤ 7)"
+                          : undefined;
+                      const sourceLabel =
+                        axis.source === "dispute"
+                          ? "확정"
+                          : axis.source === "human_consensus"
+                          ? "합의"
+                          : `σ ${axis.stddev.toFixed(1)}`;
                       return (
                         <td
                           key={c.id}
                           className="py-3 px-1 text-center align-middle"
-                          title={
-                            fromDispute
-                              ? "분쟁 결정으로 확정된 최종 점수"
-                              : undefined
-                          }
+                          title={sourceTitle}
                         >
                           <div className="flex flex-col items-center gap-0.5">
                             <ScoreChip
@@ -739,21 +776,19 @@ export default async function CompetitionDetailPage({
                               <span
                                 className="text-[10px] tabular-nums"
                                 style={{
-                                  color: fromDispute
+                                  color: resolved
                                     ? "var(--accent)"
                                     : axis.needsReview
                                     ? "var(--signal-attention)"
                                     : "var(--text-tertiary)",
                                   fontWeight:
-                                    fromDispute || axis.needsReview ? 600 : 500,
+                                    resolved || axis.needsReview ? 600 : 500,
                                   letterSpacing: "0.02em",
                                 }}
                               >
-                                {fromDispute
-                                  ? "확정"
-                                  : `σ ${axis.stddev.toFixed(1)}`}
+                                {sourceLabel}
                               </span>
-                              {!fromDispute && axis.needsReview && (
+                              {!resolved && axis.needsReview && (
                                 <FairnessBadge stddev={axis.stddev} compact />
                               )}
                             </div>

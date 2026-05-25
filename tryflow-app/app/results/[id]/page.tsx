@@ -16,13 +16,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   rowToCompetition,
   rowToDisputeResolution,
+  rowToJudgeReview,
   rowToProposal,
   type CompetitionRow,
   type DisputeResolutionRow,
   type ProposalRow,
+  type ProposalReviewRow,
 } from "@/lib/fastlane/db";
 import { foldFinalScore } from "@/lib/fastlane/score";
-import type { Competition, DisputeResolution } from "@/lib/fastlane/types";
+import type {
+  Competition,
+  DisputeResolution,
+  JudgeReview,
+} from "@/lib/fastlane/types";
 
 interface Loaded {
   competition: Competition;
@@ -56,23 +62,37 @@ async function loadPublicResults(id: string): Promise<Loaded | null> {
   const propRowsTyped = (propRows ?? []) as ProposalRow[];
   if (propRowsTyped.length === 0) return null;
 
-  // 분쟁 결정도 함께 가져와 axis 점수를 최종값으로 폴드한다.
-  // proposal_dispute_resolutions 의 final_score 가 있으면 그 값으로 axis 를 덮어쓰고
-  // composite 를 재계산.
+  // 분쟁 결정 + 사람 평가를 함께 가져온다. score.ts 의 foldFinalScore 가
+  // (1) 분쟁 final_score, (2) 사람 합의(σ≤7) 평균 을 axis 점수에 자동 폴드.
   const proposalIds = propRowsTyped.map((r) => r.id);
-  const { data: disputeRows } = await admin
-    .from("proposal_dispute_resolutions")
-    .select("*")
-    .in("proposal_id", proposalIds);
+  const [{ data: disputeRows }, { data: reviewRows }] = await Promise.all([
+    admin
+      .from("proposal_dispute_resolutions")
+      .select("*")
+      .in("proposal_id", proposalIds),
+    admin
+      .from("proposal_reviews")
+      .select("*")
+      .in("proposal_id", proposalIds),
+  ]);
   const disputesByProposal = new Map<string, DisputeResolution[]>();
+  const reviewsByProposal = new Map<string, JudgeReview[]>();
   for (const r of (disputeRows ?? []) as DisputeResolutionRow[]) {
     const list = disputesByProposal.get(r.proposal_id) ?? [];
     list.push(rowToDisputeResolution(r));
     disputesByProposal.set(r.proposal_id, list);
   }
+  for (const r of (reviewRows ?? []) as ProposalReviewRow[]) {
+    const list = reviewsByProposal.get(r.proposal_id) ?? [];
+    list.push(rowToJudgeReview(r));
+    reviewsByProposal.set(r.proposal_id, list);
+  }
 
   const proposals = propRowsTyped.map((r) =>
-    rowToProposal(r, { disputeResolutions: disputesByProposal.get(r.id) })
+    rowToProposal(r, {
+      disputeResolutions: disputesByProposal.get(r.id),
+      judgeReviews: reviewsByProposal.get(r.id),
+    })
   );
 
   // 모든 출품이 검토 종료된 경우만 공개. 한 건이라도 미종료면 결과 비공개.
@@ -125,14 +145,19 @@ export default async function PublicResultsPage({
   const { competition, publishedAt, totalProposals } = loaded;
   const { proposals, template } = competition;
 
-  // 분쟁 결정을 폴드한 최종 점수를 proposal.id 별로 미리 계산.
+  // 분쟁 결정 + 사람 합의(σ≤7) 자동 폴드를 반영한 최종 점수.
   // 이후 정렬과 표 표시 모두 이 값을 사용한다.
   const foldedByProposal = new Map(
     proposals.map((p) => {
       if (!p.score) return [p.id, null] as const;
       return [
         p.id,
-        foldFinalScore(p.score, template.criteria, p.disputeResolutions ?? []),
+        foldFinalScore(
+          p.score,
+          template.criteria,
+          p.disputeResolutions ?? [],
+          p.judgeReviews ?? []
+        ),
       ] as const;
     })
   );
@@ -337,7 +362,15 @@ export default async function PublicResultsPage({
                         const axis = folded?.axes.find(
                           (a) => a.criterionId === c.id
                         );
-                        const fromDispute = axis?.source === "dispute";
+                        const resolved =
+                          axis?.source === "dispute" ||
+                          axis?.source === "human_consensus";
+                        const title =
+                          axis?.source === "dispute"
+                            ? "분쟁 결정으로 확정된 최종 점수"
+                            : axis?.source === "human_consensus"
+                            ? "사람 합의 자동 채택 (σ ≤ 7)"
+                            : "AI 평가 결과";
                         return (
                           <td
                             key={c.id}
@@ -345,21 +378,17 @@ export default async function PublicResultsPage({
                           >
                             {axis ? (
                               <span
-                                title={
-                                  fromDispute
-                                    ? "분쟁 결정으로 확정된 최종 점수"
-                                    : "AI 평가 결과"
-                                }
+                                title={title}
                                 className="tabular-nums text-[13px]"
                                 style={{
-                                  color: fromDispute
+                                  color: resolved
                                     ? "var(--accent)"
                                     : "var(--text-primary)",
-                                  fontWeight: fromDispute ? 700 : 500,
+                                  fontWeight: resolved ? 700 : 500,
                                 }}
                               >
                                 {axis.mean}
-                                {fromDispute ? "*" : ""}
+                                {resolved ? "*" : ""}
                               </span>
                             ) : (
                               <span

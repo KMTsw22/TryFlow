@@ -37,13 +37,10 @@ import type {
   DisputeResolution,
   JudgeReview,
 } from "@/lib/fastlane/types";
+import { HUMAN_STDDEV_WARN } from "@/lib/fastlane/score";
 import { DisputeResolutionModal } from "./DisputeResolutionModal";
 
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
-
-// 다인 심사 합의의 분산 임계. 사람 점수 stddev 가 이 값을 넘으면 분쟁으로 본다.
-// AI 분산 임계(STDDEV_REVIEW_THRESHOLD=8)와 별도로 관리.
-const HUMAN_STDDEV_WARN = 7;
 
 interface Props {
   /** 백엔드 API 호출에 필요한 식별자. mock URL(=non-uuid) 이면 fetch 안 함. */
@@ -91,8 +88,41 @@ export function JudgeReviewSection({
   // 검토 종료 — initialClosedAt 이 있으면 그대로, 없으면 사용자가 버튼 클릭해서 종료.
   const [closedAt, setClosedAt] = useState<string | undefined>(initialClosedAt);
 
-  // 현재 결정 진척 — UI 모든 곳에서 같은 값 공유.
-  const decidedCount = resolutions.length;
+  // 현재 결정 진척 — 명시 결정(resolutions) + A안 자동 합의 카운트.
+  // 자동 합의 axis 는 별도 row 가 없어도 "결정 완료" 로 본다 (검토 종료 활성화용).
+  const submittedReviews = useMemo(
+    () => reviews.filter((r) => r.status === "submitted"),
+    [reviews]
+  );
+  const autoConsensusCount = useMemo(() => {
+    let cnt = 0;
+    for (const c of disputeAxes) {
+      // 이미 명시 결정된 axis 는 제외 (중복 카운트 방지).
+      if (resolutions.some((r) => r.criterionId === c.id)) continue;
+      const ai = aiAxes.find((a) => a.criterionId === c.id);
+      const aiMean = ai?.mean ?? 0;
+      const scores = submittedReviews
+        .map((r) => {
+          const a = r.axes.find((x) => x.criterionId === c.id);
+          if (!a) return null;
+          if (a.acceptedAiScore) return aiMean;
+          return a.overrideScore ?? null;
+        })
+        .filter((s): s is number => s !== null);
+      if (scores.length === 0) continue;
+      const m = scores.reduce((s, x) => s + x, 0) / scores.length;
+      const sd =
+        scores.length < 2
+          ? 0
+          : Math.sqrt(
+              scores.reduce((s, x) => s + (x - m) ** 2, 0) / scores.length
+            );
+      if (sd <= HUMAN_STDDEV_WARN) cnt += 1;
+    }
+    return cnt;
+  }, [disputeAxes, resolutions, aiAxes, submittedReviews]);
+
+  const decidedCount = resolutions.length + autoConsensusCount;
   const disputeCount = disputeAxes.length;
   const allDecided = disputeCount > 0 && decidedCount >= disputeCount;
   const reviewClosed = !!closedAt;
@@ -407,6 +437,40 @@ function ComparisonTable({
             const resolution = resolutions.find((r) => r.criterionId === c.id);
             const resolved = !!resolution;
 
+            // A안 자동 합의 — 분쟁이지만 submitted 평가자 ≥ 1, 사람 σ ≤ 7 이면
+            // 사람 평균이 자동 채택되어 별도 결정이 필요 없다.
+            // (score.ts 의 foldFinalScore 와 동일한 규칙.)
+            const submittedHumanScores = reviews
+              .filter((r) => r.status === "submitted")
+              .map((r) => {
+                const review = r.axes.find((a) => a.criterionId === c.id);
+                if (!review) return null;
+                if (review.acceptedAiScore) return ai?.mean ?? null;
+                return review.overrideScore ?? null;
+              })
+              .filter((s): s is number => s !== null);
+            const submittedMean =
+              submittedHumanScores.length === 0
+                ? null
+                : Math.round(
+                    submittedHumanScores.reduce((s, x) => s + x, 0) /
+                      submittedHumanScores.length
+                  );
+            const submittedStddev =
+              submittedHumanScores.length < 2
+                ? 0
+                : Math.sqrt(
+                    submittedHumanScores.reduce(
+                      (s, x) => s + (x - (submittedMean ?? 0)) ** 2,
+                      0
+                    ) / submittedHumanScores.length
+                  );
+            const autoConsensus =
+              !resolved &&
+              isDispute &&
+              submittedHumanScores.length >= 1 &&
+              submittedStddev <= HUMAN_STDDEV_WARN;
+
             // 행 배경: 결정 안 된 분쟁만 강조. 결정 끝났으면 차분하게.
             const rowBg = isDispute
               ? resolved
@@ -511,6 +575,9 @@ function ComparisonTable({
                   ) : resolved ? (
                     // 결정 완료 — 액션 + 최종 점수 + 결정자 inline 표시
                     <ResolvedBadge resolution={resolution!} />
+                  ) : autoConsensus ? (
+                    // A안 자동 합의 — 결정 모달 불필요. 사람 평균이 자동 final.
+                    <ConsensusBadge mean={submittedMean ?? 0} />
                   ) : (
                     <button
                       type="button"
@@ -561,6 +628,30 @@ function Th({
     >
       {children}
     </th>
+  );
+}
+
+// A안 자동 합의 — 사람 σ ≤ 7 인 분쟁 axis 는 결정 버튼 없이 사람 평균이 자동
+// 최종 점수가 됨. 사용자가 "결정자" 가 필요 없도록 한 핵심 변경.
+function ConsensusBadge({ mean }: { mean: number }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold"
+      style={{
+        background: "var(--surface-2)",
+        border: "1px solid var(--t-border-subtle)",
+        color: "var(--signal-success)",
+        letterSpacing: "0.02em",
+      }}
+      title="심사위원 σ ≤ 7 — 합의된 사람 평균이 자동으로 최종 점수가 됩니다."
+    >
+      <Check
+        className="w-3 h-3"
+        style={{ color: "var(--signal-success)" }}
+        strokeWidth={2.4}
+      />
+      합의 {mean}
+    </span>
   );
 }
 
