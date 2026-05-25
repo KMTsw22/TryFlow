@@ -365,14 +365,14 @@ export default async function PublicResultsPage({
                         const resolved =
                           axis?.source === "dispute" ||
                           axis?.source === "human_consensus" ||
-                          axis?.source === "weak_override";
+                          axis?.source === "noisy_consensus";
                         const title =
                           axis?.source === "dispute"
                             ? "분쟁 결정으로 확정된 최종 점수"
                             : axis?.source === "human_consensus"
-                            ? "사람 합의 자동 채택 (σ ≤ 7)"
-                            : axis?.source === "weak_override"
-                            ? "심사위원이 조정 — 사람 평균 반영"
+                            ? "심사위원 평균 채택"
+                            : axis?.source === "noisy_consensus"
+                            ? `심사위원 평균 채택 — 격차 큼(σ ${axis.humanStddev.toFixed(1)})`
                             : "AI 평가 결과";
                         return (
                           <td

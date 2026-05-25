@@ -1,21 +1,14 @@
-// 분쟁 결정(DisputeResolution) + 사람 평가(JudgeReview) 결과를 AI axis 점수에
-// 폴드해 최종 composite 를 재계산하는 순수 함수. 출처 데이터는 그대로 두고
-// view-time 에 머지한다.
+// AI 점수 + 사람 평가(JudgeReview) + 분쟁 결정(DisputeResolution) 을 폴드해
+// 최종 composite 를 view-time 에 재계산하는 순수 함수.
 //
-// 폴드 규칙 (3분법) — 2026-05
-//   1) dispute resolution 에 final_score 있음          → source: "dispute"
-//   2) 분쟁 axis (AI needsReview OR 사람 σ > 7)
-//        - submitted 사람 ≥ 1, 사람 σ ≤ 7 → 사람 평균  → source: "human_consensus"
-//        - 그 외                            → AI mean   → source: "ai"
-//   3) 일반 axis 이지만 submitted 사람 중 override(acceptedAi=false)
-//      가 1명 이상 있음 → submitted 사람 평균          → source: "weak_override"
-//   4) 그 외 (사람 override 없음)              → AI mean → source: "ai"
+// 정책 (2026-05) — "AI 는 1차 도구, 사람이 final"
+//   1) 분쟁 결정 final_score 있음              → source: "dispute"  (감사 호환)
+//   2) submitted 사람 평가 ≥ 1, 사람 σ ≤ NOISY → 사람 평균          → "human_consensus"
+//   3) submitted 사람 평가 ≥ 1, 사람 σ > NOISY → 사람 평균 + 경고   → "noisy_consensus"
+//   4) submitted 사람 평가 0명                  → AI mean           → "ai"
 //
-// 의도:
-//   - 강한 분쟁: 사람들이 자동 합의 or 결정 모달
-//   - 약한 분쟁: 1명이라도 명시적으로 다르게 매기면 그 신호를 자동 반영.
-//     심사위원 시간을 존중하고, 별도 결정자 없이 시스템 신뢰 유지.
-//   - 무분쟁: 모두 AI 동의 → AI 그대로
+// 즉 "분쟁 결정 모달" 가정은 폐기. 심사위원이 점수만 제출하면 그게 final.
+// σ 가 매우 클 때(>20) 만 운영자에게 정보 표시(추가 평가 권고).
 
 import type {
   AxisReview,
@@ -26,46 +19,55 @@ import type {
   ProposalScore,
 } from "./types";
 
-/** 사람 점수 표준편차 임계 — 이 값을 넘으면 사람들도 갈렸다고 본다. */
+/**
+ * 사람 점수 σ 가 이 값을 넘으면 "격차 큰 axis" 로 보고 운영자에 경고 표시.
+ * 평균은 그대로 적용하되, 추가 평가자 초대 등 사람의 능동 액션을 권고하는 신호.
+ */
+export const NOISY_STDDEV_THRESHOLD = 20;
+
+/** 호환 — 이전 정책의 분쟁 임계. 현재는 사용 안 함. */
 export const HUMAN_STDDEV_WARN = 7;
 
 /**
  * axis 점수가 어떻게 결정됐는지 표시. UI 가 시각적 분기에 사용.
- *   - ai             : AI mean 그대로 (분쟁 없거나 사람이 모두 AI 동의)
- *   - weak_override  : 일반 axis 인데 사람 1명 이상이 override — 사람 평균 자동 반영
- *   - human_consensus: 분쟁 axis 였지만 사람 σ≤7 합의로 사람 평균 자동 채택
- *   - dispute        : 분쟁 결정 모달에서 명시적으로 결정됨
+ *   - ai              : 사람 평가 0명 — AI mean 그대로
+ *   - human_consensus : 사람 평가 1명+ σ≤20 — 사람 평균 채택
+ *   - noisy_consensus : 사람 평가 1명+ σ>20 — 사람 평균 채택하되 격차 경고
+ *   - dispute         : 분쟁 결정 모달의 명시 결정 (호환 — 기존 데이터)
  */
 export type AxisSource =
   | "ai"
-  | "weak_override"
   | "human_consensus"
+  | "noisy_consensus"
   | "dispute";
 
 export interface FoldedScore {
-  /** 분쟁 결정·사람 합의 반영된 가중 평균 점수 (정수 0~100). */
+  /** 사람 평가·분쟁 결정 반영된 가중 평균 점수 (정수 0~100). */
   composite: number;
-  /** axis 별로 머지된 점수 + 출처 표시. */
-  axes: Array<AxisScore & { resolved: boolean; source: AxisSource }>;
-  /** 자동 폴드 또는 수동 결정이 한 건이라도 반영됐는지 — UI 배지 분기용. */
+  /** axis 별로 머지된 점수 + 출처 + 사람 점수 σ. */
+  axes: Array<
+    AxisScore & {
+      resolved: boolean;
+      source: AxisSource;
+      /** 사람 점수 표준편차 — UI 경고 분기 용. 사람 평가 없으면 0. */
+      humanStddev: number;
+      /** 반영된 사람 평가자 수 (acceptedAi=true 포함). */
+      humanCount: number;
+    }
+  >;
+  /** 사람 평균이 반영된 axis 가 한 건이라도 있는지. */
   hasResolution: boolean;
+  /** σ>NOISY axis 수 — 운영자에게 한눈에 보여줄 경고 카운트. */
+  noisyCount: number;
 }
 
-/**
- * AI 점수 + 사람 평가 + 분쟁 결정 → 최종 composite.
- *
- * @param score        AI 의 ProposalScore (axes, composite 포함)
- * @param criteria     대회의 평가 항목들 (weight 가짐)
- * @param resolutions  분쟁 결정 기록들. 빈 배열이면 자동 폴드만 적용.
- * @param judgeReviews 사람 평가들. status=submitted 만 자동 폴드에 반영.
- */
 export function foldFinalScore(
   score: ProposalScore,
   criteria: Criterion[],
   resolutions: DisputeResolution[],
   judgeReviews: JudgeReview[] = []
 ): FoldedScore {
-  // criterionId → resolution(finalScore 있는 것만) 빠르게 조회.
+  // criterionId → 분쟁 결정 final_score 빠르게 조회.
   const finalByCriterion = new Map<string, number>();
   for (const r of resolutions) {
     if (typeof r.finalScore === "number" && Number.isFinite(r.finalScore)) {
@@ -73,12 +75,13 @@ export function foldFinalScore(
     }
   }
 
-  // submitted 평가만 사람 합의 자동 폴드에 반영. draft 는 임시저장이라 제외.
+  // submitted 만 반영. draft 는 임시 저장이라 제외.
   const submittedReviews = judgeReviews.filter((r) => r.status === "submitted");
 
-  // axis 머지.
+  let noisyCount = 0;
+
   const mergedAxes = score.axes.map((axis) => {
-    // (1) 수동 결정 우선.
+    // (1) 명시 분쟁 결정 — 호환을 위해 유지. 이전 정책에서 만든 row 가 있을 수 있음.
     const overridden = finalByCriterion.get(axis.criterionId);
     if (typeof overridden === "number") {
       return {
@@ -86,53 +89,39 @@ export function foldFinalScore(
         mean: overridden,
         resolved: true,
         source: "dispute" as const,
+        humanStddev: 0,
+        humanCount: 0,
       };
     }
 
-    // (2) 강한 분쟁 axis 이고 사람 합의 있으면 사람 평균 자동 채택.
-    const isDispute =
-      axis.needsReview || isHumanDisputed(axis, submittedReviews);
-    if (isDispute) {
-      const humanAgg = humanAggregate(
-        axis.criterionId,
-        axis.mean,
-        submittedReviews
-      );
-      if (humanAgg && humanAgg.stddev <= HUMAN_STDDEV_WARN) {
-        return {
-          ...axis,
-          mean: humanAgg.mean,
-          resolved: true,
-          source: "human_consensus" as const,
-        };
-      }
-      // 사람들끼리도 σ 가 크거나 평가자 0명 → AI mean 유지 (수동 결정 필요).
-      return { ...axis, resolved: false, source: "ai" as const };
+    // (2)(3) 사람 평가 ≥ 1명 → 사람 평균 채택. σ 가 크면 경고만.
+    const agg = humanAggregate(axis.criterionId, axis.mean, submittedReviews);
+    if (agg) {
+      const noisy = agg.stddev > NOISY_STDDEV_THRESHOLD;
+      if (noisy) noisyCount += 1;
+      return {
+        ...axis,
+        mean: agg.mean,
+        resolved: true,
+        source: (noisy ? "noisy_consensus" : "human_consensus") as
+          | "noisy_consensus"
+          | "human_consensus",
+        humanStddev: agg.stddev,
+        humanCount: agg.count,
+      };
     }
 
-    // (3) 약한 분쟁 — 일반 axis 이지만 사람 1명 이상이 명시적 override.
-    // override = acceptedAiScore=false 이고 overrideScore 가 있는 review.
-    // 그런 사람이 한 명이라도 있으면 그 axis 의 submitted 사람 평균을 채택.
-    if (hasExplicitOverride(axis.criterionId, submittedReviews)) {
-      const humanAgg = humanAggregate(
-        axis.criterionId,
-        axis.mean,
-        submittedReviews
-      );
-      if (humanAgg) {
-        return {
-          ...axis,
-          mean: humanAgg.mean,
-          resolved: true,
-          source: "weak_override" as const,
-        };
-      }
-    }
-
-    return { ...axis, resolved: false, source: "ai" as const };
+    // (4) 사람 평가 0명 — AI mean 유지.
+    return {
+      ...axis,
+      resolved: false,
+      source: "ai" as const,
+      humanStddev: 0,
+      humanCount: 0,
+    };
   });
 
-  // 가중 평균 재계산. weight 합 0 이면 단순 평균으로 fallback (분모 0 방지).
+  // 가중 평균 재계산.
   let weightSum = 0;
   let weighted = 0;
   for (const axis of mergedAxes) {
@@ -154,14 +143,15 @@ export function foldFinalScore(
     hasResolution:
       finalByCriterion.size > 0 ||
       mergedAxes.some(
-        (a) => a.source === "human_consensus" || a.source === "weak_override"
+        (a) =>
+          a.source === "human_consensus" || a.source === "noisy_consensus"
       ),
+    noisyCount,
   };
 }
 
 // ── 헬퍼 ───────────────────────────────────────────────────────
 
-/** 한 axis 에서 submitted 사람 점수 추출. acceptedAiScore=true 면 AI mean 으로 환산. */
 function collectHumanScores(
   criterionId: string,
   aiMean: number,
@@ -179,7 +169,6 @@ function collectHumanScores(
   return out;
 }
 
-/** 사람 점수의 평균·표준편차. 평가자 0명이면 null. */
 function humanAggregate(
   criterionId: string,
   aiMean: number,
@@ -188,7 +177,6 @@ function humanAggregate(
   const scores = collectHumanScores(criterionId, aiMean, submittedReviews);
   if (scores.length === 0) return null;
   const mean = scores.reduce((s, x) => s + x, 0) / scores.length;
-  // 평가자 1명이면 stddev=0 (혼자라 분산 없음 — 단일 의견으로 합의 간주).
   const stddev =
     scores.length < 2
       ? 0
@@ -196,33 +184,4 @@ function humanAggregate(
           scores.reduce((s, x) => s + (x - mean) ** 2, 0) / scores.length
         );
   return { mean: Math.round(mean), stddev, count: scores.length };
-}
-
-/** 사람 점수 σ 가 임계를 넘으면 분쟁으로 본다. */
-function isHumanDisputed(
-  axis: AxisScore,
-  submittedReviews: JudgeReview[]
-): boolean {
-  const agg = humanAggregate(axis.criterionId, axis.mean, submittedReviews);
-  return !!agg && agg.stddev > HUMAN_STDDEV_WARN;
-}
-
-/**
- * 약한 분쟁 감지 — submitted 사람 중 acceptedAiScore=false 이고
- * overrideScore 가 있는 평가자가 한 명이라도 있는지.
- * acceptedAi=true 인 사람은 AI 점수 동의로 본다 — override 신호 아님.
- */
-function hasExplicitOverride(
-  criterionId: string,
-  submittedReviews: JudgeReview[]
-): boolean {
-  for (const r of submittedReviews) {
-    const a: AxisReview | undefined = r.axes.find(
-      (x) => x.criterionId === criterionId
-    );
-    if (a && !a.acceptedAiScore && typeof a.overrideScore === "number") {
-      return true;
-    }
-  }
-  return false;
 }

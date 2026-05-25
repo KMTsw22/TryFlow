@@ -38,7 +38,6 @@ import type {
   JudgeReview,
 } from "@/lib/fastlane/types";
 import { HUMAN_STDDEV_WARN } from "@/lib/fastlane/score";
-import { DisputeResolutionModal } from "./DisputeResolutionModal";
 
 const SERIF = "'Pretendard Variable', 'Pretendard', system-ui, sans-serif";
 
@@ -88,17 +87,18 @@ export function JudgeReviewSection({
   // 검토 종료 — initialClosedAt 이 있으면 그대로, 없으면 사용자가 버튼 클릭해서 종료.
   const [closedAt, setClosedAt] = useState<string | undefined>(initialClosedAt);
 
-  // 현재 결정 진척 — 명시 결정(resolutions) + A안 자동 합의 카운트.
-  // 자동 합의 axis 는 별도 row 가 없어도 "결정 완료" 로 본다 (검토 종료 활성화용).
+  // submitted 평가만 점수에 반영. draft 는 제외.
   const submittedReviews = useMemo(
     () => reviews.filter((r) => r.status === "submitted"),
     [reviews]
   );
-  const autoConsensusCount = useMemo(() => {
-    let cnt = 0;
-    for (const c of disputeAxes) {
-      // 이미 명시 결정된 axis 는 제외 (중복 카운트 방지).
-      if (resolutions.some((r) => r.criterionId === c.id)) continue;
+
+  // 사람 평가 1명+ 가 들어온 axis 수 — 자동으로 사람 평균이 final 이 됨.
+  // 그중 σ > 20 인 것은 격차 큰 axis 로 따로 카운트해 운영자에게 경고.
+  const { humanFinalizedCount, noisyAxesCount } = useMemo(() => {
+    let humanCnt = 0;
+    let noisyCnt = 0;
+    for (const c of criteria) {
       const ai = aiAxes.find((a) => a.criterionId === c.id);
       const aiMean = ai?.mean ?? 0;
       const scores = submittedReviews
@@ -110,91 +110,36 @@ export function JudgeReviewSection({
         })
         .filter((s): s is number => s !== null);
       if (scores.length === 0) continue;
-      const m = scores.reduce((s, x) => s + x, 0) / scores.length;
-      const sd =
-        scores.length < 2
-          ? 0
-          : Math.sqrt(
-              scores.reduce((s, x) => s + (x - m) ** 2, 0) / scores.length
-            );
-      if (sd <= HUMAN_STDDEV_WARN) cnt += 1;
+      humanCnt += 1;
+      if (scores.length >= 2) {
+        const m = scores.reduce((s, x) => s + x, 0) / scores.length;
+        const sd = Math.sqrt(
+          scores.reduce((s, x) => s + (x - m) ** 2, 0) / scores.length
+        );
+        if (sd > 20) noisyCnt += 1;
+      }
     }
-    return cnt;
-  }, [disputeAxes, resolutions, aiAxes, submittedReviews]);
+    return { humanFinalizedCount: humanCnt, noisyAxesCount: noisyCnt };
+  }, [criteria, aiAxes, submittedReviews]);
 
-  const decidedCount = resolutions.length + autoConsensusCount;
-  const disputeCount = disputeAxes.length;
-  const allDecided = disputeCount > 0 && decidedCount >= disputeCount;
+  // 호환 — 이전 정책의 명시 분쟁 결정이 있는 axis 의 수. 모두 결정되어야 종료 가능.
+  const pendingLegacyDisputeCount = useMemo(() => {
+    return disputeAxes.filter(
+      (c) => !resolutions.some((r) => r.criterionId === c.id)
+    ).length;
+  }, [disputeAxes, resolutions]);
+
+  // 검토 종료 활성화: legacy 분쟁 결정이 없거나 모두 결정됐으면 OK.
+  const allDecided = pendingLegacyDisputeCount === 0;
   const reviewClosed = !!closedAt;
 
-  // 약한 분쟁(weak_override) axis 수 — 분쟁 axis 가 아닌데 submitted 사람 중
-  // acceptedAi=false 로 override 한 사람이 1명 이상 있는 axis 의 수.
-  // 결과 페이지·리더보드에서 이미 사람 평균으로 자동 반영되므로 안내 톤은 정보성.
-  const weakOverrideCount = useMemo(() => {
-    const disputeIds = new Set(disputeAxes.map((c) => c.id));
-    let cnt = 0;
-    for (const c of criteria) {
-      if (disputeIds.has(c.id)) continue;
-      const hasOverride = submittedReviews.some((r) => {
-        const a = r.axes.find((x) => x.criterionId === c.id);
-        return a && !a.acceptedAiScore && typeof a.overrideScore === "number";
-      });
-      if (hasOverride) cnt += 1;
-    }
-    return cnt;
-  }, [criteria, disputeAxes, submittedReviews]);
-
-  // 결정 모달 상태.
-  const [modalCriterion, setModalCriterion] = useState<Criterion | null>(null);
-
-  // 백엔드 호출 in-flight 표시 — 버튼 비활성화·로딩 스피너 토글에 사용.
+  // 백엔드 호출 in-flight 표시.
   const [busy, setBusy] = useState<"resolve" | "close" | "reopen" | null>(null);
 
   // 다른 심사위원 평가 0건이어도 본인 평가 작성 영역은 보여야 한다.
   // 본인이 첫 평가자가 되는 경우가 흔하므로 early return 금지 — 아래에서
   // hasReviews 분기로 비교 테이블/코멘트만 가리고 MyReviewDraft 는 그대로.
   const hasReviews = reviews.length > 0;
-
-  // 낙관적 UI — 백엔드 응답 전에 화면을 즉시 갱신해 시연 흐름이 끊기지 않게.
-  // 실패 시 setResolutions 를 이전 상태로 롤백.
-  async function handleResolve(resolution: DisputeResolution) {
-    const prev = resolutions;
-    setResolutions((p) => {
-      const filtered = p.filter((r) => r.criterionId !== resolution.criterionId);
-      return [...filtered, resolution];
-    });
-
-    if (!usingBackend) return; // mock 데모는 client state 만.
-
-    setBusy("resolve");
-    try {
-      const res = await fetch(
-        `/api/competitions/${competitionId}/proposals/${proposalId}/disputes`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            criterionId: resolution.criterionId,
-            action: resolution.action,
-            finalScore: resolution.finalScore,
-            reason: resolution.reason,
-            decidedByName: resolution.decidedBy.judgeName,
-          }),
-        }
-      );
-      if (!res.ok) {
-        const { error } = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(error ?? `HTTP ${res.status}`);
-      }
-      router.refresh(); // 다른 곳(예: pending 카드 진행률)도 갱신되게.
-    } catch (err) {
-      console.error("dispute resolve failed", err);
-      alert(`결정 저장 실패: ${(err as Error).message}`);
-      setResolutions(prev); // 롤백.
-    } finally {
-      setBusy(null);
-    }
-  }
 
   async function handleCloseReview() {
     const optimistic = new Date().toISOString();
@@ -248,19 +193,6 @@ export function JudgeReviewSection({
     }
   }
 
-  // 모달에 전달할 컨텍스트 계산 — 현재 선택된 criterion 기준.
-  const modalContext = modalCriterion
-    ? buildModalContext(modalCriterion, aiAxes, reviews)
-    : null;
-
-  // 결정자(decidedBy) — 데모에서는 첫 심사위원이 심사위원장 역할.
-  // reviews 0건이면 결정 모달 자체가 호출 안 되므로 빈 객체로 둠 (type 만족).
-  const decidedBy = hasReviews
-    ? {
-        judgeId: reviews[0].judgeId,
-        judgeName: reviews[0].judgeName,
-      }
-    : { judgeId: "", judgeName: "" };
 
   return (
     <section className="mb-14" aria-labelledby="judge-review-heading">
@@ -282,7 +214,9 @@ export function JudgeReviewSection({
           style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
           {hasReviews ? `${reviews.length}명 제출` : "아직 제출 없음"}
-          {disputeCount > 0 && ` · 분쟁 ${decidedCount}/${disputeCount} 결정`}
+          {humanFinalizedCount > 0 &&
+            ` · 사람 합의 ${humanFinalizedCount}개`}
+          {noisyAxesCount > 0 && ` · 격차 큼 ${noisyAxesCount}개`}
         </p>
       </div>
 
@@ -296,9 +230,8 @@ export function JudgeReviewSection({
               wordBreak: "keep-all",
             }}
           >
-            AI 1차 점수 위에 각 심사위원이 매긴 점수와 코멘트입니다. 분쟁(사람
-            분산 σ &gt; {HUMAN_STDDEV_WARN} 또는 AI 분산 임계 초과) 항목은 행
-            끝의 <strong>결정 →</strong> 버튼으로 처리합니다.
+            AI 1차 점수 위에 각 심사위원이 매긴 점수와 코멘트입니다. 사람이
+            제출한 axis 는 그 평균이 자동으로 최종 점수가 됩니다.
           </p>
 
           {/* 심사위원 chip 리스트 */}
@@ -329,31 +262,31 @@ export function JudgeReviewSection({
             ))}
           </div>
 
-          {/* 약한 분쟁 자동 반영 요약 — 운영자가 사람 조정이 어디서 일어났는지
-              한눈에 보게. 점수는 이미 사람 평균으로 자동 반영됨. */}
-          {weakOverrideCount > 0 && (
+          {/* 격차 경고 — σ>20 인 axis 가 있으면 운영자에게 알림. 점수는 평균으로
+              이미 반영됨. 추가 평가자 초대 같은 능동 액션을 권고. */}
+          {noisyAxesCount > 0 && (
             <div
               className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12.5px]"
               style={{
-                background: "var(--accent-soft)",
-                border: "1px solid var(--accent-ring)",
+                background: "var(--signal-attention-soft)",
+                border: "1px solid var(--signal-attention-ring)",
                 borderRadius: 2,
                 color: "var(--text-secondary)",
                 wordBreak: "keep-all",
               }}
             >
-              <Pencil
+              <AlertTriangle
                 className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                style={{ color: "var(--accent)" }}
+                style={{ color: "var(--signal-attention)" }}
                 strokeWidth={2.4}
               />
               <span>
-                심사위원이 조정한 항목{" "}
-                <strong style={{ color: "var(--accent)" }}>
-                  {weakOverrideCount}개
+                심사위원 점수 격차가 큰 항목{" "}
+                <strong style={{ color: "var(--signal-attention)" }}>
+                  {noisyAxesCount}개
                 </strong>
-                가 자동 반영되었습니다 — 임계 이하 axis 라도 사람 점수가 있으면
-                그 평균이 최종 점수가 됩니다.
+                가 있습니다 (σ &gt; 20). 평균은 반영되었지만 추가 평가자 초대를
+                권고합니다.
               </span>
             </div>
           )}
@@ -364,7 +297,6 @@ export function JudgeReviewSection({
             reviews={reviews}
             resolutions={resolutions}
             disputeIds={new Set(disputeAxes.map((c) => c.id))}
-            onOpenDecide={(c) => setModalCriterion(c)}
             disabled={reviewClosed}
           />
 
@@ -382,31 +314,17 @@ export function JudgeReviewSection({
         usingBackend={usingBackend}
       />
 
-      {/* 검토 종료 영역 — proposal 단위 마무리 액션. 모든 분쟁 결정되어야 활성화. */}
+      {/* 검토 종료 영역 — 사람 합의 axis 수 / 격차 큰 axis 수 요약 + 종료 액션. */}
       <CloseReviewArea
-        disputeCount={disputeCount}
-        decidedCount={decidedCount}
+        humanFinalizedCount={humanFinalizedCount}
+        noisyAxesCount={noisyAxesCount}
+        legacyPendingCount={pendingLegacyDisputeCount}
         allDecided={allDecided}
         reviewClosed={reviewClosed}
         closedAt={closedAt}
         onClose={handleCloseReview}
         onReopen={handleReopenReview}
       />
-
-      {/* 분쟁 결정 모달 */}
-      {modalContext && (
-        <DisputeResolutionModal
-          open={!!modalCriterion}
-          onClose={() => setModalCriterion(null)}
-          criterionName={modalContext.criterionName}
-          criterionId={modalContext.criterionId}
-          aiMean={modalContext.aiMean}
-          humanAverage={modalContext.humanAverage}
-          humanStddev={modalContext.humanStddev}
-          decidedBy={decidedBy}
-          onResolve={handleResolve}
-        />
-      )}
     </section>
   );
 }
@@ -417,8 +335,9 @@ interface ComparisonTableProps {
   aiAxes: AxisScore[];
   reviews: JudgeReview[];
   resolutions: DisputeResolution[];
+  /** 강한 분쟁 axis id — 시각 강조 용도(점수 결정엔 영향 없음). */
   disputeIds: Set<string>;
-  onOpenDecide: (c: Criterion) => void;
+  /** 검토 종료 후엔 일부 인터랙션을 막기 위함 — 현재 미사용. 호환 유지. */
   disabled: boolean;
 }
 function ComparisonTable({
@@ -427,8 +346,6 @@ function ComparisonTable({
   reviews,
   resolutions,
   disputeIds,
-  onOpenDecide,
-  disabled,
 }: ComparisonTableProps) {
   return (
     <div
@@ -616,27 +533,18 @@ function ComparisonTable({
                   className="text-right px-3 py-3"
                   style={{ background: "var(--surface-1)" }}
                 >
-                  {!isDispute ? (
-                    <span style={{ color: "var(--text-tertiary)" }}>—</span>
-                  ) : resolved ? (
-                    // 결정 완료 — 액션 + 최종 점수 + 결정자 inline 표시
+                  {resolved ? (
+                    // 호환 — 이전 정책에서 만든 분쟁 결정 row 가 있으면 표시.
                     <ResolvedBadge resolution={resolution!} />
-                  ) : autoConsensus ? (
-                    // A안 자동 합의 — 결정 모달 불필요. 사람 평균이 자동 final.
-                    <ConsensusBadge mean={submittedMean ?? 0} />
+                  ) : submittedHumanScores.length === 0 ? (
+                    // 사람 제출 0명 — AI 점수가 final.
+                    <span style={{ color: "var(--text-tertiary)" }}>—</span>
+                  ) : submittedStddev > 20 ? (
+                    // σ>20 — 사람 평균 채택하되 격차 큼 경고.
+                    <NoisyBadge mean={submittedMean ?? 0} stddev={submittedStddev} />
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => onOpenDecide(c)}
-                      disabled={disabled}
-                      className="inline-flex items-center gap-1 px-2.5 h-7 text-[11.5px] font-semibold text-white transition-[filter] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{
-                        background: "var(--signal-attention)",
-                        letterSpacing: "0.02em",
-                      }}
-                    >
-                      결정 →
-                    </button>
+                    // 사람 평균 자동 채택.
+                    <ConsensusBadge mean={submittedMean ?? 0} />
                   )}
                 </td>
               </tr>
@@ -677,8 +585,7 @@ function Th({
   );
 }
 
-// A안 자동 합의 — 사람 σ ≤ 7 인 분쟁 axis 는 결정 버튼 없이 사람 평균이 자동
-// 최종 점수가 됨. 사용자가 "결정자" 가 필요 없도록 한 핵심 변경.
+// 사람 평균이 자동 final 인 axis — σ ≤ 20.
 function ConsensusBadge({ mean }: { mean: number }) {
   return (
     <span
@@ -689,7 +596,7 @@ function ConsensusBadge({ mean }: { mean: number }) {
         color: "var(--signal-success)",
         letterSpacing: "0.02em",
       }}
-      title="심사위원 σ ≤ 7 — 합의된 사람 평균이 자동으로 최종 점수가 됩니다."
+      title="심사위원 평균이 자동으로 최종 점수가 됩니다."
     >
       <Check
         className="w-3 h-3"
@@ -697,6 +604,31 @@ function ConsensusBadge({ mean }: { mean: number }) {
         strokeWidth={2.4}
       />
       합의 {mean}
+    </span>
+  );
+}
+
+// σ > 20 — 사람 평균은 채택하되 격차 큼 경고. 운영자에게 정보 신호.
+function NoisyBadge({ mean, stddev }: { mean: number; stddev: number }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold"
+      style={{
+        background: "var(--signal-attention-soft)",
+        border: "1px solid var(--signal-attention-ring)",
+        color: "var(--signal-attention)",
+        letterSpacing: "0.02em",
+      }}
+      title={`심사위원 점수 격차가 큽니다 (σ ${stddev.toFixed(
+        1
+      )}). 평균은 반영되지만 추가 평가자 초대를 권고합니다.`}
+    >
+      <AlertTriangle
+        className="w-3 h-3"
+        style={{ color: "var(--signal-attention)" }}
+        strokeWidth={2.4}
+      />
+      격차 {mean}
     </span>
   );
 }
@@ -942,8 +874,8 @@ function MyReviewDraft({
                 <strong style={{ color: "var(--signal-attention)" }}>
                   {disputedCount}개
                 </strong>
-                가 있습니다 — 그 항목만 개별 결정하면 됩니다. 나머지는 비워두고
-                제출하면 AI 점수가 그대로 반영됩니다.
+                가 있습니다 — 그 항목만 우선 점수를 매겨주세요. 나머지는
+                비워두고 제출하면 AI 점수가 그대로 반영됩니다.
               </span>
             </div>
           );
@@ -1169,25 +1101,27 @@ function MyReviewDraft({
 
 // ── 검토 종료 영역 — proposal 단위 마무리 액션 ─────────────────────────────
 function CloseReviewArea({
-  disputeCount,
-  decidedCount,
+  humanFinalizedCount,
+  noisyAxesCount,
+  legacyPendingCount,
   allDecided,
   reviewClosed,
   closedAt,
   onClose,
   onReopen,
 }: {
-  disputeCount: number;
-  decidedCount: number;
+  /** 사람 평가 1명+ 가 들어와 사람 평균이 final 인 axis 수. */
+  humanFinalizedCount: number;
+  /** σ>20 격차 큰 axis 수 — 운영자에게 경고 표시 용. */
+  noisyAxesCount: number;
+  /** 이전 정책의 명시 분쟁 결정 row 가 있는데 아직 결정 안 된 axis 수 (보통 0). */
+  legacyPendingCount: number;
   allDecided: boolean;
   reviewClosed: boolean;
   closedAt: string | undefined;
   onClose: () => void;
   onReopen: () => void;
 }) {
-  // 분쟁이 아예 없는 케이스 — 검토 종료 액션 의미가 약하므로 표시 안 함.
-  if (disputeCount === 0) return null;
-
   // 종료된 상태 — 차분한 success 카드 + 종료 취소 버튼.
   if (reviewClosed) {
     return (
@@ -1214,8 +1148,8 @@ function CloseReviewArea({
             className="text-[12px]"
             style={{ color: "var(--text-tertiary)" }}
           >
-            모든 분쟁 항목({disputeCount}개)이 결정되었고, 본 출품에 대한 심사가
-            종료되었습니다. {closedAt && `· ${new Date(closedAt).toLocaleString("ko-KR")}`}
+            본 출품에 대한 심사가 종료되었습니다.
+            {closedAt && ` · ${new Date(closedAt).toLocaleString("ko-KR")}`}
           </p>
         </div>
         <button
@@ -1233,7 +1167,7 @@ function CloseReviewArea({
     );
   }
 
-  // 진행 중 — 진척도 + 종료 버튼(모든 분쟁 결정되어야 활성화).
+  // 진행 중 — 사람 합의 / 격차 요약 + 종료 버튼.
   return (
     <div
       className="px-7 py-5"
@@ -1251,27 +1185,11 @@ function CloseReviewArea({
         </h3>
         <span
           className="text-[10.5px] font-bold uppercase tabular-nums"
-          style={{
-            color: allDecided ? "var(--signal-success)" : "var(--text-tertiary)",
-            letterSpacing: "0.14em",
-          }}
+          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
         >
-          분쟁 결정 {decidedCount} / {disputeCount}
+          사람 합의 {humanFinalizedCount}개
+          {noisyAxesCount > 0 ? ` · 격차 큼 ${noisyAxesCount}개` : ""}
         </span>
-      </div>
-
-      {/* 진척 막대 */}
-      <div
-        className="relative h-1 mb-4 overflow-hidden"
-        style={{ background: "var(--t-border-subtle)" }}
-      >
-        <div
-          className="absolute inset-y-0 left-0 transition-all"
-          style={{
-            width: `${disputeCount === 0 ? 0 : (decidedCount / disputeCount) * 100}%`,
-            background: allDecided ? "var(--signal-success)" : "var(--accent)",
-          }}
-        />
       </div>
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -1279,9 +1197,13 @@ function CloseReviewArea({
           className="text-[12px] leading-[1.6] max-w-md"
           style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
         >
-          {allDecided
-            ? "모든 분쟁 항목이 결정되었습니다. 검토를 종료하면 이 출품이 검토 대기 리스트에서 빠지고, 본심 단계로 넘어갈 준비가 됩니다."
-            : `${disputeCount - decidedCount}건이 남아 있습니다. 모든 분쟁이 결정되어야 검토를 종료할 수 있습니다.`}
+          {legacyPendingCount > 0
+            ? `이전 정책에서 만든 분쟁 결정 row ${legacyPendingCount}개가 아직 미결정 상태입니다. 모두 결정되거나 정리되어야 종료 가능합니다.`
+            : noisyAxesCount > 0
+            ? "격차가 큰 항목이 있습니다. 평균은 반영되었으니 그대로 종료하거나, 추가 평가자를 초대한 뒤 종료할 수 있습니다."
+            : humanFinalizedCount === 0
+            ? "아직 사람 평가가 한 건도 들어오지 않았습니다. 그대로 종료하면 AI 점수가 그대로 최종이 됩니다."
+            : "사람 평가가 반영된 상태입니다. 종료하면 이 출품이 검토 대기에서 빠지고 결과 페이지에 반영됩니다."}
         </p>
         <button
           type="button"
@@ -1345,36 +1267,6 @@ function computeHumanStddev(
   return Math.sqrt(
     scores.reduce((s, x) => s + (x - mean) ** 2, 0) / scores.length
   );
-}
-
-// 모달에 전달할 컨텍스트 빌드 — 모달 내부에서 다시 계산하지 않게.
-function buildModalContext(
-  criterion: Criterion,
-  aiAxes: AxisScore[],
-  reviews: JudgeReview[]
-) {
-  const ai = aiAxes.find((a) => a.criterionId === criterion.id);
-  const aiMean = ai?.mean ?? 0;
-  const humanScores = reviews
-    .map((r) => {
-      const a = r.axes.find((x) => x.criterionId === criterion.id);
-      if (!a) return null;
-      if (a.acceptedAiScore) return aiMean;
-      return a.overrideScore ?? null;
-    })
-    .filter((s): s is number => s !== null);
-  const humanAverage =
-    humanScores.length === 0
-      ? null
-      : Math.round(humanScores.reduce((s, x) => s + x, 0) / humanScores.length);
-  const humanStddev = computeHumanStddev(criterion.id, aiMean, reviews);
-  return {
-    criterionId: criterion.id,
-    criterionName: criterion.name,
-    aiMean,
-    humanAverage,
-    humanStddev,
-  };
 }
 
 // 액션 → 아이콘 매핑 (ResolvedBadge 와 모달에서 공유)
