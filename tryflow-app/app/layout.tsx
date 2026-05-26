@@ -5,8 +5,6 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { CompareTrayProvider } from "@/components/compare/CompareTrayContext";
-import { CompareTray } from "@/components/compare/CompareTray";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ConfirmProvider } from "@/components/ui/ConfirmModal";
 import { SidebarProvider } from "@/components/layout/SidebarContext";
@@ -57,12 +55,9 @@ export default async function RootLayout({
           <ToastProvider>
             <ConfirmProvider>
               <SidebarProvider>
-                <CompareTrayProvider>
-                  <NavigationProgress />
-                  <SidebarWrapper />
-                  <CompareTray />
-                  <ContentWrapper>{children}</ContentWrapper>
-                </CompareTrayProvider>
+                <NavigationProgress />
+                <SidebarWrapper />
+                <ContentWrapper>{children}</ContentWrapper>
               </SidebarProvider>
             </ConfirmProvider>
           </ToastProvider>

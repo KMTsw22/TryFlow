@@ -6,13 +6,13 @@
 
 | # | 항목 | 파일 |
 |---|------|------|
-| 1 | 구조·서사 완결성 | [01_구조_서사_완결성.md](./01_구조_서사_완결성.md) |
-| 2 | 장르·갈래·맥락 | [02_장르_갈래_맥락.md](./02_장르_갈래_맥락.md) |
-| 3 | 주제·가치·문제의식 | [03_주제_가치_문제의식.md](./03_주제_가치_문제의식.md) |
-| 4 | 형상화·형식의 일관성 | [04_형상화_형식_일관성.md](./04_형상화_형식_일관성.md) |
-| 5 | 인물·대화(소통) | [05_인물_대화_소통.md](./05_인물_대화_소통.md) |
-| 6 | 서사·장면 밀도 | [06_서사_장면_밀도.md](./06_서사_장면_밀도.md) |
-| 7 | 갈등·완결·마무리 | [07_갈등_완결_마무리.md](./07_갈등_완결_마무리.md) |
+| 1 | 구조·서사 완결성 | [01_structure_narrative.md](./01_structure_narrative.md) |
+| 2 | 장르·갈래·맥락 | [02_genre_context.md](./02_genre_context.md) |
+| 3 | 주제·가치·문제의식 | [03_theme_value.md](./03_theme_value.md) |
+| 4 | 형상화·형식의 일관성 | [04_form_consistency.md](./04_form_consistency.md) |
+| 5 | 인물·대화(소통) | [05_character_dialogue.md](./05_character_dialogue.md) |
+| 6 | 서사·장면 밀도 | [06_scene_density.md](./06_scene_density.md) |
+| 7 | 갈등·완결·마무리 | [07_conflict_resolution.md](./07_conflict_resolution.md) |
 
 **총점:** 축당 10점 → **70점 만점**.
 

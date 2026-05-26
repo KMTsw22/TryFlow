@@ -170,7 +170,7 @@ export async function POST(
 // 현재 지원:
 //   - game: fastlane/prompts/game/{fun,game_design,...}.md
 //   - finance: fastlane/prompts/finance/{A1_problem_validity,...}.md
-//   - literature: fastlane/prompts/literature/{01_구조_서사_완결성,...}.md
+//   - literature: fastlane/prompts/literature/{01_structure_narrative,...}.md
 //
 // 파일이 없으면 null 반환 → 호출자가 AI fallback 결정.
 //
@@ -183,7 +183,8 @@ async function tryLoadStaticRubric(
 ): Promise<string | null> {
   if (!competitionType) return null;
   // path traversal 방어 — Unicode letter/number + '_' + '-' 만 허용
-  // (한글 파일명 지원: 01_구조_완결성, A1_problem_validity, fun 모두 통과).
+  // (criterion id 예: 01_structure_narrative, A1_problem_validity, fun 모두 통과.
+  //  Unicode letter 허용은 향후 비ASCII id 대비 — 현재 빌트인 id는 모두 ASCII).
   // 경로 구분자(/, \) 와 점(.) 명시적 배제.
   if (!/^[\p{L}\p{N}_\-]+$/u.test(criterionId)) return null;
   if (criterionId.includes("..") || criterionId.includes("/") || criterionId.includes("\\")) return null;
