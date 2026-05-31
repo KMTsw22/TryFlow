@@ -31,7 +31,11 @@ create table if not exists proposals (
   submitter_id    uuid references auth.users(id) on delete set null,
   title           text not null,
   team            text not null default '',
+  -- summary: 업로드 시 AI 가 생성한 human-facing 요약(목록/상세 표시용).
+  -- content: 업로드 파일의 원문 전체 — AI 채점이 실제로 판단하는 텍스트.
+  --          비어있으면(직접 입력/레거시) 채점은 summary 로 fallback.
   summary         text not null default '',
+  content         text not null default '',
   -- 평가 결과 — ProposalScore (lib/fastlane/types.ts) 직렬화.
   -- { proposalId, composite, runs, axes: [{ criterionId, mean, stddev, needsReview, reasoning? }] }
   -- AI 평가 전엔 null.

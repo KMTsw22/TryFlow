@@ -67,6 +67,7 @@ export async function POST(
         title: result.payload.title,
         team: result.payload.team,
         summary: result.payload.summary,
+        content: result.payload.content,
         evaluation_status: "pending",
       })
       .select("*")

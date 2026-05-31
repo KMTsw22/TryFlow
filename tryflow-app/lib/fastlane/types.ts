@@ -119,8 +119,13 @@ export interface Proposal {
   title: string;
   /** 제안 팀명. */
   team: string;
-  /** 한 줄 요약. */
+  /** 한 줄 요약 — 업로드 시 AI 가 생성한 human-facing 요약. 목록/상세 표시용. */
   summary: string;
+  /**
+   * 출품 원문 전체. 업로드된 파일의 본문 그대로 — AI 채점이 실제로 판단하는 텍스트.
+   * 비어있으면(직접 입력 / 레거시) 채점은 summary 로 fallback 한다.
+   */
+  content: string;
   /** 제출 시각 (ISO). */
   submittedAt: string;
   /** AI 평가 결과 (없으면 평가 전). */

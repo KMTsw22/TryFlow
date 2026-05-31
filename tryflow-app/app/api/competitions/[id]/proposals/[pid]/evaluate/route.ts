@@ -138,8 +138,14 @@ export async function POST(
   }
   const proposal = rowToProposal(propRow as ProposalRow);
 
+  // 채점은 AI 요약본(summary)이 아니라 업로드된 파일 원문 전체(content)로 판단한다.
+  // content 가 비어있으면(직접 입력 / 마이그레이션 전 레거시) summary 로 fallback.
+  // 이후 모든 채점 단계는 summary 필드에 원문이 담긴 scoringProposal 을 사용한다.
+  const scoringText = (proposal.content ?? "").trim() || proposal.summary;
+  const scoringProposal: Proposal = { ...proposal, summary: scoringText };
+
   // ── Stage 0: Hard Gate ─────────────────────────────────────
-  const gate = hardQualityGate(proposal);
+  const gate = hardQualityGate(scoringProposal);
   if (!gate.ok) {
     await supabase
       .from("proposals")
@@ -191,7 +197,7 @@ export async function POST(
         const result = await scoreAxisThreePass(
           openai,
           competition,
-          proposal,
+          scoringProposal,
           c,
           skepticPrompt,
           judgePrompt
@@ -262,7 +268,7 @@ export async function POST(
           openai,
           axisAnalyzerSystem,
           competition,
-          proposal,
+          scoringProposal,
           criterion,
           runsForAnalyzer,
           axis
@@ -276,6 +282,9 @@ export async function POST(
     );
 
     // ── Stage 3: Synthesizer ───────────────────────────────
+    // 종합 단계는 점수를 다시 매기지 않고 축별 분석을 엮어 리포트를 쓴다.
+    // 원문 전체 대신 짧은 summary 를 컨텍스트로 넘겨 토큰을 아낀다(채점은 이미
+    // Stage 1·2 에서 원문으로 끝남).
     const reportMd = await runSynthesizer(
       openai,
       synthSystem,

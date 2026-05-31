@@ -6,6 +6,8 @@ interface PatchPayload {
   title?: string;
   team?: string;
   summary?: string;
+  /** 파일 원문 전체. 채점이 판단하는 텍스트. 보내면 갱신 + 재평가 판단 기준이 됨. */
+  content?: string;
 }
 
 export async function GET(
@@ -66,7 +68,7 @@ export async function PATCH(
     // 현재 출품 상태 조회 — content 변경 여부 비교 + 검토 종료 여부 확인.
     const { data: current } = await supabase
       .from("proposals")
-      .select("title, team, summary, review_closed_at")
+      .select("title, team, summary, content, review_closed_at")
       .eq("id", pid)
       .eq("competition_id", id)
       .single();
@@ -77,6 +79,7 @@ export async function PATCH(
       title: string;
       team: string;
       summary: string;
+      content: string | null;
       review_closed_at: string | null;
     };
     if (cur.review_closed_at) {
@@ -92,6 +95,8 @@ export async function PATCH(
     const team = typeof body.team === "string" ? body.team.trim() : cur.team;
     const summary =
       typeof body.summary === "string" ? body.summary.trim() : cur.summary;
+    const content =
+      typeof body.content === "string" ? body.content.trim() : (cur.content ?? "");
 
     if (title.length === 0) {
       return NextResponse.json({ error: "제목은 비울 수 없습니다." }, { status: 400 });
@@ -103,8 +108,12 @@ export async function PATCH(
       );
     }
 
-    // content(summary) 가 바뀌면 평가 결과 무효화 → 자동 재평가 대상.
-    const contentChanged = summary !== cur.summary;
+    // 채점이 실제로 보는 텍스트 = content(원문) 있으면 그것, 없으면 summary.
+    // 그 "채점 대상 텍스트" 가 바뀔 때만 평가 결과를 무효화하고 재평가한다.
+    // → 원문(파일)은 그대로인데 요약만 손본 경우엔 점수가 안 바뀌므로 재평가 안 함.
+    const oldScored = ((cur.content ?? "").trim() || cur.summary).trim();
+    const newScored = (content.trim() || summary).trim();
+    const contentChanged = newScored !== oldScored;
 
     const updatePayload: Record<string, unknown> = {
       title,
@@ -112,6 +121,10 @@ export async function PATCH(
       summary,
       updated_at: new Date().toISOString(),
     };
+    // content 를 명시적으로 보냈을 때만 갱신(요약만 수정하는 모달은 건드리지 않음).
+    if (typeof body.content === "string") {
+      updatePayload.content = content;
+    }
     if (contentChanged) {
       updatePayload.score = null;
       updatePayload.evaluation_status = "pending";

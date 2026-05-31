@@ -311,6 +311,8 @@ function buildProposal(
     title,
     team,
     summary,
+    // mock 은 원문 별도 본문이 없으므로 summary 를 그대로 채점 대상으로 사용.
+    content: summary,
     submittedAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
     score,
   };

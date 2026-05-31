@@ -177,6 +177,9 @@ export async function POST(req: NextRequest) {
       title,
       team,
       summary,
+      // 파일 원문 전체(컨텍스트 폭주 방지로 truncate 된 텍스트). summary 는 사람이
+      // 보는 요약이고, 실제 AI 채점은 이 fullText(원문)로 판단한다.
+      fullText: truncated,
       // 디버깅·표시용 — 어떤 파일에서 추출됐는지 UI 에 표시할 수 있게.
       sourceFileName: file.name,
     });

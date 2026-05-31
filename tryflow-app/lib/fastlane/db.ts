@@ -59,6 +59,9 @@ export interface ProposalRow {
   title: string;
   team: string;
   summary: string;
+  // 업로드된 파일의 원문 전체. AI 채점이 실제로 판단하는 텍스트.
+  // 마이그레이션(add_proposal_content.sql) 전 DB 호환 위해 옵셔널.
+  content?: string | null;
   score: unknown;
   evaluation_status: string;
   evaluation_error: string | null;
@@ -164,6 +167,7 @@ export function rowToProposal(
     title: row.title,
     team: row.team,
     summary: row.summary,
+    content: row.content ?? "",
     submittedAt: row.created_at,
     score: parseScore(row.score, row.id),
     judgeReviews: extras?.judgeReviews,
@@ -431,6 +435,8 @@ export interface ProposalCreatePayload {
   title: string;
   team: string;
   summary: string;
+  /** 파일 원문 전체. 채점이 판단하는 텍스트. 직접 입력 시엔 빈 문자열(채점은 summary 사용). */
+  content: string;
 }
 
 export function validateProposalPayload(
@@ -451,7 +457,11 @@ export function validateProposalPayload(
     return { ok: false, error: "요약은 최소 30자 이상이어야 합니다." };
   }
   if (summary.length > 5000) return { ok: false, error: "요약이 너무 깁니다." };
-  return { ok: true, payload: { title, team, summary } };
+  // content 는 파일 원문 전체 — 길 수 있어 cap 을 크게(채점 입력은 evaluate 에서 다시 제한).
+  // 직접 입력 출품은 content 없이 들어오므로 빈 문자열 허용.
+  const content = typeof b.content === "string" ? b.content.trim() : "";
+  if (content.length > 100_000) return { ok: false, error: "본문이 너무 깁니다." };
+  return { ok: true, payload: { title, team, summary, content } };
 }
 
 function slugify(name: string): string {

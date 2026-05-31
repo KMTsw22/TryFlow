@@ -61,6 +61,8 @@ interface Row {
   title: string;
   team: string;
   summary: string;
+  /** 파일 원문 전체 — AI 채점이 실제로 판단하는 텍스트. 직접 입력 row 는 빈 값. */
+  content: string;
   error?: string;
 }
 
@@ -88,6 +90,7 @@ export default function BatchUploadProposalsPage() {
       title: "",
       team: "",
       summary: "",
+      content: "",
     }));
     setRows((prev) => [...prev, ...newRows]);
     // 각 row 의 extract 호출 — 부모 setState 가 비동기라 stale closure 회피 위해
@@ -109,6 +112,7 @@ export default function BatchUploadProposalsPage() {
       title: "",
       team: "",
       summary: "",
+      content: "",
     };
     setRows((prev) => [...prev, newRow]);
   }
@@ -126,6 +130,7 @@ export default function BatchUploadProposalsPage() {
         title?: string;
         team?: string;
         summary?: string;
+        fullText?: string;
         error?: string;
       };
       if (!res.ok) {
@@ -140,6 +145,8 @@ export default function BatchUploadProposalsPage() {
         title: typeof data.title === "string" ? data.title : "",
         team: typeof data.team === "string" ? data.team : "",
         summary: typeof data.summary === "string" ? data.summary : "",
+        // 원문 전체 — 채점이 판단할 텍스트. summary 는 사람이 검토할 요약.
+        content: typeof data.fullText === "string" ? data.fullText : "",
         error: undefined,
       });
     } catch (err) {
@@ -244,6 +251,9 @@ export default function BatchUploadProposalsPage() {
               title: r.title.trim(),
               team: r.team.trim(),
               summary: r.summary.trim(),
+              // 파일 원문 전체. 직접 입력 row 는 content 가 없으므로 빈 문자열로
+              // 보내고, 서버 채점이 summary 로 fallback 한다.
+              content: r.content.trim(),
             }),
           });
           const data = (await res.json().catch(() => ({}))) as {
@@ -324,9 +334,10 @@ export default function BatchUploadProposalsPage() {
         className="text-[13px] leading-[1.8] mt-4 mb-10 max-w-2xl"
         style={{ color: "var(--text-secondary)", wordBreak: "keep-all" }}
       >
-        파일마다 AI 가 제목·팀·요약을 자동으로 채웁니다. 행을 검토·수정한 다음
-        하단의 <strong>일괄 제출</strong>을 누르면 모든 출품에 대한 AI 1차 평가가
-        동시에 시작됩니다.
+        파일마다 AI 가 제목·팀·요약을 자동으로 채웁니다. 요약은 검토용이며,
+        <strong>AI 채점은 업로드한 파일 원문 전체</strong>로 판단합니다. 행을
+        검토·수정한 다음 하단의 <strong>일괄 제출</strong>을 누르면 모든 출품에
+        대한 AI 1차 평가가 동시에 시작됩니다.
       </p>
 
       {/* 드롭 영역 */}
