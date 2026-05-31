@@ -35,6 +35,7 @@ import { RubricStatusBanner } from "@/components/fastlane/RubricStatusBanner";
 import { CriterionRubricCard } from "@/components/fastlane/CriterionRubricCard";
 import { BulkAcceptAction } from "@/components/fastlane/BulkAcceptAction";
 import { BulkCloseAction } from "@/components/fastlane/BulkCloseAction";
+import { EvaluatePendingButton } from "@/components/fastlane/EvaluatePendingButton";
 import {
   StageStepper,
   type CompetitionStage,
@@ -333,6 +334,12 @@ export default async function CompetitionDetailPage({
 
   const stage = stageOf(competition);
 
+  // 아직 AI 평가가 안 끝난 출품 수 — 점수 없음 + 'failed'(hard gate 등) 아님.
+  // 제출 시 트리거 유실/레이트리밋으로 멈춘 것들을 운영자가 서버에서 재개할 수 있게.
+  const pendingEvalCount = proposals.filter(
+    (p) => !p.score && p.evaluationStatus !== "failed"
+  ).length;
+
   return (
     <div className="max-w-[1400px] mx-auto px-10 pt-8 pb-20">
       {/* Back nav */}
@@ -560,6 +567,14 @@ export default async function CompetitionDetailPage({
             3-Pass (Draft·Skeptic·Judge) · 편차 큰 항목은 검토 권고
           </p>
         </div>
+
+        {/* 운영자 + 미평가 출품이 있으면 서버 평가 재개 액션 노출(트리거 유실 복구). */}
+        {!isMock && isOwner && pendingEvalCount > 0 && (
+          <EvaluatePendingButton
+            competitionId={competition.id}
+            pendingCount={pendingEvalCount}
+          />
+        )}
 
         {/* 본인이 심사위원이고 분쟁 0개 미평가 출품이 있으면 일괄 동의 액션 노출. */}
         {!isMock && bulkAcceptIds.length > 0 && (

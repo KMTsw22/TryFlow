@@ -169,6 +169,7 @@ export function rowToProposal(
     summary: row.summary,
     content: row.content ?? "",
     submittedAt: row.created_at,
+    evaluationStatus: parseEvaluationStatus(row.evaluation_status),
     score: parseScore(row.score, row.id),
     judgeReviews: extras?.judgeReviews,
     disputeResolutions: extras?.disputeResolutions,
@@ -308,6 +309,14 @@ function parseTemplate(raw: unknown): CriteriaTemplate {
     ...(competitionType ? { competitionType } : {}),
     criteria,
   };
+}
+
+function parseEvaluationStatus(
+  raw: unknown
+): "pending" | "running" | "done" | "failed" | undefined {
+  return raw === "pending" || raw === "running" || raw === "done" || raw === "failed"
+    ? raw
+    : undefined;
 }
 
 function parseScore(raw: unknown, proposalId: string): ProposalScore | undefined {

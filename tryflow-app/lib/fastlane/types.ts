@@ -128,6 +128,8 @@ export interface Proposal {
   content: string;
   /** 제출 시각 (ISO). */
   submittedAt: string;
+  /** AI 평가 진행 상태. pending | running | done | failed. 미평가 판정에 사용. */
+  evaluationStatus?: "pending" | "running" | "done" | "failed";
   /** AI 평가 결과 (없으면 평가 전). */
   score?: ProposalScore;
   /**

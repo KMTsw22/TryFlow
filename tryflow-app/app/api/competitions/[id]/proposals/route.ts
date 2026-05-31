@@ -78,9 +78,14 @@ export async function POST(
       return NextResponse.json({ error: "제안서 제출에 실패했습니다." }, { status: 500 });
     }
 
+    // deferEval=true 면 여기서 평가를 트리거하지 않는다. 일괄 제출이 모든 insert 후
+    // /evaluate-pending 으로 동시성 제한을 두고 한 번에 처리하기 위함(fire-and-forget
+    // 트리거 유실·떼거리 호출 문제 회피). 단건 제출은 기존대로 즉시 트리거.
+    const deferEval = (body as { deferEval?: unknown })?.deferEval === true;
+
     // Fire-and-forget: AI 평가 트리거. 제출 후 사용자 응답을 막지 않음.
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "";
-    if (origin) {
+    if (origin && !deferEval) {
       const cookieHeader = req.headers.get("cookie") ?? "";
       fetch(`${origin}/api/competitions/${id}/proposals/${data.id}/evaluate`, {
         method: "POST",

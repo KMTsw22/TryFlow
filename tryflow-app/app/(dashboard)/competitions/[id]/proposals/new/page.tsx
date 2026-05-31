@@ -74,6 +74,8 @@ export default function BatchUploadProposalsPage() {
 
   const [rows, setRows] = useState<Row[]>([]);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+  // 제출 후 서버 평가 큐를 도는 단계. 이 동안 화살표/버튼을 잠근다.
+  const [evaluating, setEvaluating] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -213,6 +215,7 @@ export default function BatchUploadProposalsPage() {
   const canSubmit =
     submittableRows.length > 0 &&
     !batchSubmitting &&
+    !evaluating &&
     !anyExtracting &&
     !hasInvalid;
 
@@ -254,6 +257,9 @@ export default function BatchUploadProposalsPage() {
               // 파일 원문 전체. 직접 입력 row 는 content 가 없으므로 빈 문자열로
               // 보내고, 서버 채점이 summary 로 fallback 한다.
               content: r.content.trim(),
+              // 평가는 여기서 트리거하지 않고, 전부 insert 된 뒤 evaluate-pending 으로
+              // 동시성 제한을 두고 한 번에 처리한다(트리거 유실·떼거리 호출 방지).
+              deferEval: true,
             }),
           });
           const data = (await res.json().catch(() => ({}))) as {
@@ -283,22 +289,64 @@ export default function BatchUploadProposalsPage() {
     setBatchSubmitting(false);
 
     // 결과 확인 — Promise.all 결과 기반. stale state 위험 없음.
+    const okCount = results.filter((r) => r.ok).length;
     const allOk = results.every((r) => r.ok);
-    if (allOk) {
+    if (okCount === 0) {
       toast({
-        message: `${targets.length}건 제출 완료. AI 평가가 시작됩니다.`,
-        tone: "success",
-      });
-      // 잠깐 보여주고 이동 — 사용자가 결과를 인식할 시간.
-      setTimeout(() => {
-        router.push(`/competitions/${competitionId}`);
-        router.refresh();
-      }, 700);
-    } else {
-      toast({
-        message: "일부 출품이 제출에 실패했습니다. 행을 확인해주세요.",
+        message: "출품 제출에 모두 실패했습니다. 행을 확인해주세요.",
         tone: "danger",
       });
+      return;
+    }
+    toast({
+      message: allOk
+        ? `${okCount}건 제출 완료. 서버에서 AI 평가를 시작합니다.`
+        : `${okCount}건 제출됨. 실패한 행은 남겨두고 평가를 시작합니다.`,
+      tone: allOk ? "success" : "danger",
+    });
+
+    // 서버 주도 평가 — 동시성 제한 큐(evaluate-pending). 제출 트리거를 개별
+    // fire-and-forget 으로 던지지 않고, 여기서 큐를 끝까지 돌려 전부 처리한다.
+    setEvaluating(true);
+    try {
+      await runEvaluationQueue();
+    } finally {
+      setEvaluating(false);
+    }
+
+    router.push(`/competitions/${competitionId}`);
+    router.refresh();
+  }
+
+  // evaluate-pending 를 remaining 이 0 이 될 때까지(최대 N회) 호출. 한 번 호출이
+  // maxDuration 에 걸려 일부만 끝나도, 재호출로 이어서 처리되어 전부 평가된다.
+  async function runEvaluationQueue() {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      try {
+        const res = await fetch(
+          `/api/competitions/${competitionId}/evaluate-pending`,
+          { method: "POST" }
+        );
+        const data = (await res.json().catch(() => ({}))) as {
+          remaining?: number;
+          error?: string;
+        };
+        if (!res.ok) {
+          toast({
+            message: data.error ?? "평가 처리 중 오류가 발생했습니다.",
+            tone: "danger",
+          });
+          return;
+        }
+        if (!data.remaining || data.remaining <= 0) return; // 모두 완료
+      } catch (err) {
+        console.error("evaluate-pending failed", err);
+        toast({
+          message: "평가 호출 중 네트워크 오류가 발생했습니다. 대회 화면의 '대기 평가' 로 이어서 처리할 수 있습니다.",
+          tone: "danger",
+        });
+        return;
+      }
     }
   }
 
@@ -479,7 +527,9 @@ export default function BatchUploadProposalsPage() {
               className="text-[13px] font-semibold mb-0.5"
               style={{ color: "var(--text-primary)" }}
             >
-              {batchSubmitting
+              {evaluating
+                ? "서버에서 AI 평가 중…"
+                : batchSubmitting
                 ? `제출 중… ${submittedCount} / ${totalToSubmit}`
                 : `제출 준비 완료: ${submittableRows.length}건 / 전체 ${rows.length}건`}
             </p>
@@ -487,11 +537,13 @@ export default function BatchUploadProposalsPage() {
               className="text-[11px]"
               style={{ color: "var(--text-tertiary)" }}
             >
-              {hasInvalid
+              {evaluating
+                ? "동시 3건씩 순차 처리합니다. 끝나면 대회 화면으로 이동합니다."
+                : hasInvalid
                 ? "제목과 요약(30자 이상) 이 채워진 행만 제출됩니다."
                 : anyExtracting
                 ? "모든 자동 채움이 끝나면 제출할 수 있습니다."
-                : "제출 후 AI 1차 평가가 각 출품마다 동시에 시작됩니다."}
+                : "제출 후 서버가 AI 1차 평가를 안정적으로 처리합니다."}
             </p>
           </div>
           <button
@@ -504,7 +556,12 @@ export default function BatchUploadProposalsPage() {
               letterSpacing: "0.04em",
             }}
           >
-            {batchSubmitting ? (
+            {evaluating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                평가 중…
+              </>
+            ) : batchSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 제출 중…
