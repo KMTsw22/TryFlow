@@ -26,12 +26,10 @@ import {
   type ProposalRow,
 } from "@/lib/fastlane/db";
 import type { Competition, Proposal } from "@/lib/fastlane/types";
-import { CollapsibleAxisGrid } from "@/components/fastlane/CollapsibleAxisGrid";
 import { FairnessExplainer } from "@/components/fastlane/FairnessExplainer";
 import { EvaluationStatusCard } from "@/components/fastlane/EvaluationStatusCard";
 import { MarkdownReport } from "@/components/fastlane/MarkdownReport";
 import { JudgeReviewSection } from "@/components/fastlane/JudgeReviewSection";
-import { AIReportEnvelope } from "@/components/fastlane/AIReportEnvelope";
 import { DeleteProposalButton } from "@/components/fastlane/DeleteProposalButton";
 import { EditProposalButton } from "@/components/fastlane/EditProposalButton";
 import { foldFinalScore } from "@/lib/fastlane/score";
@@ -344,15 +342,43 @@ export default async function ProposalDetailPage({
         <EvaluationStatusCard status={evaluationStatus} error={evaluationError} />
       )}
 
-      {/* ── AI 봉투 (에디토리얼 톤) ─────────────────────────── */}
+      {/* ── 종합 점수 Hero — 봉투 wrapper 제거. 페이지 자체 hero 로 격상.
+          심사위원이 작업할 때 봉투를 굳이 들춰내지 않아도 종합·verdict·검토
+          권고가 한눈에 보이도록. AI 표기는 axis 행마다 "AI 근거" 배지로 분산. */}
       {score && (
-        <AIReportEnvelope modelName="gpt-4o-mini" generatedAt={evaluatedAt}>
+        <section className="mb-10">
+          {/* AI 출처 미니 라인 — 봉투의 disclaimer 를 한 줄로 압축. */}
+          <div
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] mb-4"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 font-semibold"
+              style={{
+                background: "var(--accent-soft)",
+                color: "var(--accent)",
+                border: "1px solid var(--accent-ring)",
+                borderRadius: 2,
+                letterSpacing: "0.04em",
+              }}
+            >
+              AI 1차 평가
+            </span>
+            <span className="tabular-nums">gpt-4o-mini</span>
+            {evaluatedAt && (
+              <span className="tabular-nums">· {new Date(evaluatedAt).toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" })} 생성</span>
+            )}
+            <span className="ml-auto" style={{ wordBreak: "keep-all" }}>
+              참고용 1차 평가입니다. 최종 결정은 심사위원의 권한입니다.
+            </span>
+          </div>
+
           {/* Hero — 큰 점수 + verdict + 검토 권고 */}
-          <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-x-10 gap-y-6 items-end pb-8 mb-8 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
+          <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-x-10 gap-y-6 items-end pb-8 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
             <div>
               <p
-                className="text-[11px] font-bold uppercase mb-3"
-                style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
+                className="text-[11px] font-bold mb-3"
+                style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
               >
                 종합 점수
               </p>
@@ -382,8 +408,8 @@ export default async function ProposalDetailPage({
               style={{ borderColor: "var(--t-border-subtle)" }}
             >
               <p
-                className="text-[11px] font-bold uppercase mb-2"
-                style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
+                className="text-[11px] font-bold mb-2"
+                style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
               >
                 참고 의견
               </p>
@@ -424,8 +450,8 @@ export default async function ProposalDetailPage({
                     strokeWidth={2.2}
                   />
                   <span
-                    className="text-[11px] font-bold uppercase"
-                    style={{ color: "var(--signal-attention)", letterSpacing: "0.14em" }}
+                    className="text-[11px] font-bold"
+                    style={{ color: "var(--signal-attention)", letterSpacing: "0.04em" }}
                   >
                     검토 권고
                   </span>
@@ -454,45 +480,38 @@ export default async function ProposalDetailPage({
             )}
           </div>
 
-          {/* 항목별 평가 — 기본 펼침. 첫 진입 시 점수 한눈에 보임.
-              각 축의 강점/약점 디테일은 행마다 "심층 분석 보기" 안 axisMarkdown 으로. */}
-          <CollapsibleAxisGrid
-            criteria={competition.template.criteria}
-            axes={displayAxes}
-            axisReports={axisReports}
-          />
-
-          {/* 종합 평가만 노출 — verdict 톤 섹션 한 단락.
-              핵심 강점/보완 리스크/축 통찰 같은 디테일은 페이지 중복 방지 위해
-              각 항목의 "심층 분석 보기" 로 위임. */}
-          {reportMd && (
-            <div>
-              <h2
-                className="mb-2"
-                style={{
-                  fontWeight: 700,
-                  fontSize: "1.125rem",
-                  lineHeight: 1.4,
-                  color: "var(--text-primary)",
-                  letterSpacing: "-0.005em",
-                }}
-              >
-                종합 평가
-              </h2>
-              <p
-                className="text-[12px] mb-6"
-                style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
-              >
-                AI 1차 평가의 결론입니다. 항목별 강점·리스크는 위 "심층 분석
-                보기" 에서 확인할 수 있습니다.
-              </p>
-              <MarkdownReport source={reportMd} verdictOnly />
-            </div>
-          )}
-        </AIReportEnvelope>
+        </section>
       )}
 
-      {/* ── 운영 영역: 심사 작업 (행정 톤) ──────────────────── */}
+      {/* ── AI 종합 평가 (markdown report) — 봉투 안에서 빠져나와 독립 섹션.
+          axis 별 디테일은 아래 "심사 작업" 안의 각 행 "심층 분석 보기" 로. */}
+      {score && reportMd && (
+        <section className="mb-12">
+          <h2
+            className="mb-2"
+            style={{
+              fontWeight: 700,
+              fontSize: "1.125rem",
+              lineHeight: 1.4,
+              color: "var(--text-primary)",
+              letterSpacing: "-0.005em",
+            }}
+          >
+            AI 종합 평가
+          </h2>
+          <p
+            className="text-[12px] mb-5"
+            style={{ color: "var(--text-tertiary)", letterSpacing: "0.02em" }}
+          >
+            AI 1차 평가의 결론입니다. 항목별 점수·강점·리스크는 아래
+            <strong style={{ color: "var(--text-secondary)" }}>{" 심사 작업 "}</strong>
+            안의 각 행에서 확인하고, 그 자리에서 본인 의견을 입력할 수 있습니다.
+          </p>
+          <MarkdownReport source={reportMd} verdictOnly />
+        </section>
+      )}
+
+      {/* ── 심사 작업 — axis 별 AI 정보 + 내 입력이 한 행에 통합된 영역. ── */}
       {score && proposal.judgeReviews !== undefined && (
         <section className="mb-14">
           <div
@@ -512,7 +531,8 @@ export default async function ProposalDetailPage({
               className="text-[12px] mt-1"
               style={{ color: "var(--text-tertiary)" }}
             >
-              AI 평가는 참고용입니다. 본인의 평가·코멘트·분쟁 결정을 아래에서 진행합니다.
+              각 항목마다 AI 점수·근거·채점 기준과 본인의 점수·코멘트가 같은 행에 있습니다.
+              의견이 다른 항목만 조정하시면 됩니다.
             </p>
           </div>
           <JudgeReviewSection
@@ -524,6 +544,7 @@ export default async function ProposalDetailPage({
             initialResolutions={proposal.disputeResolutions}
             initialClosedAt={proposal.reviewClosedAt}
             myExistingReview={myExistingReview}
+            axisReports={axisReports}
           />
         </section>
       )}

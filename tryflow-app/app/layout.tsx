@@ -6,6 +6,8 @@ import { SidebarWrapper } from "@/components/layout/SidebarWrapper";
 import { ContentWrapper } from "@/components/layout/ContentWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ConfirmProvider } from "@/components/ui/ConfirmModal";
+import { SidebarProvider } from "@/components/layout/SidebarContext";
 
 export const metadata: Metadata = {
   title: "Fastlane — AI 기반 창업 평가 플랫폼",
@@ -51,9 +53,13 @@ export default async function RootLayout({
 
         <ThemeProvider>
           <ToastProvider>
-            <NavigationProgress />
-            <SidebarWrapper />
-            <ContentWrapper>{children}</ContentWrapper>
+            <ConfirmProvider>
+              <SidebarProvider>
+                <NavigationProgress />
+                <SidebarWrapper />
+                <ContentWrapper>{children}</ContentWrapper>
+              </SidebarProvider>
+            </ConfirmProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

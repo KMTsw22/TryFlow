@@ -63,8 +63,8 @@ export function RubricStatusBanner({
         />
         <div className="flex-1">
           <p
-            className="text-[12px] font-bold uppercase mb-0.5"
-            style={{ color: "var(--signal-success)", letterSpacing: "0.14em" }}
+            className="text-[12px] font-bold mb-0.5"
+            style={{ color: "var(--signal-success)", letterSpacing: "0.04em" }}
           >
             평가 가이드 준비 완료
           </p>
@@ -110,8 +110,8 @@ export function RubricStatusBanner({
         />
         <div className="flex-1">
           <p
-            className="text-[12px] font-bold uppercase mb-0.5"
-            style={{ color: "var(--signal-danger)", letterSpacing: "0.14em" }}
+            className="text-[12px] font-bold mb-0.5"
+            style={{ color: "var(--signal-danger)", letterSpacing: "0.04em" }}
           >
             채점 가이드 생성 실패
           </p>
@@ -162,8 +162,8 @@ export function RubricStatusBanner({
       />
       <div className="flex-1">
         <p
-          className="text-[12px] font-bold uppercase mb-0.5"
-          style={{ color: "var(--accent)", letterSpacing: "0.14em" }}
+          className="text-[12px] font-bold mb-0.5"
+          style={{ color: "var(--accent)", letterSpacing: "0.04em" }}
         >
           {status === "generating"
             ? "AI 채점 가이드 생성 중"

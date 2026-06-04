@@ -600,7 +600,7 @@ export default async function CompetitionDetailPage({
             background: "var(--surface-1)",
           }}
         >
-          <table className="w-full border-collapse" style={{ minWidth: 940 }}>
+          <table className="w-full border-collapse md:min-w-[940px]">
             <thead
               className="sticky top-0 z-10"
               style={{
@@ -622,6 +622,7 @@ export default async function CompetitionDetailPage({
                     align="center"
                     minWidth={92}
                     title={`${c.name} · 가중치 ${Math.round(c.weight * 100)}%`}
+                    className="hidden md:table-cell"
                   >
                     <span className="block">{c.name}</span>
                     <span
@@ -752,7 +753,7 @@ export default async function CompetitionDetailPage({
                         return (
                           <td
                             key={c.id}
-                            className="py-4 px-1 text-center"
+                            className="py-4 px-1 text-center hidden md:table-cell"
                             style={{ color: "var(--text-tertiary)" }}
                           >
                             —
@@ -783,7 +784,7 @@ export default async function CompetitionDetailPage({
                       return (
                         <td
                           key={c.id}
-                          className="py-3 px-1 text-center align-middle"
+                          className="py-3 px-1 text-center align-middle hidden md:table-cell"
                           title={sourceTitle}
                         >
                           <div className="flex flex-col items-center gap-0.5">
@@ -986,19 +987,21 @@ function Th({
   width,
   minWidth,
   title,
+  className,
 }: {
   children?: React.ReactNode;
   align?: "left" | "center" | "right";
   width?: number;
   minWidth?: number;
   title?: string;
+  className?: string;
 }) {
   return (
     <th
-      className="py-3 px-2 text-[11px] font-bold uppercase"
+      className={`py-3 px-2 text-[11px] font-bold ${className ?? ""}`}
       style={{
         color: "var(--text-tertiary)",
-        letterSpacing: "0.14em",
+        letterSpacing: "0.04em",
         width,
         minWidth,
         textAlign: align,

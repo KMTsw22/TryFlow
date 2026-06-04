@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   Loader2,
   X,
+  ChevronDown,
 } from "lucide-react";
 import type {
   AxisReview,
@@ -55,6 +56,8 @@ interface Props {
   initialClosedAt?: string;
   /** 본인의 기존 평가 — MyReviewDraft 폼 prefill 용. 없으면 빈 상태. */
   myExistingReview?: JudgeReview;
+  /** axis 별 markdown 심층 분석 — 폼 각 행의 "심층 분석 보기" 토글에서 사용. */
+  axisReports?: Record<string, { markdown: string; generatedAt?: string }>;
 }
 
 /** uuid 형식만 진짜 API 호출. mock 데모 데이터는 client state 로만. */
@@ -71,6 +74,7 @@ export function JudgeReviewSection({
   initialResolutions = [],
   initialClosedAt,
   myExistingReview,
+  axisReports,
 }: Props) {
   const router = useRouter();
   const usingBackend = isRealId(competitionId) && isRealId(proposalId);
@@ -90,6 +94,11 @@ export function JudgeReviewSection({
 
   // 검토 종료 — initialClosedAt 이 있으면 그대로, 없으면 사용자가 버튼 클릭해서 종료.
   const [closedAt, setClosedAt] = useState<string | undefined>(initialClosedAt);
+
+  // 본인이 이미 평가를 제출했는지. 다른 심사위원 비교 영역을 자동 펼침 여부 결정.
+  // anchoring 방지 — 미제출이면 비교 영역을 collapsed 로 두고 본인 의견을 먼저 형성.
+  const initiallySubmitted = myExistingReview?.status === "submitted";
+  const [peerExpanded, setPeerExpanded] = useState(initiallySubmitted);
 
   // submitted 평가만 점수에 반영. draft 는 제외.
   const submittedReviews = useMemo(
@@ -214,8 +223,8 @@ export function JudgeReviewSection({
           심사위원 평가
         </h2>
         <p
-          className="text-[11px] font-bold uppercase"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+          className="text-[11px] font-bold"
+          style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
         >
           {hasReviews ? `${reviews.length}명 제출` : "아직 제출 없음"}
           {humanFinalizedCount > 0 &&
@@ -224,92 +233,20 @@ export function JudgeReviewSection({
         </p>
       </div>
 
-      {hasReviews ? (
-        <>
-          <p
-            className="text-[12px] mb-4 max-w-2xl"
-            style={{
-              color: "var(--text-tertiary)",
-              letterSpacing: "0.02em",
-              wordBreak: "keep-all",
-            }}
-          >
-            AI 1차 점수 위에 각 심사위원이 매긴 점수와 코멘트입니다. 사람이
-            제출한 axis 는 그 평균이 자동으로 최종 점수가 됩니다.
-          </p>
+      <p
+        className="text-[12px] mb-6 max-w-2xl"
+        style={{
+          color: "var(--text-tertiary)",
+          letterSpacing: "0.02em",
+          wordBreak: "keep-all",
+        }}
+      >
+        본인 평가를 먼저 매긴 뒤 다른 심사위원의 의견을 확인할 수 있습니다.
+        사람이 제출한 axis 는 그 평균이 자동으로 최종 점수가 됩니다.
+      </p>
 
-          {/* 심사위원 chip 리스트 */}
-          <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mb-7">
-            {reviews.map((r, i) => (
-              <span
-                key={r.judgeId}
-                className="inline-flex items-center gap-2 px-2.5 py-1 text-[12px]"
-                style={{
-                  background: "var(--surface-1)",
-                  border: "1px solid var(--t-border-subtle)",
-                  color: "var(--text-primary)",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: judgeColor(i) }}
-                  aria-hidden
-                />
-                <span style={{ fontWeight: 600 }}>{r.judgeName}</span>
-                {r.affiliation && (
-                  <span style={{ color: "var(--text-tertiary)" }}>
-                    · {r.affiliation}
-                  </span>
-                )}
-              </span>
-            ))}
-          </div>
-
-          {/* 격차 경고 — σ>20 인 axis 가 있으면 운영자에게 알림. 점수는 평균으로
-              이미 반영됨. 추가 평가자 초대 같은 능동 액션을 권고. */}
-          {noisyAxesCount > 0 && (
-            <div
-              className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12px]"
-              style={{
-                background: "var(--signal-attention-soft)",
-                border: "1px solid var(--signal-attention-ring)",
-                borderRadius: 2,
-                color: "var(--text-secondary)",
-                wordBreak: "keep-all",
-              }}
-            >
-              <AlertTriangle
-                className="w-3.5 h-3.5 mt-0.5 shrink-0"
-                style={{ color: "var(--signal-attention)" }}
-                strokeWidth={2.4}
-              />
-              <span>
-                심사위원 점수 격차가 큰 항목{" "}
-                <strong style={{ color: "var(--signal-attention)" }}>
-                  {noisyAxesCount}개
-                </strong>
-                가 있습니다 (σ &gt; 20). 평균은 반영되었지만 추가 평가자 초대를
-                권고합니다.
-              </span>
-            </div>
-          )}
-
-          <ComparisonTable
-            criteria={criteria}
-            aiAxes={aiAxes}
-            reviews={reviews}
-            resolutions={resolutions}
-            disputeIds={new Set(disputeAxes.map((c) => c.id))}
-            disabled={reviewClosed}
-          />
-
-          <OverallComments reviews={reviews} />
-        </>
-      ) : (
-        <EmptyReviews />
-      )}
-
+      {/* 1. 내 평가 작성 — 최상위. anchoring 방지를 위해 다른 심사위원
+            점수가 먼저 보이지 않도록. */}
       <MyReviewDraft
         criteria={criteria}
         aiAxes={aiAxes}
@@ -317,7 +254,139 @@ export function JudgeReviewSection({
         proposalId={proposalId}
         usingBackend={usingBackend}
         existingReview={myExistingReview}
+        axisReports={axisReports}
       />
+
+      {/* 2. 다른 심사위원 비교 영역 — 본인 미제출이면 collapsed. 본인 의견
+            형성 후 비교할 수 있게. submitted 자동 펼침. 토글 가능. */}
+      {hasReviews ? (
+        <section
+          className="mb-10 mt-10 px-5 py-4"
+          style={{
+            background: "var(--surface-1)",
+            border: "1px solid var(--t-border-subtle)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setPeerExpanded((v) => !v)}
+            aria-expanded={peerExpanded}
+            className="w-full flex items-center justify-between gap-3"
+          >
+            <div className="text-left">
+              <h3
+                className="text-[14px] font-bold"
+                style={{
+                  color: "var(--text-primary)",
+                  letterSpacing: "-0.003em",
+                }}
+              >
+                다른 심사위원 평가
+                <span
+                  className="ml-2 text-[12px] font-medium"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  {reviews.length}명 제출
+                </span>
+              </h3>
+              {!peerExpanded && !initiallySubmitted && (
+                <p
+                  className="text-[11px] mt-0.5"
+                  style={{ color: "var(--text-tertiary)" }}
+                >
+                  본인 평가를 먼저 제출한 뒤 비교하는 것을 권장합니다.
+                </p>
+              )}
+            </div>
+            <span
+              className="inline-flex items-center gap-1 text-[12px] font-semibold"
+              style={{ color: "var(--accent)" }}
+            >
+              {peerExpanded ? "접기" : "펼치기"}
+              <ChevronDown
+                className="w-4 h-4 transition-transform"
+                style={{
+                  transform: peerExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                }}
+                strokeWidth={2.2}
+              />
+            </span>
+          </button>
+
+          {peerExpanded && (
+            <div className="mt-5">
+              {/* 심사위원 chip 리스트 */}
+              <div className="flex items-center flex-wrap gap-x-2 gap-y-2 mb-6">
+                {reviews.map((r, i) => (
+                  <span
+                    key={r.judgeId}
+                    className="inline-flex items-center gap-2 px-2.5 py-1 text-[12px]"
+                    style={{
+                      background: "var(--surface-1)",
+                      border: "1px solid var(--t-border-subtle)",
+                      color: "var(--text-primary)",
+                      letterSpacing: "0.01em",
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ background: judgeColor(i) }}
+                      aria-hidden
+                    />
+                    <span style={{ fontWeight: 600 }}>{r.judgeName}</span>
+                    {r.affiliation && (
+                      <span style={{ color: "var(--text-tertiary)" }}>
+                        · {r.affiliation}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+
+              {/* 격차 경고 — σ>20 인 axis 가 있으면 운영자에게 알림. */}
+              {noisyAxesCount > 0 && (
+                <div
+                  className="flex items-start gap-2.5 px-4 py-3 mb-3 text-[12px]"
+                  style={{
+                    background: "var(--signal-attention-soft)",
+                    border: "1px solid var(--signal-attention-ring)",
+                    borderRadius: 2,
+                    color: "var(--text-secondary)",
+                    wordBreak: "keep-all",
+                  }}
+                >
+                  <AlertTriangle
+                    className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                    style={{ color: "var(--signal-attention)" }}
+                    strokeWidth={2.4}
+                  />
+                  <span>
+                    심사위원 점수 격차가 큰 항목{" "}
+                    <strong style={{ color: "var(--signal-attention)" }}>
+                      {noisyAxesCount}개
+                    </strong>
+                    가 있습니다 (σ &gt; 20). 평균은 반영되었지만 추가 평가자
+                    초대를 권고합니다.
+                  </span>
+                </div>
+              )}
+
+              <ComparisonTable
+                criteria={criteria}
+                aiAxes={aiAxes}
+                reviews={reviews}
+                resolutions={resolutions}
+                disputeIds={new Set(disputeAxes.map((c) => c.id))}
+                disabled={reviewClosed}
+              />
+
+              <OverallComments reviews={reviews} />
+            </div>
+          )}
+        </section>
+      ) : (
+        <EmptyReviews />
+      )}
 
       {/* 검토 종료 영역 — 사람 합의 axis 수 / 격차 큰 axis 수 요약 + 종료 액션. */}
       <CloseReviewArea
@@ -574,10 +643,10 @@ function Th({
 }) {
   return (
     <th
-      className="px-3 py-2.5 font-bold uppercase"
+      className="px-3 py-2.5 font-bold"
       style={{
         color: "var(--text-tertiary)",
-        letterSpacing: "0.14em",
+        letterSpacing: "0.04em",
         fontSize: "10.5px",
         borderBottom: "1px solid var(--t-border-subtle)",
         textAlign: align,
@@ -673,8 +742,8 @@ function OverallComments({ reviews }: { reviews: JudgeReview[] }) {
   return (
     <div className="mb-10">
       <h3
-        className="mb-3 text-[12px] font-bold uppercase"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+        className="mb-3 text-[12px] font-bold"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
       >
         종합 코멘트
       </h3>
@@ -729,6 +798,7 @@ function MyReviewDraft({
   proposalId,
   usingBackend,
   existingReview,
+  axisReports,
 }: {
   criteria: Criterion[];
   aiAxes: AxisScore[];
@@ -736,6 +806,7 @@ function MyReviewDraft({
   proposalId: string;
   usingBackend: boolean;
   existingReview?: JudgeReview;
+  axisReports?: Record<string, { markdown: string; generatedAt?: string }>;
 }) {
   const router = useRouter();
 
@@ -773,6 +844,17 @@ function MyReviewDraft({
   );
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // 각 axis 행의 "심층 분석 보기" 펼침 상태. 봉투 안 CollapsibleAxisGrid 에서
+  // 빠져나와 폼 행에 흡수된 패턴.
+  const [expandedAnalysis, setExpandedAnalysis] = useState<Set<string>>(new Set());
+  function toggleAnalysis(cid: string) {
+    setExpandedAnalysis((prev) => {
+      const next = new Set(prev);
+      if (next.has(cid)) next.delete(cid);
+      else next.add(cid);
+      return next;
+    });
+  }
 
   function setOverride(cid: string, val: string) {
     if (val.trim() === "") {
@@ -1081,7 +1163,7 @@ function MyReviewDraft({
                     </p>
                     {needsAttention && (
                       <span
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold uppercase"
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-bold"
                         style={{
                           background: "var(--signal-attention)",
                           color: "#fff",
@@ -1158,10 +1240,10 @@ function MyReviewDraft({
                     }}
                   >
                     <span
-                      className="text-[11px] font-bold uppercase tabular-nums"
+                      className="text-[11px] font-bold tabular-nums"
                       style={{
                         color: "var(--text-tertiary)",
-                        letterSpacing: "0.12em",
+                        letterSpacing: "0.04em",
                       }}
                     >
                       AI
@@ -1211,12 +1293,12 @@ function MyReviewDraft({
                   }}
                 >
                   <span
-                    className="inline-block mr-1.5 text-[11px] font-bold uppercase tracking-wider not-italic align-middle px-1.5 py-0.5"
+                    className="inline-block mr-1.5 text-[11px] font-bold tracking-wider not-italic align-middle px-1.5 py-0.5"
                     style={{
                       background: "var(--surface-2)",
                       border: "1px solid var(--t-border-subtle)",
                       color: "var(--text-tertiary)",
-                      letterSpacing: "0.12em",
+                      letterSpacing: "0.04em",
                       fontFamily: "var(--font-sans, system-ui)",
                       borderRadius: 2,
                     }}
@@ -1226,14 +1308,68 @@ function MyReviewDraft({
                   &ldquo;{ai.reasoning}&rdquo;
                 </p>
               )}
+
+              {/* 채점 기준 — 봉투 안 CollapsibleAxisGrid 에 있던 정보를 폼 행으로 흡수.
+                  심사위원이 점수 매기는 그 자리에서 "어떤 기준인지" 즉시 확인. */}
+              {c.description && (
+                <p
+                  className="mt-2 text-[12px]"
+                  style={{ color: "var(--text-tertiary)", wordBreak: "keep-all" }}
+                >
+                  <span className="font-semibold">채점 기준:</span> {c.description}
+                </p>
+              )}
+
+              {/* 심층 분석 보기 — axisReports markdown 토글. 봉투 안에서 빠져나옴. */}
+              {axisReports?.[c.id]?.markdown && (
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleAnalysis(c.id)}
+                    aria-expanded={expandedAnalysis.has(c.id)}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold transition-colors hover:text-[color:var(--accent)]"
+                    style={{
+                      color: "var(--text-tertiary)",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {expandedAnalysis.has(c.id) ? "심층 분석 접기" : "심층 분석 보기"}
+                    <ChevronDown
+                      className="w-3 h-3 transition-transform"
+                      strokeWidth={2.4}
+                      style={{
+                        transform: expandedAnalysis.has(c.id)
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      }}
+                    />
+                  </button>
+                  {expandedAnalysis.has(c.id) && (
+                    <div
+                      className="mt-3 px-4 py-3.5 text-[12px] leading-[1.75]"
+                      style={{
+                        background: "var(--envelope-bg, var(--surface-2))",
+                        border: "1px solid var(--envelope-border, var(--t-border-subtle))",
+                        borderRadius: 4,
+                        color: "var(--text-secondary)",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "keep-all",
+                        fontFamily: "'Fraunces', serif",
+                      }}
+                    >
+                      {axisReports[c.id].markdown}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
       <label
-        className="block text-[11px] font-bold uppercase mb-2"
-        style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+        className="block text-[11px] font-bold mb-2"
+        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
       >
         종합 코멘트
       </label>
@@ -1388,8 +1524,8 @@ function CloseReviewArea({
           검토 종료
         </h3>
         <span
-          className="text-[11px] font-bold uppercase tabular-nums"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+          className="text-[11px] font-bold tabular-nums"
+          style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
         >
           사람 합의 {humanFinalizedCount}개
           {noisyAxesCount > 0 ? ` · 격차 큼 ${noisyAxesCount}개` : ""}

@@ -317,8 +317,8 @@ export default function NewCompetitionPage() {
                     </span>
                     {!t.available && (
                       <span
-                        className="text-[11px] font-bold uppercase"
-                        style={{ color: "var(--text-tertiary)", letterSpacing: "0.12em" }}
+                        className="text-[11px] font-bold"
+                        style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
                       >
                         준비 중
                       </span>
@@ -554,7 +554,7 @@ export default function NewCompetitionPage() {
                           className="text-[11px] font-bold tabular-nums"
                           style={{
                             color: "var(--text-tertiary)",
-                            letterSpacing: "0.14em",
+                            letterSpacing: "0.04em",
                           }}
                         >
                           {String(i + 1).padStart(2, "0")}
@@ -586,10 +586,10 @@ export default function NewCompetitionPage() {
                     {/* 가중치 */}
                     <div>
                       <p
-                        className="text-[11px] font-bold uppercase mb-1.5"
+                        className="text-[11px] font-bold mb-1.5"
                         style={{
                           color: "var(--text-tertiary)",
-                          letterSpacing: "0.14em",
+                          letterSpacing: "0.04em",
                         }}
                       >
                         가중치
@@ -710,8 +710,8 @@ function Section({
       <div className="flex items-end justify-between mb-6 pb-3 border-b" style={{ borderColor: "var(--t-border-subtle)" }}>
         <div>
           <p
-            className="text-[11px] font-bold uppercase mb-1.5"
-            style={{ color: "var(--text-tertiary)", letterSpacing: "0.16em" }}
+            className="text-[11px] font-bold mb-1.5"
+            style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
           >
             {step}
           </p>
@@ -754,7 +754,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="flex items-baseline gap-1.5 text-[12px] font-bold uppercase mb-2" style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}>
+      <label className="flex items-baseline gap-1.5 text-[12px] font-bold mb-2" style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}>
         {label}
         {required && <span style={{ color: "var(--signal-danger)" }}>*</span>}
         {hint && (
@@ -805,8 +805,8 @@ function WeightBalanceBar({
     <div>
       <div className="flex items-end justify-between mb-2">
         <p
-          className="text-[11px] font-bold uppercase"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+          className="text-[11px] font-bold"
+          style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
         >
           가중치 합계
         </p>

@@ -51,7 +51,7 @@ export function CriterionRubricCard({
       >
         <span
           className="text-[11px] font-bold tabular-nums shrink-0 mt-1"
-          style={{ color: "var(--text-tertiary)", letterSpacing: "0.14em" }}
+          style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
         >
           {String(index + 1).padStart(2, "0")}
         </span>
@@ -64,15 +64,15 @@ export function CriterionRubricCard({
               {criterion.name}
             </h3>
             <span
-              className="text-[11px] font-bold uppercase tabular-nums"
-              style={{ color: accent, letterSpacing: "0.12em" }}
+              className="text-[11px] font-bold tabular-nums"
+              style={{ color: accent, letterSpacing: "0.04em" }}
             >
               {Math.round(criterion.weight * 100)}%
             </span>
             {hasRubric ? (
               <span
                 className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase"
-                style={{ color: "var(--signal-success)", letterSpacing: "0.12em" }}
+                style={{ color: "var(--signal-success)", letterSpacing: "0.04em" }}
               >
                 <FileText className="w-3 h-3" />
                 채점 가이드 준비됨
@@ -80,7 +80,7 @@ export function CriterionRubricCard({
             ) : (
               <span
                 className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase"
-                style={{ color: "var(--text-tertiary)", letterSpacing: "0.12em" }}
+                style={{ color: "var(--text-tertiary)", letterSpacing: "0.04em" }}
               >
                 <Hourglass className="w-3 h-3" />
                 채점 가이드 미생성

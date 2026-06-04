@@ -29,6 +29,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 import type { Invitation } from "@/lib/fastlane/types";
 
 // API 페이로드 타입 — route.ts 와 동일 모양 (별도 import 안 함 — 라우트와 페이지가
@@ -85,6 +86,7 @@ export default function JudgesManagementPage() {
   const params = useParams<{ id: string }>();
   const competitionId = params.id;
   const { show: toast } = useToast();
+  const confirm = useConfirm();
 
   const [progress, setProgress] = useState<ReviewProgress | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -174,13 +176,13 @@ export default function JudgesManagementPage() {
   }
 
   async function handleRevoke(token: string) {
-    if (
-      !confirm(
-        "이 초대 링크를 비활성화하시겠어요? 이미 받은 사람도 더는 가입할 수 없습니다."
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "이 초대 링크를 비활성화하시겠어요?",
+      body: "이미 링크를 받은 사람도 더는 가입할 수 없습니다.",
+      tone: "danger",
+      confirmLabel: "비활성화",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(
         `/api/competitions/${competitionId}/invitations?token=${encodeURIComponent(
